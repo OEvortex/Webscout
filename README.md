@@ -1,799 +1,775 @@
-#  webscout
-<p align="center">
+<div align="center">
+  <a href="https://github.com/OEvortex/Webscout">
+    <img src="https://img.shields.io/badge/WebScout-Ultimate%20Toolkit-blue?style=for-the-badge&logo=python&logoColor=white" alt="WebScout Logo">
+  </a>
 
-<a href="#"><img alt="Python version" src="https://img.shields.io/pypi/pyversions/webscout"/></a>
-<a href="https://pepy.tech/project/webscout"><img alt="Downloads" src="https://static.pepy.tech/badge/webscout"></a>
+  <h1>Webscout</h1>
 
-Search for anything using the Google, DuckDuckGo.com, yep.com, phind.com, you.com, etc Also containes AI models, can transcribe yt videos, have TTS support and now has webai(terminal gpt and open interpeter) support
+  <p><strong>Your All-in-One Python Toolkit for Web Search, AI Interaction, Digital Utilities, and More</strong></p>
 
+  <p>
+    Access diverse search engines, cutting-edge AI models, temporary communication tools, media utilities, developer helpers, and powerful CLI interfaces – all through one unified library.
+  </p>
 
-## Table of Contents
-- [webscout](#webscout)
-  - [Table of Contents](#table-of-contents)
-  - [Install](#install)
-  - [CLI version](#cli-version)
-  - [CLI to use LLM](#cli-to-use-llm)
-  - [Regions](#regions)
-  - [Transcriber](#transcriber)
-  - [DeepWEBS: Advanced Web Searches](#deepwebs-advanced-web-searches)
-    - [Activating DeepWEBS](#activating-deepwebs)
-    - [Point to remember before using `DeepWEBS`](#point-to-remember-before-using-deepwebs)
-    - [Usage Example](#usage-example)
-  - [Text-to-Speech:](#text-to-speech)
-    - [Available TTS Voices:](#available-tts-voices)
-    - [ALL voices:](#all-voices)
-  - [WEBS and AsyncWEBS classes](#webs-and-asyncwebs-classes)
-  - [Exceptions](#exceptions)
-  - [usage of webscout](#usage-of-webscout)
-    - [1. `text()` - text search by DuckDuckGo.com and Yep.com](#1-text---text-search-by-duckduckgocom-and-yepcom)
-    - [2. `answers()` - instant answers by DuckDuckGo.com and Yep.com](#2-answers---instant-answers-by-duckduckgocom-and-yepcom)
-    - [3. `images()` - image search by DuckDuckGo.com and Yep.com](#3-images---image-search-by-duckduckgocom-and-yepcom)
-    - [4. `videos()` - video search by DuckDuckGo.com](#4-videos---video-search-by-duckduckgocom)
-    - [5. `news()` - news search by DuckDuckGo.com and yep.com](#5-news---news-search-by-duckduckgocom-and-yepcom)
-    - [6. `maps()` - map search by DuckDuckGo.com and](#6-maps---map-search-by-duckduckgocom-and)
-    - [7. `translate()` - translation by DuckDuckGo.com and Yep.com](#7-translate---translation-by-duckduckgocom-and-yepcom)
-    - [8. `suggestions()` - suggestions by DuckDuckGo.com and Yep.com](#8-suggestions---suggestions-by-duckduckgocom-and-yepcom)
-  - [usage of webscout.AI](#usage-of-webscoutai)
-    - [1. `PhindSearch` - Search using Phind.com](#1-phindsearch---search-using-phindcom)
-    - [2. `YepChat` - Chat with mistral 8x7b powered by yepchat](#2-yepchat---chat-with-mistral-8x7b-powered-by-yepchat)
-    - [3. `You.com` - search with you.com](#3-youcom---search-with-youcom)
-    - [4. `Gemini` - search with google gemini](#4-gemini---search-with-google-gemini)
-  - [usage of image generator from Webscout.AI](#usage-of-image-generator-from-webscoutai)
-    - [5. `Prodia` - make image using prodia](#5-prodia---make-image-using-prodia)
-    - [6. `BlackBox` - Search/chat With BlackBox](#6-blackbox---searchchat-with-blackbox)
-    - [7. `PERPLEXITY` - Search With PERPLEXITY](#7-perplexity---search-with-perplexity)
-    - [8. `OpenGPT` - chat With OPENGPT](#8-opengpt---chat-with-opengpt)
-    - [9. `KOBOLDIA` -](#9-koboldia--)
-    - [10. `Sean` - chat With Sean](#10-sean---chat-with-sean)
-  - [usage of special .LLM file from webscout (webscout.LLM)](#usage-of-special-llm-file-from-webscout-webscoutllm)
-    - [`LLM`](#llm)
-    - [`LLM` with internet](#llm-with-internet)
-  - [`Webai` - terminal gpt and a open interpeter](#webai---terminal-gpt-and-a-open-interpeter)
-    - [for using as terminal gpt](#for-using-as-terminal-gpt)
+  <!-- Badges -->
+  <p>
+    <a href="https://pypi.org/project/webscout/"><img src="https://img.shields.io/pypi/v/webscout.svg?style=flat-square&logo=pypi&label=PyPI" alt="PyPI Version"></a>
+    <a href="https://pepy.tech/project/webscout"><img src="https://static.pepy.tech/badge/webscout/month?style=flat-square" alt="Monthly Downloads"></a>
+    <a href="https://pepy.tech/project/webscout"><img src="https://static.pepy.tech/badge/webscout?style=flat-square" alt="Total Downloads"></a>
+    <a href="#"><img src="https://img.shields.io/pypi/pyversions/webscout?style=flat-square&logo=python" alt="Python Version"></a>
+  </p>
+</div>
 
-## Install
-```python
+<hr/>
+
+## 📋 Table of Contents
+
+- [🌟 Key Features](#-features)
+- [⚙️ Installation](#️-installation)
+- [🖥️ Command Line Interface](#️-command-line-interface)
+- [🔍 Search Engines](#-search-engines)
+- [🦆 DuckDuckGo Search](#-duckduckgo-search-with-webs-and-asyncwebs)
+- [💻 WEBS API Reference](#-webs-api-reference)
+- [🤖 AI Models and Voices](#-ai-models-and-voices)
+- [💬 AI Chat Providers](#-ai-chat-providers)
+- [👨‍💻 Advanced AI Interfaces](#-advanced-ai-interfaces)
+- [🤝 Contributing](#-contributing)
+- [🙏 Acknowledgments](#-acknowledgments)
+
+<hr/>
+
+> [!IMPORTANT]
+> **Webscout supports three types of compatibility:**
+> - **Native Compatibility:** Webscout's own native API for maximum flexibility
+> - **OpenAI Compatibility:** Use providers with OpenAI-compatible interfaces
+> - **Local LLM Compatibility:** Run local models with [Inferno](webscout/Local/README.md), an OpenAI-compatible server
+>
+> Choose the approach that best fits your needs! For OpenAI compatibility, check the [OpenAI Providers README](webscout/Provider/OPENAI/README.md).
+
+> [!NOTE]
+> Webscout supports over 90 AI providers including: LLAMA, C4ai, Venice, Copilot, HuggingFaceChat, PerplexityLabs, DeepSeek, WiseCat, GROQ, OPENAI, GEMINI, DeepInfra, Meta, YEPCHAT, TypeGPT, ChatGPTClone, ExaAI, Claude, Anthropic, Cloudflare, AI21, Cerebras, and many more. All providers follow similar usage patterns with consistent interfaces.
+
+<div align="center">
+  <!-- Social/Support Links -->
+  <p>
+    <a href="https://t.me/PyscoutAI"><img alt="Telegram Group" src="https://img.shields.io/badge/Telegram%20Group-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white"></a>
+    <a href="https://t.me/ANONYMOUS_56788"><img alt="Developer Telegram" src="https://img.shields.io/badge/Developer%20Contact-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white"></a>
+    <a href="https://youtube.com/@OEvortex"><img alt="YouTube" src="https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white"></a>
+    <a href="https://www.linkedin.com/in/oe-vortex-29a407265/"><img alt="LinkedIn" src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white"></a>
+    <a href="https://www.instagram.com/oevortex/"><img alt="Instagram" src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white"></a>
+    <a href="https://buymeacoffee.com/oevortex"><img alt="Buy Me A Coffee" src="https://img.shields.io/badge/Buy%20Me%20A%20Coffee-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=black"></a>
+  </p>
+</div>
+
+<hr/>
+
+## 🚀 Features
+
+<details open>
+<summary><b>Search & AI</b></summary>
+<p>
+
+* **Comprehensive Search:** Leverage Google, DuckDuckGo, and Yep for diverse search results
+* **AI Powerhouse:** Access and interact with various AI models through three compatibility options:
+  * **Native API:** Use Webscout's native interfaces for providers like OpenAI, Cohere, Gemini, and many more
+  * **[OpenAI-Compatible Providers](webscout/Provider/OPENAI/README.md):** Seamlessly integrate with various AI providers using standardized OpenAI-compatible interfaces
+  * **[Local LLMs with Inferno](webscout/Local/README.md):** Run local models with an OpenAI-compatible server
+* **[AI Search](webscout/Provider/AISEARCH/README.md):** AI-powered search engines with advanced capabilities
+</p>
+</details>
+
+<details open>
+<summary><b>Media & Content Tools</b></summary>
+<p>
+
+* **[YouTube Toolkit](webscout/Extra/YTToolkit/README.md):** Advanced YouTube video and transcript management with multi-language support
+* **[Text-to-Speech (TTS)](webscout/Provider/TTS/README.md):** Convert text into natural-sounding speech using multiple AI-powered providers
+* **[Text-to-Image](webscout/Provider/TTI/README.md):** Generate high-quality images using a wide range of AI art providers
+* **[Weather Tools](webscout/Extra/weather.md):** Retrieve detailed weather information for any location
+</p>
+</details>
+
+<details open>
+<summary><b>Developer Tools</b></summary>
+<p>
+
+* **[GitAPI](webscout/Extra/GitToolkit/gitapi):** Powerful GitHub data extraction toolkit without authentication requirements for public data
+* **[SwiftCLI](webscout/swiftcli/Readme.md):** A powerful and elegant CLI framework for beautiful command-line interfaces
+* **[LitPrinter](webscout/litprinter/Readme.md):** Styled console output with rich formatting and colors
+* **[LitLogger](webscout/litlogger/Readme.md):** Simplified logging with customizable formats and color schemes
+* **[LitAgent](webscout/litagent/Readme.md):** Modern user agent generator that keeps your requests undetectable
+* **[Scout](webscout/scout/README.md):** Advanced web parsing and crawling library with intelligent HTML/XML parsing
+* **[Inferno](webscout/Local/README.md):** Run local LLMs with an OpenAI-compatible API and interactive CLI
+* **GGUF Conversion:** Convert and quantize Hugging Face models to GGUF format
+</p>
+</details>
+
+<details open>
+<summary><b>Privacy & Utilities</b></summary>
+<p>
+
+* **[Tempmail](webscout/Extra/tempmail/README.md) & Temp Number:** Generate temporary email addresses and phone numbers
+* **[Awesome Prompts](webscout/Extra/Act.md):** Curated collection of system prompts for specialized AI personas
+</p>
+</details>
+
+<hr/>
+
+## ⚙️ Installation
+
+Install Webscout using pip:
+
+```bash
 pip install -U webscout
 ```
-## CLI version
+</div>
 
-```python3
+<hr/>
+
+## 🖥️ Command Line Interface
+
+Webscout provides a powerful command-line interface for quick access to its features:
+
+```bash
 python -m webscout --help
 ```
 
-| Command                                   | Description                                                                                           |
-|-------------------------------------------|-------------------------------------------------------------------------------------------------------|
-| python -m webscout answers -k Text        | CLI function to perform an answers search using Webscout.                                       |
-| python -m webscout images -k Text         | CLI function to perform an images search using Webscout.                                        |
-| python -m webscout maps -k Text           | CLI function to perform a maps search using Webscout.                                           |
-| python -m webscout news -k Text           | CLI function to perform a news search using Webscout.                                           |
-| python -m webscout suggestions  -k Text   | CLI function to perform a suggestions search using Webscout.                                    |
-| python -m webscout text -k Text           | CLI function to perform a text search using Webscout.                                           |
-| python -m webscout translate -k Text      | CLI function to perform translate using Webscout.                                               |
-| python -m webscout version                | A command-line interface command that prints and returns the version of the program.            | 
-| python -m webscout videos -k Text         | CLI function to perform a videos search using DuckDuckGo API.                                   |  
+<details open>
+<summary><b>Web Search Commands</b></summary>
+<p>
 
-
-
-## CLI to use LLM 
-```python
-python -m webscout.LLM model_name 
-```
-[Go To TOP](#TOP)
-
-## Regions
-<details>
-  <summary>expand</summary>
-
-    xa-ar for Arabia
-    xa-en for Arabia (en)
-    ar-es for Argentina
-    au-en for Australia
-    at-de for Austria
-    be-fr for Belgium (fr)
-    be-nl for Belgium (nl)
-    br-pt for Brazil
-    bg-bg for Bulgaria
-    ca-en for Canada
-    ca-fr for Canada (fr)
-    ct-ca for Catalan
-    cl-es for Chile
-    cn-zh for China
-    co-es for Colombia
-    hr-hr for Croatia
-    cz-cs for Czech Republic
-    dk-da for Denmark
-    ee-et for Estonia
-    fi-fi for Finland
-    fr-fr for France
-    de-de for Germany
-    gr-el for Greece
-    hk-tzh for Hong Kong
-    hu-hu for Hungary
-    in-en for India
-    id-id for Indonesia
-    id-en for Indonesia (en)
-    ie-en for Ireland
-    il-he for Israel
-    it-it for Italy
-    jp-jp for Japan
-    kr-kr for Korea
-    lv-lv for Latvia
-    lt-lt for Lithuania
-    xl-es for Latin America
-    my-ms for Malaysia
-    my-en for Malaysia (en)
-    mx-es for Mexico
-    nl-nl for Netherlands
-    nz-en for New Zealand
-    no-no for Norway
-    pe-es for Peru
-    ph-en for Philippines
-    ph-tl for Philippines (tl)
-    pl-pl for Poland
-    pt-pt for Portugal
-    ro-ro for Romania
-    ru-ru for Russia
-    sg-en for Singapore
-    sk-sk for Slovak Republic
-    sl-sl for Slovenia
-    za-en for South Africa
-    es-es for Spain
-    se-sv for Sweden
-    ch-de for Switzerland (de)
-    ch-fr for Switzerland (fr)
-    ch-it for Switzerland (it)
-    tw-tzh for Taiwan
-    th-th for Thailand
-    tr-tr for Turkey
-    ua-uk for Ukraine
-    uk-en for United Kingdom
-    us-en for United States
-    ue-es for United States (es)
-    ve-es for Venezuela
-    vn-vi for Vietnam
-    wt-wt for No region
-___
+| Command | Description |
+|---------|-------------|
+| `python -m webscout answers -k "query"` | Perform an answers search |
+| `python -m webscout chat` | Start an interactive AI chat session |
+| `python -m webscout images -k "query"` | Search for images |
+| `python -m webscout maps -k "query"` | Perform a maps search |
+| `python -m webscout news -k "query"` | Search for news articles |
+| `python -m webscout suggestions -k "query"` | Get search suggestions |
+| `python -m webscout text -k "query"` | Perform a text search |
+| `python -m webscout translate -k "text"` | Translate text |
+| `python -m webscout version` | Display the current version |
+| `python -m webscout videos -k "query"` | Search for videos |
+| `python -m webscout weather -l "location"` | Get weather information |
+| `python -m webscout google_text -k "query"` | Perform a text search using Google |
+| `python -m webscout google_news -k "query"` | Search for news using Google |
+| `python -m webscout google_suggestions -q "query"` | Get search suggestions from Google |
+| `python -m webscout yep_text -k "query"` | Perform a text search using Yep |
+| `python -m webscout yep_images -k "query"` | Search for images using Yep |
+| `python -m webscout yep_suggestions -q "query"` | Get search suggestions from Yep |
+</p>
 </details>
 
-[Go To TOP](#TOP)
+<details open>
+<summary><b>Inferno LLM Commands</b></summary>
+<p>
 
+Inferno provides commands for managing and using local LLMs:
 
-## Transcriber
-The transcriber function in webscout is a handy tool that transcribes YouTube videos. Here's an example code demonstrating its usage:
-```python
-import sys
-from webscout import transcriber
-
-def extract_transcript(video_id):
-    """Extracts the transcript from a YouTube video."""
-    try:
-        transcript_list = transcriber.list_transcripts(video_id)
-        for transcript in transcript_list:
-            transcript_data_list = transcript.fetch()
-            lang = transcript.language
-            transcript_text = ""
-            if transcript.language_code == 'en':
-                for line in transcript_data_list:
-                    start_time = line['start']
-                    end_time = start_time + line['duration']
-                    formatted_line = f"{start_time:.2f} - {end_time:.2f}: {line['text']}\n"
-                    transcript_text += formatted_line
-                return transcript_text
-            elif transcript.is_translatable:
-                english_transcript_list = transcript.translate('en').fetch()
-                for line in english_transcript_list:
-                    start_time = line['start']
-                    end_time = start_time + line['duration']
-                    formatted_line = f"{start_time:.2f} - {end_time:.2f}: {line['text']}\n"
-                    transcript_text += formatted_line
-                return transcript_text
-        print("Transcript extraction failed. Please check the video URL.")
-    except Exception as e:
-        print(f"Error: {e}")
-
-def main():
-    video_url = input("Enter the video link: ")
-
-    if video_url:
-        video_id = video_url.split("=")[1]
-        print("Video URL:", video_url)
-        submit = input("Press 'Enter' to get the transcript or type 'exit' to quit: ")
-        if submit == '':
-            print("Extracting Transcript...")
-            transcript = extract_transcript(video_id)
-            print('Transcript:')
-            print(transcript)
-            print("__________________________________________________________________________________")
-        elif submit.lower() == 'exit':
-            print("Exiting...")
-            sys.exit()
-        else:
-            print("Invalid input. Please try again.")
-
-if __name__ == "__main__":
-    main()
+```bash
+python -m inferno --help
 ```
-## DeepWEBS: Advanced Web Searches
 
-`DeepWEBS` is a standalone feature designed to perform advanced web searches with enhanced capabilities. It is particularly powerful in extracting relevant information directly from webpages and Search engine, focusing exclusively on text (web) searches. Unlike the `WEBS` , which provides a broader range of search functionalities, `DeepWEBS` is specifically tailored for in-depth web searches.
+| Command | Description |
+|---------|-------------|
+| `python -m inferno pull <model>` | Download a model from Hugging Face |
+| `python -m inferno list` | List downloaded models |
+| `python -m inferno serve <model>` | Start a model server with OpenAI-compatible API |
+| `python -m inferno run <model>` | Chat with a model interactively |
+| `python -m inferno remove <model>` | Remove a downloaded model |
+| `python -m inferno version` | Show version information |
+</p>
+</details>
 
-### Activating DeepWEBS
+> [!NOTE]
+> **Hardware requirements for running models:**
+> - Around 2 GB of RAM for 1B models
+> - Around 4 GB of RAM for 3B models
+> - At least 8 GB of RAM for 7B models
+> - 16 GB of RAM for 13B models
+> - 32 GB of RAM for 33B models
+> - GPU acceleration is recommended for better performance
 
-To utilize the `DeepWEBS` feature, you must first create an instance of the `DeepWEBS` . This is designed to be used independently of the `WEBS` , offering a focused approach to web searches.
+<hr/>
 
-### Point to remember before using `DeepWEBS`
-As `DeepWEBS` is designed to extract relevant information directly from webpages and Search engine, It extracts html from webpages and saves them to folder named files in `DeepWEBS` that can be found at `C:\Users\Username\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\DeepWEBS`
+## 🔍 Search Engines
 
-### Usage Example
+Webscout provides multiple search engine interfaces for diverse search capabilities.
 
-Here's a basic example of how to use the `DeepWEBS` :
+### YepSearch - Yep.com Interface
+
 ```python
-from webscout import DeepWEBS
+from webscout import YepSearch
 
-def perform_web_search(query):
-    # Initialize the DeepWEBS class
-    D = DeepWEBS()
-    
-    # Set up the search parameters
-    search_params = D.DeepSearch(
-        queries=[query], # Query to search
-        result_num=5, # Number of search results
-        safe=True, # Enable SafeSearch
-        types=["web"], # Search type: web
-        extract_webpage=True, # True for extracting webpages
-        overwrite_query_html=False,
-        overwrite_webpage_html=False,
-    )
-    
-    # Execute the search and retrieve results
-    results = D.queries_to_search_results(search_params)
-    
-    return results
+# Initialize YepSearch
+yep = YepSearch(
+    timeout=20,  # Optional: Set custom timeout
+    proxies=None,  # Optional: Use proxies
+    verify=True   # Optional: SSL verification
+)
 
-def print_search_results(results):
-    """
-    Print the search results.
-    
-    Args:
-    - search_results (list): List of search results to print.
-    """
-    if results:
-        for index, result in enumerate(results, start=1):
-            print(f"Result {index}: {result}")
-    else:
-        print("No search results found.")
+# Text Search
+text_results = yep.text(
+    keywords="artificial intelligence",
+    region="all",           # Optional: Region for results
+    safesearch="moderate",  # Optional: "on", "moderate", "off"
+    max_results=10          # Optional: Limit number of results
+)
 
-def main():
-    # Prompt the user for a search query
-    query = input("Enter your search query: ")
-    
-    # Perform the web search
-    results = perform_web_search(query)
-    
-    # Print the search results
-    print_search_results(results)
+# Image Search
+image_results = yep.images(
+    keywords="nature photography",
+    region="all",
+    safesearch="moderate",
+    max_results=10
+)
 
-if __name__ == "__main__":
-    main()
-
+# Get search suggestions
+suggestions = yep.suggestions("hist")
 ```
-## Text-to-Speech:
+
+### GoogleSearch - Google Interface
+
 ```python
-from webscout import play_audio
+from webscout import GoogleSearch
 
-message = "This is an example of text-to-speech."
-audio_content = play_audio(message, voice="Brian")
+# Initialize GoogleSearch
+google = GoogleSearch(
+    timeout=10,  # Optional: Set custom timeout
+    proxies=None,  # Optional: Use proxies
+    verify=True   # Optional: SSL verification
+)
 
-# Save the audio to a file
-with open("output.mp3", "wb") as f:
-    f.write(audio_content)
+# Text Search
+text_results = google.text(
+    keywords="artificial intelligence",
+    region="us",           # Optional: Region for results
+    safesearch="moderate",  # Optional: "on", "moderate", "off"
+    max_results=10          # Optional: Limit number of results
+)
+for result in text_results:
+    print(f"Title: {result.title}")
+    print(f"URL: {result.url}")
+    print(f"Description: {result.description}")
+
+# News Search
+news_results = google.news(
+    keywords="technology trends",
+    region="us",
+    safesearch="moderate",
+    max_results=5
+)
+
+# Get search suggestions
+suggestions = google.suggestions("how to")
+
+# Legacy usage is still supported
+from webscout import search
+results = search("Python programming", num_results=5)
 ```
-### Available TTS Voices:
-You can choose from a wide range of voices, including:
-- Filiz, Astrid, Tatyana, Maxim, Carmen, Ines, Cristiano, Vitoria, Ricardo, Maja, Jan, Jacek, Ewa, Ruben, Lotte, Liv, Seoyeon, Takumi, Mizuki, Giorgio, Carla, Bianca, Karl, Dora, Mathieu, Celine, Chantal, Penelope, Miguel, Mia, Enrique, Conchita, Geraint, Salli, Matthew, Kimberly, Kendra, Justin, Joey, Joanna, Ivy, Raveena, Aditi, Emma, Brian, Amy, Russell, Nicole, Vicki, Marlene, Hans, Naja, Mads, Gwyneth, Zhiyu
-- Standard and WaveNet voices for various languages (e.g., en-US, es-ES, ja-JP, etc.)
-### ALL voices:
-[Filiz, Astrid, Tatyana, Maxim, Carmen, Ines, Cristiano, Vitoria, Ricardo, Maja, Jan, Jacek, Ewa, Ruben, Lotte, Liv, Seoyeon, Takumi, Mizuki, Giorgio, Carla, Bianca, Karl, Dora, Mathieu, Celine, Chantal, Penelope, Miguel, Mia, Enrique, Conchita, Geraint, Salli, Matthew, Kimberly, Kendra, Justin, Joey, Joanna, Ivy, Raveena, Aditi, Emma, Brian, Amy, Russell, Nicole, Vicki, Marlene, Hans, Naja, Mads, Gwyneth, Zhiyu, es-ES-Standard-A, it-IT-Standard-A, it-IT-Wavenet-A, ja-JP-Standard-A, ja-JP-Wavenet-A, ko-KR-Standard-A, ko-KR-Wavenet-A, pt-BR-Standard-A, tr-TR-Standard-A, sv-SE-Standard-A, nl-NL-Standard-A, nl-NL-Wavenet-A, en-US-Wavenet-A, en-US-Wavenet-B, en-US-Wavenet-C, en-US-Wavenet-D, en-US-Wavenet-E, en-US-Wavenet-F, en-GB-Standard-A, en-GB-Standard-B, en-GB-Standard-C, en-GB-Standard-D, en-GB-Wavenet-A, en-GB-Wavenet-B, en-GB-Wavenet-C, en-GB-Wavenet-D, en-US-Standard-B, en-US-Standard-C, en-US-Standard-D, en-US-Standard-E, de-DE-Standard-A, de-DE-Standard-B, de-DE-Wavenet-A, de-DE-Wavenet-B, de-DE-Wavenet-C, de-DE-Wavenet-D, en-AU-Standard-A, en-AU-Standard-B, en-AU-Wavenet-A, en-AU-Wavenet-B, en-AU-Wavenet-C, en-AU-Wavenet-D, en-AU-Standard-C, en-AU-Standard-D, fr-CA-Standard-A, fr-CA-Standard-B, fr-CA-Standard-C, fr-CA-Standard-D, fr-FR-Standard-C, fr-FR-Standard-D, fr-FR-Wavenet-A, fr-FR-Wavenet-B, fr-FR-Wavenet-C, fr-FR-Wavenet-D, da-DK-Wavenet-A, pl-PL-Wavenet-A, pl-PL-Wavenet-B, pl-PL-Wavenet-C, pl-PL-Wavenet-D, pt-PT-Wavenet-A, pt-PT-Wavenet-B, pt-PT-Wavenet-C, pt-PT-Wavenet-D, ru-RU-Wavenet-A, ru-RU-Wavenet-B, ru-RU-Wavenet-C, ru-RU-Wavenet-D, sk-SK-Wavenet-A, tr-TR-Wavenet-A, tr-TR-Wavenet-B, tr-TR-Wavenet-C, tr-TR-Wavenet-D, tr-TR-Wavenet-E, uk-UA-Wavenet-A, ar-XA-Wavenet-A, ar-XA-Wavenet-B, ar-XA-Wavenet-C, cs-CZ-Wavenet-A, nl-NL-Wavenet-B, nl-NL-Wavenet-C, nl-NL-Wavenet-D, nl-NL-Wavenet-E, en-IN-Wavenet-A, en-IN-Wavenet-B, en-IN-Wavenet-C, fil-PH-Wavenet-A, fi-FI-Wavenet-A, el-GR-Wavenet-A, hi-IN-Wavenet-A, hi-IN-Wavenet-B, hi-IN-Wavenet-C, hu-HU-Wavenet-A, id-ID-Wavenet-A, id-ID-Wavenet-B, id-ID-Wavenet-C, it-IT-Wavenet-B, it-IT-Wavenet-C, it-IT-Wavenet-D, ja-JP-Wavenet-B, ja-JP-Wavenet-C, ja-JP-Wavenet-D, cmn-CN-Wavenet-A, cmn-CN-Wavenet-B, cmn-CN-Wavenet-C, cmn-CN-Wavenet-D, nb-no-Wavenet-E, nb-no-Wavenet-A, nb-no-Wavenet-B, nb-no-Wavenet-C, nb-no-Wavenet-D, vi-VN-Wavenet-A, vi-VN-Wavenet-B, vi-VN-Wavenet-C, vi-VN-Wavenet-D, sr-rs-Standard-A, lv-lv-Standard-A, is-is-Standard-A, bg-bg-Standard-A, af-ZA-Standard-A, Tracy, Danny, Huihui, Yaoyao, Kangkang, HanHan, Zhiwei, Asaf, An, Stefanos, Filip, Ivan, Heidi, Herena, Kalpana, Hemant, Matej, Andika, Rizwan, Lado, Valluvar, Linda, Heather, Sean, Michael, Karsten, Guillaume, Pattara, Jakub, Szabolcs, Hoda, Naayf]
-## WEBS and AsyncWEBS classes
 
-The WEBS and AsyncWEBS classes are used to retrieve search results from DuckDuckGo.com and yep.com periodically.
-To use the AsyncWEBS class, you can perform asynchronous operations using Python's asyncio library.
-To initialize an instance of the WEBS or AsyncWEBS classes, you can provide the following optional arguments:
+<hr/>
 
-Here is an example of initializing the WEBS class:
-```python3
+## 🦆 DuckDuckGo Search with WEBS and AsyncWEBS
+
+Webscout provides powerful interfaces to DuckDuckGo's search capabilities through the `WEBS` and `AsyncWEBS` classes.
+
+<details open>
+<summary><b>Synchronous Usage with WEBS</b></summary>
+<p>
+
+```python
 from webscout import WEBS
 
-R = WEBS().text("python programming", max_results=5)
-print(R)
+# Use as a context manager for proper resource management
+with WEBS() as webs:
+    # Simple text search
+    results = webs.text("python programming", max_results=5)
+    for result in results:
+        print(f"Title: {result['title']}\nURL: {result['url']}")
 ```
-Here is an example of initializing the AsyncWEBS class:
-```python3
+</p>
+</details>
+
+<details open>
+<summary><b>Asynchronous Usage with AsyncWEBS</b></summary>
+<p>
+
+```python
 import asyncio
-import logging
-import sys
-from itertools import chain
-from random import shuffle
-import requests
 from webscout import AsyncWEBS
 
-# If you have proxies, define them here
-proxies = None
-
-if sys.platform.lower().startswith("win"):
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-
-def get_words():
-    word_site = "https://www.mit.edu/~ecprice/wordlist.10000"
-    resp = requests.get(word_site)
-    words = resp.text.splitlines()
-    return words
-
-async def aget_results(word):
-    async with AsyncWEBS(proxies=proxies) as WEBS:
-        results = await WEBS.text(word, max_results=None)
+async def search_multiple_terms(search_terms):
+    async with AsyncWEBS() as webs:
+        # Create tasks for each search term
+        tasks = [webs.text(term, max_results=5) for term in search_terms]
+        # Run all searches concurrently
+        results = await asyncio.gather(*tasks)
         return results
 
 async def main():
-    words = get_words()
-    shuffle(words)
-    tasks = [aget_results(word) for word in words[:10]]
-    results = await asyncio.gather(*tasks)
-    print(f"Done")
-    for r in chain.from_iterable(results):
-        print(r)
+    terms = ["python", "javascript", "machine learning"]
+    all_results = await search_multiple_terms(terms)
 
-logging.basicConfig(level=logging.DEBUG)
+    # Process results
+    for i, term_results in enumerate(all_results):
+        print(f"Results for '{terms[i]}':\n")
+        for result in term_results:
+            print(f"- {result['title']}")
+        print("\n")
 
-await main()
+# Run the async function
+asyncio.run(main())
 ```
-It is important to note that the WEBS and AsyncWEBS classes should always be used as a context manager (with statement).
-This ensures proper resource management and cleanup, as the context manager will automatically handle opening and closing the HTTP client connection.
+</p>
+</details>
 
-## Exceptions
+> [!TIP]
+> Always use these classes with a context manager (`with` statement) to ensure proper resource management and cleanup.
 
-Exceptions:
-- `WebscoutE`: Raised when there is a generic exception during the API request.
+<hr/>
 
-## usage of webscout
+## 💻 WEBS API Reference
 
-### 1. `text()` - text search by DuckDuckGo.com and Yep.com
+The WEBS class provides comprehensive access to DuckDuckGo's search capabilities through a clean, intuitive API.
+
+### Available Search Methods
+
+| Method | Description | Example |
+|--------|-------------|--------|
+| `text()` | General web search | `webs.text('python programming')` |
+| `answers()` | Instant answers | `webs.answers('population of france')` |
+| `images()` | Image search | `webs.images('nature photography')` |
+| `videos()` | Video search | `webs.videos('documentary')` |
+| `news()` | News articles | `webs.news('technology')` |
+| `maps()` | Location search | `webs.maps('restaurants', place='new york')` |
+| `translate()` | Text translation | `webs.translate('hello', to='es')` |
+| `suggestions()` | Search suggestions | `webs.suggestions('how to')` |
+| `weather()` | Weather information | `webs.weather('london')` |
+
+<details>
+<summary><b>Example: Text Search</b></summary>
+<p>
 
 ```python
 from webscout import WEBS
 
-# Text search for 'live free or die' using DuckDuckGo.com and Yep.com
-with WEBS() as WEBS:
-    for r in WEBS.text('live free or die', region='wt-wt', safesearch='off', timelimit='y', max_results=10):
-        print(r)
-
-    for r in WEBS.text('live free or die', region='wt-wt', safesearch='off', timelimit='y', max_results=10):
-        print(r)
-```
-
-### 2. `answers()` - instant answers by DuckDuckGo.com and Yep.com
-
-```python
-from webscout import WEBS
-
-# Instant answers for the query "sun" using DuckDuckGo.com and Yep.com
-with WEBS() as WEBS:
-    for r in WEBS.answers("sun"):
-        print(r)
-```
-
-### 3. `images()` - image search by DuckDuckGo.com and Yep.com
-
-```python
-from webscout import WEBS
-
-# Image search for the keyword 'butterfly' using DuckDuckGo.com and Yep.com
-with WEBS() as WEBS:
-    keywords = 'butterfly'
-    WEBS_images_gen = WEBS.images(
-      keywords,
-      region="wt-wt",
-      safesearch="off",
-      size=None,
-      type_image=None,
-      layout=None,
-      license_image=None,
-      max_results=10,
+with WEBS() as webs:
+    results = webs.text(
+        'artificial intelligence',
+        region='wt-wt',        # Optional: Region for results
+        safesearch='off',      # Optional: 'on', 'moderate', 'off'
+        timelimit='y',         # Optional: Time limit ('d'=day, 'w'=week, 'm'=month, 'y'=year)
+        max_results=10         # Optional: Limit number of results
     )
-    for r in WEBS_images_gen:
-        print(r)
-```
 
-### 4. `videos()` - video search by DuckDuckGo.com 
+    for result in results:
+        print(f"Title: {result['title']}")
+        print(f"URL: {result['url']}")
+        print(f"Description: {result['body']}\n")
+```
+</p>
+</details>
+
+<details>
+<summary><b>Example: News Search with Formatting</b></summary>
+<p>
+
+```python
+from webscout import WEBS
+import datetime
+
+def fetch_formatted_news(keywords, timelimit='d', max_results=20):
+    """Fetch and format news articles"""
+    with WEBS() as webs:
+        # Get news results
+        news_results = webs.news(
+            keywords,
+            region="wt-wt",
+            safesearch="off",
+            timelimit=timelimit,  # 'd'=day, 'w'=week, 'm'=month
+            max_results=max_results
+        )
+
+        # Format the results
+        formatted_news = []
+        for i, item in enumerate(news_results, 1):
+            # Format the date
+            date = datetime.datetime.fromisoformat(item['date']).strftime('%B %d, %Y')
+
+            # Create formatted entry
+            entry = f"{i}. {item['title']}\n"
+            entry += f"   Published: {date}\n"
+            entry += f"   {item['body']}\n"
+            entry += f"   URL: {item['url']}\n"
+
+            formatted_news.append(entry)
+
+        return formatted_news
+
+# Example usage
+news = fetch_formatted_news('artificial intelligence', timelimit='w', max_results=5)
+print('\n'.join(news))
+```
+</p>
+</details>
+
+<details>
+<summary><b>Example: Weather Information</b></summary>
+<p>
 
 ```python
 from webscout import WEBS
 
-# Video search for the keyword 'tesla' using DuckDuckGo.com 
-with WEBS() as WEBS:
-    keywords = 'tesla'
-    WEBS_videos_gen = WEBS.videos(
-      keywords,
-      region="wt-wt",
-      safesearch="off",
-      timelimit="w",
-      resolution="high",
-      duration="medium",
-      max_results=10,
-    )
-    for r in WEBS_videos_gen:
-        print(r)
-```
+with WEBS() as webs:
+    # Get weather for a location
+    weather = webs.weather("New York")
 
-### 5. `news()` - news search by DuckDuckGo.com and yep.com
+    # Access weather data
+    if weather:
+        print(f"Location: {weather.get('location', 'Unknown')}")
+        print(f"Temperature: {weather.get('temperature', 'N/A')}")
+        print(f"Conditions: {weather.get('condition', 'N/A')}")
+```
+</p>
+</details>
+
+<hr/>
+
+## 🤖 AI Models and Voices
+
+Webscout provides easy access to a wide range of AI models and voice options.
+
+<details open>
+<summary><b>LLM Models</b></summary>
+<p>
+
+Access and manage Large Language Models with Webscout's model utilities.
 
 ```python
-from webscout import WEBS
-
-# News search for the keyword 'holiday' using DuckDuckGo.com and yep.com
-with WEBS() as WEBS:
-    keywords = 'holiday'
-    WEBS_news_gen = WEBS.news(
-      keywords,
-      region="wt-wt",
-      safesearch="off",
-      timelimit="m",
-      max_results=20
-    )
-    for r in WEBS_news_gen:
-        print(r)
-```
-
-### 6. `maps()` - map search by DuckDuckGo.com and
-
-```python
-from webscout import WEBS
-
-# Map search for the keyword 'school' in 'anantnag' using DuckDuckGo.com
-with WEBS() as WEBS:
-    for r in WEBS.maps("school", place="anantnag", max_results=50):
-        print(r)
-```
-
-### 7. `translate()` - translation by DuckDuckGo.com and Yep.com
-
-```python
-from webscout import WEBS
-
-# Translation of the keyword 'school' to German ('hi') using DuckDuckGo.com and Yep.com
-with WEBS() as WEBS:
-    keywords = 'school'
-    r = WEBS.translate(keywords, to="hi")
-    print(r)
-```
-
-### 8. `suggestions()` - suggestions by DuckDuckGo.com and Yep.com
-
-```python
-from webscout import WEBS
-
-# Suggestions for the keyword 'fly' using DuckDuckGo.com and Yep
-with WEBS() as WEBS:
-    for r in WEBS.suggestions("fly"):
-        print(r)
-```
-## usage of webscout.AI
-
-### 1. `PhindSearch` - Search using Phind.com 
-
-```python
-from webscout.AI import PhindSearch
-
-# Create an instance of the PHIND class
-ph = PhindSearch()
-
-# Define a prompt to send to the AI
-prompt = "write a essay on phind"
-
-# Use the 'ask' method to send the prompt and receive a response
-response = ph.ask(prompt)
-
-# Extract and print the message from the response
-message = ph.get_message(response)
-print(message)
-```
-### 2. `YepChat` - Chat with mistral 8x7b powered by yepchat
-Thanks To Divyansh Shukla for This code
-```python
-from webscout.AI import YepChat
-
-def main():
-    # Initialize the YepChat class with your message
-    yep_chat = YepChat(message="who is pm of india")
-    
-    # Send the request and process the response
-    response = yep_chat.send_request()
-    processed_response = yep_chat.process_response(response)
-    
-    # Print the processed response
-    print(processed_response)
-
-if __name__ == "__main__":
-    main()
-```
-
-### 3. `You.com` - search with you.com
-```python
-from webscout.AI import youChat
-
-# Instantiate the youchat class
-youChat = youChat()
-
-while True:
-    # Ask the user for a prompt
-    prompt = input("💡 Enter a prompt (or type 'exit' to quit): ")
-    
-    # Exit condition
-    if prompt.lower() == 'exit':
-        break
-    
-    # Generate a completion based on the prompt
-    try:
-        completion = youChat.create(prompt)
-        print("💬:", completion)
-    except Exception as e:
-        print("⚠️ An error occurred:", e)
-```
-
-### 4. `Gemini` - search with google gemini
-
-```python
-from webscout.AI import Gemini
-
-# Create an instance of the Gemini class
-gemini = Gemini()
-
-# Use the chat method to send a message to the Gemini assistant
-response = gemini.chat("Your message here")
-
-# Print the response from the Gemini assistant
-print(response)
-```
-##  usage of image generator from Webscout.AI
-### 5. `Prodia` - make image using prodia
-```python
-from webscout.AI import Prodia
-
-# Define a prompt for the image generation
-prompt = "A beautiful sunset over the ocean"
-
-# Use the prodia_cli method to generate an image based on the prompt
-Prodia.prodia_cli(prompt)
-```
-### 6. `BlackBox` - Search/chat With BlackBox
-```python
-from webscout.AI import BLACKBOXAI
+from webscout import model
 from rich import print
 
-ai = BLACKBOXAI(
-    is_conversation=True,
-    max_tokens=800,
-    timeout=30,
-    intro=None,
-    filepath=None,
-    update_file=True,
-    proxies={},
-    history_offset=10250,
-    act=None,
-    model=None # You can specify a model if needed
-)
+# List all available LLM models
+all_models = model.llm.list()
+print(f"Total available models: {len(all_models)}")
 
-# Define a prompt to send to the AI
-prompt = "Tell me about india"
+# Get a summary of models by provider
+summary = model.llm.summary()
+print("Models by provider:")
+for provider, count in summary.items():
+    print(f"  {provider}: {count} models")
 
-# Use the 'ask' method to send the prompt and receive a response
-response = ai.ask(prompt)
-
-# Extract the text from the response
-response_text = ai.get_message(response)
-
-# Print the response text
-print(response_text)
+# Get models for a specific provider
+provider_name = "PerplexityLabs"
+available_models = model.llm.get(provider_name)
+print(f"\n{provider_name} models:")
+if isinstance(available_models, list):
+    for i, model_name in enumerate(available_models, 1):
+        print(f"  {i}. {model_name}")
+else:
+    print(f"  {available_models}")
 ```
-### 7. `PERPLEXITY` - Search With PERPLEXITY
-```python
-from webscout.AI import PERPLEXITY
-# Create an instance of the PERPLEXITY class
-perplexity = PERPLEXITY()
+</p>
+</details>
 
-# Example usage:
-prompt = "Explain the concept of recursion in simple terms."
-response = perplexity.chat(prompt)
+<details open>
+<summary><b>TTS Voices</b></summary>
+<p>
+
+Access and manage Text-to-Speech voices across multiple providers.
+
+```python
+from webscout import model
+from rich import print
+
+# List all available TTS voices
+all_voices = model.tts.list()
+print(f"Total available voices: {len(all_voices)}")
+
+# Get a summary of voices by provider
+summary = model.tts.summary()
+print("\nVoices by provider:")
+for provider, count in summary.items():
+    print(f"  {provider}: {count} voices")
+
+# Get voices for a specific provider
+provider_name = "ElevenlabsTTS"
+available_voices = model.tts.get(provider_name)
+print(f"\n{provider_name} voices:")
+if isinstance(available_voices, dict):
+    for voice_name, voice_id in list(available_voices.items())[:5]:  # Show first 5 voices
+        print(f"  - {voice_name}: {voice_id}")
+    if len(available_voices) > 5:
+        print(f"  ... and {len(available_voices) - 5} more")
+```
+</p>
+</details>
+
+<hr/>
+
+## 💬 AI Chat Providers
+
+Webscout offers a comprehensive collection of AI chat providers, giving you access to various language models through a consistent interface.
+
+### Popular AI Providers
+
+<div class="provider-table">
+
+| Provider | Description | Key Features |
+|----------|-------------|-------------|
+| `OPENAI` | OpenAI's models | GPT-3.5, GPT-4, tool calling |
+| `GEMINI` | Google's Gemini models | Web search capabilities |
+| `Meta` | Meta's AI assistant | Image generation, web search |
+| `GROQ` | Fast inference platform | High-speed inference, tool calling |
+| `LLAMA` | Meta's Llama models | Open weights models |
+| `DeepInfra` | Various open models | Multiple model options |
+| `Cohere` | Cohere's language models | Command models |
+| `PerplexityLabs` | Perplexity AI | Web search integration |
+| `Anthropic` | Claude models | Long context windows |
+| `YEPCHAT` | Yep.com's AI | Streaming responses |
+| `ChatGPTClone` | ChatGPT-like interface | Multiple model options |
+| `TypeGPT` | TypeChat models | Code generation focus |
+
+</div>
+
+<details>
+<summary><b>Example: Using Duckchat</b></summary>
+<p>
+
+```python
+from webscout import WEBS
+
+# Initialize and use Duckchat
+with WEBS() as webs:
+    response = webs.chat(
+        "Explain quantum computing in simple terms",
+        model='gpt-4o-mini'  # Options: mixtral-8x7b, llama-3.1-70b, claude-3-haiku, etc.
+    )
+    print(response)
+```
+</p>
+</details>
+
+<details>
+<summary><b>Example: Using Meta AI</b></summary>
+<p>
+
+```python
+from webscout import Meta
+
+# For basic usage (no authentication required)
+meta_ai = Meta()
+
+# Simple text prompt
+response = meta_ai.chat("What is the capital of France?")
+print(response)
+
+# For authenticated usage with web search and image generation
+meta_ai = Meta(fb_email="your_email@example.com", fb_password="your_password")
+
+# Text prompt with web search
+response = meta_ai.ask("What are the latest developments in quantum computing?")
+print(response["message"])
+print("Sources:", response["sources"])
+
+# Image generation
+response = meta_ai.ask("Create an image of a futuristic city")
+for media in response.get("media", []):
+    print(media["url"])
+```
+</p>
+</details>
+
+<details>
+<summary><b>Example: GROQ with Tool Calling</b></summary>
+<p>
+
+```python
+from webscout import GROQ, WEBS
+import json
+
+# Initialize GROQ client
+client = GROQ(api_key="your_api_key")
+
+# Define helper functions
+def calculate(expression):
+    """Evaluate a mathematical expression"""
+    try:
+        result = eval(expression)
+        return json.dumps({"result": result})
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+def search(query):
+    """Perform a web search"""
+    try:
+        results = WEBS().text(query, max_results=3)
+        return json.dumps({"results": results})
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+# Register functions with GROQ
+client.add_function("calculate", calculate)
+client.add_function("search", search)
+
+# Define tool specifications
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "calculate",
+            "description": "Evaluate a mathematical expression",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "expression": {
+                        "type": "string",
+                        "description": "The mathematical expression to evaluate"
+                    }
+                },
+                "required": ["expression"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "search",
+            "description": "Perform a web search",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "The search query"
+                    }
+                },
+                "required": ["query"]
+            }
+        }
+    }
+]
+
+# Use the tools
+response = client.chat("What is 25 * 4 + 10?", tools=tools)
+print(response)
+
+response = client.chat("Find information about quantum computing", tools=tools)
 print(response)
 ```
-### 8. `OpenGPT` - chat With OPENGPT
-```python
-from webscout.AI import OPENGPT
+</p>
+</details>
 
-opengpt = OPENGPT(is_conversation=True, max_tokens=8000, timeout=30)
-# This example sends a simple greeting and prints the response
-prompt = "tell me about india"
-response_str = opengpt.chat(prompt)
-print(response_str)
+<hr/>
+
+## 👨‍💻 Advanced AI Interfaces
+
+<details open>
+<summary><b>Direct Model Access with LLM and VLM</b></summary>
+<p>
+
+Webscout provides direct interfaces to language and vision-language models through the `LLM` and `VLM` classes.
+
+```python
+from webscout.LLM import LLM, VLM
+
+# Text-only model interaction
+llm = LLM("meta-llama/Meta-Llama-3-70B-Instruct")
+response = llm.chat([
+    {"role": "user", "content": "Explain the concept of neural networks"}
+])
+print(response)
+
+# Vision-language model interaction
+vlm = VLM("cogvlm-grounding-generalist")
+response = vlm.chat([
+    {
+        "role": "user",
+        "content": [
+            {"type": "image", "image_url": "path/to/image.jpg"},
+            {"type": "text", "text": "Describe what you see in this image"}
+        ]
+    }
+])
+print(response)
 ```
-### 9. `KOBOLDIA` - 
+</p>
+</details>
+
+<details open>
+<summary><b>GGUF Model Conversion</b></summary>
+<p>
+
+Webscout provides tools to convert and quantize Hugging Face models into the GGUF format for offline use.
+
 ```python
-from webscout.AI import KOBOLDAI
+from webscout.Extra.gguf import ModelConverter
 
-# Instantiate the KOBOLDAI class with default parameters
-koboldai = KOBOLDAI()
-
-# Define a prompt to send to the AI
-prompt = "What is the capital of France?"
-
-# Use the 'ask' method to get a response from the AI
-response = koboldai.ask(prompt)
-
-# Extract and print the message from the response
-message = koboldai.get_message(response)
-print(message)
-
-```
-### 10. `Sean` - chat With Sean
-```python
-from webscout.AI import Sean
-
-a = Sean(is_conversation=True, max_tokens=8000, timeout=30)
-# This example sends a simple greeting and prints the response
-prompt = "tell me about india"
-response_str = a.chat(prompt)
-print(response_str)
-```
-
-## usage of special .LLM file from webscout (webscout.LLM)
-
-### `LLM`
-```python
-from webscout.LLM import LLM
-
-# Read the system message from the file
-with open('system.txt', 'r') as file:
-    system_message = file.read()
-
-# Initialize the LLM class with the model name and system message
-llm = LLM(model="microsoft/WizardLM-2-8x22B", system_message=system_message)
-
-while True:
-    # Get the user input
-    user_input = input("User: ")
-
-    # Define the messages to be sent
-    messages = [
-        {"role": "user", "content": user_input}
-    ]
-
-    # Use the mistral_chat method to get the response
-    response = llm.chat(messages)
-
-    # Print the response
-    print("AI: ", response)
-```
-### `LLM` with internet
-```python
-from __future__ import annotations
-from typing import List, Optional
-
-from webscout import LLM
-from webscout import WEBS
-import warnings
-
-system_message: str = (
-    "As AI, you possess internet access and are capable of executing real-time web searches based on user inputs. "
-    "You shall utilize this capability to enrich conversations, offer informed insights, and augment your ability to "
-    "respond accurately and thoroughly. However, refrain from stating 'You have provided a list of strings,' ensuring "
-    "seamless interactions with users. Embrace a responsive demeanor, harnessing available online resources to address "
-    "queries, share pertinent content, and facilitate meaningful exchanges. By doing so, you create value through "
-    "connection and engagement, ultimately enhancing overall user satisfaction and experience. Additionally, "
-    "continue upholding the principles of respect, impartiality, and intellectual integrity throughout all interactions."
+# Create a converter instance
+converter = ModelConverter(
+    model_id="mistralai/Mistral-7B-Instruct-v0.2",  # Hugging Face model ID
+    quantization_methods="q4_k_m"                  # Quantization method
 )
 
-# Ignore the specific UserWarning
-warnings.filterwarnings("ignore", category=UserWarning, module="curl_cffi.aio", lineno=205)
-LLM = LLM(model="meta-llama/Meta-Llama-3-70B-Instruct", system_message=system_message)
-
-
-def chat(
-    user_input: str, webs: WEBS, max_results: int = 10
-) -> Optional[str]:
-    """
-    Chat function to perform a web search based on the user input and generate a response using the LLM model.
-
-    Parameters
-    ----------
-    user_input : str
-        The user input to be used for the web search
-    webs : WEBS
-        The web search instance to be used to perform the search
-    max_results : int, optional
-        The maximum number of search results to include in the response, by default 10
-
-    Returns
-    -------
-    Optional[str]
-        The response generated by the LLM model, or None if there is no response
-    """
-    # Perform a web search based on the user input
-    search_results: List[str] = []
-    for r in webs.text(
-        user_input, region="wt-wt", safesearch="off", timelimit="y", max_results=max_results
-    ):
-        search_results.append(str(r))  # Convert each result to a string
-
-    # Define the messages to be sent, including the user input, search results, and system message
-    messages = [
-        {"role": "user", "content": user_input + "\n" + "websearch results are:" + "\n".join(search_results)},
-    ]
-
-    # Use the chat method to get the response
-    response = LLM.chat(messages)
-
-    return response
-
-
-if __name__ == "__main__":
-    while True:
-        # Get the user input
-        user_input = input("User: ")
-
-        # Perform a web search based on the user input
-        with WEBS() as webs:
-            response = chat(user_input, webs)
-
-        # Print the response
-        if response:
-            print("AI:", response)
-        else:
-            print("No response")
+# Run the conversion
+converter.convert()
 ```
-## `Webai` - terminal gpt and a open interpeter
 
-```python
-from webscout.webai import Main
+#### Available Quantization Methods
 
-def use_rawdog_with_webai(prompt):
-    """
-    Wrap the webscout default method in a try-except block to catch any unhandled
-    exceptions and print a helpful message.
-    """
-    try:
-        webai_bot = Main(
-            max_tokens=500, 
-            provider="phind",
-            temperature=0.7,  
-            top_k=40,          
-            top_p=0.95,        
-            model="Phind Model",  # Replace with your desired model
-            auth=None,       # Replace with your auth key/value (if needed)
-            timeout=30,
-            disable_conversation=True,
-            filepath=None,
-            update_file=True,
-            intro=None,
-            rawdog=True,
-            history_offset=10250,
-            awesome_prompt=None,
-            proxy_path=None,
-            quiet=True
-        )
-        webai_response = webai_bot.default(prompt) 
-    except Exception as e:
-        print("Unexpected error:", e)
+| Method | Description |
+|--------|-------------|
+| `fp16` | 16-bit floating point - maximum accuracy, largest size |
+| `q2_k` | 2-bit quantization (smallest size, lowest accuracy) |
+| `q3_k_l` | 3-bit quantization (large) - balanced for size/accuracy |
+| `q3_k_m` | 3-bit quantization (medium) - good balance for most use cases |
+| `q3_k_s` | 3-bit quantization (small) - optimized for speed |
+| `q4_0` | 4-bit quantization (version 0) - standard 4-bit compression |
+| `q4_1` | 4-bit quantization (version 1) - improved accuracy over q4_0 |
+| `q4_k_m` | 4-bit quantization (medium) - balanced for most models |
+| `q4_k_s` | 4-bit quantization (small) - optimized for speed |
+| `q5_0` | 5-bit quantization (version 0) - high accuracy, larger size |
+| `q5_1` | 5-bit quantization (version 1) - improved accuracy over q5_0 |
+| `q5_k_m` | 5-bit quantization (medium) - best balance for quality/size |
+| `q5_k_s` | 5-bit quantization (small) - optimized for speed |
+| `q6_k` | 6-bit quantization - highest accuracy, largest size |
+| `q8_0` | 8-bit quantization - maximum accuracy, largest size |
 
+#### Command Line Usage
 
-if __name__ == "__main__":
-    user_prompt = input("Enter your prompt: ")
-    use_rawdog_with_webai(user_prompt)
+```bash
+python -m webscout.Extra.gguf convert -m "mistralai/Mistral-7B-Instruct-v0.2" -q "q4_k_m"
 ```
-```shell
-python -m webscout.webai webai --provider "phind" --rawdog
-```
-### for using as terminal gpt
-```python
-python -m webscout.webai webai --provider "sean"
-```
+</p>
+</details>
+
+<div align="center">
+  <p>
+    <a href="https://youtube.com/@OEvortex">▶️ Vortex's YouTube Channel</a> |
+    <a href="https://t.me/ANONYMOUS_56788">📢 Anonymous Coder's Telegram</a>
+  </p>
+</div>
+
+<hr/>
+
+## 🤝 Contributing
+
+Contributions are welcome! If you'd like to contribute to Webscout, please follow these steps:
+
+1. Fork the repository
+2. Create a new branch for your feature or bug fix
+3. Make your changes and commit them with descriptive messages
+4. Push your branch to your forked repository
+5. Submit a pull request to the main repository
+
+## 🙏 Acknowledgments
+
+* All the amazing developers who have contributed to the project
+* The open-source community for their support and inspiration
+
+<hr/>
+
+<div align="center">
+  <p>Made with ❤️ by the Webscout team</p>
+</div>
