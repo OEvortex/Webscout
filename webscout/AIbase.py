@@ -5,7 +5,7 @@ from typing import Any, Dict, Generator, List, Optional, Union
 from typing_extensions import TypeAlias
 
 # Type aliases for better readability
-Response: TypeAlias = Union[Dict[str, Any], Generator[Any, None, None]]
+Response: TypeAlias = Union[Dict[str, Any], Generator[Any, None, None], str]
 
 class SearchResponse:
     """A wrapper class for search API responses.

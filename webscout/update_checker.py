@@ -215,7 +215,7 @@ def check_for_updates(force: bool = False) -> Optional[str]:
         pypi = get_pypi_versions()
         mark_checked() # Mark even if it fails or no update, to avoid constant hitting
 
-        if not pypi['stable']:
+        if not pypi['stable'] or not pypi['latest']:
             return None
 
         latest_stable_str = pypi['stable']

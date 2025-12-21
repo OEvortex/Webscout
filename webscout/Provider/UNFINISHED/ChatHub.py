@@ -1,10 +1,10 @@
 import json
-from typing import Any, Dict, Generator, Union
+from typing import Any, Dict, Generator, Union, Optional
 
 import requests
 
 from webscout import exceptions
-from webscout.AIbase import Provider
+from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 
 
@@ -99,7 +99,7 @@ class ChatHub(Provider):
         prompt: str,
         stream: bool = False,
         raw: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
     ) -> Union[Dict[str, Any], Generator]:
 
@@ -168,10 +168,11 @@ class ChatHub(Provider):
         self,
         prompt: str,
         stream: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
         raw: bool = False,
-    ) -> Union[str, Generator]:
+        **kwargs: Any,
+    ) -> Union[str, Generator[str, None, None]]:
         """Generate response `str`"""
 
         def for_stream():
@@ -181,7 +182,10 @@ class ChatHub(Provider):
                 if raw:
                     yield response
                 else:
-                    yield self.get_message(response)
+                    if isinstance(response, dict):
+                        yield self.get_message(response)
+                    else:
+                        yield str(response)
 
         def for_non_stream():
             result = self.ask(
@@ -199,9 +203,10 @@ class ChatHub(Provider):
 
 
 
-    def get_message(self, response: dict) -> str:
+    def get_message(self, response: Response) -> str:
         """Retrieves message only from response"""
-        assert isinstance(response, dict), "Response should be of dict data-type only"
+        if not isinstance(response, dict):
+            return str(response)
         return response.get("text", "")
 
 

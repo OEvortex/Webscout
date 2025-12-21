@@ -109,7 +109,7 @@ class QwenLM(Provider):
         )
         Conversation.intro = (
             AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
+                act, default=None, case_insensitive=True
             )
             if act
             else intro or Conversation.intro
@@ -234,7 +234,7 @@ class QwenLM(Provider):
             processed_stream = sanitize_stream(
                 data=response.text,
                 to_json=True,
-                intro_value=None,
+                intro_value="",
                 content_extractor=lambda chunk: chunk.get("choices", [{}])[0].get("message", {}).get("content") if isinstance(chunk, dict) else None,
                 yield_raw_on_error=False,
                 raw=raw
@@ -258,8 +258,9 @@ class QwenLM(Provider):
         prompt: str,
         stream: bool = False,
         optimizer: Optional[str] = None,
-        raw: bool = False,
         conversationally: bool = False,
+        raw: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """
         Generates a chat response from the QwenLM API.
@@ -297,7 +298,10 @@ class QwenLM(Provider):
                 if raw:
                     yield response
                 else:
-                    yield response["text"]
+                    if isinstance(response, dict):
+                        yield response["text"]
+                    else:
+                        yield str(response)
 
         def for_non_stream() -> str:
             result = self.ask(prompt, False, raw=raw, optimizer=optimizer, conversationally=conversationally)

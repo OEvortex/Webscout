@@ -104,7 +104,7 @@ class ChatSandbox(Provider):
 
         Conversation.intro = (
             AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
+                act, default=None, case_insensitive=True
             )
             if act
             else intro or Conversation.intro

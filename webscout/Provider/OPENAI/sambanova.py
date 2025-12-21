@@ -24,7 +24,7 @@ from webscout.Provider.OPENAI.utils import (
 try:
     from webscout.litagent import LitAgent
 except ImportError:
-    LitAgent = None
+    LitAgent = None  # type: ignore
 
 
 class Completions(BaseCompletions):

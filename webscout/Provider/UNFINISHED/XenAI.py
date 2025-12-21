@@ -2,13 +2,13 @@ import random
 import string
 import uuid
 import warnings
-from typing import Any, Dict, Generator, Union
+from typing import Any, Dict, Generator, Union, Optional
 
 import requests
 import urllib3
 
 from webscout import exceptions
-from webscout.AIbase import Provider
+from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 from webscout.litagent import LitAgent
 
@@ -53,12 +53,12 @@ class XenAI(Provider):
         is_conversation: bool = True,
         max_tokens: int = 2048,
         timeout: int = 60,
-        intro: str = None,
-        filepath: str = None,
+        intro: Optional[str] = None,
+        filepath: Optional[str] = None,
         update_file: bool = True,
         proxies: dict = {},
         history_offset: int = 10250,
-        act: str = None,
+        act: Optional[str] = None,
         model: str = "gemini-2.5-pro-preview-05-06",
         system_prompt: str = "You are a helpful assistant.",
     ):
@@ -102,7 +102,7 @@ class XenAI(Provider):
         )
         Conversation.intro = (
             AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
+                act, default=None, case_insensitive=True
             )
             if act
             else intro or Conversation.intro
@@ -166,10 +166,10 @@ class XenAI(Provider):
         prompt: str,
         stream: bool = False,
         raw: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
         **kwargs
-    ) -> Union[Dict[str, Any], Generator]:
+    ) -> Response:
         """Sends a prompt to the xenai API and returns the response."""
 
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
@@ -263,9 +263,9 @@ class XenAI(Provider):
         self,
         prompt: str,
         stream: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
-        **kwargs
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """Generates a response from the xenai API."""
 
@@ -286,9 +286,10 @@ class XenAI(Provider):
 
         return for_stream_chat() if stream else for_non_stream_chat()
 
-    def get_message(self, response: Dict[str, Any]) -> str:
+    def get_message(self, response: Response) -> str:
         """Extracts the message from the API response."""
-        assert isinstance(response, dict), "Response should be of dict data-type only"
+        if not isinstance(response, dict):
+            return str(response)
         return response.get("text", "")
 
 # Example usage (no cookies file needed)

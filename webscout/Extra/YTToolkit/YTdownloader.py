@@ -7,7 +7,7 @@ from datetime import datetime
 from os import getcwd, makedirs, path
 from threading import Thread
 from time import sleep
-from typing import Union
+from typing import Union, Optional, Tuple, Any
 
 import requests
 from colorama import Fore
@@ -369,7 +369,7 @@ class third_query:
         self,
         format: str = "mp4",
         quality="auto",
-        resolver: str = None,
+        resolver: Optional[str] = None,
         timeout: int = 30,
     ):
         r"""
@@ -475,6 +475,7 @@ class Handler:
         self.dropped = []
         self.total = 1
         self.saved_videos = utils.get_history()
+        self.query_one = None
 
     def __str__(self):
         return self.query
@@ -514,7 +515,7 @@ class Handler:
             self.vitems.extend(self.__filter_videos(self.query_one.vitems))
 
     @utils.error_handler(exit_on_error=True)
-    def __verify_item(self, second_query_obj) -> bool:
+    def __verify_item(self, second_query_obj) -> Tuple[bool, str]:
         video_id = second_query_obj.vid
         video_author = second_query_obj.a
         video_title = second_query_obj.title
@@ -537,6 +538,7 @@ class Handler:
 
     def __make_second_query(self):
         r"""Links first query with 3rd query"""
+        assert self.query_one is not None
         init_query_two = second_query(self.query_one)
         x = 0
         if not self.query_one.is_link:
@@ -603,10 +605,10 @@ class Handler:
         self,
         format: str = "mp4",
         quality: str = "auto",
-        resolver: str = None,
+        resolver: Optional[str] = None,
         limit: int = 1,
-        keyword: str = None,
-        author: str = None,
+        keyword: Optional[str] = None,
+        author: Optional[str] = None,
     ):
         r"""Generate and yield video dictionary
         :param format: (Optional) Media format mp4/mp3
@@ -638,7 +640,7 @@ class Handler:
                 )
 
 
-    def generate_filename(self, third_dict: dict, naming_format: str = None) -> str:
+    def generate_filename(self, third_dict: dict, naming_format: Optional[str] = None) -> str:
         r"""Generate filename based on the response of `third_query`
         :param third_dict: response of `third_query.main()` object
         :param naming_format: (Optional) Format for generating filename based on `third_dict` keys
@@ -678,7 +680,7 @@ class Handler:
         iterator: object = None,
         progress_bar=True,
         quiet: bool = False,
-        naming_format: str = None,
+        naming_format: Optional[str] = None,
         chunk_size: int = 512,
         play: bool = False,
         resume: bool = False,

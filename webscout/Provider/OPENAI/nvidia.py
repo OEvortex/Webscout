@@ -217,7 +217,7 @@ class Nvidia(OpenAICompatibleProvider):
     AVAILABLE_MODELS = []
 
     @classmethod
-    def get_models(cls, api_key: str = None) -> List[str]:
+    def get_models(cls, api_key: Optional[str] = None) -> List[str]:
         """Fetch available models from Nvidia API."""
         url = "https://integrate.api.nvidia.com/v1/models"
         try:
@@ -237,7 +237,7 @@ class Nvidia(OpenAICompatibleProvider):
             return cls.AVAILABLE_MODELS
 
     @classmethod
-    def update_available_models(cls, api_key: str = None):
+    def update_available_models(cls, api_key: Optional[str] = None):
         """Update the available models list from Nvidia API dynamically."""
         try:
             models = cls.get_models(api_key)

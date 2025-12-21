@@ -257,7 +257,7 @@ class GEMINIAPI(Provider):
                 processed_stream = sanitize_stream(
                     data=response_text,
                     to_json=True,
-                    intro_value=None,
+                    intro_value="",
                     content_extractor=lambda chunk: chunk.get("choices", [{}])[0].get("message", {}).get("content") if isinstance(chunk, dict) else None,
                     yield_raw_on_error=False,
                     raw=raw
@@ -275,7 +275,8 @@ class GEMINIAPI(Provider):
             except CurlError as e:
                 raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {e}") from e
             except Exception as e:
-                err_text = getattr(e, 'response', None) and getattr(e.response, 'text', '')
+                response = getattr(e, 'response', None)
+                err_text = getattr(response, 'text', '') if response else ''
                 raise exceptions.FailedToGenerateResponseError(f"Request failed ({type(e).__name__}): {e} - {err_text}") from e
 
         return for_stream() if stream else for_non_stream()
@@ -305,6 +306,7 @@ class GEMINIAPI(Provider):
 
         return for_stream_chat() if stream else for_non_stream_chat()
 
-    def get_message(self, response: dict) -> str:
-        assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"]
+    def get_message(self, response: Response) -> str:
+        if not isinstance(response, dict):
+            return str(response)
+        return response.get("text", "")

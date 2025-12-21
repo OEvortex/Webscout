@@ -51,6 +51,8 @@ class Mojeek(BaseSearchEngine[TextResult]):
         keywords = args[0] if args else kwargs.get("keywords")
         region = args[1] if len(args) > 1 else kwargs.get("region", "us-en")
         safesearch = args[2] if len(args) > 2 else kwargs.get("safesearch", "moderate")
+        if not safesearch:
+            safesearch = "moderate"
         max_results = args[3] if len(args) > 3 else kwargs.get("max_results")
 
         results = self.search(query=keywords, region=region, safesearch=safesearch)

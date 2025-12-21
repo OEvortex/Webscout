@@ -69,7 +69,7 @@ class WiseCat(Provider):
         )
         Conversation.intro = (
             AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
+                act, default=None, case_insensitive=True
             )
             if act
             else intro or Conversation.intro
@@ -130,7 +130,7 @@ class WiseCat(Provider):
                 streaming_text = ""
                 processed_stream = sanitize_stream(
                     data=response.iter_content(chunk_size=None),
-                    intro_value=None,
+                    intro_value="",
                     to_json=False,
                     extract_regexes=[
                         r'0:"(.*?)"'  # Extract content from 0:"..." format
@@ -174,6 +174,7 @@ class WiseCat(Provider):
         optimizer: Optional[str] = None,
         conversationally: bool = False,
         raw: bool = False,  # Added raw parameter
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         def for_stream():
             for response in self.ask(
@@ -182,7 +183,10 @@ class WiseCat(Provider):
                 if raw:
                     yield response
                 else:
-                    yield self.get_message(response)
+                    if isinstance(response, dict):
+                        yield self.get_message(response)
+                    else:
+                        yield str(response)
         def for_non_stream():
             result = self.ask(
                 prompt,
@@ -194,7 +198,9 @@ class WiseCat(Provider):
             if raw:
                 return result
             else:
-                return self.get_message(result)
+                if isinstance(result, dict):
+                    return self.get_message(result)
+                return str(result)
         return for_stream() if stream else for_non_stream()
 
     def get_message(self, response: dict) -> str:

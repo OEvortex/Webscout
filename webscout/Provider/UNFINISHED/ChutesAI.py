@@ -263,7 +263,7 @@ class ChutesAI(OpenAICompatibleProvider):
         "NousResearch/DeepHermes-3-Mistral-24B-Preview",
         "chutesai/Llama-4-Maverick-17B-128E-Instruct-FP8",
     ]
-    def __init__(self, api_key: str = None,):
+    def __init__(self, api_key: Optional[str] = None,):
         self.timeout = None  # Infinite timeout
         self.base_url = "https://llm.chutes.ai/v1/chat/completions"
 

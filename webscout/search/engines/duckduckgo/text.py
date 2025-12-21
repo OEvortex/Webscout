@@ -31,6 +31,8 @@ class DuckDuckGoTextSearch(DuckDuckGoBase):
             List of TextResult objects.
         """
         keywords = args[0] if args else kwargs.get("keywords")
+        if not keywords:
+            raise WebscoutE("keywords is mandatory")
         region = args[1] if len(args) > 1 else kwargs.get("region", "wt-wt")
         args[2] if len(args) > 2 else kwargs.get("safesearch", "moderate")
         timelimit = args[3] if len(args) > 3 else kwargs.get("timelimit")
@@ -169,6 +171,8 @@ class DuckDuckGoTextSearch(DuckDuckGoBase):
                 return []
 
             data = zip(self.cycle(range(1, 5)), elements)
+            href = None
+            title = ""
             for i, e in data:
                 if isinstance(e, self.parser.etree.Element):
                     if i == 1:

@@ -5,7 +5,7 @@ from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider
+from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 from webscout.litagent import LitAgent
 
@@ -333,9 +333,10 @@ class QodoAI(Provider):
         self,
         prompt: str,
         stream: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
         raw: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         def for_stream():
             for response in self.ask(
@@ -344,7 +345,10 @@ class QodoAI(Provider):
                 if raw:
                     yield response
                 else:
-                    yield response.get("text", "")
+                    if isinstance(response, dict):
+                        yield response.get("text", "")
+                    else:
+                        yield str(response)
 
         def for_non_stream():
             result = self.ask(
@@ -357,8 +361,9 @@ class QodoAI(Provider):
 
         return for_stream() if stream else for_non_stream()
 
-    def get_message(self, response: dict) -> str:
-        assert isinstance(response, dict), "Response should be of dict data-type only"
+    def get_message(self, response: Response) -> str:
+        if not isinstance(response, dict):
+            return str(response)
         text = response.get("text", "")
         return text.replace('\\n', '\n').replace('\\n\\n', '\n\n')
 

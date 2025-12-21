@@ -108,7 +108,7 @@ class Ayle(Provider):
 
         Conversation.intro = (
             AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
+                act, default=None, case_insensitive=True
             )
             if act
             else intro or Conversation.intro
@@ -250,6 +250,7 @@ class Ayle(Provider):
         optimizer: Optional[str] = None,
         conversationally: bool = False,
         raw: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         def for_stream():
             for response in self.ask(
