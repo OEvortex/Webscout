@@ -7,7 +7,7 @@ from datetime import datetime
 from os import getcwd, makedirs, path
 from threading import Thread
 from time import sleep
-from typing import Union, Optional, Tuple, Any
+from typing import Any, Optional, Tuple, Union
 
 import requests
 from colorama import Fore

@@ -23,6 +23,9 @@ All notable changes to this project will be documented in this file.
     - Split multiple statements on single lines (E701, E702) across the entire project for better readability.
 - **refactor**: Replaced star imports (`from ... import *`) with explicit imports in `GitToolkit` and `samurai` provider to eliminate name shadowing and improve static analysis.
 - **refactor**: Added dynamic model fetching to both DeepInfra providers (`webscout/Provider/Deepinfra.py`, `webscout/Provider/OPENAI/deepinfra.py`) following Groq provider pattern. Implemented `get_models()` and `update_available_models()` class methods that fetch from `https://api.deepinfra.com/v1/models` API endpoint with fallback to default models on failure. Providers now automatically update their available models list during initialization.
+- **fix**: `webscout/Provider/AISEARCH/Perplexity.py` - Fixed line break handling in streaming responses by updating the `output_formatter` to properly unescape escaped newlines (`\\n`) in extracted answer strings, ensuring proper terminal output formatting.
+- **refactor**: `webscout/Provider/AISEARCH/Perplexity.py` - Removed content extractor and shifted to extract_regexes=[r'"answer":\s*"((?:\\.|[^"\\])*)"'], standardizing with other providers and improving robustness against response format changes.
+
 ### 🚮 Removed
 - **removed**: `yep.py` - Removed the YEPCHAT provider and related files.
 

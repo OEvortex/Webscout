@@ -70,7 +70,7 @@ class Perplexity(AISearch):
         # Initialize session info if possible
         try:
             self.timestamp = format(random.getrandbits(32), "08x")
-            response = self.session.get(
+            response: requests.Response = self.session.get(
                 f"https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.timestamp}"
             )
             if response.status_code == 200 and response.text.startswith("0"):
@@ -83,103 +83,12 @@ class Perplexity(AISearch):
         except Exception:
             pass
 
-    def _extract_answer(self, response):
-        """
-        Extract the answer from the response.
-        """
-        if not response:
-            return ""
-
-        # Handle FINAL step at top level
-        if response.get("step_type") == "FINAL" and "content" in response:
-            content = response["content"]
-            if isinstance(content, dict) and "answer" in content:
-                answer_content = content["answer"]
-                if isinstance(answer_content, str):
-                    try:
-                        return json.loads(answer_content).get("answer", "")
-                    except Exception:
-                        return str(answer_content)
-                elif isinstance(answer_content, dict):
-                    return answer_content.get("answer", "")
-
-        # New pattern extraction
-        if "text" in response:
-            text_val = response["text"]
-            if isinstance(text_val, list):
-                for step in text_val:
-                    if step.get("type") == "answer" and "value" in step:
-                        return step["value"]
-                    if step.get("step_type") == "FINAL" and "content" in step:
-                        content = step["content"]
-                        if isinstance(content, dict) and "answer" in content:
-                            answer_content = content["answer"]
-                            if isinstance(answer_content, str):
-                                try:
-                                    return json.loads(answer_content).get("answer", "")
-                                except Exception:
-                                    return str(answer_content)
-                            elif isinstance(answer_content, dict):
-                                return answer_content.get("answer", "")
-            elif isinstance(text_val, str):
-                try:
-                    return json.loads(text_val).get("answer", text_val)
-                except Exception:
-                    return text_val
-        return ""
-
-        # New pattern extraction
-        if "text" in response:
-            text_val = response["text"]
-            if isinstance(text_val, list):
-                for step in text_val:
-                    if step.get("type") == "answer" and "value" in step:
-                        return step["value"]
-                    if step.get("step_type") == "FINAL" and "content" in step:
-                        content = step["content"]
-                        if isinstance(content, dict) and "answer" in content:
-                            answer_content = content["answer"]
-                            if isinstance(answer_content, str):
-                                try:
-                                    return json.loads(answer_content).get("answer", "")
-                                except Exception:
-                                    return str(answer_content)
-                            elif isinstance(answer_content, dict):
-                                return answer_content.get("answer", "")
-            elif isinstance(text_val, str):
-                try:
-                    return json.loads(text_val).get("answer", text_val)
-                except Exception:
-                    return text_val
-        return ""
-
-        # New pattern extraction
-        if "text" in response:
-            text_val = response["text"]
-            if isinstance(text_val, list):
-                for step in text_val:
-                    if step.get("type") == "answer" and "value" in step:
-                        return step["value"]
-                    if step.get("step_type") == "FINAL" and "content" in step:
-                        content = step["content"]
-                        if isinstance(content, dict) and "answer" in content:
-                            try:
-                                return json.loads(content["answer"]).get("answer", "")
-                            except Exception:
-                                return str(content["answer"])
-            elif isinstance(text_val, str):
-                try:
-                    return json.loads(text_val).get("answer", text_val)
-                except Exception:
-                    return text_val
-        return ""
-
     def search(
         self,
         prompt: str,
         mode: str = "auto",
         model: Optional[str] = None,
-        sources: Optional[list] = None,
+        sources: Optional[List[str]] = None,
         stream: bool = False,
         raw: bool = False,
         language: str = "en-US",
@@ -237,28 +146,31 @@ class Perplexity(AISearch):
                         f"API returned status code {resp.status_code}: {resp.text}"
                     )
 
-                def stream_response():
-                    full_text = ""
-                    def extract_perplexity_content(data):
-                        nonlocal full_text
-                        current_answer = self._extract_answer(data)
-                        if current_answer and len(current_answer) > len(full_text):
-                            delta = current_answer[len(full_text):]
-                            full_text = current_answer
-                            return delta
-                        return None
-
+                def stream_response() -> Generator[
+                    Union[Dict[str, str], SearchResponse], None, None
+                ]:
                     processed_chunks = sanitize_stream(
                         data=resp.iter_content(chunk_size=1024),
-                        to_json=True,
-                        extract_regexes=[r"data:\s*({.*})"],
-                        content_extractor=lambda chunk: extract_perplexity_content(chunk),
+                        to_json=False,
+                        extract_regexes=[r'"answer":\s*"((?:\\.|[^"\\])*)"'],
                         yield_raw_on_error=False,
-                        encoding='utf-8',
-                        encoding_errors='replace',
-                        line_delimiter="\r\n\r\n",
+                        encoding="utf-8",
+                        encoding_errors="replace",
+                        line_delimiter="event: message",
                         raw=raw,
-                        output_formatter=None if raw else lambda x: SearchResponse(x) if isinstance(x, str) else x,
+                        output_formatter=None
+                        if raw
+                        else lambda x: (
+                            SearchResponse(
+                                x.get("text", "").replace("\\n", "\n").replace("\\n\\n", "\n\n")
+                            )
+                            if isinstance(x, dict) and "text" in x
+                            else (
+                                SearchResponse(x.replace("\\n", "\n").replace("\\n\\n", "\n\n"))
+                                if isinstance(x, str)
+                                else SearchResponse(str(x))
+                            )
+                        ),
                     )
 
                     yield from processed_chunks
@@ -290,5 +202,5 @@ class Perplexity(AISearch):
 
 if __name__ == "__main__":
     ai = Perplexity()
-    response = ai.search("What is Python?", stream=False)
-    print(response)
+    for chunk in ai.search("Explain the theory of relativity.", stream=True, raw=False):
+        print(chunk, end="", flush=True)

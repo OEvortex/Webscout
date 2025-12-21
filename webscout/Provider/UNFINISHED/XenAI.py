@@ -2,7 +2,7 @@ import random
 import string
 import uuid
 import warnings
-from typing import Any, Dict, Generator, Union, Optional
+from typing import Any, Dict, Generator, Optional, Union
 
 import requests
 import urllib3
