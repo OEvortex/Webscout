@@ -24,7 +24,4 @@ uv.lock
 gpu.py
 .zencoder
 blackbox_private_key.pem
-
-# Vibe Flow plans
-_plans/*
-!_plans/.gitkeep
+conductor/
