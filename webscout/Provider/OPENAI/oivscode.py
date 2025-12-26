@@ -4,12 +4,12 @@ import secrets
 import string
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import cast, Any, Dict, Generator, List, Optional, Union
 
 import requests
 
 # Import base classes and utility structures
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -281,11 +281,8 @@ class oivscode(OpenAICompatibleProvider):
         return results
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return self.AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(self.AVAILABLE_MODELS)
 
 if __name__ == "__main__":
     # Example usage
@@ -297,4 +294,5 @@ if __name__ == "__main__":
         max_tokens=50,
         stream=False
     )
-    print(response.choices[0].message.content)
+    if not isinstance(response, Generator):
+        print(response.choices[0].message.content)

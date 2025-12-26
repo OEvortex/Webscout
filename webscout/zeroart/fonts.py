@@ -2,7 +2,7 @@
 ZeroArt Fonts: Predefined ASCII art fonts
 """
 
-from typing import Dict, List
+from typing import Optional, Dict, List
 
 from .base import ZeroArtFont
 

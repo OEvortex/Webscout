@@ -2,12 +2,12 @@ import json
 import time
 import uuid
 from copy import deepcopy
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import cast, Any, Dict, Generator, List, Optional, Union
 
 import requests
 
 # Import base classes and utility structures
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -21,7 +21,7 @@ from webscout.Provider.OPENAI.utils import (
 try:
     from webscout.litagent import LitAgent
 except ImportError:
-    pass
+    LitAgent = None # type: ignore
 
 
 class Completions(BaseCompletions):
@@ -302,11 +302,8 @@ class Liner(OpenAICompatibleProvider):
         return self.AVAILABLE_MODELS
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 
 if __name__ == "__main__":

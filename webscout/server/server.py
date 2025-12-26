@@ -61,10 +61,12 @@ def create_app():
     # Simple Custom Swagger UI with WebScout footer
     @app.get(app_docs_url, include_in_schema=False)
     async def custom_swagger_ui_html():
-        html = get_swagger_ui_html(
-            openapi_url=app.openapi_url,
+        openapi_url = app.openapi_url or "/openapi.json"
+        swagger_response = get_swagger_ui_html(
+            openapi_url=openapi_url,
             title=app.title + " - API Documentation",
-        ).body.decode("utf-8")
+        )
+        html = bytes(swagger_response.body).decode("utf-8")
 
         # Custom footer and styles
         footer_html = """
@@ -119,8 +121,8 @@ def create_app_debug():
 def start_server(
     port: int = DEFAULT_PORT,
     host: str = DEFAULT_HOST,
-    default_provider: str = None,
-    base_url: str = None,
+    default_provider: Optional[str] = None,
+    base_url: Optional[str] = None,
     workers: int = 1,
     log_level: str = 'info',
     debug: bool = False,
@@ -140,8 +142,8 @@ def start_server(
 def run_api(
     host: str = '0.0.0.0',
     port: int = None,
-    default_provider: str = None,
-    base_url: str = None,
+    default_provider: Optional[str] = None,
+    base_url: Optional[str] = None,
     debug: bool = False,
     workers: int = 1,
     log_level: str = 'info',

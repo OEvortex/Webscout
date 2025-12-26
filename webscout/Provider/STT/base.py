@@ -9,19 +9,26 @@ import json
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, BinaryIO, Dict, Generator, List, Optional, Union
+from typing import cast, Any, BinaryIO, Dict, Generator, List, Optional, Union
 
 # Import OpenAI response types from the main OPENAI module
 try:
-    from webscout.Provider.OPENAI.pydantic_imports import (
-        ChatCompletion,
-        ChatCompletionChunk,
-        Choice,
-        ChoiceDelta,
-        Message,
-        Usage,
-        count_tokens,
+    from webscout.Provider.OPENAI.utils import (
+        ChatCompletion as _ChatCompletion,
+        ChatCompletionChunk as _ChatCompletionChunk,
+        Choice as _Choice,
+        ChoiceDelta as _ChoiceDelta,
+        ChatCompletionMessage as _Message,
+        CompletionUsage as _Usage,
+        count_tokens as _count_tokens,
     )
+    ChatCompletion = _ChatCompletion # type: ignore
+    ChatCompletionChunk = _ChatCompletionChunk # type: ignore
+    Choice = _Choice # type: ignore
+    ChoiceDelta = _ChoiceDelta # type: ignore
+    Message = _Message # type: ignore
+    Usage = _Usage # type: ignore
+    count_tokens = _count_tokens # type: ignore
 except ImportError:
     # Fallback if pydantic_imports is not available
     from dataclasses import dataclass
@@ -243,11 +250,11 @@ class STTCompatibleProvider(ABC):
 
     @property
     @abstractmethod
-    def models(self):
+    def models(self) -> STTModels:
         """
         Property that returns an object with a .list() method returning available models.
         """
-        pass
+        raise NotImplementedError
 
 
 class STTModels:

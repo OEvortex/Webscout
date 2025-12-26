@@ -5,7 +5,7 @@ Request processing utilities for the Webscout API.
 import json
 import time
 import uuid
-from typing import Any, Dict, List
+from typing import Optional, Any, Dict, List
 
 from fastapi.responses import StreamingResponse
 from litprinter import ic
@@ -57,7 +57,7 @@ async def log_api_request(
 
 async def log_request(request_id: str, ip_address: str, model_used: str, question: str,
                      answer: str, response_time_ms: int, status_code: int = 200,
-                     error_message: str = None, provider: str = None, request_obj=None):
+                     error_message: Optional[str] = None, provider: Optional[str] = None, request_obj=None):
     """Log API request."""
     try:
         # Use simple logger if request logging is enabled
@@ -141,7 +141,7 @@ def prepare_provider_params(chat_request: ChatCompletionRequest, model_name: str
 
 async def handle_streaming_response(provider: Any, params: Dict[str, Any], request_id: str,
                                   ip_address: str, question: str, model_name: str, start_time: float,
-                                  provider_name: str = None, request_obj=None) -> StreamingResponse:
+                                  provider_name: Optional[str] = None, request_obj=None) -> StreamingResponse:
     """Handle streaming chat completion response."""
     collected_content = []
 
@@ -157,10 +157,12 @@ async def handle_streaming_response(provider: Any, params: Dict[str, Any], reque
                 try:
                     for chunk in completion_stream:
                         # Standardize chunk format before sending
-                        if hasattr(chunk, 'model_dump'):  # Pydantic v2
-                            chunk_data = chunk.model_dump(exclude_none=True)
-                        elif hasattr(chunk, 'dict'):  # Pydantic v1
-                            chunk_data = chunk.dict(exclude_none=True)
+                        model_dump = getattr(chunk, 'model_dump', None)
+                        model_dict = getattr(chunk, 'dict', None)
+                        if model_dump and callable(model_dump):  # Pydantic v2
+                            chunk_data = model_dump(exclude_none=True)
+                        elif model_dict and callable(model_dict):  # Pydantic v1
+                            chunk_data = model_dict(exclude_none=True)
                         elif isinstance(chunk, dict):
                             chunk_data = chunk
                         else:  # Fallback for unknown chunk types
@@ -188,10 +190,12 @@ async def handle_streaming_response(provider: Any, params: Dict[str, Any], reque
                     ic.configureOutput(prefix='ERROR| ')
                     ic(f"Error iterating over completion_stream: {te}")
                     # Fall back to treating as non-generator response
-                    if hasattr(completion_stream, 'model_dump'):
-                        response_data = completion_stream.model_dump(exclude_none=True)
-                    elif hasattr(completion_stream, 'dict'):
-                        response_data = completion_stream.dict(exclude_none=True)
+                    model_dump = getattr(completion_stream, 'model_dump', None)
+                    model_dict = getattr(completion_stream, 'dict', None)
+                    if model_dump and callable(model_dump):
+                        response_data = model_dump(exclude_none=True)
+                    elif model_dict and callable(model_dict):
+                        response_data = model_dict(exclude_none=True)
                     else:
                         response_data = completion_stream
 
@@ -212,10 +216,12 @@ async def handle_streaming_response(provider: Any, params: Dict[str, Any], reque
 
                     yield f"data: {json.dumps(response_data, ensure_ascii=False)}\n\n"
             else:  # Non-generator response
-                if hasattr(completion_stream, 'model_dump'):
-                    response_data = completion_stream.model_dump(exclude_none=True)
-                elif hasattr(completion_stream, 'dict'):
-                    response_data = completion_stream.dict(exclude_none=True)
+                model_dump = getattr(completion_stream, 'model_dump', None)
+                model_dict = getattr(completion_stream, 'dict', None)
+                if model_dump and callable(model_dump):
+                    response_data = model_dump(exclude_none=True)
+                elif model_dict and callable(model_dict):
+                    response_data = model_dict(exclude_none=True)
                 else:
                     response_data = completion_stream
 
@@ -287,7 +293,7 @@ async def handle_streaming_response(provider: Any, params: Dict[str, Any], reque
 
 async def handle_non_streaming_response(provider: Any, params: Dict[str, Any],
                                       request_id: str, start_time: float, ip_address: str,
-                                      question: str, model_name: str, provider_name: str = None,
+                                      question: str, model_name: str, provider_name: Optional[str] = None,
                                       request_obj=None) -> Dict[str, Any]:
     """Handle non-streaming chat completion response."""
     try:

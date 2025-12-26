@@ -1,12 +1,12 @@
 import json
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import cast, Any, Dict, Generator, List, Optional, Union
 
 import cloudscraper  # Import cloudscraper
 
 # Import base classes and utility structures
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -19,7 +19,7 @@ from webscout.Provider.OPENAI.utils import (
 
 # Attempt to import LitAgent, fallback if not available
 try:
-    from webscout.litagent import LitAgent
+    from ...litagent import LitAgent
 except ImportError:
     # Define a dummy LitAgent if webscout is not installed or accessible
     class LitAgent:
@@ -341,11 +341,8 @@ class YEPCHAT(OpenAICompatibleProvider):
         self.chat = Chat(self)
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return YEPCHAT.AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
     def convert_model_name(self, model: str) -> str:
         """

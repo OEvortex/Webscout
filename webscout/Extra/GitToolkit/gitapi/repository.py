@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union, cast
 from urllib.parse import quote
 
 from .utils import request
@@ -28,7 +28,7 @@ class Repository:
         """Get basic repository information"""
         return request(self.base_url)
 
-    def get_commits(self, page: int = 1, per_page: int = 30, sha: str = None) -> List[Dict[str, Any]]:
+    def get_commits(self, page: int = 1, per_page: int = 30, sha: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Get repository commits
 
@@ -74,7 +74,7 @@ class Repository:
         url = f"{self.base_url}/pulls/{pr_number}/files"
         return request(url)
 
-    def get_issues(self, state: str = "all", page: int = 1, per_page: int = 30, labels: str = None) -> List[Dict[str, Any]]:
+    def get_issues(self, state: str = "all", page: int = 1, per_page: int = 30, labels: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Get repository issues
 
@@ -142,7 +142,7 @@ class Repository:
     def get_latest_release(self) -> Dict[str, Any]:
         """Get latest release"""
         url = f"{self.base_url}/releases/latest"
-        return request(url)
+        return cast(Dict[str, Any], request(url))
 
     def get_branches(self, page: int = 1, per_page: int = 30) -> List[Dict[str, Any]]:
         """Get repository branches"""

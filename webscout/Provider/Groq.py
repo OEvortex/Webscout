@@ -1,5 +1,5 @@
 import json
-from typing import Any, Callable, Dict, Generator, List, Optional, Union
+from typing import cast, Any, Callable, Dict, Generator, List, Optional, Union
 
 from curl_cffi import CurlError
 
@@ -165,21 +165,22 @@ class GROQ(Provider):
         # Update curl_cffi session headers
         self.session.headers.update(self.headers)
 
-        # Set up conversation
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
 
+        if act:
+            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
+            ) or self.conversation.intro
+        elif intro:
+            self.conversation.intro = intro
+
         # Set proxies for curl_cffi session
-        self.session.proxies = proxies
+        self.session = Session()
+        self.session.headers.update(self.headers)
+        if proxies:
+            self.session.proxies.update(proxies)
 
     @staticmethod
     def _groq_extractor(chunk: Union[str, Dict[str, Any]]) -> Optional[Dict]:
@@ -216,7 +217,7 @@ class GROQ(Provider):
         raw: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        tools: Optional[List[Dict[str, Any]]] = None,  # Add tools parameter
+        **kwargs: Any,
     ) -> Response:
         """Chat with AI
 
@@ -226,11 +227,12 @@ class GROQ(Provider):
             raw (bool, optional): Stream back raw response as received. Defaults to False.
             optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
             conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-            tools (List[Dict[str, Any]], optional): List of tool definitions. See example in class docstring. Defaults to None.
+            **kwargs: Additional parameters like tools.
 
         Returns:
            dict : {}
         """
+        tools = kwargs.get("tools")
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
@@ -259,6 +261,7 @@ class GROQ(Provider):
         }
 
         def for_stream():
+            resp = {}
             try:
                 response = self.session.post(
                     self.chat_endpoint,
@@ -346,6 +349,8 @@ class GROQ(Provider):
             )
 
         def for_non_stream():
+            resp = {}
+            response = None
             try:
                 response = self.session.post(
                     self.chat_endpoint,
@@ -444,7 +449,7 @@ class GROQ(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        tools: Optional[List[Dict[str, Any]]] = None,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """Generate response `str`
         Args:
@@ -452,29 +457,35 @@ class GROQ(Provider):
             stream (bool, optional): Flag for streaming response. Defaults to False.
             optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
             conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-            tools (List[Dict[str, Any]], optional): List of tool definitions. See example in class docstring. Defaults to None.
+            **kwargs: Additional parameters like tools.
         Returns:
             str: Response generated
         """
-
-        def for_stream():
-            for response in self.ask(
-                prompt, True, optimizer=optimizer, conversationally=conversationally, tools=tools
-            ):
-                yield self.get_message(response)
-
-        def for_non_stream():
-            return self.get_message(
-                self.ask(
-                    prompt,
-                    False,
-                    optimizer=optimizer,
-                    conversationally=conversationally,
-                    tools=tools
+        raw = kwargs.get("raw", False)
+        if stream:
+            def for_stream():
+                gen = self.ask(
+                    prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally, **kwargs
                 )
+                if hasattr(gen, "__iter__"):
+                    for response in gen:
+                        if raw:
+                            yield cast(str, response)
+                        else:
+                            yield self.get_message(response)
+            return for_stream()
+        else:
+            result = self.ask(
+                prompt,
+                False,
+                raw=raw,
+                optimizer=optimizer,
+                conversationally=conversationally,
+                **kwargs
             )
-
-        return for_stream() if stream else for_non_stream()
+            if raw:
+                return cast(str, result)
+            return self.get_message(result)
 
     def get_message(self, response: Response) -> str:
         """Retrieves message only from response

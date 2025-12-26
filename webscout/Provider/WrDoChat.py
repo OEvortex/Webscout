@@ -1,7 +1,7 @@
 import json
 import re
 from datetime import datetime
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 from uuid import uuid4
 
 from curl_cffi import CurlError
@@ -118,24 +118,25 @@ class WrDoChat(Provider):
 
         # Update session headers and proxies
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies
+        if proxies:
+            self.session.proxies.update(proxies)
 
         # Apply cookies to session
         if self.cookies:
             for name, value in self.cookies.items():
                 self.session.cookies.set(name, value, domain="oi.wr.do")
 
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
+
+        if act:
+            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
+            ) or self.conversation.intro
+        elif intro:
+            self.conversation.intro = intro
+
         self.last_message_id = None  # Store the last message ID from the API
 
     def _load_cookies(self) -> Optional[Dict[str, str]]:
@@ -308,7 +309,7 @@ class WrDoChat(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        raw: bool = False,  # Added raw parameter
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """
         Generate a response to a prompt.
@@ -318,18 +319,20 @@ class WrDoChat(Provider):
             stream (bool): Whether to stream the response.
             optimizer (str): Optimizer to use for the prompt.
             conversationally (bool): Whether to use conversation context.
+            **kwargs: Additional parameters including raw.
 
         Returns:
             Union[str, Generator[str, None, None]]: The generated response.
         """
+        raw = kwargs.get("raw", False)
         def for_stream():
             for response in self.ask(
                 prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
             ):
                 if raw:
-                    yield response
+                    yield cast(str, response)
                 else:
-                    yield self.get_message(response)
+                    yield self.get_message(cast(Response, response))
         def for_non_stream():
             result = self.ask(
                 prompt,
@@ -339,9 +342,9 @@ class WrDoChat(Provider):
                 conversationally=conversationally,
             )
             if raw:
-                return result
+                return cast(str, result)
             else:
-                return self.get_message(result)
+                return self.get_message(cast(Response, result))
         return for_stream() if stream else for_non_stream()
 
     def get_message(self, response: Response) -> str:

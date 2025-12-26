@@ -6,7 +6,7 @@ import pathlib
 import random
 import string
 import tempfile
-from typing import Optional
+from typing import Union, cast, Any, Optional
 
 import httpx
 from litprinter import ic
@@ -153,8 +153,40 @@ class ParlerTTS(BaseTTSProvider):
                 ic(f"Error in ParlerTTS: {e}")
             raise exceptions.FailedToGenerateResponseError(f"Failed to generate audio: {e}")
 
-    def create_speech(self, input: str, **kwargs) -> str:
-        return self.tts(text=input, **kwargs)
+    def create_speech(
+        self,
+        input_text: str,
+        model: Optional[str] = "parler-mini-v1",
+        voice: Optional[str] = None,
+        response_format: Optional[str] = "mp3",
+        instructions: Optional[str] = None,
+        verbose: bool = False,
+        **kwargs: Any
+    ) -> str:
+        """
+        OpenAI-compatible speech creation interface.
+
+        Args:
+            input_text (str): The text to convert to speech
+            model (str): The TTS model to use
+            voice (str): The voice to use (not used by ParlerAI directly)
+            response_format (str): Audio format
+            instructions (str): Voice instructions (used as description)
+            verbose (bool): Whether to print debug information
+
+        Returns:
+            str: Path to the generated audio file
+        """
+        description = instructions or "A female speaker delivers a slightly expressive and animated speech with a moderate speed. The recording features a low-pitch voice and very clear audio."
+        use_large = (model == "parler-large-v1")
+        
+        return self.tts(
+            text=input_text,
+            description=description,
+            use_large=use_large,
+            response_format=response_format or "mp3",
+            verbose=verbose
+        )
 
 if __name__ == "__main__":
     tts = ParlerTTS()

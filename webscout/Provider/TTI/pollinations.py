@@ -4,12 +4,13 @@ import random
 import tempfile
 import time
 from io import BytesIO
-from typing import Optional
+from typing import Union, cast, Optional
 
 import requests
 from requests.exceptions import RequestException
 
 from webscout.litagent import LitAgent
+from webscout.AIbase import SimpleModelList
 from webscout.Provider.TTI.base import BaseImages, TTICompatibleProvider
 from webscout.Provider.TTI.utils import ImageData, ImageResponse
 
@@ -222,12 +223,8 @@ class PollinationsAI(TTICompatibleProvider):
         self.images = Images(self)
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 
 if __name__ == "__main__":

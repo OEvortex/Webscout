@@ -8,7 +8,7 @@ from functools import cached_property
 from itertools import cycle, islice
 from random import choice
 from time import sleep, time
-from typing import Any
+from typing import Optional, Any, cast
 
 try:
     import trio  # type: ignore
@@ -23,6 +23,8 @@ try:
     LXML_AVAILABLE = True
 except ImportError:
     LXML_AVAILABLE = False
+    LHTMLParser = None # type: ignore
+    document_fromstring = None # type: ignore
 
 from ....exceptions import RatelimitE, TimeoutE, WebscoutE
 from ....litagent import LitAgent
@@ -157,7 +159,7 @@ class DuckDuckGoBase:
             else:
                 if data or content:
                     request_kwargs["data"] = data or content
-                resp = self.client.request(method, url, **request_kwargs)
+                resp = self.client.request(cast(Any, method), url, **request_kwargs)
         except Exception as ex:
             if "time" in str(ex).lower():
                 raise TimeoutE(f"{url} {type(ex).__name__}: {ex}") from ex

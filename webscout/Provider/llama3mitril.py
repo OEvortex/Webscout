@@ -46,20 +46,23 @@ class Llama3Mitril(Provider):
             for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
+        self.conversation = Conversation(
+            is_conversation, self.max_tokens_to_sample, filepath, update_file
+        )
+        act_prompt = (
+            AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True
             )
             if act
-            else intro or Conversation.intro
+            else intro
         )
-        self.conversation = Conversation(
-            is_conversation, self.max_tokens, filepath, update_file
-        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
         # Update curl_cffi session headers and proxies
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies
+        if proxies:
+            from typing import cast
+            self.session.proxies.update(cast(Any, proxies))
 
     def _format_prompt(self, prompt: str) -> str:
         """Format the prompt for the Llama3 model"""
@@ -143,7 +146,11 @@ class Llama3Mitril(Provider):
             except CurlError as e:  # Catch CurlError
                 raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {e}") from e
             except Exception as e:  # Catch other potential exceptions (like HTTPError)
-                err_text = getattr(e, 'response', None) and getattr(e.response, 'text', '')
+                err_text = ""
+                if hasattr(e, 'response'):
+                    response_obj = getattr(e, 'response')
+                    if hasattr(response_obj, 'text'):
+                        err_text = getattr(response_obj, 'text')
                 raise exceptions.FailedToGenerateResponseError(f"Failed to generate response ({type(e).__name__}): {e} - {err_text}") from e
 
         def for_non_stream():
@@ -197,9 +204,9 @@ class Llama3Mitril(Provider):
 
         return for_stream_chat() if stream else for_non_stream_chat()
 
-    def get_message(self, response: Dict[str, Any]) -> str:
-        """Extracts the message from the API response."""
-        assert isinstance(response, dict), "Response should be of dict data-type only"
+    def get_message(self, response: Response) -> str:
+        if not isinstance(response, dict):
+            return str(response)
         return response["text"]
 
 

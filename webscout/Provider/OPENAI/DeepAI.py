@@ -3,12 +3,12 @@
 import json
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi.requests import RequestsError, Session
 
 # Import base classes and utility structures
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -20,22 +20,7 @@ from webscout.Provider.OPENAI.utils import (
 )
 
 # Attempt to import LitAgent, fallback if not available
-try:
-    from webscout.litagent import LitAgent
-except ImportError:
-    # Define a dummy LitAgent if webscout is not installed or accessible
-    class LitAgent:
-        def generate_fingerprint(self, browser: str = "chrome") -> Dict[str, Any]:
-            # Return minimal default headers if LitAgent is unavailable
-            print("Warning: LitAgent not found. Using default minimal headers.")
-            return {
-                "accept": "*/*",
-                "accept_language": "en-US,en;q=0.9",
-                "platform": "Windows",
-                "sec_ch_ua": '"Not/A)Brand";v="99", "Google Chrome";v="127", "Chromium";v="127"',
-                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
-                "browser_type": browser,
-            }
+from ...litagent import LitAgent
 
 # --- DeepAI Client ---
 
@@ -62,7 +47,7 @@ class Completions(BaseCompletions):
         Creates a model response for the given chat conversation.
         Mimics openai.chat.completions.create
         """
-        payload = {
+        payload: Dict[str, Any] = {
             "chat_style": self._client.chat_style,
             "chatHistory": json.dumps(messages),
             "model": model,
@@ -97,11 +82,11 @@ class Completions(BaseCompletions):
     ) -> Generator[ChatCompletionChunk, None, None]:
         # DeepAI doesn't actually support streaming, but we'll implement it for compatibility
         # For now, just yield the non-stream response as a single chunk
-        original_proxies = self._client.session.proxies
+        original_proxies = dict(cast(Any, self._client.session.proxies))
         if proxies is not None:
-            self._client.session.proxies = proxies
+            self._client.session.proxies.update(cast(Any, proxies))
         else:
-            self._client.session.proxies = {}
+            self._client.session.proxies.update(cast(Any, {})) # Use update with empty dict instead of clear
         try:
             timeout_val = timeout if timeout is not None else self._client.timeout
             response = self._client.session.post(
@@ -168,11 +153,11 @@ class Completions(BaseCompletions):
         self, request_id: str, created_time: int, model: str, payload: Dict[str, Any],
         timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
     ) -> ChatCompletion:
-        original_proxies = self._client.session.proxies
+        original_proxies = dict(cast(Any, self._client.session.proxies))
         if proxies is not None:
-            self._client.session.proxies = proxies
+            self._client.session.proxies.update(cast(Any, proxies))
         else:
-            self._client.session.proxies = {}
+            self._client.session.proxies.update(cast(Any, {}))
         try:
             timeout_val = timeout if timeout is not None else self._client.timeout
             response = self._client.session.post(
@@ -284,8 +269,17 @@ class DeepAI(OpenAICompatibleProvider):
         self.enabled_tools = enabled_tools or ["image_generator"]
 
         # Use LitAgent for fingerprint if available, else fallback
-        agent = LitAgent()
-        self.fingerprint = agent.generate_fingerprint(browser)
+        if LitAgent:
+            agent = LitAgent()
+            self.fingerprint = agent.generate_fingerprint(browser)
+        else:
+            self.fingerprint = {
+                "accept": "*/*",
+                "accept_language": "en-US,en;q=0.9",
+                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "sec_ch_ua": "",
+                "platform": "Windows"
+            }
 
         # Use the fingerprint for headers
         self.headers = {
@@ -316,8 +310,9 @@ class DeepAI(OpenAICompatibleProvider):
     def refresh_identity(self, browser: Optional[str] = None, impersonate: str = "chrome120"):
         """Refreshes the browser identity fingerprint and curl_cffi session."""
         browser = browser or self.fingerprint.get("browser_type", "chrome")
-        self.fingerprint = LitAgent().generate_fingerprint(browser)
-        self.session = Session(impersonate=impersonate)
+        if LitAgent:
+            self.fingerprint = LitAgent().generate_fingerprint(browser)
+        self.session = Session(impersonate=cast(Any, impersonate))
         # Update headers with new fingerprint
         self.headers.update({
             "Accept": self.fingerprint["accept"],
@@ -458,11 +453,8 @@ class DeepAI(OpenAICompatibleProvider):
             pass
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 if __name__ == "__main__":
     client = DeepAI()
@@ -472,6 +464,7 @@ if __name__ == "__main__":
         stream=False
     )
     if isinstance(response, ChatCompletion):
+        if not isinstance(response, Generator):
         print(response.choices[0].message.content)
     else:
         for chunk in response:

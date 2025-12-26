@@ -4,6 +4,7 @@
 import pathlib
 import tempfile
 import time
+from typing import Union, cast, Any, Optional
 
 import requests
 from litprinter import ic
@@ -100,10 +101,10 @@ class FreeTTS(BaseTTSProvider):
     def tts(
         self,
         text: str,
-        model: str = None, # Dummy for compatibility
-        voice: str = None,
+        model: Optional[str] = None, # Dummy for compatibility
+        voice: Optional[str] = None,
         response_format: str = "mp3",
-        instructions: str = None,
+        instructions: Optional[str] = None,
         verbose: bool = True
     ) -> str:
         """
@@ -188,8 +189,24 @@ class FreeTTS(BaseTTSProvider):
         except Exception as e:
             raise exceptions.FailedToGenerateResponseError(f"FreeTTS failed: {e}")
 
-    def create_speech(self, input: str, **kwargs) -> str:
-        return self.tts(text=input, **kwargs)
+    def create_speech(
+        self,
+        input_text: str,
+        model: Optional[str] = None,
+        voice: Optional[str] = None,
+        response_format: Optional[str] = None,
+        instructions: Optional[str] = None,
+        verbose: bool = False,
+        **kwargs: Any
+    ) -> str:
+        return self.tts(
+            text=input_text,
+            model=model,
+            voice=voice,
+            response_format=response_format or "mp3",
+            instructions=instructions,
+            verbose=verbose
+        )
 
 if __name__ == "__main__":
     tts = FreeTTS()

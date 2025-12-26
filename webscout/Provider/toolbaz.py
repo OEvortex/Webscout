@@ -104,7 +104,9 @@ class Toolbaz(Provider):
             # Add sec-ch-ua headers if needed for impersonation consistency
         })
         # Assign proxies directly to the session
-        self.session.proxies = proxies
+        if proxies:
+            from typing import cast
+            self.session.proxies.update(cast(Any, proxies))
 
         # Initialize conversation history
         self.__available_optimizers = (
@@ -113,17 +115,17 @@ class Toolbaz(Provider):
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
 
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
-
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
+        act_prompt = (
+            AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
+        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
 
 
@@ -179,7 +181,11 @@ class Toolbaz(Provider):
              raise exceptions.FailedToGenerateResponseError(f"Authentication failed: Could not decode JSON response. Error: {e}. Response text: {getattr(resp, 'text', 'N/A')}") from e
         except Exception as e: # Catch other potential errors (like HTTPError from raise_for_status)
             # Raise a specific error indicating a general failure during auth
-            err_text = getattr(e, 'response', None) and getattr(e.response, 'text', '')
+            err_text = ""
+                if hasattr(e, 'response'):
+                    response_obj = getattr(e, 'response')
+                    if hasattr(response_obj, 'text'):
+                        err_text = getattr(response_obj, 'text')
             raise exceptions.FailedToGenerateResponseError(f"Authentication failed due to an unexpected error ({type(e).__name__}): {e} - {err_text}") from e
 
     def ask(
@@ -292,10 +298,10 @@ class Toolbaz(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        raw: bool = False,  # Added raw parameter
         **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """Generates a response from the Toolbaz API."""
+        raw = kwargs.get("raw", False)
         def for_stream_chat():
             # ask() yields dicts when raw=False
             for response in self.ask(
@@ -306,9 +312,9 @@ class Toolbaz(Provider):
                 conversationally=conversationally
             ):
                 if raw:
-                    yield response
+                    yield cast(str, response)
                 else:
-                    yield self.get_message(response)
+                    yield self.get_message(cast(Response, response))
 
         def for_non_stream_chat():
             # ask() returns a dict when stream=False
@@ -320,21 +326,13 @@ class Toolbaz(Provider):
                 conversationally=conversationally,
             )
             if raw:
-                return response_dict
+                return cast(str, response_dict)
             else:
-                return self.get_message(response_dict)
+                return self.get_message(cast(Response, response_dict))
 
         return for_stream_chat() if stream else for_non_stream_chat()
 
     def get_message(self, response: Response) -> str:
-        """Extract the message from the response.
-
-        Args:
-            response: Response dictionary
-
-        Returns:
-            str: Message extracted
-        """
         if not isinstance(response, dict):
             return str(response)
         return response.get("text", "")

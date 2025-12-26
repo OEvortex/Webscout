@@ -5,6 +5,7 @@ import os
 import pathlib
 import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Union, cast, Any, Optional
 
 import requests
 from litprinter import ic
@@ -77,7 +78,7 @@ class ElevenlabsTTS(BaseTTSProvider):
         "will": "bIHbv24MWmeRgasZH58o"
     }
 
-    def __init__(self, api_key: str = None, timeout: int = 30, proxies: dict = None):
+    def __init__(self, api_key: Optional[str] = None, timeout: int = 30, proxies: dict = None):
         """
         Initialize the ElevenLabs TTS client.
 
@@ -162,5 +163,20 @@ class ElevenlabsTTS(BaseTTSProvider):
         except Exception as e:
             raise exceptions.FailedToGenerateResponseError(f"ElevenLabs TTS failed: {e}")
 
-    def create_speech(self, input: str, **kwargs) -> str:
-        return self.tts(text=input, **kwargs)
+    def create_speech(
+        self,
+        input_text: str,
+        model: Optional[str] = None,
+        voice: Optional[str] = None,
+        response_format: Optional[str] = None,
+        instructions: Optional[str] = None,
+        verbose: bool = False,
+        **kwargs: Any
+    ) -> str:
+        return self.tts(
+            text=input_text,
+            model=model or "eleven_multilingual_v2",
+            voice=voice or "brian",
+            response_format=response_format or "mp3",
+            verbose=verbose
+        )

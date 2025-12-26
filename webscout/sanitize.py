@@ -95,7 +95,7 @@ def _compile_regexes(
 
 def _process_chunk(
     chunk: str,
-    intro_value: str,
+    intro_value: Optional[str],
     to_json: bool,
     skip_markers: List[str],
     strip_chars: Optional[str],
@@ -328,7 +328,7 @@ async def _decode_byte_stream_async(
 
 def _sanitize_stream_sync(
     data: Any,
-    intro_value: str = "data:",
+    intro_value: Optional[str] = "data:",
     to_json: bool = True,
     skip_markers: Optional[List[str]] = None,
     strip_chars: Optional[str] = None,
@@ -610,7 +610,7 @@ def _sanitize_stream_sync(
 
 async def _sanitize_stream_async(
     data: Any,
-    intro_value: str = "data:",
+    intro_value: Optional[str] = "data:",
     to_json: bool = True,
     skip_markers: Optional[List[str]] = None,
     strip_chars: Optional[str] = None,
@@ -934,7 +934,7 @@ def sanitize_stream(
         bool,
         None,
     ],
-    intro_value: str = "data:",
+    intro_value: Optional[str] = "data:",
     to_json: bool = True,
     skip_markers: Optional[List[str]] = None,
     strip_chars: Optional[str] = None,
@@ -961,7 +961,7 @@ def sanitize_stream(
         AsyncIterable[str],
         AsyncIterable[bytes],
     ],
-    intro_value: str = "data:",
+    intro_value: Optional[str] = "data:",
     to_json: bool = True,
     skip_markers: Optional[List[str]] = None,
     strip_chars: Optional[str] = None,
@@ -984,7 +984,7 @@ def sanitize_stream(
 
 def sanitize_stream(
     data: Any,
-    intro_value: str = "data:",
+    intro_value: Optional[str] = "data:",
     to_json: bool = True,
     skip_markers: Optional[List[str]] = None,
     strip_chars: Optional[str] = None,
@@ -1367,7 +1367,7 @@ def sanitize_stream(
 def _sanitize_stream_decorator(
     _func=None,
     *,
-    intro_value: str = "data:",
+    intro_value: Optional[str] = "data:",
     to_json: bool = True,
     skip_markers: Optional[List[str]] = None,
     strip_chars: Optional[str] = None,

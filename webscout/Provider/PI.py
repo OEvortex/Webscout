@@ -1,6 +1,6 @@
 import re
 import threading
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 from uuid import uuid4
 
 from curl_cffi import CurlError
@@ -96,7 +96,8 @@ class PiAI(Provider):
 
         # Update curl_cffi session headers, proxies, and cookies
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies # Assign proxies directly
+        if proxies:
+            self.session.proxies.update(cast(Any, proxies)) # Assign proxies directly
         # Set cookies on the session object for curl_cffi
         for name, value in self.cookies.items():
             self.session.cookies.set(name, value)
@@ -113,17 +114,18 @@ class PiAI(Provider):
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
 
-        # Setup conversation
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            ) if act else intro or Conversation.intro
-        )
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
-        self.session.proxies = proxies
+
+        if act:
+            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
+            ) or self.conversation.intro
+        elif intro:
+            self.conversation.intro = intro
+        if proxies:
+            self.session.proxies.update(proxies)
 
         if self.is_conversation:
             self.start_conversation()
@@ -273,7 +275,11 @@ class PiAI(Provider):
             except CurlError as e:
                 raise exceptions.FailedToGenerateResponseError(f"API request failed (CurlError): {e}") from e
             except Exception as e:
-                err_text = getattr(e, 'response', None) and getattr(e.response, 'text', '')
+                err_text = ""
+                if hasattr(e, 'response'):
+                    response_obj = getattr(e, 'response')
+                    if hasattr(response_obj, 'text'):
+                        err_text = getattr(response_obj, 'text')
                 raise exceptions.FailedToGenerateResponseError(f"API request failed ({type(e).__name__}): {e} - {err_text}") from e
 
         if stream:
@@ -300,10 +306,6 @@ class PiAI(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        voice: Optional[bool] = None,
-        voice_name: Optional[str] = None,
-        output_file: Optional[str] = None,
-        raw: bool = False,  # Added raw parameter
         **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """
@@ -314,14 +316,12 @@ class PiAI(Provider):
             stream (bool): Whether to stream the response
             optimizer (str): Prompt optimizer to use
             conversationally (bool): Use conversation context
-            voice (bool): Override default voice setting
-            voice_name (str): Override default voice name
-            output_file (str): Override default output file path
+            **kwargs: Additional parameters including voice, voice_name, output_file, raw.
         """
-        # Use instance defaults if not specified
-        voice = self.voice_enabled if voice is None else voice
-        voice_name = self.voice_name if voice_name is None else voice_name
-        output_file = self.output_file if output_file is None else output_file
+        voice = kwargs.get("voice", self.voice_enabled)
+        voice_name = kwargs.get("voice_name", self.voice_name)
+        output_file = kwargs.get("output_file", self.output_file)
+        raw = kwargs.get("raw", False)
 
         if voice and voice_name and voice_name not in self.AVAILABLE_VOICES:
             raise ValueError(f"Voice '{voice_name}' not available. Choose from: {list(self.AVAILABLE_VOICES.keys())}")
@@ -340,9 +340,9 @@ class PiAI(Provider):
                 )
                 for response in gen:
                     if raw:
-                        yield response
+                        yield cast(str, response)
                     else:
-                        yield self.get_message(response)
+                        yield self.get_message(cast(Response, response))
             return stream_generator()
         else:
             response_data = self.ask(
@@ -356,9 +356,9 @@ class PiAI(Provider):
                 output_file=output_file
             )
             if raw:
-                return response_data
+                return cast(str, response_data)
             else:
-                return self.get_message(response_data)
+                return self.get_message(cast(Response, response_data))
 
     def get_message(self, response: Response) -> str:
         """Retrieves message only from response"""

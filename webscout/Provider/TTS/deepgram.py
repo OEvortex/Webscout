@@ -5,6 +5,7 @@ import pathlib
 import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Union, cast, Any, Optional
 
 import requests
 from litprinter import ic
@@ -106,7 +107,7 @@ class DeepgramTTS(BaseTTSProvider):
         model: str = "aura-2", # Dummy model param for compatibility
         voice: str = "thalia",
         response_format: str = "mp3",
-        instructions: str = None,
+        instructions: Optional[str] = None,
         verbose: bool = True
     ) -> str:
         """
@@ -195,9 +196,24 @@ class DeepgramTTS(BaseTTSProvider):
         except Exception as e:
             raise exceptions.FailedToGenerateResponseError(f"Deepgram TTS failed: {e}")
 
-    def create_speech(self, input: str, **kwargs) -> str:
-        """OpenAI-compatible speech creation interface."""
-        return self.tts(text=input, **kwargs)
+    def create_speech(
+        self,
+        input_text: str,
+        model: Optional[str] = None,
+        voice: Optional[str] = None,
+        response_format: Optional[str] = None,
+        instructions: Optional[str] = None,
+        verbose: bool = False,
+        **kwargs: Any
+    ) -> str:
+        return self.tts(
+            text=input_text,
+            model=model or "aura-2",
+            voice=voice or "thalia",
+            response_format=response_format or "mp3",
+            instructions=instructions,
+            verbose=verbose
+        )
 
     def with_streaming_response(self):
         return StreamingResponseContextManager(self)

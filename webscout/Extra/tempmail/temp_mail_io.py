@@ -84,6 +84,9 @@ class TempMailIOAsync(AsyncTempMailProvider):
         """Get available domains"""
         if not self._session:
             await self.initialize()
+        
+        if not self._session:
+            return []
 
         try:
             async with self._session.get("/api/v3/domains") as response:
@@ -101,6 +104,9 @@ class TempMailIOAsync(AsyncTempMailProvider):
         """Create a new temporary email"""
         if not self._session:
             await self.initialize()
+        
+        if not self._session:
+            return "", ""
 
         try:
             async with self._session.post(
@@ -110,12 +116,15 @@ class TempMailIOAsync(AsyncTempMailProvider):
                 response_json = await response.json()
                 self.email = response_json['email']
                 self.token = response_json['token']
-                return self.email, self.token
+                return str(self.email), str(self.token)
         except Exception:
             return "", ""
 
     async def delete_email(self) -> bool:
         """Delete a temporary email"""
+        if not self._session:
+            await self.initialize()
+        
         if not self._session or not self.email or not self.token:
             return False
 
@@ -134,6 +143,9 @@ class TempMailIOAsync(AsyncTempMailProvider):
 
     async def get_messages(self) -> List[Dict]:
         """Get messages for a temporary email"""
+        if not self._session:
+            await self.initialize()
+            
         if not self._session or not self.email:
             return []
 

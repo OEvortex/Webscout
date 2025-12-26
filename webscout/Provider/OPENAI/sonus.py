@@ -1,12 +1,12 @@
 import json
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import cast, Any, Dict, Generator, List, Optional, Union
 
 import requests
 
-from webscout.litagent import LitAgent
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from ...litagent import LitAgent
+from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -268,11 +268,8 @@ class SonusAI(OpenAICompatibleProvider):
         return "pro"
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 
 

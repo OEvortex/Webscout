@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Generator, Optional, Union
+from typing import cast, Any, Dict, Generator, Optional, Union
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
@@ -68,10 +68,9 @@ class K2Think(Provider):
 
         # Initialize curl_cffi Session
         self.session = Session()
-        # Update curl_cffi session headers and proxies
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies  # Assign proxies directly
-
+        if proxies:
+            self.session.proxies.update(proxies)
         self.system_prompt = system_prompt
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
@@ -89,20 +88,20 @@ class K2Think(Provider):
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
 
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
-
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
+        act_prompt = (
+            AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
+        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
 
-    def refresh_identity(self, browser: str = None):
+    def refresh_identity(self, browser: Optional[str] = None):
         """
         Refreshes the browser identity fingerprint.
 
@@ -204,6 +203,7 @@ class K2Think(Provider):
                     self.conversation.update_chat_history(prompt, streaming_text)
 
         def for_non_stream():
+            streaming_text = ""
             try:
                 # For non-streaming, we can get the full response
                 response = self.session.post(
@@ -241,7 +241,11 @@ class K2Think(Provider):
             except CurlError as e:
                 raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {str(e)}") from e
             except Exception as e:
-                err_text = getattr(e, 'response', None) and getattr(e.response, 'text', '')
+                err_text = ""
+                if hasattr(e, 'response'):
+                    response_obj = getattr(e, 'response')
+                    if hasattr(response_obj, 'text'):
+                        err_text = getattr(response_obj, 'text')
                 raise exceptions.FailedToGenerateResponseError(f"Request failed ({type(e).__name__}): {e} - {err_text}") from e
 
         return for_stream() if stream else for_non_stream()
@@ -252,24 +256,33 @@ class K2Think(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        raw: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
-        def for_stream_chat():
-            gen = self.ask(
-                prompt, stream=True, raw=raw,
-                optimizer=optimizer, conversationally=conversationally
+        raw = kwargs.get("raw", False)
+        if stream:
+            def for_stream_chat():
+                gen = self.ask(
+                    prompt, stream=True, raw=raw,
+                    optimizer=optimizer, conversationally=conversationally
+                )
+                if hasattr(gen, "__iter__"):
+                    for response in gen:
+                        if raw:
+                            yield cast(str, response)
+                        else:
+                            yield self.get_message(response)
+            return for_stream_chat()
+        else:
+            result = self.ask(
+                prompt,
+                stream=False,
+                raw=raw,
+                optimizer=optimizer,
+                conversationally=conversationally,
             )
-            for response_dict in gen:
-                yield self.get_message(response_dict) if isinstance(response_dict, dict) else response_dict
-
-        def for_non_stream_chat():
-            response_data = self.ask(
-                prompt, stream=False, raw=raw,
-                optimizer=optimizer, conversationally=conversationally
-            )
-            return self.get_message(response_data) if isinstance(response_data, dict) else response_data
-
-        return for_stream_chat() if stream else for_non_stream_chat()
+            if raw:
+                return cast(str, result)
+            return self.get_message(result)
 
     def get_message(self, response: Response) -> str:
         if not isinstance(response, dict):

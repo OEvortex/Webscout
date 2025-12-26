@@ -76,6 +76,7 @@ class LitAgent:
         """
         agents = []
         for _ in range(count):
+            agent = ""
             browser = random.choice(list(BROWSERS.keys()))
             version_range = BROWSERS.get(browser, (100, 130))
             version = random.randint(*version_range)

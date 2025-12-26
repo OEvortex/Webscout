@@ -1,6 +1,6 @@
 import importlib
 import pkgutil
-from typing import Any, Dict, List, Union
+from typing import Optional, Any, Dict, List, Union
 
 from webscout.AIbase import Provider, TTSProvider
 
@@ -98,17 +98,19 @@ class _LLMModels:
                 for attr_name in dir(module):
                     attr = getattr(module, attr_name)
                     if isinstance(attr, type) and issubclass(attr, Provider) and attr != Provider:
-                        if hasattr(attr, 'get_models'):
+                        get_models = getattr(attr, 'get_models', None)
+                        available_models = getattr(attr, 'AVAILABLE_MODELS', None)
+                        if get_models and callable(get_models):
                             try:
-                                models = attr.get_models()
+                                models = get_models()
                                 if isinstance(models, set):
                                     models = list(models)
                                 provider_models[attr_name] = models
                             except Exception:
                                 provider_models[attr_name] = []
-                        elif hasattr(attr, 'AVAILABLE_MODELS'):
+                        elif available_models is not None:
                             # Convert any sets to lists to ensure serializability
-                            models = attr.AVAILABLE_MODELS
+                            models = available_models
                             if isinstance(models, set):
                                 models = list(models)
                             provider_models[attr_name] = models
@@ -137,19 +139,20 @@ class _LLMModels:
                     if isinstance(attr, type) and issubclass(attr, Provider) and attr != Provider:
                         # Get available models
                         models = []
-                        if hasattr(attr, 'get_models'):
+                        get_models = getattr(attr, 'get_models', None)
+                        available_models = getattr(attr, 'AVAILABLE_MODELS', None)
+                        if get_models and callable(get_models):
                             try:
-                                available_models = attr.get_models()
-                                if isinstance(available_models, set):
-                                    models = list(available_models)
-                                elif isinstance(available_models, (list, tuple)):
-                                    models = list(available_models)
+                                fetched_models = get_models()
+                                if isinstance(fetched_models, set):
+                                    models = list(fetched_models)
+                                elif isinstance(fetched_models, (list, tuple)):
+                                    models = list(fetched_models)
                                 else:
-                                    models = [str(available_models)] if available_models else []
+                                    models = [str(fetched_models)] if fetched_models else []
                             except Exception:
                                 models = []
-                        elif hasattr(attr, 'AVAILABLE_MODELS'):
-                            available_models = attr.AVAILABLE_MODELS
+                        elif available_models is not None:
                             if isinstance(available_models, set):
                                 models = list(available_models)
                             elif isinstance(available_models, (list, tuple)):
@@ -264,9 +267,9 @@ class _TTSModels:
                         attr = getattr(module, attr_name)
                         if isinstance(attr, type) and issubclass(attr, TTSProvider) and attr != TTSProvider:
                             # TTS providers typically use 'all_voices' instead of 'AVAILABLE_MODELS'
-                            if hasattr(attr, 'all_voices'):
-                                voices = attr.all_voices
-                                provider_voices[attr_name] = voices
+                            all_voices = getattr(attr, 'all_voices', None)
+                            if all_voices is not None:
+                                provider_voices[attr_name] = all_voices
                 except Exception:
                     pass
         except Exception:
@@ -397,19 +400,20 @@ class _TTIModels:
                         issubclass(attr, BaseImages) and attr != BaseImages):
                         # Get available models
                         models = []
-                        if hasattr(attr, 'get_models'):
+                        get_models = getattr(attr, 'get_models', None)
+                        available_models = getattr(attr, 'AVAILABLE_MODELS', None)
+                        if get_models and callable(get_models):
                             try:
-                                available_models = attr.get_models()
-                                if isinstance(available_models, set):
-                                    models = list(available_models)
-                                elif isinstance(available_models, (list, tuple)):
-                                    models = list(available_models)
+                                fetched_models = get_models()
+                                if isinstance(fetched_models, set):
+                                    models = list(fetched_models)
+                                elif isinstance(fetched_models, (list, tuple)):
+                                    models = list(fetched_models)
                                 else:
-                                    models = [str(available_models)] if available_models else []
+                                    models = [str(fetched_models)] if fetched_models else []
                             except Exception:
                                 models = []
-                        elif hasattr(attr, 'AVAILABLE_MODELS'):
-                            available_models = attr.AVAILABLE_MODELS
+                        elif available_models is not None:
                             if isinstance(available_models, set):
                                 models = list(available_models)
                             elif isinstance(available_models, (list, tuple)):

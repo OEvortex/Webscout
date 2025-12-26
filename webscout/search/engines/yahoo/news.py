@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from secrets import token_urlsafe
-from typing import Any
+from typing import Optional, Any
 
 from ...results import NewsResult
 from .base import YahooSearchEngine

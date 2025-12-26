@@ -1,7 +1,7 @@
 """
 ZeroArt Base: Core classes and utilities for ASCII art generation
 """
-from typing import Dict, List
+from typing import Optional, Dict, List
 
 
 class ZeroArtFont:

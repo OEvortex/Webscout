@@ -1,5 +1,5 @@
 import re
-from typing import Any, Dict, List
+from typing import Optional, Any, Dict, List
 from urllib.request import Request, urlopen
 
 try:

@@ -5,12 +5,12 @@ import random
 import time
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import cast, Any, Dict, Generator, List, Optional, Union
 
 import requests
 
 # Import base classes and utility structures
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, Tool
+from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList, Tool
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -132,7 +132,7 @@ class ChatGPTReversed:
 
         return headers
 
-    def generate_proof_token(self, seed: str, difficulty: str, user_agent: str = None):
+    def generate_proof_token(self, seed: str, difficulty: str, user_agent: Optional[str] = None):
         """
         Improved proof-of-work implementation based on gpt4free/g4f/Provider/openai/proofofwork.py
 
@@ -834,11 +834,8 @@ class ChatGPT(OpenAICompatibleProvider):
         return ChatGPTReversed.AVAILABLE_MODELS
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return ChatGPTReversed.AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(self.AVAILABLE_MODELS)
 
 if __name__ == "__main__":
     # Example usage
@@ -847,5 +844,6 @@ if __name__ == "__main__":
         model="o4-mini-high",
         messages=[{"role": "user", "content": "How many r in strawberry"}]
     )
-    print(response.choices[0].message.content)
+    if not isinstance(response, Generator):
+        print(response.choices[0].message.content)
     print()

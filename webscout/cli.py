@@ -1,5 +1,5 @@
 import sys
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional, Type, Union
 
 from rich import print as rprint
 from rich.console import Console
@@ -8,6 +8,7 @@ from rich.table import Table
 
 from .search import (
     BaseSearch,
+    BaseSearchEngine,
     BingSearch,
     Brave,
     DuckDuckGoSearch,
@@ -23,7 +24,7 @@ from .version import __version__
 console = Console()
 
 # Engine mapping
-ENGINES: Dict[str, Type[BaseSearch]] = {
+ENGINES: Dict[str, Union[Type[BaseSearch], Type[BaseSearchEngine]]] = {
     "ddg": DuckDuckGoSearch,
     "duckduckgo": DuckDuckGoSearch,
     "bing": BingSearch,
@@ -35,7 +36,7 @@ ENGINES: Dict[str, Type[BaseSearch]] = {
     "yep": YepSearch,
 }
 
-def _get_engine(name: str) -> BaseSearch:
+def _get_engine(name: str) -> Union[BaseSearch, BaseSearchEngine]:
     cls = ENGINES.get(name.lower())
     if not cls:
         rprint(f"[bold red]Error: Engine '{name}' not supported.[/bold red]")

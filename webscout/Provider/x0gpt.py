@@ -1,4 +1,4 @@
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 from uuid import uuid4
 
 from curl_cffi import CurlError
@@ -107,20 +107,21 @@ class X0GPT(Provider):
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
         # Update curl_cffi session headers and proxies
+        self.session = Session()
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies
+        if proxies:
+            self.session.proxies.update(proxies)
 
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
+
+        if act:
+            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
+            ) or self.conversation.intro
+        elif intro:
+            self.conversation.intro = intro
 
     def ask(
         self,
@@ -255,7 +256,6 @@ class X0GPT(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        raw: bool = False,  # Added raw parameter
         **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """
@@ -266,7 +266,7 @@ class X0GPT(Provider):
             stream (bool): Whether to stream the response.
             optimizer (str): Optimizer to use for the prompt.
             conversationally (bool): Whether to generate the prompt conversationally.
-            raw (bool): Whether to return raw response chunks.
+            **kwargs: Additional parameters including raw.
 
         Returns:
             str: The API response.
@@ -277,15 +277,15 @@ class X0GPT(Provider):
             >>> print(response)
             'The weather today is sunny with a high of 75°F.'
         """
-
+        raw = kwargs.get("raw", False)
         def for_stream():
             for response in self.ask(
                 prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
             ):
                 if raw:
-                    yield response
+                    yield cast(str, response)
                 else:
-                    yield self.get_message(response)
+                    yield self.get_message(cast(Dict[str, Any], response))
 
         def for_non_stream():
             result = self.ask(
@@ -296,30 +296,15 @@ class X0GPT(Provider):
                 conversationally=conversationally,
             )
             if raw:
-                return result
+                return cast(str, result)
             else:
-                return self.get_message(result)
+                return self.get_message(cast(Dict[str, Any], result))
 
         return for_stream() if stream else for_non_stream()
 
-    def get_message(self, response: dict) -> str:
-        """
-        Extracts the message from the API response.
-
-        Args:
-            response (dict): The API response.
-
-        Returns:
-            str: The message content.
-
-        Examples:
-            >>> ai = X0GPT()
-            >>> response = ai.ask("Tell me a joke!")
-            >>> message = ai.get_message(response)
-            >>> print(message)
-            'Why did the scarecrow win an award? Because he was outstanding in his field!'
-        """
-        assert isinstance(response, dict), "Response should be of dict data-type only"
+    def get_message(self, response: Response) -> str:
+        if not isinstance(response, dict):
+            return str(response)
         # Ensure text exists before processing
         text = response.get("text", "")
         # Text is now cleaned by the regex-based sanitize_stream processing

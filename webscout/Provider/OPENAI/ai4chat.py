@@ -1,12 +1,12 @@
 import time
 import urllib.parse
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import cast, Any, Dict, Generator, List, Optional, Union
 
 from curl_cffi.requests import RequestsError
 
 # Import base classes and utility structures
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -197,9 +197,9 @@ class Completions(BaseCompletions):
                                timeout: Optional[int] = None, proxies: Optional[dict] = None) -> str:
         """Make the actual API request to AI4Chat."""
         timeout_val = timeout if timeout is not None else self._client.timeout
-        original_proxies = self._client.session.proxies
+        original_proxies = dict(self._client.session.proxies)
         if proxies is not None:
-            self._client.session.proxies = proxies
+            self._client.session.proxies.update(cast(Any, proxies))
 
         try:
             # URL encode parameters
@@ -217,7 +217,8 @@ class Completions(BaseCompletions):
             raise IOError(f"Failed to generate response: {e}")
         finally:
             if proxies is not None:
-                self._client.session.proxies = original_proxies
+                self._client.session.proxies.clear()
+                self._client.session.proxies.update(cast(Any, original_proxies))
 
         # Process the response text
         response_text = response.text
@@ -300,11 +301,8 @@ class AI4Chat(OpenAICompatibleProvider):
         self.chat = Chat(self)
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 if __name__ == "__main__":
     # Example usage
@@ -316,4 +314,5 @@ if __name__ == "__main__":
             {"role": "user", "content": "Hello, how are you?"}
         ]
     )
-    print(response.choices[0].message.content)
+    if not isinstance(response, Generator):
+        print(response.choices[0].message.content)

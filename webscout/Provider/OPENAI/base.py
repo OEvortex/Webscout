@@ -1,10 +1,12 @@
 import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Generator, List, Optional, TypedDict, Union
+from typing import cast, Any, Callable, Dict, Generator, List, Optional, TypedDict, Union
 
 import requests
 from litprinter import ic
+
+from webscout.AIbase import Response, ModelList, SimpleModelList
 
 # Import the utils for response structures
 from webscout.Provider.OPENAI.utils import ChatCompletion, ChatCompletionChunk
@@ -187,6 +189,7 @@ class OpenAICompatibleProvider(ABC):
     available_tools: Dict[str, Tool] = {}  # Dictionary of available tools
     supports_tools: bool = False  # Whether the provider supports tools
     supports_tool_choice: bool = False  # Whether the provider supports tool_choice
+    required_auth: bool = False  # Whether the provider requires authentication
 
     def __init__(self, api_key: Optional[str] = None, tools: Optional[List[Tool]] = None, proxies: Optional[dict] = None, **kwargs: Any):
         self.available_tools = {}
@@ -200,12 +203,12 @@ class OpenAICompatibleProvider(ABC):
 
     @property
     @abstractmethod
-    def models(self):
+    def models(self) -> ModelList:
         """
         Property that returns an object with a .list() method returning available models.
         Subclasses must implement this property.
         """
-        pass
+        raise NotImplementedError
 
     def register_tools(self, tools: List[Tool]) -> None:
         """

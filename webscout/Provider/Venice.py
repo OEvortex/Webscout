@@ -1,5 +1,5 @@
 import random
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 from uuid import uuid4
 
 from curl_cffi import CurlError
@@ -93,17 +93,17 @@ class Venice(Provider):
             for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
-
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
+        act_prompt = (
+            AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
+        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
 
     @staticmethod
@@ -202,25 +202,27 @@ class Venice(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        raw: bool = False,  # Added raw parameter
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
+        raw = kwargs.get("raw", False)
         def for_stream():
             for response in self.ask(prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally):
                 if raw:
-                    yield response
+                    yield cast(str, response)
                 else:
-                    yield self.get_message(response)
+                    yield self.get_message(cast(Response, response))
         def for_non_stream():
             result = self.ask(prompt, False, raw=raw, optimizer=optimizer, conversationally=conversationally)
             if raw:
-                return result
+                return cast(str, result)
             else:
-                return self.get_message(result)
+                return self.get_message(cast(Response, result))
         return for_stream() if stream else for_non_stream()
 
-    def get_message(self, response: dict) -> str:
-        assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"]
+    def get_message(self, response: Response) -> str:
+        if not isinstance(response, dict):
+            return str(response)
+        return response.get("text", "")
 
 if __name__ == "__main__":
     # Ensure curl_cffi is installed

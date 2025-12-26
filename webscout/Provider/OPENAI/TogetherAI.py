@@ -5,8 +5,8 @@ from typing import Any, Dict, Generator, List, Optional, Union
 
 import requests
 
-from webscout.litagent import LitAgent
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from ...litagent import LitAgent
+from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -213,7 +213,7 @@ class TogetherAI(OpenAICompatibleProvider):
     AVAILABLE_MODELS = []
 
     @classmethod
-    def get_models(cls, api_key: str = None):
+    def get_models(cls, api_key: Optional[str] = None):
         """Fetch available models from Together API."""
         if not api_key:
             return cls.AVAILABLE_MODELS
@@ -254,7 +254,7 @@ class TogetherAI(OpenAICompatibleProvider):
         except Exception:
             pass
 
-    def __init__(self, api_key: str = None, browser: str = "chrome", proxies: Optional[Dict[str, str]] = None):
+    def __init__(self, api_key: Optional[str] = None, browser: str = "chrome", proxies: Optional[Dict[str, str]] = None):
         super().__init__(proxies=proxies)
         self.timeout = 60
         self.api_endpoint = "https://api.together.xyz/v1/chat/completions"
@@ -276,11 +276,8 @@ class TogetherAI(OpenAICompatibleProvider):
                 pass
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return TogetherAI.AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
     def _generate_consistent_fingerprint(self, browser: Optional[str] = None) -> Dict[str, str]:
         """
@@ -376,14 +373,14 @@ if __name__ == "__main__":
 
     # Streaming example
     print("\nStreaming response:")
-    stream = client.chat.completions.create(
+    stream_gen = client.chat.completions.create(
         model="meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
         messages=messages,
         max_tokens=50,
         stream=True
     )
 
-    for chunk in stream:
+    for chunk in cast(Generator[ChatCompletionChunk, None, None], stream_gen):
         if chunk.choices[0].delta.content:
             print(chunk.choices[0].delta.content, end="")
     print()

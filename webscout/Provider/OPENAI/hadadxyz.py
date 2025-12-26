@@ -1,11 +1,11 @@
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import cast, Any, Dict, Generator, List, Optional, Union
 
 from curl_cffi.requests import Session
 
 # Import base classes and utility structures
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -17,10 +17,7 @@ from webscout.Provider.OPENAI.utils import (
     format_prompt,
 )
 
-try:
-    from webscout.litagent import LitAgent
-except ImportError:
-    pass
+from ...litagent import LitAgent
 
 class _DeltaExtractor:
     """Stateful extractor that merges `reasoning-delta` and `text-delta` into a single text stream.
@@ -270,11 +267,8 @@ class HadadXYZ(OpenAICompatibleProvider):
         self.chat = Chat(self)
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 if __name__ == "__main__":
     client = HadadXYZ()

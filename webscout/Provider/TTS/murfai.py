@@ -181,18 +181,18 @@ class MurfAITTS(BaseTTSProvider):
 
     def create_speech(
         self,
-        input: str,
-        model: str = "gpt-4o-mini-tts",
-        voice: str = "Hazel",
-        response_format: str = "mp3",
-        instructions: str = None,
+        input_text: str,
+        model: Optional[str] = "gpt-4o-mini-tts",
+        voice: Optional[str] = "Hazel",
+        response_format: Optional[str] = "mp3",
+        instructions: Optional[str] = None,
         verbose: bool = False
     ) -> str:
         """
         OpenAI-compatible speech creation interface.
 
         Args:
-            input (str): The text to convert to speech
+            input_text (str): The text to convert to speech
             model (str): The TTS model to use
             voice (str): The voice to use
             response_format (str): Audio format
@@ -203,27 +203,27 @@ class MurfAITTS(BaseTTSProvider):
             str: Path to the generated audio file
         """
         return self.tts(
-            text=input,
-            voice=voice,
-            response_format=response_format,
+            text=input_text,
+            voice=voice or "Hazel",
+            response_format=response_format or "mp3",
             verbose=verbose
         )
 
     def stream_audio(
         self,
-        input: str,
-        model: str = "gpt-4o-mini-tts",
-        voice: str = "Hazel",
-        response_format: str = "mp3",
-        instructions: str = None,
+        input_text: str,
+        model: Optional[str] = "gpt-4o-mini-tts",
+        voice: Optional[str] = "Hazel",
+        response_format: Optional[str] = "mp3",
+        instructions: Optional[str] = None,
         chunk_size: int = 1024,
         verbose: bool = False
-    ):
+    ) -> Generator[bytes, None, None]:
         """
         Stream audio response in chunks.
 
         Args:
-            input (str): The text to convert to speech
+            input_text (str): The text to convert to speech
             model (str): The TTS model to use
             voice (str): The voice to use
             response_format (str): Audio format
@@ -236,7 +236,7 @@ class MurfAITTS(BaseTTSProvider):
         """
         # Generate the audio file using create_speech
         audio_file = self.create_speech(
-            input=input,
+            input_text=input_text,
             model=model,
             voice=voice,
             response_format=response_format,
@@ -258,7 +258,7 @@ if __name__ == "__main__":
     ic("Generating audio...")
     try:
         audio_file = murfai.create_speech(
-            input=text,
+            input_text=text,
             model="gpt-4o-mini-tts",
             voice="Hazel",
             response_format="mp3",

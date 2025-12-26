@@ -1,12 +1,12 @@
 import base64
 import json
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider
+from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 
 
@@ -32,12 +32,12 @@ class TwoAI(Provider):
         is_conversation: bool = True,
         max_tokens: int = 1024,
         timeout: int = 30,
-        intro: str = None,
-        filepath: str = None,
+        intro: Optional[str] = None,
+        filepath: Optional[str] = None,
         update_file: bool = True,
         proxies: dict = {},
         history_offset: int = 10250,
-        act: str = None,
+        act: Optional[str] = None,
         model: str = "sutra-v2",  # Default model
         temperature: float = 0.6,
         system_message: str = "You are a helpful assistant."
@@ -89,7 +89,8 @@ class TwoAI(Provider):
         # Initialize curl_cffi Session
         self.session = Session()
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies
+        if proxies:
+            self.session.proxies.update(proxies)
 
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
@@ -105,18 +106,16 @@ class TwoAI(Provider):
             for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
-
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
+
+        if act:
+            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
+            ) or self.conversation.intro
+        elif intro:
+            self.conversation.intro = intro
 
     @staticmethod
     def _twoai_extractor(chunk_json: Dict[str, Any]) -> Optional[str]:
@@ -149,11 +148,12 @@ class TwoAI(Provider):
         prompt: str,
         stream: bool = True,
         raw: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
-        online_search: bool = True,
-        image_path: str = None,
+        **kwargs: Any,
     ) -> Union[Dict[str, Any], Generator]:
+        online_search = kwargs.get("online_search", True)
+        image_path = kwargs.get("image_path")
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
@@ -273,32 +273,44 @@ class TwoAI(Provider):
         self,
         prompt: str,
         stream: bool = True,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
-        online_search: bool = True,
-        image_path: str = None,
-    ) -> str:
-        # The API uses SSE streaming for all requests, so we always aggregate
-        aggregated_text = ""
-        gen = self.ask(
-            prompt,
-            stream=True,
-            raw=False, # Ensure ask yields dicts
-            optimizer=optimizer,
-            conversationally=conversationally,
-            online_search=online_search,
-            image_path=image_path,
-        )
-        for response_dict in gen:
-            if isinstance(response_dict, dict) and "text" in response_dict:
-                aggregated_text += response_dict["text"]
-            elif isinstance(response_dict, str):
-                aggregated_text += response_dict
+        **kwargs: Any,
+    ) -> Union[str, Generator[str, None, None]]:
+        raw = kwargs.get("raw", False)
+        if stream:
+            def stream_generator():
+                gen = self.ask(
+                    prompt,
+                    stream=True,
+                    raw=raw,
+                    optimizer=optimizer,
+                    conversationally=conversationally,
+                    **kwargs
+                )
+                for response in gen:
+                    if raw:
+                        yield cast(str, response)
+                    else:
+                        yield self.get_message(cast(Response, response))
+            return stream_generator()
+        else:
+            response_data = self.ask(
+                prompt,
+                stream=False,
+                raw=raw,
+                optimizer=optimizer,
+                conversationally=conversationally,
+                **kwargs
+            )
+            if raw:
+                return cast(str, response_data)
+            else:
+                return self.get_message(cast(Response, response_data))
 
-        return aggregated_text
-
-    def get_message(self, response: dict) -> str:
-        assert isinstance(response, dict), "Response should be of dict data-type only"
+    def get_message(self, response: Response) -> str:
+        if not isinstance(response, dict):
+            return str(response)
         return response.get("text", "") # Use .get for safety
 
 

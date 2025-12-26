@@ -4,7 +4,7 @@ ZeroArt Effects: ASCII art text effects and transformations
 
 import random
 import textwrap
-from typing import List
+from typing import Optional, List
 
 from .base import ZeroArtFont
 

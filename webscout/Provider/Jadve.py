@@ -1,6 +1,6 @@
 import re
 import secrets
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
@@ -86,26 +86,26 @@ class JadveOpenAI(Provider):
         }
 
         # Update curl_cffi session headers and proxies
+        self.session = Session()
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies # Assign proxies directly
+        if proxies:
+            self.session.proxies.update(proxies)
 
         self.__available_optimizers = (
             method for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
 
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
-
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
+
+        if act:
+            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
+            ) or self.conversation.intro
+        elif intro:
+            self.conversation.intro = intro
 
     @staticmethod
     def _jadve_extractor(chunk: Union[str, Dict[str, Any]]) -> Optional[str]:
@@ -202,7 +202,11 @@ class JadveOpenAI(Provider):
             except CurlError as e: # Catch CurlError
                 raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {e}") from e
             except Exception as e: # Catch other potential exceptions (like HTTPError)
-                err_text = getattr(e, 'response', None) and getattr(e.response, 'text', '')
+                err_text = ""
+                if hasattr(e, 'response'):
+                    response_obj = getattr(e, 'response')
+                    if hasattr(response_obj, 'text'):
+                        err_text = getattr(response_obj, 'text')
                 raise exceptions.FailedToGenerateResponseError(f"Failed to generate response ({type(e).__name__}): {e} - {err_text}") from e
 
         def for_non_stream():
@@ -229,7 +233,7 @@ class JadveOpenAI(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        raw: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """
         Generate a chat response (string).
@@ -239,10 +243,11 @@ class JadveOpenAI(Provider):
             stream (bool, optional): Flag for streaming response. Defaults to False.
             optimizer (str, optional): Prompt optimizer name. Defaults to None.
             conversationally (bool, optional): Flag for conversational optimization. Defaults to False.
-            raw (bool, optional): Return raw response. Defaults to False.
+            **kwargs: Additional parameters including raw.
         Returns:
             str or generator: Generated response string or generator yielding response chunks.
         """
+        raw = kwargs.get("raw", False)
         def for_stream_chat():
             gen = self.ask(
                 prompt, stream=True, raw=raw,
@@ -250,9 +255,9 @@ class JadveOpenAI(Provider):
             )
             for response in gen:
                 if raw:
-                    yield response
+                    yield cast(str, response)
                 else:
-                    yield self.get_message(response)
+                    yield self.get_message(cast(Response, response))
 
         def for_non_stream_chat():
             response_data = self.ask(
@@ -260,8 +265,8 @@ class JadveOpenAI(Provider):
                 optimizer=optimizer, conversationally=conversationally
             )
             if raw:
-                return response_data if isinstance(response_data, str) else str(response_data)
-            return self.get_message(response_data)
+                return cast(str, response_data) if isinstance(response_data, str) else str(response_data)
+            return self.get_message(cast(Response, response_data))
 
         return for_stream_chat() if stream else for_non_stream_chat()
 

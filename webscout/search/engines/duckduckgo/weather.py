@@ -8,10 +8,12 @@ from ....exceptions import WebscoutE
 from .base import DuckDuckGoBase
 
 
+from typing import Optional, Any
+
 class DuckDuckGoWeather(DuckDuckGoBase):
     name = "duckduckgo"
     category = "weather"
-    def run(self, *args, **kwargs) -> dict[str, any]:
+    def run(self, *args, **kwargs) -> dict[str, Any]:
         location = args[0] if args else kwargs.get("location")
         language = args[1] if len(args) > 1 else kwargs.get("language", "en")
 

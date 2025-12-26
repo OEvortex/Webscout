@@ -1,12 +1,12 @@
 import json
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -16,10 +16,7 @@ from webscout.Provider.OPENAI.utils import (
     CompletionUsage,
 )
 
-try:
-    from webscout.litagent import LitAgent
-except ImportError:
-    pass
+from ...litagent import LitAgent
 
 class Completions(BaseCompletions):
     def __init__(self, client: 'Cerebras'):
@@ -60,6 +57,8 @@ class Completions(BaseCompletions):
         self, request_id: str, created_time: int, model: str, payload: Dict[str, Any],
         timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
     ) -> Generator[ChatCompletionChunk, None, None]:
+        if proxies is not None:
+            self._client.session.proxies.update(cast(Any, proxies))
         try:
             response = self._client.session.post(
                 self._client.base_url,
@@ -67,7 +66,6 @@ class Completions(BaseCompletions):
                 json=payload,
                 stream=True,
                 timeout=timeout or self._client.timeout,
-                proxies=proxies,
                 impersonate="chrome120"
             )
             response.raise_for_status()
@@ -148,13 +146,14 @@ class Completions(BaseCompletions):
         self, request_id: str, created_time: int, model: str, payload: Dict[str, Any],
         timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
     ) -> ChatCompletion:
+        if proxies is not None:
+            self._client.session.proxies.update(cast(Any, proxies))
         try:
             response = self._client.session.post(
                 self._client.base_url,
                 headers=self._client.headers,
                 json=payload,
                 timeout=timeout or self._client.timeout,
-                proxies=proxies,
                 impersonate="chrome120"
             )
             response.raise_for_status()
@@ -208,7 +207,7 @@ class Cerebras(OpenAICompatibleProvider):
     AVAILABLE_MODELS = []
 
     @classmethod
-    def get_models(cls, api_key: str = None):
+    def get_models(cls, api_key: Optional[str] = None):
         """Fetch available models from Cerebras API."""
         if not api_key:
             raise Exception("API key required to fetch models")
@@ -238,7 +237,7 @@ class Cerebras(OpenAICompatibleProvider):
         except (CurlError, Exception) as e:
             raise Exception(f"Failed to fetch models: {str(e)}")
 
-    def __init__(self, browser: str = "chrome", api_key: str = None):
+    def __init__(self, browser: str = "chrome", api_key: Optional[str] = None):
         if not api_key:
             raise ValueError("API key is required for Cerebras")
         self.timeout = None
@@ -260,11 +259,8 @@ class Cerebras(OpenAICompatibleProvider):
         self.chat = Chat(self)
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 
 if __name__ == "__main__":
@@ -276,4 +272,5 @@ if __name__ == "__main__":
         max_tokens=1000,
         stream=False
     )
-    print(response.choices[0].message.content)
+    if not isinstance(response, Generator):
+        print(response.choices[0].message.content)

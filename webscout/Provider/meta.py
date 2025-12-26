@@ -3,7 +3,7 @@ import random
 import time
 import urllib
 import uuid
-from typing import Dict, Generator, List, Union
+from typing import Any, Optional, cast, Dict, Generator, List, Union
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
@@ -310,18 +310,18 @@ class Meta(Provider):
     required_auth = False
     def __init__(
         self,
-        fb_email: str = None,
-        fb_password: str = None,
+        fb_email: Optional[str] = None,
+        fb_password: Optional[str] = None,
         proxy: dict = None,
         is_conversation: bool = True,
         max_tokens: int = 600,
         timeout: int = 30,
-        intro: str = None,
-        filepath: str = None,
+        intro: Optional[str] = None,
+        filepath: Optional[str] = None,
         update_file: bool = True,
         proxies: dict = {},
         history_offset: int = 10250,
-        act: str = None,
+        act: Optional[str] = None,
         skip_init: bool = False,
     ):
         """
@@ -399,18 +399,20 @@ class Meta(Provider):
             for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
+        act_prompt = (
+            AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
+        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
-        self.session.proxies = proxies
+        if proxies:
+            self.session.proxies.update(proxies)
         # If skip_init was True we won't have cookies yet — some methods will fetch them lazily
         if self.skip_init:
             ic.configureOutput(prefix='WARNING| ')
@@ -527,7 +529,7 @@ class Meta(Provider):
         prompt: str,
         stream: bool = False,
         raw: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
     ) -> Union[Dict, Generator[Dict, None, None]]:
         """
@@ -730,7 +732,7 @@ class Meta(Provider):
         self,
         prompt: str,
         stream: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
     ) -> str:
         """

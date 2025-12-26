@@ -1,13 +1,13 @@
 import json
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import cast, Any, Dict, Generator, List, Optional, Union
 
 from curl_cffi.requests import Session
 
 # Import LitAgent for user agent generation
 # Import base classes and utility structures
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -113,11 +113,12 @@ class Completions(BaseCompletions):
                 created=created_time,
                 model=model
             )
-            final_chunk.usage = CompletionUsage(
+            usage_obj = CompletionUsage(
                 prompt_tokens=prompt_tokens,
                 completion_tokens=count_tokens(full_content),
                 total_tokens=prompt_tokens + count_tokens(full_content)
             )
+            final_chunk.usage = usage_obj.model_dump(exclude_none=True)
             yield final_chunk
 
         except Exception as e:
@@ -214,7 +215,8 @@ class LLMChat(OpenAICompatibleProvider):
         self.timeout = timeout
         self.api_endpoint = "https://llmchat.in/inference/stream"
         self.proxies = proxies
-        self.session.proxies = proxies
+        if proxies:
+            self.session.proxies.update(cast(Any, proxies))
 
         self.headers = {
             "Content-Type": "application/json",
@@ -226,11 +228,8 @@ class LLMChat(OpenAICompatibleProvider):
         self.chat = Chat(self)
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 if __name__ == "__main__":
     client = LLMChat()

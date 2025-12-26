@@ -1,11 +1,11 @@
 import json
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import cast, Any, Dict, Generator, List, Optional, Union
 
 from curl_cffi.requests import Session
 
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -16,10 +16,7 @@ from webscout.Provider.OPENAI.utils import (
     count_tokens,
 )
 
-try:
-    from webscout.litagent import LitAgent
-except ImportError:
-    pass
+from ...litagent import LitAgent
 
 class Completions(BaseCompletions):
     def __init__(self, client: 'HuggingFace'):
@@ -221,7 +218,7 @@ class HuggingFace(OpenAICompatibleProvider):
     AVAILABLE_MODELS = []
 
     @classmethod
-    def get_models(cls, api_key: str = None) -> List[str]:
+    def get_models(cls, api_key: Optional[str] = None) -> List[str]:
         """Fetch available text-generation models from Hugging Face."""
         url = "https://router.huggingface.co/v1/models"
         try:
@@ -242,7 +239,7 @@ class HuggingFace(OpenAICompatibleProvider):
             return cls.AVAILABLE_MODELS
 
     @classmethod
-    def update_available_models(cls, api_key: str = None):
+    def update_available_models(cls, api_key: Optional[str] = None):
         """Update the available models list from Hugging Face API dynamically."""
         try:
             models = cls.get_models(api_key)
@@ -281,11 +278,8 @@ class HuggingFace(OpenAICompatibleProvider):
         self.chat = Chat(self)
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 if __name__ == "__main__":
     # Example usage:
@@ -294,5 +288,6 @@ if __name__ == "__main__":
     #     model="meta-llama/Llama-3.3-70B-Instruct",
     #     messages=[{"role": "user", "content": "Hello!"}]
     # )
-    # print(response.choices[0].message.content)
+    # if not isinstance(response, Generator):
+        print(response.choices[0].message.content)
     pass

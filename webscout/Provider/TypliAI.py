@@ -1,12 +1,12 @@
 import random
 import string
-from typing import Any, Dict, Generator, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider
+from webscout.AIbase import Provider, Response
 
 # from curl_cffi.const import CurlHttpVersion # Not strictly needed if using default
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
@@ -50,12 +50,12 @@ class TypliAI(Provider):
         is_conversation: bool = True,
         max_tokens: int = 600,
         timeout: int = 30,
-        intro: str = None,
-        filepath: str = None,
+        intro: Optional[str] = None,
+        filepath: Optional[str] = None,
         update_file: bool = True,
         proxies: dict = {},
         history_offset: int = 10250,
-        act: str = None,
+        act: Optional[str] = None,
         system_prompt: str = "You are a helpful assistant.",
         model: str = "openai/gpt-4.1-mini"
     ):
@@ -115,19 +115,19 @@ class TypliAI(Provider):
         )
         # Update curl_cffi session headers and proxies
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies
+        if proxies:
+            self.session.proxies.update(proxies)
 
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
+
+        if act:
+            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
+            ) or self.conversation.intro
+        elif intro:
+            self.conversation.intro = intro
 
 
 
@@ -136,8 +136,9 @@ class TypliAI(Provider):
         prompt: str,
         stream: bool = False,
         raw: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Union[Dict[str, Any], Generator[Dict[str, Any], None, None]]:
         """
         Sends a prompt to the Typli.ai API and returns the response.
@@ -244,9 +245,9 @@ class TypliAI(Provider):
         self,
         prompt: str,
         stream: bool = False,
-        raw: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """
         Generates a response from the Typli.ai API.
@@ -254,22 +255,22 @@ class TypliAI(Provider):
         Args:
             prompt (str): The prompt to send to the API.
             stream (bool): Whether to stream the response.
-            raw (bool): Whether to return the raw response.
             optimizer (str): Optimizer to use for the prompt.
             conversationally (bool): Whether to generate the prompt conversationally.
+            **kwargs: Additional parameters including raw.
 
         Returns:
             Union[str, Generator[str, None, None]]: The API response.
         """
-
+        raw = kwargs.get("raw", False)
         def for_stream():
             for response in self.ask(
                 prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
             ):
                 if raw:
-                    yield response
+                    yield cast(str, response)
                 else:
-                    yield self.get_message(response)
+                    yield self.get_message(cast(Response, response))
 
         def for_non_stream():
             result = self.ask(
@@ -280,23 +281,24 @@ class TypliAI(Provider):
                 conversationally=conversationally,
             )
             if raw:
-                return result
+                return cast(str, result)
             else:
-                return self.get_message(result)
+                return self.get_message(cast(Response, result))
 
         return for_stream() if stream else for_non_stream()
 
-    def get_message(self, response: dict) -> str:
+    def get_message(self, response: Response) -> str:
         """
         Extracts the message from the API response.
 
         Args:
-            response (dict): The API response.
+            response (Response): The API response.
 
         Returns:
             str: The message content.
         """
-        assert isinstance(response, dict), "Response should be of dict data-type only"
+        if not isinstance(response, dict):
+            return str(response)
         # Ensure text exists before processing
         return response.get("text", "").replace('\\n', '\n').replace('\\n\\n', '\n\n')
 

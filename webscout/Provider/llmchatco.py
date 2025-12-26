@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, Dict, Generator, Optional, Union
+from typing import cast, Any, Dict, Generator, Optional, Union
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
@@ -43,12 +43,12 @@ class LLMChatCo(Provider):
         is_conversation: bool = True,
         max_tokens: int = 2048, # Note: max_tokens is not used by this API
         timeout: int = 60,
-        intro: str = None,
-        filepath: str = None,
+        intro: Optional[str] = None,
+        filepath: Optional[str] = None,
         update_file: bool = True,
         proxies: dict = {},
         history_offset: int = 10250,
-        act: str = None,
+        act: Optional[str] = None,
         model: str = "gemini-flash-2.0",
         system_prompt: str = "You are a helpful assistant."
     ):
@@ -94,21 +94,24 @@ class LLMChatCo(Provider):
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
 
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
-
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
+        act_prompt = (
+            AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
+        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
         # Update curl_cffi session headers and proxies
+        self.session = cloudscraper.create_scraper()
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies # Assign proxies directly
+        if proxies:
+            self.session.proxies.update(proxies)
+        self.system_prompt = system_prompt
         # Store message history for conversation context
         self.last_assistant_response = ""
 
@@ -129,7 +132,7 @@ class LLMChatCo(Provider):
         prompt: str,
         stream: bool = True,  # Default to stream as the API uses SSE
         raw: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
         web_search: bool = False,
     ) -> Union[Dict[str, Any], Generator[Any, None, None], str]:
@@ -205,7 +208,11 @@ class LLMChatCo(Provider):
             except CurlError as e:
                 raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {e}") from e
             except Exception as e:
-                err_text = getattr(e, 'response', None) and getattr(e.response, 'text', '')
+                err_text = ""
+                if hasattr(e, 'response'):
+                    response_obj = getattr(e, 'response')
+                    if hasattr(response_obj, 'text'):
+                        err_text = getattr(response_obj, 'text')
                 raise exceptions.FailedToGenerateResponseError(f"Unexpected error ({type(e).__name__}): {str(e)} - {err_text}") from e
         def for_non_stream():
             full_response_text = ""
@@ -225,7 +232,7 @@ class LLMChatCo(Provider):
         self,
         prompt: str,
         stream: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
         web_search: bool = False,
         raw: bool = False

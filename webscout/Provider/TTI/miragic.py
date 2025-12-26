@@ -1,10 +1,11 @@
 import json
 import random
-from typing import Any, Optional
+from typing import Union, cast, Any, Optional
 
 import requests
 
 from webscout.litagent import LitAgent
+from webscout.AIbase import SimpleModelList
 from webscout.Provider.TTI.base import BaseImages, TTICompatibleProvider
 from webscout.Provider.TTI.utils import ImageData, ImageResponse
 
@@ -155,12 +156,8 @@ class MiragicAI(TTICompatibleProvider):
         self.images = Images(self)
 
     @property
-    def models(self):
-        """Returns a list of available models for this provider."""
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 if __name__ == "__main__":
     from rich import print

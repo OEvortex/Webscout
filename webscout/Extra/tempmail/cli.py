@@ -9,7 +9,8 @@ from rich.console import Console
 
 from webscout.swiftcli import CLI, option
 
-from .base import get_provider
+from typing import Optional, cast
+from .base import get_provider, TempMailProvider
 
 # Initialize console for rich output
 console = Console()
@@ -33,10 +34,10 @@ def monitor(wait: int = 10, output: str = "simple", provider: str = "mailtm"):
     Press Ctrl+C to exit and delete the account.
     """
     # Create a new email
-    mail = get_provider(provider_name=provider)
+    mail = cast(TempMailProvider, get_provider(provider_name=provider))
 
     if hasattr(mail, 'auto_create'):
-        mail = get_provider(provider_name=provider, async_provider=False)
+        mail = cast(TempMailProvider, get_provider(provider_name=provider, async_provider=False))
         mail.create_account()
     else:
         success = mail.create_account()
@@ -87,10 +88,10 @@ def create(provider: str = "mailtm"):
     Creates a new temporary email account and displays the email address.
     The account will remain active until manually deleted.
     """
-    mail = get_provider(provider_name=provider)
+    mail = cast(TempMailProvider, get_provider(provider_name=provider))
 
     if hasattr(mail, 'auto_create'):
-        mail = get_provider(provider_name=provider, async_provider=False)
+        mail = cast(TempMailProvider, get_provider(provider_name=provider, async_provider=False))
         mail.create_account()
     else:
         success = mail.create_account()
@@ -115,7 +116,7 @@ def check(email: str, account_id: str, provider: str = "mailtm", output: str = "
     Retrieves and displays messages for an existing temporary email account.
     Requires the email address and account ID.
     """
-    mail = get_provider(provider_name=provider)
+    mail = cast(TempMailProvider, get_provider(provider_name=provider))
     mail.email = email
     mail.account_id = account_id
 
@@ -159,7 +160,7 @@ def delete(email: str, account_id: str, provider: str = "mailtm"):
 
     Deletes a temporary email account using the provided email address and account ID.
     """
-    mail = get_provider(provider_name=provider)
+    mail = cast(TempMailProvider, get_provider(provider_name=provider))
     mail.email = email
     mail.account_id = account_id
 

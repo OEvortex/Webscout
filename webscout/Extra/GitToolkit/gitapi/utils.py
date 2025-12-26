@@ -1,6 +1,6 @@
 import json
 import time
-from typing import Any, Dict
+from typing import Optional, Any, Dict, List, Union
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
@@ -27,7 +27,7 @@ class RequestError(GitError):
 
 _USER_AGENT_GENERATOR = LitAgent() if LitAgent else None
 
-def request(url: str, retry_attempts: int = 3) -> Dict[str, Any]:
+def request(url: str, retry_attempts: int = 3) -> Any:
     """
     Send a request to GitHub API with retry mechanism
 
@@ -77,3 +77,6 @@ def request(url: str, retry_attempts: int = 3) -> Dict[str, Any]:
         except Exception as e:
             if attempt == retry_attempts - 1:
                 raise RequestError(f"Request failed: {str(e)}")
+            time.sleep(1)
+    
+    raise RequestError(f"Request to {url} failed after {retry_attempts} attempts")

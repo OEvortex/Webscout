@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
@@ -94,7 +94,8 @@ class ChatSandbox(Provider):
 
         # Update curl_cffi session headers and proxies
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies
+        if proxies:
+            self.session.proxies.update(proxies)
 
         self.__available_optimizers = (
             method
@@ -102,17 +103,16 @@ class ChatSandbox(Provider):
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
 
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
+
+        if act:
+            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
+            ) or self.conversation.intro
+        elif intro:
+            self.conversation.intro = intro
 
     @staticmethod
     def _chatsandbox_extractor(chunk: Union[str, Dict[str, Any]]) -> Optional[str]:
@@ -222,6 +222,7 @@ class ChatSandbox(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """
         Generates a response from the ChatSandbox API.
@@ -231,32 +232,39 @@ class ChatSandbox(Provider):
             stream (bool): Whether to stream the response.
             optimizer (str): Optimizer to use for the prompt.
             conversationally (bool): Whether to generate the prompt conversationally.
+            **kwargs: Additional parameters including raw.
 
         Returns:
             str: The API response.
         """
+        raw = kwargs.get("raw", False)
         def for_stream():
             for response in self.ask(
                 prompt,
                 stream=True,
-                raw=False,
+                raw=raw,
                 optimizer=optimizer,
                 conversationally=conversationally,
             ):
-                yield response.get("text", "")
+                if raw:
+                    yield response
+                else:
+                    yield self.get_message(response)
 
         if stream:
             return for_stream()
         else:
-            return self.get_message(
-                self.ask(
-                    prompt,
-                    stream=False,
-                    raw=False,
-                    optimizer=optimizer,
-                    conversationally=conversationally,
-                )
+            result = self.ask(
+                prompt,
+                stream=False,
+                raw=raw,
+                optimizer=optimizer,
+                conversationally=conversationally,
             )
+            if raw:
+                return cast(str, result)
+            else:
+                return self.get_message(result)
 
     def get_message(self, response: Response) -> str:
         """

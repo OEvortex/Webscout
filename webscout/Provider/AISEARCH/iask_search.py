@@ -1,7 +1,7 @@
 import asyncio
 import re
 import urllib.parse
-from typing import AsyncIterator, Dict, Generator, Literal, Optional, Union
+from typing import Any, AsyncIterator, Dict, Generator, Literal, Optional, Union, cast
 
 import aiohttp
 import lxml.html
@@ -164,6 +164,7 @@ class IAsk(AISearch):
         raw: bool = False,
         mode: Optional[ModeType] = None,
         detail_level: Optional[DetailLevelType] = None,
+        **kwargs: Any,
     ) -> Union[SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None]]:
         """Search using the IAsk API and get AI-generated responses.
 
@@ -211,9 +212,8 @@ class IAsk(AISearch):
             >>> print(response)
             Climate change refers to...
         """
-        # Use provided parameters or fall back to instance defaults
-        search_mode = mode or self.default_mode
-        search_detail_level = detail_level or self.default_detail_level
+        search_mode = cast(ModeType, mode or self.default_mode)
+        search_detail_level = cast(Optional[DetailLevelType], detail_level or self.default_detail_level)
 
         # For non-streaming, run the async search and return the complete response
         if not stream:
@@ -224,7 +224,7 @@ class IAsk(AISearch):
                 result = loop.run_until_complete(
                     self._async_search(prompt, False, raw, search_mode, search_detail_level)
                 )
-                return result
+                return cast(Union[SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None]], result)
             finally:
                 loop.close()
         buffer = ""
@@ -242,10 +242,11 @@ class IAsk(AISearch):
 
                 # Process chunks one by one
                 if hasattr(async_gen, "__anext__"):
+                    async_iterator = cast(AsyncIterator, async_gen)
                     while True:
                         try:
                             # Get the next chunk
-                            chunk_coro = async_gen.__anext__()
+                            chunk_coro = async_iterator.__anext__()
                             chunk = loop.run_until_complete(chunk_coro)
 
                             # Update buffer and yield the chunk
@@ -271,7 +272,7 @@ class IAsk(AISearch):
                 self.last_response = {"text": buffer}
                 loop.close()
 
-        return sync_generator()
+        return cast(Union[SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None]], sync_generator())
 
     async def _async_search(
         self,
@@ -280,10 +281,11 @@ class IAsk(AISearch):
         raw: bool = False,
         mode: ModeType = "question",
         detail_level: Optional[DetailLevelType] = None,
-    ) -> Union[SearchResponse, AsyncIterator[Union[Dict[str, str], SearchResponse]]]:
+    ) -> Union[SearchResponse, str, AsyncIterator[Union[str, Dict[str, str], SearchResponse]]]:
         """Internal async implementation of the search method."""
 
         async def stream_generator() -> AsyncIterator[str]:
+            timeout = aiohttp.ClientTimeout(total=self.timeout)
             async with aiohttp.ClientSession() as session:
                 # Prepare parameters
                 params = {"mode": mode, "q": prompt}
@@ -295,11 +297,11 @@ class IAsk(AISearch):
                         self.api_endpoint,
                         params=params,
                         proxy=self.proxies.get('http') if self.proxies else None,
-                        timeout=self.timeout
+                        timeout=timeout
                     ) as response:
-                        if not response.ok:
+                        if response.status != 200:
                             raise exceptions.APIConnectionError(
-                                f"Failed to generate response - ({response.status_code}, {response.reason}) - {await response.text()}"
+                                f"Failed to generate response - ({response.status}, {response.reason}) - {await response.text()}"
                             )
 
                         etree = lxml.html.fromstring(await response.text())
@@ -315,7 +317,7 @@ class IAsk(AISearch):
                             "vsn": "2.0.0",
                         },
                         proxy=self.proxies.get('http') if self.proxies else None,
-                        timeout=self.timeout
+                        timeout=cast(aiohttp.ClientWSTimeout, timeout)
                     ) as wsResponse:
                         await wsResponse.send_json(
                             [
@@ -384,5 +386,8 @@ if __name__ == "__main__":
 
     ai = IAsk()
     response = ai.search("What is Python?", stream=True)
-    for chunk in response:
-        print(chunk, end="", flush=True)
+    if hasattr(response, "__iter__") and not isinstance(response, (str, SearchResponse)):
+        for chunk in response:
+            print(chunk, end="", flush=True)
+    else:
+        print(response)

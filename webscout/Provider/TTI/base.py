@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Union, cast, Any, List, Optional
 
 from .utils import ImageResponse
 
@@ -17,7 +17,7 @@ class BaseImages(ABC):
         user: Optional[str] = None,
         style: str = "none",
         aspect_ratio: str = "1:1",
-        timeout: int = None,
+        timeout: Optional[int] = None,
         image_format: str = "png",
         seed: Optional[int] = None,
         **kwargs
@@ -127,6 +127,7 @@ class TTICompatibleProvider(ABC):
     images: BaseImages
     required_auth: bool = False  # Default: no auth required
     working: bool = True  # Default: provider is working
+    AVAILABLE_MODELS: List[str] = []  # List of available models
 
     @abstractmethod
     def __init__(self, **kwargs: Any):
@@ -134,9 +135,9 @@ class TTICompatibleProvider(ABC):
 
     @property
     @abstractmethod
-    def models(self):
+    def models(self) -> Any:
         """
         Property that returns an object with a .list() method returning available models.
         Subclasses must implement this property.
         """
-        pass
+        raise NotImplementedError

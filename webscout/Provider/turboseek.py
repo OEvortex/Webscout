@@ -1,6 +1,6 @@
 
 import re
-from typing import Any, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
@@ -83,18 +83,18 @@ class TurboSeek(Provider):
         )
         # Update curl_cffi session headers and proxies
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies # Assign proxies directly
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
+        if proxies:
+            self.session.proxies.update(proxies) # Assign proxies directly
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
+
+        if act:
+            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
+            ) or self.conversation.intro
+        elif intro:
+            self.conversation.intro = intro
 
     @staticmethod
     def _html_to_markdown(text: str) -> str:
@@ -247,7 +247,6 @@ class TurboSeek(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        raw: bool = False,  # Added raw parameter
         **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """Generate response `str`
@@ -256,18 +255,19 @@ class TurboSeek(Provider):
             stream (bool, optional): Flag for streaming response. Defaults to False.
             optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
             conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
+            **kwargs: Additional parameters including raw.
         Returns:
             str: Response generated
         """
-
+        raw = kwargs.get("raw", False)
         def for_stream():
             for response in self.ask(
                 prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
             ):
                 if raw:
-                    yield response
+                    yield cast(str, response)
                 else:
-                    yield self.get_message(response)
+                    yield self.get_message(cast(Response, response))
         def for_non_stream():
             result = self.ask(
                 prompt,
@@ -277,9 +277,9 @@ class TurboSeek(Provider):
                 conversationally=conversationally,
             )
             if raw:
-                return result
+                return cast(str, result)
             else:
-                return self.get_message(result)
+                return self.get_message(cast(Response, result))
         return for_stream() if stream else for_non_stream()
 
     def get_message(self, response: Response) -> str:

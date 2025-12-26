@@ -2,7 +2,7 @@
 Text processing utilities for TTS providers.
 """
 import re
-from typing import Dict, List, Pattern, Set, Tuple
+from typing import Optional, Union, cast, Dict, List, Pattern, Set, Tuple
 
 
 class SentenceTokenizer:

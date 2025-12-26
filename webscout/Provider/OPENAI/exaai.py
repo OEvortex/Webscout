@@ -2,12 +2,12 @@ import json
 import re
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import cast, Any, Dict, Generator, List, Optional, Union
 
 import requests
 
 # Import base classes and utility structures
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -19,10 +19,7 @@ from webscout.Provider.OPENAI.utils import (
 )
 
 # Attempt to import LitAgent, fallback if not available
-try:
-    from webscout.litagent import LitAgent
-except ImportError:
-    pass
+from ...litagent import LitAgent
 
 # --- ExaAI Client ---
 
@@ -381,7 +378,7 @@ class ExaAI(OpenAICompatibleProvider):
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
             "sec-gpc": "1",
-            "user-agent": LitAgent().random()
+            "user-agent": LitAgent().random() if LitAgent else "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
 
         self.session.headers.update(self.headers)
@@ -442,11 +439,8 @@ class ExaAI(OpenAICompatibleProvider):
         return "O3-Mini"
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 if __name__ == "__main__":
     # Example usage
@@ -457,4 +451,5 @@ if __name__ == "__main__":
             {"role": "user", "content": "Hello, how are you?"}
         ]
     )
-    print(response.choices[0].message.content)
+    if not isinstance(response, Generator):
+        print(response.choices[0].message.content)

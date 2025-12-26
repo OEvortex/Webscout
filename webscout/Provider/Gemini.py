@@ -1,7 +1,7 @@
 import warnings
 from json import dumps
 from os import path
-from typing import Any, Dict, Generator, Optional, Union
+from typing import cast, Any, Dict, Generator, Optional, Union
 
 from ..AIbase import Provider, Response
 
@@ -126,34 +126,24 @@ class GEMINI(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        raw: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
-        """Generate response text.
-
-        Args:
-            prompt (str): Prompt to be sent.
-            stream (bool, optional): Flag for streaming response. Defaults to False.
-            optimizer (str, optional): Prompt optimizer name. Defaults to None.
-            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-            raw (bool, optional): Return raw response. Defaults to False.
-
-        Returns:
-            str: Response generated.
-        """
-        def for_stream():
-            for response in self.ask(prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally):
-                if raw:
-                    yield response
-                else:
-                    yield self.get_message(response)
-
-        def for_non_stream():
+        raw = kwargs.get("raw", False)
+        if stream:
+            def for_stream():
+                gen = self.ask(prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally)
+                if hasattr(gen, "__iter__"):
+                    for response in gen:
+                        if raw:
+                            yield cast(str, response)
+                        else:
+                            yield self.get_message(response)
+            return for_stream()
+        else:
             result = self.ask(prompt, False, raw=raw, optimizer=optimizer, conversationally=conversationally)
             if raw:
-                return result
+                return cast(str, result)
             return self.get_message(result)
-
-        return for_stream() if stream else for_non_stream()
 
     def get_message(self, response: Response) -> str:
         """Retrieves message content from the response.

@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Generator, Iterator, List, Optional, Union
+from typing import cast, Any, Dict, Generator, Iterator, List, Optional, Union
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
@@ -123,7 +123,8 @@ class DeepAI(Provider):
         # Setup session
         self.session = Session()
         self.session.headers.update(self.headers)
-        self.session.proxies = self.proxies
+        if self.proxies:
+            self.session.proxies = self.proxies  # type: ignore
 
         # Optimizers
         self.__available_optimizers = (
@@ -133,17 +134,19 @@ class DeepAI(Provider):
         )
 
         # Conversation setup similar to other providers
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
+        
+        act_prompt = (
+            AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
+        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
 
     def refresh_identity(self, browser: Optional[str] = None):
         """
@@ -157,10 +160,10 @@ class DeepAI(Provider):
 
         # Update relevant headers
         self.headers.update({
-            "User-Agent": self.fingerprint.get("user_agent"),
-            "Accept-Language": self.fingerprint.get("accept_language"),
-            "Sec-CH-UA": self.fingerprint.get("sec_ch_ua"),
-            "Sec-CH-UA-Platform": f'"{self.fingerprint.get("platform")}"',
+            "User-Agent": str(self.fingerprint.get("user_agent", "")),
+            "Accept-Language": str(self.fingerprint.get("accept_language", "")),
+            "Sec-CH-UA": str(self.fingerprint.get("sec_ch_ua", "")),
+            "Sec-CH-UA-Platform": f'"{self.fingerprint.get("platform", "")}"',
         })
 
         self.session.headers.update(self.headers)

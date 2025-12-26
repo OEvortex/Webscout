@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Tuple
 
 from litprinter import ic
 
-from .base import TempMailAPI
+from .temp_mail_io import TempMailIOAsync as TempMailAPI
 
 
 class AsyncTempMailHelper:
@@ -35,9 +35,7 @@ class AsyncTempMailHelper:
         await self.api.initialize()
 
         try:
-            result = await self.api.create_email(alias, domain)
-            self.email = result.email
-            self.token = result.token
+            self.email, self.token = await self.api.create_email(alias, domain)
             return self.email, self.token
         except Exception as e:
             ic.configureOutput(prefix='ERROR| ')
@@ -56,19 +54,19 @@ class AsyncTempMailHelper:
             raise ValueError("No email created yet")
 
         try:
-            messages = await self.api.get_messages(self.email)
+            messages = await self.api.get_messages()
             if not messages:
                 return []
 
             return [
                 {
-                    "id": msg.id,
-                    "from": msg.email_from,
-                    "to": msg.email_to,
-                    "subject": msg.subject,
-                    "created_at": msg.created_at,
-                    "body": msg.body_text or msg.body_html,
-                    "has_attachments": bool(msg.attachments and len(msg.attachments) > 0)
+                    "id": msg.get("id") or msg.get("msg_id"),
+                    "from": msg.get("from") or msg.get("email_from"),
+                    "to": msg.get("to") or msg.get("email_to"),
+                    "subject": msg.get("subject"),
+                    "created_at": msg.get("created_at") or msg.get("createdAt"),
+                    "body": msg.get("body_text") or msg.get("body_html") or msg.get("body"),
+                    "has_attachments": bool(msg.get("attachments") or msg.get("has_attachments") or msg.get("hasAttachments"))
                 }
                 for msg in messages
             ]
@@ -90,7 +88,7 @@ class AsyncTempMailHelper:
             return False
 
         try:
-            result = await self.api.delete_email(self.email, self.token)
+            result = await self.api.delete_email()
             return result
         except Exception as e:
             ic.configureOutput(prefix='ERROR| ')

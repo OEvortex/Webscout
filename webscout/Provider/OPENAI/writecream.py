@@ -1,12 +1,12 @@
 import json
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import cast, Any, Dict, Generator, List, Optional, Union
 
 import requests
 
 # Import base classes and utility structures
-from .base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from .base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
 from .utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -18,10 +18,7 @@ from .utils import (
 )
 
 # Attempt to import LitAgent, fallback if not available
-try:
-    from webscout.litagent import LitAgent
-except ImportError:
-    print("Warning: LitAgent not found. Using default user agent.")
+from ...litagent import LitAgent
 
 class Completions(BaseCompletions):
     def __init__(self, client: 'Writecream'):
@@ -154,11 +151,8 @@ class Writecream(OpenAICompatibleProvider):
         return "writecream"
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return Writecream.AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 # Simple test if run directly
 if __name__ == "__main__":
@@ -171,6 +165,7 @@ if __name__ == "__main__":
         ]
     )
     if isinstance(response, ChatCompletion):
+        if not isinstance(response, Generator):
         print(response.choices[0].message.content)
     else:
         print(response)

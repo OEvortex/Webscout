@@ -1,11 +1,11 @@
 import json
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import cast, Any, Dict, Generator, List, Optional, Union
 
 from curl_cffi.requests import Session
 
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -16,10 +16,7 @@ from webscout.Provider.OPENAI.utils import (
     count_tokens,
 )
 
-try:
-    from webscout.litagent import LitAgent
-except ImportError:
-    pass
+from ...litagent import LitAgent
 
 class Completions(BaseCompletions):
     def __init__(self, client: 'Nvidia'):
@@ -217,7 +214,7 @@ class Nvidia(OpenAICompatibleProvider):
     AVAILABLE_MODELS = []
 
     @classmethod
-    def get_models(cls, api_key: str = None) -> List[str]:
+    def get_models(cls, api_key: Optional[str] = None) -> List[str]:
         """Fetch available models from Nvidia API."""
         url = "https://integrate.api.nvidia.com/v1/models"
         try:
@@ -237,7 +234,7 @@ class Nvidia(OpenAICompatibleProvider):
             return cls.AVAILABLE_MODELS
 
     @classmethod
-    def update_available_models(cls, api_key: str = None):
+    def update_available_models(cls, api_key: Optional[str] = None):
         """Update the available models list from Nvidia API dynamically."""
         try:
             models = cls.get_models(api_key)
@@ -259,8 +256,14 @@ class Nvidia(OpenAICompatibleProvider):
         self.base_url = "https://integrate.api.nvidia.com/v1/chat/completions"
         self.session = Session()
 
-        agent = LitAgent()
-        fingerprint = agent.generate_fingerprint(browser)
+        if LitAgent:
+            agent = LitAgent()
+            fingerprint = agent.generate_fingerprint(browser)
+        else:
+            fingerprint = {
+                "accept_language": "en-US,en;q=0.9",
+                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            }
 
         self.headers = {
             "Accept": "application/json",
@@ -273,11 +276,8 @@ class Nvidia(OpenAICompatibleProvider):
         self.chat = Chat(self)
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 if __name__ == "__main__":
     # Example usage:
@@ -286,5 +286,6 @@ if __name__ == "__main__":
     #     model="meta/llama-3.3-70b-instruct",
     #     messages=[{"role": "user", "content": "Hello!"}]
     # )
-    # print(response.choices[0].message.content)
+    # if not isinstance(response, Generator):
+        print(response.choices[0].message.content)
     pass

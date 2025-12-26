@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from random import choice
-from typing import Any, Literal
+from typing import Optional, Any, Literal
 
 try:
     import trio  # type: ignore
@@ -54,7 +54,7 @@ class HttpClient:
         self.client = curl_cffi.requests.Session(
             headers=headers or {},
             proxies={'http': self.proxy, 'https': self.proxy} if self.proxy else None,
-            timeout=timeout,
+            timeout=cast(Any, timeout),
             impersonate=impersonate_browser,
             verify=verify,
         )

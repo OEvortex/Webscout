@@ -240,6 +240,9 @@ class MailTMAsync(AsyncTempMailProvider):
         """Get available domain for email creation"""
         if not self.session:
             await self.initialize()
+        
+        if not self.session:
+            return ""
 
         try:
             async with self.session.get(f"{self.url_domain}?page=1") as resp:
@@ -253,6 +256,9 @@ class MailTMAsync(AsyncTempMailProvider):
         """Create a new email account"""
         if not self.session:
             await self.initialize()
+        
+        if not self.session:
+            return "", ""
 
         if not domain:
             domain = await self.get_domain()
@@ -285,7 +291,7 @@ class MailTMAsync(AsyncTempMailProvider):
 
     async def _get_token(self) -> str:
         """Get authentication token"""
-        if not self.email or not self.password:
+        if not self.email or not self.password or not self.session:
             return ""
 
         data = {'address': self.email, 'password': self.password}
@@ -301,7 +307,7 @@ class MailTMAsync(AsyncTempMailProvider):
 
     async def get_message_detail(self, msg_id: str) -> str:
         """Get detailed content of a message"""
-        if not self.header:
+        if not self.header or not self.session:
             return ""
 
         try:
@@ -321,7 +327,7 @@ class MailTMAsync(AsyncTempMailProvider):
 
     async def get_messages(self) -> List[Dict]:
         """Get messages for a temporary email"""
-        if not self.header:
+        if not self.header or not self.session:
             return []
 
         try:
@@ -349,7 +355,7 @@ class MailTMAsync(AsyncTempMailProvider):
 
     async def delete_email(self) -> bool:
         """Delete a temporary email"""
-        if not self.header or not self.account_id:
+        if not self.header or not self.account_id or not self.session:
             return False
 
         try:

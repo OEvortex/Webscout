@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any
+from typing import Optional, Any, Dict
 
 from ...http_client import HttpClient
 
@@ -24,7 +24,8 @@ class YahooWeather:
     def request(self, method: str, url: str, **kwargs: Any) -> str | None:
         """Make a request to the weather service."""
         try:
-            response = self.http_client.request(method, url, **kwargs)
+            from typing import cast
+            response = self.http_client.request(cast(Any, method), url, **kwargs)
             return response.text
         except Exception:
             return None
@@ -81,7 +82,7 @@ class YahooWeather:
             json_pattern = r'self\.__next_f\.push\(\[1,"([^"]+)"\]\)'
             matches = re.findall(json_pattern, html)
 
-            weather_info = {}
+            weather_info: Dict[str, Any] = {}
 
             for match in matches:
                 # Unescape the JSON string

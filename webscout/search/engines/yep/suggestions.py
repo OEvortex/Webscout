@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List
+from typing import Optional, List
 from urllib.parse import urlencode
 
 from .base import YepBase
@@ -30,8 +30,9 @@ class YepSuggestions(YepBase):
             return []
 
         except Exception as e:
-            if hasattr(e, 'response') and e.response is not None:
-                 raise Exception(f"Yep suggestions failed with status {e.response.status_code}: {str(e)}")
+            resp = getattr(e, 'response', None)
+            if resp is not None:
+                 raise Exception(f"Yep suggestions failed with status {resp.status_code}: {str(e)}")
             else:
                  raise Exception(f"Yep suggestions failed: {str(e)}")
 

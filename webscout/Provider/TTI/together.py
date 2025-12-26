@@ -1,12 +1,13 @@
 import json
 import random
-from typing import Dict, Optional
+from typing import Union, cast, Dict, Optional
 
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from webscout.litagent import LitAgent
+from webscout.AIbase import SimpleModelList
 from webscout.Provider.TTI.base import BaseImages, TTICompatibleProvider
 from webscout.Provider.TTI.utils import ImageData, ImageResponse
 
@@ -98,14 +99,14 @@ class Images(BaseImages):
 
     def create(
         self,
-        model: str = None,
-        prompt: str = None,
+        model: Optional[str] = None,
+        prompt: Optional[str] = None,
         n: int = 1,
         size: str = "1024x1024",
         response_format: str = "url",
         user: Optional[str] = None,
-        style: str = None,
-        aspect_ratio: str = None,
+        style: Optional[str] = None,
+        aspect_ratio: Optional[str] = None,
         timeout: int = 120,
         image_format: str = "png",
         enhance: bool = True,
@@ -219,7 +220,7 @@ class TogetherImage(TTICompatibleProvider):
     AVAILABLE_MODELS = []
 
     @classmethod
-    def get_models(cls, api_key: str = None):
+    def get_models(cls, api_key: Optional[str] = None):
         """Fetch available image models from Together API."""
         if not api_key:
             # Return default models if no API key is provided
@@ -272,7 +273,7 @@ class TogetherImage(TTICompatibleProvider):
             return cls.get_models(None)
 
     @classmethod
-    def update_available_models(cls, api_key=None):
+    def update_available_models(cls, api_key: Optional[str] = None):
         """Update the available models list from Together API"""
         try:
             models = cls.get_models(api_key)
@@ -281,7 +282,7 @@ class TogetherImage(TTICompatibleProvider):
         except Exception:
             cls.AVAILABLE_MODELS = cls.get_models(None)
 
-    def __init__(self, api_key: str = None):
+    def __init__(self, api_key: Optional[str] = None):
         """
         Initialize the TogetherImage client.
 
@@ -301,12 +302,8 @@ class TogetherImage(TTICompatibleProvider):
         self._fingerprint = None
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return TogetherImage.AVAILABLE_MODELS
-
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
     def convert_model_name(self, model: str) -> str:
         """Convert model alias to full model name"""

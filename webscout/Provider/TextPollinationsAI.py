@@ -1,6 +1,6 @@
 
 import json
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 import requests
 
@@ -87,18 +87,17 @@ class TextPollinationsAI(Provider):
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
 
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
-
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
+
+        if act:
+            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
+            ) or self.conversation.intro
+        elif intro:
+            self.conversation.intro = intro
+
 
     def update_available_models(self):
         try:
@@ -247,19 +246,20 @@ class TextPollinationsAI(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        tools: Optional[List[Dict[str, Any]]] = None,
-        tool_choice: Optional[Dict[str, Any]] = None,
-        raw: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
+        raw = kwargs.get("raw", False)
+        tools = kwargs.get("tools")
+        tool_choice = kwargs.get("tool_choice")
         def for_stream():
             for response in self.ask(
                 prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally,
                 tools=tools, tool_choice=tool_choice
             ):
                 if raw:
-                    yield response
+                    yield cast(str, response)
                 else:
-                    yield self.get_message(response)
+                    yield self.get_message(cast(Dict[str, Any], response))
         def for_non_stream():
             result = self.ask(
                 prompt,
@@ -271,13 +271,14 @@ class TextPollinationsAI(Provider):
                 tool_choice=tool_choice,
             )
             if raw:
-                return result
-            return self.get_message(result)
+                return cast(str, result)
+            return self.get_message(cast(Dict[str, Any], result))
         return for_stream() if stream else for_non_stream()
 
-    def get_message(self, response: dict) -> str:
+    def get_message(self, response: Response) -> str:
         """Retrieves message only from response"""
-        assert isinstance(response, dict), "Response should be of dict data-type only"
+        if not isinstance(response, dict):
+            return str(response)
         if "text" in response:
             return response["text"]
         elif "tool_calls" in response:

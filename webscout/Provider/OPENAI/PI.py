@@ -3,7 +3,7 @@ import re
 import threading
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 from uuid import uuid4
 
 from curl_cffi import CurlError
@@ -12,10 +12,10 @@ from curl_cffi.requests import Session
 from webscout import exceptions
 
 # Attempt to import LitAgent, fallback if not available
-from webscout.litagent import LitAgent
+from ...litagent import LitAgent
 
 # Import base classes and utility structures
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -330,7 +330,7 @@ class PiAI(OpenAICompatibleProvider):
         # Configure session
         self.session.headers.update(self.headers)
         if proxies:
-            self.session.proxies = proxies
+            self.session.proxies.update(cast(Any, proxies))
 
         # Set cookies on the session
         for name, value in self.cookies.items():
@@ -392,12 +392,8 @@ class PiAI(OpenAICompatibleProvider):
             pass
 
     @property
-    def models(self):
-        """Return available models in OpenAI-compatible format."""
-        class _ModelList:
-            def list(inner_self):
-                return PiAI.AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 
 # Example usage
@@ -434,6 +430,7 @@ if __name__ == "__main__":
     )
 
     if isinstance(response, ChatCompletion):
+        if not isinstance(response, Generator):
         print(response.choices[0].message.content)
         print(f"Usage: {response.usage}")
     else:

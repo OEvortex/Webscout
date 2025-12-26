@@ -11,7 +11,7 @@ from webscout.Provider.OPENAI.base import (
     BaseCompletions,
     FunctionDefinition,
     FunctionParameters,
-    OpenAICompatibleProvider,
+    OpenAICompatibleProvider, SimpleModelList,
     Tool,
     ToolDefinition,
 )
@@ -76,6 +76,7 @@ from webscout.Provider.OPENAI.zenmux import Zenmux
 __all__ = [
     # Base classes and utilities
     "OpenAICompatibleProvider",
+    "SimpleModelList",
     "BaseChat",
     "BaseCompletions",
     "Tool",

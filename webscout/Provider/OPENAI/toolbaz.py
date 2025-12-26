@@ -6,12 +6,12 @@ import string
 import time
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import cast, Any, Dict, Generator, List, Optional, Union
 
 import cloudscraper
 
-from webscout.litagent import LitAgent
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from ...litagent import LitAgent
+from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -400,11 +400,8 @@ class Toolbaz(OpenAICompatibleProvider):
             return None
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 # Example usage
 if __name__ == "__main__":
@@ -417,4 +414,5 @@ if __name__ == "__main__":
             {"role": "user", "content": "Hello! How are you today?"}
         ]
     )
-    print(response.choices[0].message.content)
+    if not isinstance(response, Generator):
+        print(response.choices[0].message.content)

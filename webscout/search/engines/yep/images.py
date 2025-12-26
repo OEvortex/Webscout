@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List
+from typing import Optional, List
 from urllib.parse import urlencode
 
 from webscout.search.results import ImagesResult
@@ -67,8 +67,9 @@ class YepImages(YepBase):
             return formatted_results
 
         except Exception as e:
-            if hasattr(e, 'response') and e.response is not None:
-                 raise Exception(f"Yep image search failed with status {e.response.status_code}: {str(e)}")
+            resp = getattr(e, 'response', None)
+            if resp is not None:
+                 raise Exception(f"Yep image search failed with status {resp.status_code}: {str(e)}")
             else:
                  raise Exception(f"Yep image search failed: {str(e)}")
 

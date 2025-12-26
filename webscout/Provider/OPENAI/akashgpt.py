@@ -2,13 +2,13 @@ import json
 import re
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import cast, Any, Dict, Generator, List, Optional, Union
 
 # Import LitAgent for user agent generation
-from webscout.litagent import LitAgent
+from ...litagent import LitAgent
 
 # Import base classes and utility structures
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -372,11 +372,8 @@ class AkashGPT(OpenAICompatibleProvider):
         self.chat = Chat(self)
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 
 if __name__ == "__main__":
@@ -386,5 +383,6 @@ if __name__ == "__main__":
         model="gpt-4o",
         messages=[{"role": "user", "content": "Hello! How are you?"}]
     )
-    print(response.choices[0].message.content)
+    if not isinstance(response, Generator):
+        print(response.choices[0].message.content)
     print(f"Usage: {response.usage}")

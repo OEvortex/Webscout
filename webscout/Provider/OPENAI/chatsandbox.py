@@ -1,14 +1,14 @@
 import json
 import time
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import cast, Any, Dict, Generator, List, Optional, Union
 
 from curl_cffi.const import CurlHttpVersion
 from curl_cffi.requests import Session
 
 from webscout import exceptions
 from webscout.AIutel import sanitize_stream
-from webscout.litagent import LitAgent
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from ...litagent import LitAgent
+from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -93,7 +93,8 @@ class Completions(BaseCompletions):
         }
         session = Session()
         session.headers.update(headers)
-        session.proxies = proxies if proxies is not None else {}
+        if proxies:
+            session.proxies.update(cast(Any, proxies))
 
         def for_stream():
             try:
@@ -193,11 +194,8 @@ class ChatSandbox(OpenAICompatibleProvider):
     def __init__(self):
         self.chat = Chat(self)
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
     def convert_model_name(self, model: str) -> str:
         if model in self.AVAILABLE_MODELS:
             return model
@@ -218,4 +216,5 @@ if __name__ == "__main__":
         ],
         stream=False
     )
-    print(response.choices[0].message.content)
+    if not isinstance(response, Generator):
+        print(response.choices[0].message.content)

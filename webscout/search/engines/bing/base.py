@@ -25,10 +25,11 @@ class BingBase:
         self.lang = lang
         self.sleep_interval = sleep_interval
         self.base_url = "https://www.bing.com"
+        from typing import Optional, Any, cast
         self.session = Session(
-            proxies=proxies,
+            proxies=cast(Any, proxies),
             verify=verify,
             timeout=timeout,
-            impersonate=impersonate,
+            impersonate=cast(Any, impersonate),
         )
         self.session.headers.update(LitAgent().generate_fingerprint())

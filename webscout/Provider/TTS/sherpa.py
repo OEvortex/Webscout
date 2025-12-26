@@ -6,7 +6,7 @@ import pathlib
 import random
 import string
 import tempfile
-from typing import Optional
+from typing import Union, cast, Any, Generator, Optional
 
 import httpx
 from litprinter import ic
@@ -226,9 +226,37 @@ class SherpaTTS(BaseTTSProvider):
                 ic(f"Error in SherpaTTS: {e}")
             raise exceptions.FailedToGenerateResponseError(f"Failed to generate audio: {e}")
 
-    def create_speech(self, input: str, **kwargs) -> str:
-        """OpenAI-compatible speech creation interface."""
-        return self.tts(text=input, **kwargs)
+    def create_speech(
+        self,
+        input_text: str,
+        model: Optional[str] = "csukuangfj/kokoro-en-v0_19|11 speakers",
+        voice: Optional[str] = None,
+        response_format: Optional[str] = "mp3",
+        instructions: Optional[str] = None,
+        verbose: bool = False,
+        **kwargs: Any
+    ) -> str:
+        """
+        OpenAI-compatible speech creation interface.
+
+        Args:
+            input_text (str): The text to convert to speech
+            model (str): The TTS model to use
+            voice (str): The voice to use (not used by SherpaAI directly)
+            response_format (str): Audio format
+            instructions (str): Voice instructions
+            verbose (bool): Whether to print debug information
+
+        Returns:
+            str: Path to the generated audio file
+        """
+        model_choice = model or "csukuangfj/kokoro-en-v0_19|11 speakers"
+        return self.tts(
+            text=input_text,
+            model_choice=model_choice,
+            response_format=response_format or "mp3",
+            verbose=verbose
+        )
 
     def with_streaming_response(self):
         return StreamingResponseContextManager(self)

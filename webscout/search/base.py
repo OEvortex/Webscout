@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from functools import cached_property
-from typing import Any, Generic, Literal, TypeVar
+from typing import Optional, Any, Generic, Literal, TypeVar
 
 from litprinter import ic
 
@@ -28,7 +28,7 @@ class BaseSearchEngine(ABC, Generic[T]):
     """Abstract base class for all search engine backends."""
 
     name: str  # unique key, e.g. "google"
-    category: Literal["text", "images", "videos", "news", "books"]
+    category: Literal["text", "images", "videos", "news", "books", "suggestions", "weather", "maps", "translate"]
     provider: str  # source of the search results (e.g. "google", "bing", etc.)
     disabled: bool = False  # if True, the engine is disabled
     priority: float = 1

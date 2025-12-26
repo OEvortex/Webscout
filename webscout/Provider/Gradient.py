@@ -3,7 +3,7 @@ Gradient Network Chat API Provider
 Reverse engineered from https://chat.gradient.network/
 """
 
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 import requests
 
@@ -66,7 +66,8 @@ class Gradient(Provider):
 
         self.session = requests.Session()
         if proxies:
-            self.session.proxies = proxies
+            if proxies:
+                self.session.proxies.update(proxies)
 
         # Headers matching the working curl request
         self.headers = {
@@ -93,18 +94,20 @@ class Gradient(Provider):
             for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
-
+        # Conversation setup
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
+
+        act_prompt = (
+            AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
+        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
 
     @staticmethod
     def _gradient_extractor(chunk: Union[str, Dict[str, Any]]) -> Optional[str]:
@@ -204,7 +207,9 @@ class Gradient(Provider):
             try:
                 full_response = ""
                 for chunk in for_stream():
-                    full_response += self.get_message(chunk) if not raw else chunk
+                    content = self.get_message(chunk) if not raw else chunk
+                    if isinstance(content, str):
+                        full_response += content
 
                 self.last_response = {"text": full_response}
                 self.conversation.update_chat_history(prompt, full_response)
@@ -215,33 +220,42 @@ class Gradient(Provider):
 
         return for_stream() if stream else for_non_stream()
 
+    def get_message(self, response: Response) -> str:
+        if not isinstance(response, dict):
+            return str(response)
+        return response.get("text", "")
+
     def chat(
         self,
         prompt: str,
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
+        raw = kwargs.get("raw", False)
         def for_stream_chat():
             gen = self.ask(
-                prompt, stream=True, raw=False,
+                prompt, stream=True, raw=raw,
                 optimizer=optimizer, conversationally=conversationally
             )
             for response_dict in gen:
-                yield self.get_message(response_dict)
+                if raw:
+                    yield response_dict
+                else:
+                    yield self.get_message(cast(Dict[str, Any], response_dict))
 
         def for_non_stream_chat():
             response_data = self.ask(
-                prompt, stream=False, raw=False,
+                prompt, stream=False, raw=raw,
                 optimizer=optimizer, conversationally=conversationally
             )
-            return self.get_message(response_data)
+            if raw:
+                return cast(str, response_data)
+            else:
+                return self.get_message(cast(Dict[str, Any], response_data))
 
         return for_stream_chat() if stream else for_non_stream_chat()
-
-    def get_message(self, response: dict) -> str:
-        assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response.get("text", "")
 
 
 if __name__ == "__main__":

@@ -61,8 +61,8 @@ class YTTranscriber:
     @classmethod
     @lru_cache(maxsize=100)
     def get_transcript(cls, video_url: str, languages: Optional[str] = 'en',
-                      proxies: Dict[str, str] = None,
-                      cookies: str = None,
+                      proxies: Optional[Dict[str, str]] = None,
+                      cookies: Optional[str] = None,
                       preserve_formatting: bool = False) -> List[Dict[str, Union[str, float]]]:
         """
         Retrieves the transcript for a given YouTube video URL.
@@ -121,7 +121,7 @@ class YTTranscriber:
         raise InvalidVideoIdError(video_url)
 
     @staticmethod
-    def _load_cookies(cookies: str, video_id: str) -> None:
+    def _load_cookies(cookies: str, video_id: str) -> cookiejar.MozillaCookieJar:
         """Loads cookies from a file."""
         try:
             cj = cookiejar.MozillaCookieJar(cookies)

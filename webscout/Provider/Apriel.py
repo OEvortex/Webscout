@@ -4,7 +4,7 @@ A class to interact with the Apriel Gradio chat API (servicenow-ai-apriel-chat.h
 This provider integrates the Apriel chat model into the Webscout framework.
 """
 import time
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
@@ -86,19 +86,19 @@ class Apriel(Provider):
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies
+        if proxies:
+            self.session.proxies.update(proxies)
 
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
+
+        if act:
+            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
+            ) or self.conversation.intro
+        elif intro:
+            self.conversation.intro = intro
 
     def _get_session_hash(self) -> str:
         """Generate or get a session hash for the Gradio API."""
@@ -248,7 +248,7 @@ class Apriel(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        raw: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """
         Generates a response from the Apriel API.
@@ -258,12 +258,12 @@ class Apriel(Provider):
             stream (bool): Whether to stream the response.
             optimizer (str): Optimizer to use for the prompt.
             conversationally (bool): Whether to generate the prompt conversationally.
-            raw (bool): Whether to return raw response chunks.
+            **kwargs: Additional parameters including raw.
 
         Returns:
             str: The API response.
         """
-
+        raw = kwargs.get("raw", False)
         def for_stream():
             for response in self.ask(
                 prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
@@ -282,7 +282,7 @@ class Apriel(Provider):
                 conversationally=conversationally,
             )
             if raw:
-                return result
+                return cast(str, result)
             else:
                 return self.get_message(result)
 

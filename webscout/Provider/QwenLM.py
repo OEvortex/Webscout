@@ -1,6 +1,6 @@
 import json
 import uuid
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import Session
 
@@ -101,7 +101,8 @@ class QwenLM(Provider):
         }
         self.session.headers.update(self.headers)
         self.session.cookies.update(self.cookies_dict)
-        self.session.proxies = proxies
+        if proxies:
+            self.session.proxies.update(proxies)
         self.chat_type = "t2t"  # search - used WEB, t2t - chatbot, t2i - image_gen
 
         self.__available_optimizers = (
@@ -110,17 +111,16 @@ class QwenLM(Provider):
             if callable(getattr(Optimizers, method))
             and not method.startswith("__")
         )
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
+
+        if act:
+            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
+            ) or self.conversation.intro
+        elif intro:
+            self.conversation.intro = intro
 
     def _load_cookies(self) -> tuple[dict, str]:
         """Load cookies from a JSON file and build a cookie dict."""
@@ -261,8 +261,8 @@ class QwenLM(Provider):
         prompt: str,
         stream: bool = False,
         optimizer: Optional[str] = None,
-        raw: bool = False,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """
         Generates a chat response from the QwenLM API.
@@ -271,10 +271,8 @@ class QwenLM(Provider):
             prompt: The prompt to send to the API
             stream: Whether to stream the response
             optimizer: Optional prompt optimizer name
-            raw: If True, returns unprocessed response chunks without any
-                processing or sanitization. Useful for debugging or custom
-                processing pipelines. Defaults to False.
             conversationally: Whether to use conversation context
+            **kwargs: Additional parameters including raw.
 
         Returns:
             When raw=False: Extracted message string or Generator yielding strings
@@ -294,20 +292,20 @@ class QwenLM(Provider):
             >>> for chunk in ai.chat("Hello", stream=True, raw=True):
             ...     print(chunk, end='', flush=True)
         """
-
+        raw = kwargs.get("raw", False)
         def for_stream() -> Generator[str, None, None]:
             for response in self.ask(prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally):
                 if raw:
-                    yield response
+                    yield cast(str, response)
                 else:
-                    yield response["text"]
+                    yield cast(Dict[str, Any], response)["text"]
 
         def for_non_stream() -> str:
             result = self.ask(prompt, False, raw=raw, optimizer=optimizer, conversationally=conversationally)
             if raw:
-                return result
+                return cast(str, result)
             else:
-                return self.get_message(result)
+                return self.get_message(cast(Dict[str, Any], result))
 
         return for_stream() if stream else for_non_stream()
 

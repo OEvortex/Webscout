@@ -10,7 +10,7 @@ def option(
     type: Any = str,
     required: bool = False,
     default: Any = _NO_DEFAULT,
-    help: str = None,
+    help: Optional[str] = None,
     is_flag: bool = False,
     multiple: bool = False,
     count: bool = False,
@@ -97,7 +97,7 @@ def envvar(
     type: Any = str,
     required: bool = False,
     default: Any = None,
-    help: str = None
+    help: Optional[str] = None
 ) -> Callable:
     """
     Decorator to load option value from environment variable.
@@ -132,8 +132,8 @@ def envvar(
     return decorator
 
 def config_file(
-    path: str = None,
-    section: str = None,
+    path: Optional[str] = None,
+    section: Optional[str] = None,
     required: bool = False,
     auto_create: bool = True,
     format: str = 'json'
@@ -173,10 +173,10 @@ def config_file(
     return decorator
 
 def version_option(
-    version: str = None,
-    prog_name: str = None,
-    message: str = None,
-    package_name: str = None
+    version: Optional[str] = None,
+    prog_name: Optional[str] = None,
+    message: Optional[str] = None,
+    package_name: Optional[str] = None
 ) -> Callable:
     """
     Decorator to add version option to command.
@@ -206,7 +206,7 @@ def version_option(
 
 def help_option(
     param_decls: List[str] = None,
-    help: str = None
+    help: Optional[str] = None
 ) -> Callable:
     """
     Decorator to customize help option.

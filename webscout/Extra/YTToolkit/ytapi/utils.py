@@ -6,6 +6,8 @@ from webscout.litagent import LitAgent
 
 from .errors import InvalidURL, RequestError, TooManyRequests
 
+from typing import Optional
+
 __all__ = ['dup_filter', 'request']
 
 
@@ -50,9 +52,11 @@ def request(url: str, retry_attempts: int = 3) -> str:
         except Exception as e:
             if attempt == retry_attempts - 1:
                 raise RequestError(f'Request failed: {e!r}') from None
+    
+    raise RequestError(f"Request to {url} failed after {retry_attempts} attempts")
 
 
-def dup_filter(iterable: list, limit: int = None) -> list:
+def dup_filter(iterable: list, limit: Optional[int] = None) -> list:
     if not iterable:
         return []
     lim = limit if limit else len(iterable)

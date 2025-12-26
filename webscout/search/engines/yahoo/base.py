@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from secrets import token_urlsafe
-from typing import Generic, TypeVar
+from typing import Optional, Generic, TypeVar
 
 from ...base import BaseSearchEngine
 

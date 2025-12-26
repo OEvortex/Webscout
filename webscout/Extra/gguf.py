@@ -118,7 +118,7 @@ class ModelConverter:
         self.workspace = Path(os.getcwd())
         self.use_imatrix = use_imatrix
         self.train_data_file = train_data_file
-        self.split_model = split_model
+        self.use_split = split_model
         self.split_max_tensors = split_max_tensors
         self.split_max_size = split_max_size
         # New llama.cpp options
@@ -163,7 +163,7 @@ class ModelConverter:
                 f"Valid types are: {', '.join(self.VALID_OUTTYPES)}"
             )
 
-        if self.split_model and self.split_max_size:
+        if self.use_split and self.split_max_size:
             try:
                 # Support K, M, G units (like llama.cpp's split_str_to_n_bytes)
                 if self.split_max_size[-1].upper() in ['K', 'M', 'G']:
@@ -853,8 +853,8 @@ python -m webscout.Extra.gguf convert \\
     -q "{','.join(self.quantization_methods)}" \\
     {f'-i' if self.use_imatrix else ''} \\
     {f'--train-data "{self.train_data_file}"' if self.train_data_file else ''} \\
-    {f'-s' if self.split_model else ''} \\
-    {f'--split-max-tensors {self.split_max_tensors}' if self.split_model else ''} \\
+    {f'-s' if self.use_split else ''} \\
+    {f'--split-max-tensors {self.split_max_tensors}' if self.use_split else ''} \\
     {f'--split-max-size {self.split_max_size}' if self.split_max_size else ''}
 ```
 
@@ -974,7 +974,6 @@ This repository is licensed under the same terms as the original model.
             api.snapshot_download(
                 repo_id=self.model_id,
                 local_dir=local_dir,
-                local_dir_use_symlinks=False,
                 allow_patterns=["LICENSE", "*.json", "*.md", "*.txt", "tokenizer.model"]
             )
         else:
@@ -983,7 +982,6 @@ This repository is licensed under the same terms as the original model.
             api.snapshot_download(
                 repo_id=self.model_id,
                 local_dir=local_dir,
-                local_dir_use_symlinks=False
             )
 
         # Convert to GGUF with specified outtype
@@ -1027,7 +1025,7 @@ This repository is licensed under the same terms as the original model.
             convert_cmd.extend(["--remote"])
         if self.model_name:
             convert_cmd.extend(["--model-name", self.model_name])
-        if self.split_model:
+        if self.use_split:
             if self.split_max_tensors > 0:
                 convert_cmd.extend(["--split-max-tensors", str(self.split_max_tensors)])
             if self.split_max_size:
@@ -1089,6 +1087,7 @@ This repository is licensed under the same terms as the original model.
         console.print("[bold green]Quantizing model...")
         quantized_files: List[str] = []
         quantize_binary = self.get_binary_path("llama-quantize")
+        quantized_path = ""
 
         if not os.path.isfile(quantize_binary):
             raise ConversionError(f"llama-quantize binary not found at: {quantize_binary}")
@@ -1142,8 +1141,8 @@ This repository is licensed under the same terms as the original model.
             self.upload_readme(readme_content, repo_id)
 
             # Step 3: Upload model GGUF files
-            console.print("[bold blue]Step 3: Uploading model files")
-            if self.split_model:
+            console.print("[bold blue]Step 3: Upload model files")
+            if self.use_split:
                 split_files = self.split_model(quantized_path, outdir)
                 self.upload_split_files(split_files, outdir, repo_id)
             else:

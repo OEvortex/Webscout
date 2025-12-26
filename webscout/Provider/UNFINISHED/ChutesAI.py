@@ -4,7 +4,7 @@ import re
 import string
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import cast, Any, Dict, Generator, List, Optional, Union
 
 import cloudscraper
 import requests
@@ -13,7 +13,7 @@ from rich import print
 from webscout.litagent.agent import LitAgent
 
 # Import base classes and utility structures
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -263,7 +263,7 @@ class ChutesAI(OpenAICompatibleProvider):
         "NousResearch/DeepHermes-3-Mistral-24B-Preview",
         "chutesai/Llama-4-Maverick-17B-128E-Instruct-FP8",
     ]
-    def __init__(self, api_key: str = None,):
+    def __init__(self, api_key: Optional[str] = None,):
         self.timeout = None  # Infinite timeout
         self.base_url = "https://llm.chutes.ai/v1/chat/completions"
 
@@ -290,11 +290,8 @@ class ChutesAI(OpenAICompatibleProvider):
         self.chat = Chat(self)
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 if __name__ == "__main__":
     try:

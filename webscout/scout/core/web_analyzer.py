@@ -2,7 +2,7 @@
 Scout Web Analyzer Module
 """
 
-from typing import Any, Dict
+from typing import Optional, Any, Dict
 
 from ..element import Tag
 

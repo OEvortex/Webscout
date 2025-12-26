@@ -7,8 +7,8 @@ from ..core.context import Context
 
 
 def command(
-    name: str = None,
-    help: str = None,
+    name: Optional[str] = None,
+    help: Optional[str] = None,
     aliases: List[str] = None,
     hidden: bool = False
 ) -> Callable:
@@ -45,8 +45,8 @@ def command(
     return decorator
 
 def group(
-    name: str = None,
-    help: str = None,
+    name: Optional[str] = None,
+    help: Optional[str] = None,
     chain: bool = False,
     invoke_without_command: bool = False
 ) -> Callable:
@@ -146,7 +146,7 @@ def argument(
     name: str,
     type: Any = str,
     required: bool = True,
-    help: str = None,
+    help: Optional[str] = None,
     default: Any = None,
     validation: Optional[Dict[str, Any]] = None,
     mutually_exclusive: Optional[List[str]] = None
@@ -192,7 +192,7 @@ def argument(
 
 def flag(
     name: str,
-    help: str = None,
+    help: Optional[str] = None,
     hidden: bool = False
 ) -> Callable:
     """

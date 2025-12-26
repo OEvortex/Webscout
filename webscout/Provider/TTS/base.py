@@ -4,7 +4,7 @@ Base class for TTS providers with OpenAI-compatible functionality.
 import os
 import tempfile
 from pathlib import Path
-from typing import Generator
+from typing import Union, cast, Any, Generator, List, Optional
 
 from litprinter import ic
 
@@ -105,7 +105,7 @@ class BaseTTSProvider(TTSProvider):
             raise ValueError(f"Format '{response_format}' not supported. Available formats: {', '.join(self.SUPPORTED_FORMATS)}")
         return response_format
 
-    def save_audio(self, audio_file: str, destination: str = None, verbose: bool = False) -> str:
+    def save_audio(self, audio_file: str, destination: Optional[str] = None, verbose: bool = False) -> str:
         """
         Save audio to a specific destination.
 
@@ -148,10 +148,10 @@ class BaseTTSProvider(TTSProvider):
     def create_speech(
         self,
         input_text: str,
-        model: str = None,
-        voice: str = None,
-        response_format: str = None,
-        instructions: str = None,
+        model: Optional[str] = None,
+        voice: Optional[str] = None,
+        response_format: Optional[str] = None,
+        instructions: Optional[str] = None,
         verbose: bool = False
     ) -> str:
         """
@@ -191,10 +191,10 @@ class BaseTTSProvider(TTSProvider):
     def stream_audio(
         self,
         input_text: str,
-        model: str = None,
-        voice: str = None,
-        response_format: str = None,
-        instructions: str = None,
+        model: Optional[str] = None,
+        voice: Optional[str] = None,
+        response_format: Optional[str] = None,
+        instructions: Optional[str] = None,
         chunk_size: int = 1024,
         verbose: bool = False
     ) -> Generator[bytes, None, None]:
@@ -340,7 +340,7 @@ class AsyncBaseTTSProvider:
             raise ValueError(f"Format '{response_format}' not supported. Available formats: {', '.join(self.SUPPORTED_FORMATS)}")
         return response_format
 
-    async def save_audio(self, audio_file: str, destination: str = None, verbose: bool = False) -> str:
+    async def save_audio(self, audio_file: str, destination: Optional[str] = None, verbose: bool = False) -> str:
         """
         Save audio to a specific destination asynchronously.
 
@@ -384,10 +384,10 @@ class AsyncBaseTTSProvider:
     async def create_speech(
         self,
         input_text: str,
-        model: str = None,
-        voice: str = None,
-        response_format: str = None,
-        instructions: str = None,
+        model: Optional[str] = None,
+        voice: Optional[str] = None,
+        response_format: Optional[str] = None,
+        instructions: Optional[str] = None,
         verbose: bool = False
     ) -> str:
         """
@@ -427,10 +427,10 @@ class AsyncBaseTTSProvider:
     async def stream_audio(
         self,
         input_text: str,
-        model: str = None,
-        voice: str = None,
-        response_format: str = None,
-        instructions: str = None,
+        model: Optional[str] = None,
+        voice: Optional[str] = None,
+        response_format: Optional[str] = None,
+        instructions: Optional[str] = None,
         chunk_size: int = 1024,
         verbose: bool = False
     ):

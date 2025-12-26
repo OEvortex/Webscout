@@ -7,7 +7,7 @@ try:
 except ImportError:
     pass  # trio is optional, ignore if not available
 import json
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 import curl_cffi
 from curl_cffi.requests import Session
@@ -137,20 +137,29 @@ class Cerebras(Provider):
         )
 
         # Initialize conversation settings
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default="You are a helpful assistant.", case_insensitive=True
-            )
-            if act
-            else "You are a helpful assistant."
-        )
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
 
+        if act:
+            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
+            ) or self.conversation.intro
+        elif intro:
+            self.conversation.intro = intro
+
+        # Set headers for the session
+        self.headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "User-Agent": UserAgent().random(),
+        }
+
         # Apply proxies to the session
-        self.session.proxies = proxies
+        self.session.headers.update(self.headers)
+        if proxies:
+            self.session.proxies.update(cast(Any, proxies))
+        self.last_response = None
 
     # Rest of the class implementation remains the same...
     @staticmethod
@@ -172,7 +181,7 @@ class Cerebras(Provider):
             return chunk.get("choices", [{}])[0].get("delta", {}).get("content")
         return None
 
-    def get_demo_api_key(self, cookie_path: str = None) -> str: # Keep this using requests or switch to curl_cffi
+    def get_demo_api_key(self, cookie_path: Optional[str] = None) -> str: # Keep this using requests or switch to curl_cffi
         """Retrieves the demo API key using the provided cookie."""
         if not cookie_path:
             raise ValueError("cookie_path must be provided when using cookie-based authentication")
@@ -343,27 +352,27 @@ class Cerebras(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        raw: bool = False,
         **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """Chat with the model."""
+        raw = kwargs.get("raw", False)
         # Ask returns a generator for stream=True, dict/str for stream=False
-        response_gen_or_dict = self.ask(prompt, stream, raw=raw, optimizer=optimizer, conversationally=conversationally)
+        response_gen_or_dict = self.ask(prompt, stream, raw=raw, optimizer=optimizer, conversationally=conversationally, **kwargs)
 
         if stream:
             # Wrap the generator from ask() to get message text
             def stream_wrapper():
                 for chunk in response_gen_or_dict:
                     if raw:
-                        yield chunk
+                        yield cast(str, chunk)
                     else:
-                        yield self.get_message(chunk)
+                        yield self.get_message(cast(Response, chunk))
             return stream_wrapper()
         else:
             # Non-streaming response
             if raw:
-                return response_gen_or_dict
-            return self.get_message(response_gen_or_dict)
+                return cast(str, response_gen_or_dict)
+            return self.get_message(cast(Response, response_gen_or_dict))
 
     def get_message(self, response: Response) -> str:
         """Retrieves message from response."""

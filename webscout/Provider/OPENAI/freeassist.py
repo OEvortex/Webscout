@@ -1,11 +1,11 @@
 import json
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import cast, Any, Dict, Generator, List, Optional, Union
 
 import requests
 
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -15,10 +15,7 @@ from webscout.Provider.OPENAI.utils import (
     CompletionUsage,
 )
 
-try:
-    from webscout.litagent import LitAgent
-except ImportError:
-    pass
+from ...litagent import LitAgent
 
 
 class Completions(BaseCompletions):
@@ -382,17 +379,13 @@ class FreeAssist(OpenAICompatibleProvider):
 
         self.session.headers.update(self.headers)
         if proxies:
-            self.session.proxies.update(proxies)
+            self.session.proxies.update(cast(Any, proxies))
 
         self.chat = Chat(self)
 
     @property
-    def models(self):
-        """Return available models."""
-        class _ModelList:
-            def list(inner_self):
-                return FreeAssist.AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 
 if __name__ == "__main__":

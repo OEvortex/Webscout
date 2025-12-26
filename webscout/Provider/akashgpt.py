@@ -1,6 +1,6 @@
 import re
 import time
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 from uuid import uuid4
 
 import cloudscraper
@@ -129,18 +129,20 @@ class AkashGPT(Provider):
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
         self.session.headers.update(self.headers)
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
+        act_prompt = (
+            AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
+        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
-        self.session.proxies = proxies
+        if proxies:
+            self.session.proxies.update(cast(Any, proxies))
 
     @staticmethod
     def _akash_extractor(chunk: Union[str, Dict[str, Any]]) -> Optional[str]:
@@ -296,24 +298,9 @@ class AkashGPT(Provider):
 
         return for_stream() if stream else for_non_stream()
 
-    def get_message(self, response: dict) -> str:
-        """
-        Extracts the message from the API response.
-
-        Args:
-            response (dict): The API response.
-
-        Returns:
-            str: The message content.
-
-        Examples:
-            >>> ai = AkashGPT()
-            >>> response = ai.ask("Tell me a joke!")
-            >>> message = ai.get_message(response)
-            >>> print(message)
-            'Why did the scarecrow win an award? Because he was outstanding in his field!'
-        """
-        assert isinstance(response, dict), "Response should be of dict data-type only"
+    def get_message(self, response: Response) -> str:
+        if not isinstance(response, dict):
+            return str(response)
         return response.get("text", "")
 
 if __name__ == "__main__":

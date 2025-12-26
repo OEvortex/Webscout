@@ -6,6 +6,7 @@ import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from io import BytesIO
+from typing import Union, cast, Any, Generator, Optional
 
 import requests
 from litprinter import ic
@@ -256,19 +257,20 @@ class SpeechMaTTS(BaseTTSProvider):
 
     def create_speech(
         self,
-        input: str,
-        voice: str = "emma",
-        model: str = None,
-        response_format: str = "mp3",
+        input_text: str,
+        model: Optional[str] = "gpt-4o-mini-tts",
+        voice: Optional[str] = "emma",
+        response_format: Optional[str] = "mp3",
         speed: float = 1.0,
-        instructions: str = None,
-        **kwargs
-    ) -> bytes:
+        instructions: Optional[str] = None,
+        verbose: bool = False,
+        **kwargs: Any
+    ) -> str:
         """
         Create speech from text using OpenAI-compatible interface.
 
         Args:
-            input (str): The text to convert to speech
+            input_text (str): The text to convert to speech
             voice (str): Voice to use for generation
             model (str): TTS model to use
             response_format (str): Audio format (mp3, opus, aac, flac, wav, pcm)
@@ -277,64 +279,22 @@ class SpeechMaTTS(BaseTTSProvider):
             **kwargs: Additional parameters (pitch, rate for SpeechMa compatibility)
 
         Returns:
-            bytes: Audio data
+            str: Path to the generated audio file
 
         Raises:
             ValueError: If input parameters are invalid
             exceptions.FailedToGenerateResponseError: If generation fails
         """
-        # Validate parameters
-        if not input or not isinstance(input, str):
-            raise ValueError("Input text must be a non-empty string")
-        if len(input) > 10000:
-            raise ValueError("Input text exceeds maximum allowed length of 10,000 characters")
-
-        model = self.validate_model(model or self.default_model)
-        voice = self.validate_voice(voice)
-        response_format = self.validate_format(response_format)
-
-        # Convert speed to SpeechMa rate parameter
-        rate = int((speed - 1.0) * 10)  # Convert 0.25-4.0 to -7.5 to 30, clamp to -10 to 10
-        rate = max(-10, min(10, rate))
-
-        # Extract SpeechMa-specific parameters
-        pitch = kwargs.get('pitch', 0)
-
-        # Map voice to SpeechMa format
-        speechma_voice = self.voice_mapping.get(voice, self.all_voices.get(voice.title(), "voice-116"))
-
-        # Prepare payload
-        payload = {
-            "text": input,
-            "voice": speechma_voice,
-            "pitch": pitch,
-            "rate": rate,
-            "volume": 100
-        }
-
-        try:
-            response = self.session.post(
-                self.api_url,
-                headers=self.headers,
-                json=payload,
-                timeout=self.timeout
-            )
-            response.raise_for_status()
-
-            # Validate audio response
-            content_type = response.headers.get('content-type', '').lower()
-            if ('audio' in content_type or
-                response.content.startswith(b'\xff\xfb') or
-                response.content.startswith(b'ID3') or
-                b'LAME' in response.content[:100]):
-                return response.content
-            else:
-                raise exceptions.FailedToGenerateResponseError(
-                    f"Unexpected response format. Content-Type: {content_type}"
-                )
-
-        except requests.exceptions.RequestException as e:
-            raise exceptions.FailedToGenerateResponseError(f"API request failed: {e}")
+        return self.tts(
+            text=input_text,
+            voice=voice or "emma",
+            model=model or "gpt-4o-mini-tts",
+            response_format=response_format or "mp3",
+            instructions=instructions,
+            pitch=kwargs.get('pitch', 0),
+            rate=kwargs.get('rate', 0),
+            verbose=verbose
+        )
 
     def with_streaming_response(self):
         """
@@ -348,10 +308,10 @@ class SpeechMaTTS(BaseTTSProvider):
     def tts(
         self,
         text: str,
-        model: str = None,
+        model: Optional[str] = None,
         voice: str = "emma",
         response_format: str = "mp3",
-        instructions: str = None,
+        instructions: Optional[str] = None,
         pitch: int = 0,
         rate: int = 0,
         verbose: bool = True
@@ -524,13 +484,13 @@ class SpeechMaStreamingResponse:
 
     def create_speech(
         self,
-        input: str,
-        voice: str = "emma",
-        model: str = "gpt-4o-mini-tts",
-        response_format: str = "mp3",
+        input_text: str,
+        voice: Optional[str] = "emma",
+        model: Optional[str] = "gpt-4o-mini-tts",
+        response_format: Optional[str] = "mp3",
         speed: float = 1.0,
-        instructions: str = None,
-        **kwargs
+        instructions: Optional[str] = None,
+        **kwargs: Any
     ):
         """
         Create speech with streaming response simulation.
@@ -539,7 +499,7 @@ class SpeechMaStreamingResponse:
         the complete audio data wrapped in a BytesIO object.
 
         Args:
-            input (str): Text to convert to speech
+            input_text (str): Text to convert to speech
             voice (str): Voice to use
             model (str): TTS model
             response_format (str): Audio format
@@ -550,8 +510,8 @@ class SpeechMaStreamingResponse:
         Returns:
             BytesIO: Audio data stream
         """
-        audio_data = self.client.create_speech(
-            input=input,
+        audio_file = self.client.create_speech(
+            input_text=input_text,
             voice=voice,
             model=model,
             response_format=response_format,
@@ -559,7 +519,8 @@ class SpeechMaStreamingResponse:
             instructions=instructions,
             **kwargs
         )
-        return BytesIO(audio_data)
+        with open(audio_file, 'rb') as f:
+            return BytesIO(f.read())
 
 
 # Example usage and testing
@@ -579,13 +540,18 @@ if __name__ == "__main__":
     # Example 2: OpenAI-compatible interface
     print("\n=== Example 2: OpenAI-compatible interface ===")
     try:
-        audio_data = speechma.create_speech(
-            input="This demonstrates the OpenAI-compatible interface.",
+        audio_file_path = speechma.create_speech(
+            input_text="This demonstrates the OpenAI-compatible interface.",
             voice="brian",
             model="tts-1-hd",
             response_format="mp3",
             speed=1.2
         )
+        print(f"Generated audio file at: {audio_file_path}")
+
+        # Read the file to get bytes for the example
+        with open(audio_file_path, "rb") as f:
+            audio_data = f.read()
         print(f"Generated {len(audio_data)} bytes of audio data")
 
         # Save to file
@@ -600,7 +566,7 @@ if __name__ == "__main__":
     try:
         with speechma.with_streaming_response() as streaming:
             audio_stream = streaming.create_speech(
-                input="This demonstrates streaming response handling.",
+                input_text="This demonstrates streaming response handling.",
                 voice="aria",
                 model="gpt-4o-mini-tts"
             )

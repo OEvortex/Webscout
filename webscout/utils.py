@@ -10,9 +10,11 @@ from .exceptions import WebscoutE
 try:
     HAS_ORJSON = True
     import orjson
+    import json
 except ImportError:
     HAS_ORJSON = False
     import json
+    orjson = None # type: ignore
 
 REGEX_STRIP_TAGS = re.compile("<.*?>")
 
@@ -22,18 +24,18 @@ def _expand_proxy_tb_alias(proxy: Optional[str]) -> Optional[str]:
 
 def json_dumps(obj: Any) -> str:
     try:
-        return (
-            orjson.dumps(obj, option=orjson.OPT_INDENT_2).decode()
-            if HAS_ORJSON
-            else json.dumps(obj, ensure_ascii=False, indent=2)
-        )
+        if HAS_ORJSON and orjson is not None:
+            return orjson.dumps(obj, option=orjson.OPT_INDENT_2).decode()
+        return json.dumps(obj, ensure_ascii=False, indent=2)
     except Exception as ex:
         raise WebscoutE(f"{type(ex).__name__}: {ex}") from ex
 
 
 def json_loads(obj: Union[str, bytes]) -> Any:
     try:
-        return orjson.loads(obj) if HAS_ORJSON else json.loads(obj)
+        if HAS_ORJSON and orjson is not None:
+            return orjson.loads(obj)
+        return json.loads(obj)
     except Exception as ex:
         raise WebscoutE(f"{type(ex).__name__}: {ex}") from ex
 

@@ -2,6 +2,45 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026.01.01] - 2026-01-01
+
+### ✨ Added
+- **feat**: webscout/AIbase.py - Added `ModelList` abstract class and `SimpleModelList` implementation for standardized model list management across providers
+- **feat**: webscout/AIbase.py - Enhanced `Response` type alias to include `str` type for better type safety
+- **feat**: webscout/AIbase.py - Added `required_auth` attribute to `Provider` base class for authentication requirement tracking
+- **feat**: webscout/AIbase.py - Enhanced `TTSProvider.stream_audio()` method with additional parameters: `model`, `response_format`, and `instructions` for more flexible audio generation
+- **feat**: webscout/AIauto.py - Added `last_response` setter property for better response management in AUTO provider
+- **feat**: AGENTS.md - Added comprehensive AI agent instructions with detailed guidance for code modifications, provider patterns, and development workflows
+
+### 🐛 Fixed
+- **fix**: webscout/Provider/QwenLM.py - Fixed proxy handling to only update proxies when provided, preventing None value assignments
+- **fix**: webscout/Provider/QwenLM.py - Fixed conversation intro handling to properly apply AwesomePrompts acts when specified
+- **fix**: webscout/Provider/QwenLM.py - Moved `raw` parameter from method signature to `**kwargs` for consistency with provider patterns
+- **fix**: webscout/AIauto.py - Fixed provider initialization to use separate variable before assignment, improving error handling
+- **fix**: webscout/AIauto.py - Fixed type hints to use proper `Optional` types for nullable attributes
+
+### 🔧 Improved
+- **refactor**: webscout/AIbase.py - Converted `last_response` from simple attribute to property with getter/setter for better encapsulation
+- **refactor**: webscout/AIbase.py - Updated `Provider` base class with proper type hints for `conversation` and `last_response` attributes
+- **refactor**: Comprehensive type hint improvements across 200+ provider files with proper `Optional`, `Union`, and `Dict` type annotations
+- **refactor**: webscout/Provider/ - Standardized parameter handling across all providers with consistent `**kwargs` usage
+- **refactor**: webscout/Provider/OPENAI/ - Updated all OpenAI-compatible providers with improved type hints and parameter validation
+- **refactor**: webscout/Provider/AISEARCH/ - Standardized `raw` parameter handling in search providers
+- **refactor**: webscout/Provider/TTS/ - Enhanced all TTS providers with improved `stream_audio()` method signatures and type hints
+- **refactor**: webscout/Provider/TTI/ - Improved type hints and parameter handling in TTI providers
+- **refactor**: webscout/Extra/GitToolkit/ - Updated GitToolkit API classes with better type hints and method signatures
+- **refactor**: webscout/Extra/YTToolkit/ - Enhanced YTToolkit classes with improved type hints and error handling
+- **refactor**: webscout/Extra/tempmail/ - Improved tempmail providers with better type annotations
+- **refactor**: webscout/Extra/gguf.py - Updated GGUF converter with improved type hints
+- **refactor**: webscout/search/ - Enhanced search engine classes with better type hints
+- **refactor**: webscout/server/ - Updated server components with improved type safety
+- **refactor**: webscout/swiftcli/ - Enhanced CLI decorators with better type annotations
+- **refactor**: webscout/update_checker.py - Improved update checking logic with better error handling
+
+### 📝 Documentation
+- **docs**: AGENTS.md - Added comprehensive development guide covering provider patterns, CLI commands, logging, error handling, release notes, and testing guidelines
+- **docs**: Provider.md - Updated provider documentation with new models and improved descriptions
+
 ## [2025.12.23] - 2025-12-23
 
 ### ✨ Added

@@ -1,5 +1,5 @@
 import json
-from typing import Any, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 import requests
 
@@ -61,18 +61,18 @@ class KOBOLDAI(Provider):
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
         self.session.headers.update(self.headers)
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
-        self.session.proxies = proxies
+
+        if act:
+            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
+            ) or self.conversation.intro
+        elif intro:
+            self.conversation.intro = intro
+        if proxies:
+            self.session.proxies.update(proxies)
 
     def ask(
         self,
@@ -161,6 +161,7 @@ class KOBOLDAI(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """Generate response `str`
         Args:
@@ -168,25 +169,32 @@ class KOBOLDAI(Provider):
             stream (bool, optional): Flag for streaming response. Defaults to False.
             optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
             conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
+            **kwargs: Additional parameters including raw.
         Returns:
             str: Response generated
         """
-
+        raw = kwargs.get("raw", False)
         def for_stream():
             for response in self.ask(
-                prompt, True, optimizer=optimizer, conversationally=conversationally
+                prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
             ):
-                yield self.get_message(response)
+                if raw:
+                    yield cast(str, response)
+                else:
+                    yield self.get_message(cast(Response, response))
 
         def for_non_stream():
-            return self.get_message(
-                self.ask(
-                    prompt,
-                    False,
-                    optimizer=optimizer,
-                    conversationally=conversationally,
-                )
+            result = self.ask(
+                prompt,
+                False,
+                raw=raw,
+                optimizer=optimizer,
+                conversationally=conversationally,
             )
+            if raw:
+                return cast(str, result)
+            else:
+                return self.get_message(cast(Response, result))
 
         return for_stream() if stream else for_non_stream()
 

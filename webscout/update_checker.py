@@ -16,6 +16,14 @@ try:
     from rich.text import Text
     HAS_RICH = True
 except ImportError:
+    class _Dummy:
+        def __init__(self, *args, **kwargs): pass
+        def print(self, *args, **kwargs): pass
+        @staticmethod
+        def assemble(*args, **kwargs): return ""
+    Console = _Dummy # type: ignore
+    Panel = _Dummy # type: ignore
+    Text = _Dummy # type: ignore
     HAS_RICH = False
 
 # Constants
@@ -215,13 +223,16 @@ def check_for_updates(force: bool = False) -> Optional[str]:
         pypi = get_pypi_versions()
         mark_checked() # Mark even if it fails or no update, to avoid constant hitting
 
-        if not pypi['stable']:
+        stable_ver = pypi.get('stable')
+        latest_ver = pypi.get('latest')
+
+        if not stable_ver or not latest_ver:
             return None
 
-        latest_stable_str = pypi['stable']
+        latest_stable_str = stable_ver
         latest_stable_v = version.parse(latest_stable_str)
 
-        latest_any_str = pypi['latest']
+        latest_any_str = latest_ver
         latest_any_v = version.parse(latest_any_str)
 
         # Decide what to recommend

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import warnings
 from random import shuffle
+from typing import Optional
 
 from ....exceptions import WebscoutE
 from ....search.results import TextResult
@@ -168,6 +169,8 @@ class DuckDuckGoTextSearch(DuckDuckGoBase):
             if not isinstance(elements, list):
                 return []
 
+            href: Optional[str] = None
+            title: str = ""
             data = zip(self.cycle(range(1, 5)), elements)
             for i, e in data:
                 if isinstance(e, self.parser.etree.Element):

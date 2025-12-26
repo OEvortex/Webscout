@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Optional, Any, Dict, List
 
 from .utils import request
 

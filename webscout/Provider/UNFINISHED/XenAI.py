@@ -2,7 +2,7 @@ import random
 import string
 import uuid
 import warnings
-from typing import Any, Dict, Generator, Union
+from typing import Optional, cast, Any, Dict, Generator, Union
 
 import requests
 import urllib3
@@ -53,12 +53,12 @@ class XenAI(Provider):
         is_conversation: bool = True,
         max_tokens: int = 2048,
         timeout: int = 60,
-        intro: str = None,
-        filepath: str = None,
+        intro: Optional[str] = None,
+        filepath: Optional[str] = None,
         update_file: bool = True,
         proxies: dict = {},
         history_offset: int = 10250,
-        act: str = None,
+        act: Optional[str] = None,
         model: str = "gemini-2.5-pro-preview-05-06",
         system_prompt: str = "You are a helpful assistant.",
     ):
@@ -100,16 +100,17 @@ class XenAI(Provider):
             if callable(getattr(Optimizers, method))
             and not method.startswith("__")
         )
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
+        act_prompt = (
+            AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
+        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
 
         # Token handling: always auto-fetch token, no cookies logic
@@ -166,7 +167,7 @@ class XenAI(Provider):
         prompt: str,
         stream: bool = False,
         raw: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
         **kwargs
     ) -> Union[Dict[str, Any], Generator]:
@@ -236,7 +237,11 @@ class XenAI(Provider):
             except requests.RequestException as e:
                 raise exceptions.FailedToGenerateResponseError(f"Request failed (requests): {e}") from e
             except Exception as e:
-                err_text = getattr(e, 'response', None) and getattr(e.response, 'text', '')
+                err_text = ""
+                if hasattr(e, 'response'):
+                    response_obj = getattr(e, 'response')
+                    if hasattr(response_obj, 'text'):
+                        err_text = getattr(response_obj, 'text')
                 raise exceptions.FailedToGenerateResponseError(f"An unexpected error occurred ({type(e).__name__}): {e} - {err_text}") from e
 
         def for_non_stream():
@@ -263,7 +268,7 @@ class XenAI(Provider):
         self,
         prompt: str,
         stream: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
         **kwargs
     ) -> Union[str, Generator[str, None, None]]:

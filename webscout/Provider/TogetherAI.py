@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
@@ -19,7 +19,7 @@ class TogetherAI(Provider):
     AVAILABLE_MODELS = []
 
     @classmethod
-    def get_models(cls, api_key: str = None):
+    def get_models(cls, api_key: Optional[str] = None):
         """Fetch available models from Together API."""
         if not api_key:
             return cls.AVAILABLE_MODELS
@@ -81,12 +81,12 @@ class TogetherAI(Provider):
         is_conversation: bool = True,
         max_tokens: int = 2049,
         timeout: int = 30,
-        intro: str = None,
-        filepath: str = None,
+        intro: Optional[str] = None,
+        filepath: Optional[str] = None,
         update_file: bool = True,
         proxies: dict = {},
         history_offset: int = 10250,
-        act: str = None,
+        act: Optional[str] = None,
         model: str = "DeepSeek R1 (0528)",
         system_prompt: str = "You are a helpful assistant.",
         temperature: float = 0.6,
@@ -138,7 +138,8 @@ class TogetherAI(Provider):
         # Initialize curl_cffi Session
         self.session = Session()
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies
+        if proxies:
+            self.session.proxies.update(proxies)
         self.system_prompt = system_prompt
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
@@ -150,17 +151,17 @@ class TogetherAI(Provider):
             for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
-
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
+        act_prompt = (
+            AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
+        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
 
     def _generate_consistent_fingerprint(self, browser: Optional[str] = None) -> Dict[str, str]:
@@ -222,7 +223,7 @@ class TogetherAI(Provider):
 
         return fingerprint
 
-    def refresh_identity(self, browser: str = None):
+    def refresh_identity(self, browser: Optional[str] = None):
         """
         Refreshes the browser identity fingerprint.
 
@@ -251,9 +252,10 @@ class TogetherAI(Provider):
         prompt: str,
         stream: bool = False,
         raw: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
-    ) -> Union[Dict[str, Any], Generator]:
+        **kwargs: Any,
+    ) -> Response:
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
@@ -347,7 +349,11 @@ class TogetherAI(Provider):
             except CurlError as e:
                 raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {e}") from e
             except Exception as e:
-                err_text = getattr(e, 'response', None) and getattr(e.response, 'text', '')
+                err_text = ""
+                if hasattr(e, 'response'):
+                    response_obj = getattr(e, 'response')
+                    if hasattr(response_obj, 'text'):
+                        err_text = getattr(response_obj, 'text')
                 raise exceptions.FailedToGenerateResponseError(f"Request failed ({type(e).__name__}): {e} - {err_text}") from e
 
         return for_stream() if stream else for_non_stream()
@@ -356,36 +362,38 @@ class TogetherAI(Provider):
         self,
         prompt: str,
         stream: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
-        raw: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
-        def for_stream_chat():
-            gen = self.ask(
-                prompt, stream=True, raw=raw,
-                optimizer=optimizer, conversationally=conversationally
-            )
-            for response in gen:
-                if raw:
-                    yield response
-                else:
-                    yield self.get_message(response)
-
-        def for_non_stream_chat():
+        raw = kwargs.get("raw", False)
+        if stream:
+            def for_stream_chat():
+                gen = self.ask(
+                    prompt, stream=True, raw=raw,
+                    optimizer=optimizer, conversationally=conversationally
+                )
+                if hasattr(gen, "__iter__"):
+                    for response in gen:
+                        if raw:
+                            yield cast(str, response)
+                        else:
+                            yield self.get_message(response)
+            return for_stream_chat()
+        else:
             result = self.ask(
                 prompt, stream=False, raw=raw,
                 optimizer=optimizer, conversationally=conversationally
             )
             if raw:
-                return result
+                return cast(str, result)
             else:
                 return self.get_message(result)
 
-        return for_stream_chat() if stream else for_non_stream_chat()
-
-    def get_message(self, response: dict) -> str:
-        assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"]
+    def get_message(self, response: Response) -> str:
+        if not isinstance(response, dict):
+            return str(response)
+        return response.get("text", "")
 
 if __name__ == "__main__":
     print("-" * 100)

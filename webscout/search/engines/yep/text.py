@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List
+from typing import Optional, List
 from urllib.parse import urlencode
 
 from webscout.search.results import TextResult
@@ -46,8 +46,9 @@ class YepSearch(YepBase):
                 return formatted_results[:max_results]
             return formatted_results
         except Exception as e:
-            if hasattr(e, 'response') and e.response is not None:
-                 raise Exception(f"Yep search failed with status {e.response.status_code}: {str(e)}")
+            resp = getattr(e, 'response', None)
+            if resp is not None:
+                 raise Exception(f"Yep search failed with status {resp.status_code}: {str(e)}")
             else:
                  raise Exception(f"Yep search failed: {str(e)}")
 

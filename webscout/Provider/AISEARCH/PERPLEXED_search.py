@@ -1,4 +1,4 @@
-from typing import Dict, Generator, Optional, Union
+from typing import cast, Any, Dict, Generator, List, Optional, Union
 
 import requests
 
@@ -49,7 +49,8 @@ class PERPLEXED(AISearch):
         prompt: str,
         stream: bool = False,
         raw: bool = False,
-    ) -> Union[SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None]]:
+        **kwargs: Any,
+    ) -> Union[SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None], List[Any], Dict[str, Any], str]:
         """
         Sends a prompt to the PERPLEXED API and returns the response.
 

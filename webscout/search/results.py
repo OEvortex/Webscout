@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Optional, Any
 
 
 @dataclass
@@ -65,6 +65,8 @@ class VideosResult:
     statistics: dict[str, int] = field(default_factory=dict)
     title: str = ""
     uploader: str = ""
+    url: str = ""
+    thumbnail: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
@@ -82,6 +84,8 @@ class VideosResult:
             "statistics": self.statistics,
             "title": self.title,
             "uploader": self.uploader,
+            "url": self.url,
+            "thumbnail": self.thumbnail,
         }
 
 

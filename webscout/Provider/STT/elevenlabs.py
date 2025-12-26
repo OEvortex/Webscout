@@ -256,10 +256,10 @@ if __name__ == "__main__":
 
     print("\n=== Streaming example ===")
     with open(audio_file_path, "rb") as audio_file:
-        stream = client.audio.transcriptions.create(
+        stream_gen = client.audio.transcriptions.create(
             model="scribe_v1",
             file=audio_file,
             stream=True
         )
-        for chunk in stream:
+        for chunk in cast(Generator[str, None, None], stream_gen):
             print(chunk.strip())

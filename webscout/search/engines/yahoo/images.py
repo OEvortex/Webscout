@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any
+from typing import Optional, Any
 
 from ...results import ImagesResult
 from .base import YahooSearchEngine

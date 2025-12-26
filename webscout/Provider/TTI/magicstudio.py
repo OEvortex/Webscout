@@ -3,11 +3,12 @@ import tempfile
 import time
 import uuid
 from io import BytesIO
-from typing import Optional
+from typing import Union, cast, Optional
 
 import requests
 
 from webscout.litagent import LitAgent
+from webscout.AIbase import SimpleModelList
 from webscout.Provider.TTI.base import BaseImages, TTICompatibleProvider
 from webscout.Provider.TTI.utils import ImageData, ImageResponse
 
@@ -24,13 +25,13 @@ class Images(BaseImages):
     def create(
         self,
         model: str = "magicstudio",
-        prompt: str = None,
+        prompt: Optional[str] = None,
         n: int = 1,
-        size: str = None,
+        size: Optional[str] = None,
         response_format: str = "url",
         user: Optional[str] = None,
-        style: str = None,
-        aspect_ratio: str = None,
+        style: Optional[str] = None,
+        aspect_ratio: Optional[str] = None,
         timeout: int = 60,
         image_format: str = "jpg",
         **kwargs,
@@ -216,12 +217,8 @@ class MagicStudioAI(TTICompatibleProvider):
         self.images = Images(self)
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 
 if __name__ == "__main__":

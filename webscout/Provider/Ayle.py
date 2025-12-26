@@ -1,6 +1,6 @@
 import json
 import uuid
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Response as CurlResponse  # Import Response
@@ -98,7 +98,8 @@ class Ayle(Provider):
         }
 
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies # Assign proxies directly
+        if proxies:
+            self.session.proxies.update(cast(Any, proxies)) # Assign proxies directly
         self.session.cookies.update({"session": uuid.uuid4().hex})
 
         self.__available_optimizers = (
@@ -106,18 +107,16 @@ class Ayle(Provider):
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
 
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
-
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
+
+        if act:
+            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
+            ) or self.conversation.intro
+        elif intro:
+            self.conversation.intro = intro
 
         self.provider = self._get_provider_from_model(self.model)
         self.model_name = self.model
@@ -249,8 +248,9 @@ class Ayle(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        raw: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
+        raw = kwargs.get("raw", False)
         def for_stream():
             for response in self.ask(
                 prompt, stream=True, raw=raw, optimizer=optimizer, conversationally=conversationally

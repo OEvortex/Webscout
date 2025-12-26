@@ -7,7 +7,7 @@ from datetime import datetime
 from os import getcwd, makedirs, path
 from threading import Thread
 from time import sleep
-from typing import Union
+from typing import Any, Optional, Tuple, Union
 
 import requests
 from colorama import Fore
@@ -135,6 +135,11 @@ class utils:
 
 
 class first_query:
+    raw: dict
+    vitems: list
+    vid: str
+    title: str
+
     def __init__(self, query: str):
         r"""Initializes first query class
         :param query: Video name or youtube link
@@ -145,6 +150,10 @@ class first_query:
         self.payload = self.__get_payload()
         self.processed = False
         self.is_link = False
+        self.raw = {}
+        self.vitems = []
+        self.vid = ""
+        self.title = ""
 
     def __get_payload(self):
         return {
@@ -200,7 +209,15 @@ class first_query:
 
 
 class second_query:
-    def __init__(self, query_one: object, item_no: int = 0):
+    vid: str
+    a: str
+    title: str
+    video: dict
+    audio: dict
+    related: list
+    raw: dict
+
+    def __init__(self, query_one: first_query, item_no: int = 0):
         r"""Initializes second_query class
         :param query_one: Query_one class
         :type query_one: object
@@ -214,7 +231,13 @@ class second_query:
         self.processed = False
         self.video_dict = None
         self.url = "https://www.y2mate.com/mates/analyzeV2/ajax"
-        # self.payload  = self.__get_payload()
+        self.vid = ""
+        self.a = ""
+        self.title = ""
+        self.video = {}
+        self.audio = {}
+        self.related = []
+        self.raw = {}
 
     def __str__(self):
         return """
@@ -259,7 +282,7 @@ class second_query:
     ]
 }
             """
-    def get_item(self, item_no: int = None):
+    def get_item(self, item_no: Optional[int] = None):
         r"""Return specific items on `self.query_one.vitems`"""
         if self.video_dict:
             return self.video_dict
@@ -318,7 +341,7 @@ class second_query:
 
 
 class third_query:
-    def __init__(self, query_two: object):
+    def __init__(self, query_two: second_query):
         assert query_two.processed, "Unprocessed second_query object parsed"
         self.query_two = query_two
         self.url = "https://www.y2mate.com/mates/convertV2/index"
@@ -369,7 +392,7 @@ class third_query:
         self,
         format: str = "mp4",
         quality="auto",
-        resolver: str = None,
+        resolver: Optional[str] = None,
         timeout: int = 30,
     ):
         r"""
@@ -443,7 +466,7 @@ class Handler:
     def __init__(
         self,
         query: str,
-        author: str = None,
+        author: Optional[str] = None,
         timeout: int = 30,
         confirm: bool = False,
         unique: bool = False,
@@ -474,6 +497,7 @@ class Handler:
         self.related = []
         self.dropped = []
         self.total = 1
+        self.query_one: Optional[Any] = None
         self.saved_videos = utils.get_history()
 
     def __str__(self):
@@ -508,13 +532,13 @@ class Handler:
 
     def __make_first_query(self):
         r"""Sets query_one attribute to `self`"""
-        query_one = first_query(self.query)
-        self.__setattr__("query_one", query_one.main(self.timeout))
+        q_one = first_query(self.query)
+        self.query_one = q_one.main(self.timeout)
         if not self.query_one.is_link:
             self.vitems.extend(self.__filter_videos(self.query_one.vitems))
 
     @utils.error_handler(exit_on_error=True)
-    def __verify_item(self, second_query_obj) -> bool:
+    def __verify_item(self, second_query_obj: second_query) -> Tuple[bool, str]:
         video_id = second_query_obj.vid
         video_author = second_query_obj.a
         video_title = second_query_obj.title
@@ -537,6 +561,7 @@ class Handler:
 
     def __make_second_query(self):
         r"""Links first query with 3rd query"""
+        assert self.query_one is not None, "First query failed"
         init_query_two = second_query(self.query_one)
         x = 0
         if not self.query_one.is_link:
@@ -603,10 +628,10 @@ class Handler:
         self,
         format: str = "mp4",
         quality: str = "auto",
-        resolver: str = None,
+        resolver: Optional[str] = None,
         limit: int = 1,
-        keyword: str = None,
-        author: str = None,
+        keyword: Optional[str] = None,
+        author: Optional[str] = None,
     ):
         r"""Generate and yield video dictionary
         :param format: (Optional) Media format mp4/mp3
@@ -629,16 +654,14 @@ class Handler:
             if query_two_obj:
                 self.vitems.extend(query_two_obj.related)
                 yield third_query(query_two_obj).main(
-                    **dict(
-                        format=format,
-                        quality=quality,
-                        resolver=resolver,
-                        timeout=self.timeout,
-                    )
+                    format=format,
+                    quality=quality,
+                    resolver=resolver,
+                    timeout=self.timeout,
                 )
 
 
-    def generate_filename(self, third_dict: dict, naming_format: str = None) -> str:
+    def generate_filename(self, third_dict: dict, naming_format: Optional[str] = None) -> str:
         r"""Generate filename based on the response of `third_query`
         :param third_dict: response of `third_query.main()` object
         :param naming_format: (Optional) Format for generating filename based on `third_dict` keys
@@ -675,10 +698,10 @@ class Handler:
     def auto_save(
         self,
         dir: str = "",
-        iterator: object = None,
+        iterator: Optional[Any] = None,
         progress_bar=True,
         quiet: bool = False,
-        naming_format: str = None,
+        naming_format: Optional[str] = None,
         chunk_size: int = 512,
         play: bool = False,
         resume: bool = False,
@@ -744,7 +767,7 @@ class Handler:
         dir: str = "",
         progress_bar=True,
         quiet: bool = False,
-        naming_format: str = None,
+        naming_format: Optional[str] = None,
         chunk_size: int = 512,
         play: bool = False,
         resume: bool = False,

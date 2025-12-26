@@ -1,7 +1,7 @@
 import json
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import cast, Any, Dict, Generator, List, Optional, Union
 
 from curl_cffi import CurlError
 
@@ -9,7 +9,7 @@ from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 # Import base classes and utility structures
-from .base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from .base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
 from .utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -20,10 +20,7 @@ from .utils import (
 )
 
 # Attempt to import LitAgent, fallback if not available
-try:
-    from webscout.litagent import LitAgent
-except ImportError:
-    pass
+from ...litagent import LitAgent
 
 # --- Groq Client ---
 
@@ -272,7 +269,7 @@ class Groq(OpenAICompatibleProvider):
         "mixtral-8x7b-32768"
     ]
 
-    def __init__(self, api_key: str = None, timeout: Optional[int] = 30, browser: str = "chrome"):
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 30, browser: str = "chrome"):
         self.timeout = timeout
         self.base_url = "https://api.groq.com/openai/v1/chat/completions"
         self.api_key = api_key
@@ -329,7 +326,7 @@ class Groq(OpenAICompatibleProvider):
         self.chat = Chat(self)
 
     @classmethod
-    def get_models(cls, api_key: str = None):
+    def get_models(cls, api_key: Optional[str] = None):
         """Fetch available models from Groq API.
 
         Args:
@@ -368,7 +365,7 @@ class Groq(OpenAICompatibleProvider):
             return cls.AVAILABLE_MODELS
 
     @classmethod
-    def update_available_models(cls, api_key=None):
+    def update_available_models(cls, api_key: Optional[str] = None):
         """Update the available models list from Groq API"""
         try:
             models = cls.get_models(api_key)
@@ -379,8 +376,5 @@ class Groq(OpenAICompatibleProvider):
             pass
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)

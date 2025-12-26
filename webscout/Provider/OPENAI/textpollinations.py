@@ -6,12 +6,12 @@ https://text.pollinations.ai/openai
 import json
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import cast, Any, Dict, Generator, List, Optional, Union
 
 import requests
 
-from webscout.litagent import LitAgent
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from ...litagent import LitAgent
+from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -44,7 +44,7 @@ class Completions(BaseCompletions):
         stream: bool = False,
         temperature: Optional[float] = None,
         top_p: Optional[float] = None,
-        tools: Optional[List[Dict[str, Any]]] = None,
+        tools: Optional[List[Union[Any, Dict[str, Any]]]] = None,
         tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
         timeout: Optional[int] = None,
         proxies: Optional[Dict[str, str]] = None,
@@ -266,7 +266,7 @@ class TextPollinations(OpenAICompatibleProvider):
     AVAILABLE_MODELS = ["openai", "mistral", "p1", "unity"]
 
     @classmethod
-    def get_models(cls, api_key: str = None) -> List[str]:
+    def get_models(cls, api_key: Optional[str] = None) -> List[str]:
         """
         Fetch available models from TextPollinations API.
         """
@@ -303,7 +303,7 @@ class TextPollinations(OpenAICompatibleProvider):
 
         self.session = requests.Session()
         if proxies:
-            self.session.proxies.update(proxies)
+            self.session.proxies.update(cast(Any, proxies))
 
         agent = LitAgent()
         self.user_agent = agent.random()
@@ -319,7 +319,7 @@ class TextPollinations(OpenAICompatibleProvider):
         self.chat = Chat(self)
 
     @classmethod
-    def update_available_models(cls, api_key=None):
+    def update_available_models(cls, api_key: Optional[str] = None):
         """
         Update the available models list from the API.
         """
@@ -328,14 +328,8 @@ class TextPollinations(OpenAICompatibleProvider):
             cls.AVAILABLE_MODELS = models
 
     @property
-    def models(self):
-        """
-        Standardized model listing interface.
-        """
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 if __name__ == "__main__":
     client = TextPollinations()
@@ -348,7 +342,8 @@ if __name__ == "__main__":
                 model=model_to_use,
                 messages=[{"role": "user", "content": "Hello!"}]
             )
-            print(response.choices[0].message.content)
+            if not isinstance(response, Generator):
+        print(response.choices[0].message.content)
         except Exception as e:
             print(f"Error testing model: {e}")
     else:

@@ -4,7 +4,7 @@ Provider management and initialization for the Webscout API.
 
 import inspect
 import sys
-from typing import Any, Dict, Tuple
+from typing import Optional, Any, Dict, Tuple
 
 from litprinter import ic
 from starlette.status import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
@@ -23,7 +23,7 @@ def initialize_provider_map() -> None:
     ic("Initializing provider map...")
 
     try:
-        from webscout.Provider.OPENAI.base import OpenAICompatibleProvider
+        from webscout.Provider.OPENAI.base import OpenAICompatibleProvider, SimpleModelList
         module = sys.modules["webscout.Provider.OPENAI"]
 
         provider_count = 0
@@ -42,10 +42,11 @@ def initialize_provider_map() -> None:
                     provider_count += 1
 
                     # Register available models for this provider
-                    if hasattr(obj, "AVAILABLE_MODELS") and isinstance(
-                        obj.AVAILABLE_MODELS, (list, tuple, set)
+                    available_models = getattr(obj, "AVAILABLE_MODELS", None)
+                    if available_models is not None and isinstance(
+                        available_models, (list, tuple, set)
                     ):
-                        for model in obj.AVAILABLE_MODELS:
+                        for model in available_models:
                             if model and isinstance(model, str):
                                 model_key = f"{provider_name}/{model}"
                                 AppConfig.provider_map[model_key] = obj
@@ -106,10 +107,11 @@ def initialize_tti_provider_map() -> None:
                 provider_count += 1
 
                 # Register available models for this TTI provider
-                if hasattr(obj, "AVAILABLE_MODELS") and isinstance(
-                    obj.AVAILABLE_MODELS, (list, tuple, set)
+                available_models = getattr(obj, "AVAILABLE_MODELS", None)
+                if available_models is not None and isinstance(
+                    available_models, (list, tuple, set)
                 ):
-                    for model in obj.AVAILABLE_MODELS:
+                    for model in available_models:
                         if model and isinstance(model, str):
                             model_key = f"{provider_name}/{model}"
                             AppConfig.tti_provider_map[model_key] = obj

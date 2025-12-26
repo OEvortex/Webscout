@@ -2,7 +2,7 @@ import json
 import time
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import cast, Any, Dict, Generator, List, Optional, Union
 
 from curl_cffi import CurlError
 
@@ -10,7 +10,7 @@ from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 # Import base classes and utility structures
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -23,10 +23,7 @@ from webscout.Provider.OPENAI.utils import (
 )
 
 # Attempt to import LitAgent, fallback if not available
-try:
-    from webscout.litagent import LitAgent
-except ImportError:
-    pass
+from ...litagent import LitAgent
 
 
 class Completions(BaseCompletions):
@@ -312,7 +309,7 @@ class IBM(OpenAICompatibleProvider):
         except Exception as e:
             raise IOError(f"Error fetching auth token: {str(e)}")
 
-    def __init__(self, api_key: str = None, timeout: Optional[int] = 30, browser: str = "chrome"):
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 30, browser: str = "chrome"):
         """
         Initialize IBM client.
 
@@ -379,7 +376,7 @@ class IBM(OpenAICompatibleProvider):
         self.chat = Chat(self)
 
     @classmethod
-    def get_models(cls, api_key: str = None):
+    def get_models(cls, api_key: Optional[str] = None):
         """Get available models.
 
         Args:
@@ -391,12 +388,8 @@ class IBM(OpenAICompatibleProvider):
         return cls.AVAILABLE_MODELS
 
     @property
-    def models(self):
-        """Property that returns an object with a .list() method."""
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 
 # Example usage
@@ -429,4 +422,5 @@ if __name__ == "__main__":
         stream=False
     )
 
-    print(response.choices[0].message.content)
+    if not isinstance(response, Generator):
+        print(response.choices[0].message.content)

@@ -6,12 +6,12 @@ https://api.sambanova.ai/v1/chat/completions
 import json
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import cast, Any, Dict, Generator, List, Optional, Union
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -22,7 +22,7 @@ from webscout.Provider.OPENAI.utils import (
 )
 
 try:
-    from webscout.litagent import LitAgent
+    from ...litagent import LitAgent
 except ImportError:
     LitAgent = None
 
@@ -347,11 +347,8 @@ class Sambanova(OpenAICompatibleProvider):
                 cls.AVAILABLE_MODELS = models
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 
 if __name__ == "__main__":

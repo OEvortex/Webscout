@@ -7,12 +7,12 @@ import json
 import time
 import urllib
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import cast, Any, Dict, Generator, List, Optional, Union
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -23,7 +23,7 @@ from webscout.Provider.OPENAI.utils import (
 )
 
 try:
-    from webscout.litagent import LitAgent
+    from ...litagent import LitAgent
 except ImportError:
     LitAgent = None
 
@@ -375,8 +375,8 @@ class Meta(OpenAICompatibleProvider):
 
     def __init__(
         self,
-        fb_email: str = None,
-        fb_password: str = None,
+        fb_email: Optional[str] = None,
+        fb_password: Optional[str] = None,
         timeout: int = 60,
         proxies: dict = None,
         browser: str = "chrome"
@@ -410,7 +410,8 @@ class Meta(OpenAICompatibleProvider):
         self.offline_threading_id = None
 
         if proxies:
-            self.session.proxies = proxies
+            if proxies:
+                self.session.proxies.update(cast(Any, proxies))
 
         # Initialize chat interface
         self.chat = Chat(self)
@@ -506,11 +507,8 @@ class Meta(OpenAICompatibleProvider):
         return access_token
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 
 if __name__ == "__main__":

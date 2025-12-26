@@ -20,21 +20,21 @@ from .results import ImagesResult, NewsResult, TextResult, VideosResult
 class YahooSearch(BaseSearch):
     """Unified Yahoo search interface."""
 
-    def text(self, keywords: str, region: str = "us", safesearch: str = "moderate", max_results: Optional[int] = None) -> List[TextResult]:
+    def text(self, keywords: str, region: str = "us", safesearch: str = "moderate", max_results: Optional[int] = None) -> List[Dict[str, str]]:
         search = YahooText()
-        return search.run(keywords, region, safesearch, max_results)
+        return search.run(keywords=keywords, region=region, safesearch=safesearch, max_results=max_results)
 
-    def images(self, keywords: str, region: str = "us", safesearch: str = "moderate", max_results: Optional[int] = None) -> List[ImagesResult]:
+    def images(self, keywords: str, region: str = "us", safesearch: str = "moderate", max_results: Optional[int] = None) -> List[Dict[str, str]]:
         search = YahooImages()
-        return search.run(keywords, region, safesearch, max_results)
+        return search.run(keywords=keywords, region=region, safesearch=safesearch, max_results=max_results)
 
-    def videos(self, keywords: str, region: str = "us", safesearch: str = "moderate", max_results: Optional[int] = None) -> List[VideosResult]:
+    def videos(self, keywords: str, region: str = "us", safesearch: str = "moderate", max_results: Optional[int] = None) -> List[Dict[str, str]]:
         search = YahooVideos()
-        return search.run(keywords, region, safesearch, max_results)
+        return search.run(keywords=keywords, region=region, safesearch=safesearch, max_results=max_results)
 
-    def news(self, keywords: str, region: str = "us", safesearch: str = "moderate", max_results: Optional[int] = None) -> List[NewsResult]:
+    def news(self, keywords: str, region: str = "us", safesearch: str = "moderate", max_results: Optional[int] = None) -> List[Dict[str, str]]:
         search = YahooNews()
-        return search.run(keywords, region, safesearch, max_results)
+        return search.run(keywords=keywords, region=region, safesearch=safesearch, max_results=max_results)
 
     def suggestions(self, keywords: str, region: str = "us") -> List[str]:
         search = YahooSuggestions()

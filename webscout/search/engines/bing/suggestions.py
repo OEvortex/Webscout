@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import List
+from typing import Optional, List
 from urllib.parse import urlencode
 
 from .base import BingBase

@@ -1,6 +1,6 @@
 import json
 import random
-from typing import Dict, Generator, Optional, Union
+from typing import cast, Dict, Generator, Optional, Union
 from uuid import uuid4
 
 import requests
@@ -126,7 +126,8 @@ class Liner(AISearch):
         # Set headers and cookies in session
         self.session.headers.update(self.headers)
         self.session.cookies.update(self.cookies)
-        self.session.proxies = proxies or {}
+        if proxies:
+            self.session.proxies.update(proxies) or {}
 
     def _load_cookies(self) -> Optional[Dict[str, str]]:
         """Load cookies from a JSON file.
