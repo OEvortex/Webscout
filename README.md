@@ -100,7 +100,7 @@
 <p>
 
 - **[GitAPI](docs/gitapi.md):** Powerful GitHub data extraction toolkit without authentication requirements for public data
-- **[SwiftCLI](webscout/swiftcli/Readme.md):** A powerful and elegant CLI framework for beautiful command-line interfaces
+- **[SwiftCLI](docs/swiftcli.md):** A powerful and elegant CLI framework for beautiful command-line interfaces
 - **[LitPrinter](docs/litprinter.md):** Styled console output with rich formatting and colors
 - **[LitAgent](docs/litagent.md):** Modern user agent generator that keeps your requests undetectable
 - **[Scout](docs/scout.md):** Advanced web parsing and crawling library with intelligent HTML/XML parsing

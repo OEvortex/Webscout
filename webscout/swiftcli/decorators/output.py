@@ -22,35 +22,65 @@ try:
 except ImportError:
     # If standard imports fail, try older rich versions or create minimal fallbacks
     try:
-        from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeRemainingColumn # type: ignore
+        from rich.progress import (  # type: ignore
+            BarColumn,
+            Progress,
+            SpinnerColumn,
+            TextColumn,
+            TimeRemainingColumn,
+        )
+
         # Create a simple TaskProgressColumn replacement for older versions
-        class TaskProgressColumn: # type: ignore
-            def __init__(self): pass
-            def __call__(self, task): return f"{task.percentage:.1f}%"
+        class TaskProgressColumn:  # type: ignore
+            def __init__(self):
+                pass
+
+            def __call__(self, task):
+                return f"{task.percentage:.1f}%"
     except ImportError:
         # If rich is too old or not installed, create minimal fallbacks
-        class Progress: # type: ignore
-            def __init__(self, *args, **kwargs): pass
-            def __enter__(self): return self
-            def __exit__(self, *args): pass
-            def add_task(self, description, total=None): return 0
-            def update(self, task_id, **kwargs): pass
+        class Progress:  # type: ignore
+            def __init__(self, *args, **kwargs):
+                pass
 
-        class SpinnerColumn: pass # type: ignore
-        class TextColumn: # type: ignore
-            def __init__(self, text): pass
-        class BarColumn: pass # type: ignore
-        class TaskProgressColumn: pass # type: ignore
-        class TimeRemainingColumn: pass # type: ignore
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                pass
+
+            def add_task(self, description, total=None):
+                return 0
+
+            def update(self, task_id, **kwargs):
+                pass
+
+        class SpinnerColumn:  # type: ignore
+            pass
+
+        class TextColumn:  # type: ignore
+            def __init__(self, text):
+                pass
+
+        class BarColumn:  # type: ignore
+            pass
+
+        class TaskProgressColumn:  # type: ignore
+            pass
+
+        class TimeRemainingColumn:  # type: ignore
+            pass
+
 
 console = Console()
+
 
 def table_output(
     headers: List[str],
     title: Optional[str] = None,
     style: str = "default",
     show_lines: bool = False,
-    expand: bool = False
+    expand: bool = False,
 ) -> Callable:
     """
     Decorator to format command output as a table.
@@ -72,6 +102,7 @@ def table_output(
                 [2, "Jane", "Inactive"]
             ]
     """
+
     def decorator(f: Callable) -> Callable:
         @wraps(f)
         def wrapper(*args, **kwargs):
@@ -82,7 +113,7 @@ def table_output(
                     show_header=True,
                     header_style="bold blue",
                     show_lines=show_lines,
-                    expand=expand
+                    expand=expand,
                 )
 
                 # Add columns
@@ -95,14 +126,13 @@ def table_output(
 
                 console.print(table)
             return result
+
         return wrapper
+
     return decorator
 
-def json_output(
-    indent: int = 2,
-    sort_keys: bool = False,
-    ensure_ascii: bool = False
-) -> Callable:
+
+def json_output(indent: int = 2, sort_keys: bool = False, ensure_ascii: bool = False) -> Callable:
     """
     Decorator to format command output as JSON.
 
@@ -118,26 +148,24 @@ def json_output(
             '''Get data as JSON'''
             return {"status": "success", "data": [1, 2, 3]}
     """
+
     def decorator(f: Callable) -> Callable:
         @wraps(f)
         def wrapper(*args, **kwargs):
             result = f(*args, **kwargs)
             if result:
                 json_str = json.dumps(
-                    result,
-                    indent=indent,
-                    sort_keys=sort_keys,
-                    ensure_ascii=ensure_ascii
+                    result, indent=indent, sort_keys=sort_keys, ensure_ascii=ensure_ascii
                 )
                 console.print(json_str)
             return result
+
         return wrapper
+
     return decorator
 
-def yaml_output(
-    default_flow_style: bool = False,
-    sort_keys: bool = False
-) -> Callable:
+
+def yaml_output(default_flow_style: bool = False, sort_keys: bool = False) -> Callable:
     """
     Decorator to format command output as YAML.
 
@@ -152,20 +180,22 @@ def yaml_output(
             '''Get configuration as YAML'''
             return {"database": {"host": "localhost", "port": 5432}}
     """
+
     def decorator(f: Callable) -> Callable:
         @wraps(f)
         def wrapper(*args, **kwargs):
             result = f(*args, **kwargs)
             if result:
                 yaml_str = yaml.safe_dump(
-                    result,
-                    default_flow_style=default_flow_style,
-                    sort_keys=sort_keys
+                    result, default_flow_style=default_flow_style, sort_keys=sort_keys
                 )
                 console.print(yaml_str)
             return result
+
         return wrapper
+
     return decorator
+
 
 def progress(
     description: Optional[str] = None,
@@ -173,7 +203,7 @@ def progress(
     transient: bool = False,
     show_bar: bool = True,
     show_percentage: bool = True,
-    show_time: bool = True
+    show_time: bool = True,
 ) -> Callable:
     """
     Decorator to show progress for long-running commands.
@@ -198,6 +228,7 @@ def progress(
                 # Process file
                 yield f"Processing {file}..."
     """
+
     def decorator(f: Callable) -> Callable:
         @wraps(f)
         def wrapper(*args, **kwargs):
@@ -217,10 +248,7 @@ def progress(
                 columns.append(TimeRemainingColumn())
 
             with Progress(*columns, transient=transient) as progress:
-                task = progress.add_task(
-                    description or f.__name__,
-                    total=total
-                )
+                task = progress.add_task(description or f.__name__, total=total)
 
                 try:
                     for update in f(*args, **kwargs):
@@ -243,13 +271,15 @@ def progress(
                     progress.update(task, completed=total or 100)
 
         return wrapper
+
     return decorator
+
 
 def panel_output(
     title: Optional[str] = None,
     style: str = "default",
     expand: bool = True,
-    padding: Union[int, tuple] = 1
+    padding: Union[int, tuple] = 1,
 ) -> Callable:
     """
     Decorator to display command output in a panel.
@@ -267,27 +297,22 @@ def panel_output(
             '''Show system status'''
             return "All systems operational"
     """
+
     def decorator(f: Callable) -> Callable:
         @wraps(f)
         def wrapper(*args, **kwargs):
             result = f(*args, **kwargs)
             if result:
-                panel = Panel(
-                    str(result),
-                    title=title,
-                    style=style,
-                    expand=expand,
-                    padding=padding
-                )
+                panel = Panel(str(result), title=title, style=style, expand=expand, padding=padding)
                 console.print(panel)
             return result
+
         return wrapper
+
     return decorator
 
-def format_output(
-    template: str,
-    style: Optional[str] = None
-) -> Callable:
+
+def format_output(template: str, style: Optional[str] = None) -> Callable:
     """
     Decorator to format command output using a template.
 
@@ -302,6 +327,7 @@ def format_output(
             '''Create a new user'''
             return {"name": name, "id": 123}
     """
+
     def decorator(f: Callable) -> Callable:
         @wraps(f)
         def wrapper(*args, **kwargs):
@@ -317,13 +343,13 @@ def format_output(
                 else:
                     console.print(output)
             return result
+
         return wrapper
+
     return decorator
 
-def pager_output(
-    use_pager: bool = True,
-    style: Optional[str] = None
-) -> Callable:
+
+def pager_output(use_pager: bool = True, style: Optional[str] = None) -> Callable:
     """
     Decorator to display command output in a pager.
 
@@ -338,6 +364,7 @@ def pager_output(
             '''Show application logs'''
             return "Very long log output..."
     """
+
     def decorator(f: Callable) -> Callable:
         @wraps(f)
         def wrapper(*args, **kwargs):
@@ -349,5 +376,7 @@ def pager_output(
                     else:
                         console.print(result)
             return result
+
         return wrapper
+
     return decorator

@@ -15,7 +15,7 @@ Purpose: concise, actionable guidance so an AI coding agent can be productive im
 
 2) Key developer workflows (commands you can run)
 - Use uv for all commands: We use uv to manage the Python environment and run tools. Never run bare `python` or `pip` directly — always run commands with `uv` to avoid environment drift and to use the project's lockfile. Examples and useful commands:
-  - `uv add <package>` / `uv remove <package>` — manage dependencies
+  - `uv pip install <package>` / `uv pip uninstall <package>` — manage dependencies
   - `uv sync` — install dependencies declared in pyproject.toml and uv.lock (preferred for reproducible environments)
   - `uv run <command>` — run a script or tool inside the uv environment (e.g., `uv run pytest`, `uv run webscout`)
   - `uv run --extra api webscout-server` — run the API server with extra dependencies

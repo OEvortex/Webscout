@@ -36,6 +36,7 @@ ENGINES: Dict[str, Union[Type[BaseSearch], Type[BaseSearchEngine]]] = {
     "yep": YepSearch,
 }
 
+
 def _get_engine(name: str) -> Union[BaseSearch, BaseSearchEngine]:
     cls = ENGINES.get(name.lower())
     if not cls:
@@ -43,6 +44,7 @@ def _get_engine(name: str) -> Union[BaseSearch, BaseSearchEngine]:
         rprint(f"Available engines: {', '.join(sorted(set(e for e in ENGINES.keys())))}")
         sys.exit(1)
     return cls()  # type: ignore[arg-type]
+
 
 def _print_data(data: Any, title: str = "Search Results") -> None:
     """Prints data in a beautiful table."""
@@ -78,18 +80,19 @@ def _print_data(data: Any, title: str = "Search Results") -> None:
 
     console.print(table)
 
+
 def _print_weather(data: Dict[str, Any]) -> None:
     """Prints weather data in a clean panel."""
     # Be defensive when reading weather payloads
     current = data.get("current") or {}
     location = data.get("location", "Unknown")
 
-    temp = current.get('temperature_c', 'N/A')
-    feels_like = current.get('feels_like_c', 'N/A')
-    condition = current.get('condition', 'N/A')
-    humidity = current.get('humidity', 'N/A')
-    wind_speed = current.get('wind_speed_ms', 'N/A')
-    wind_dir = current.get('wind_direction', 'N/A')
+    temp = current.get("temperature_c", "N/A")
+    feels_like = current.get("feels_like_c", "N/A")
+    condition = current.get("condition", "N/A")
+    humidity = current.get("humidity", "N/A")
+    wind_speed = current.get("wind_speed_ms", "N/A")
+    wind_dir = current.get("wind_direction", "N/A")
 
     weather_info = (
         f"[bold blue]Location:[/bold blue] {location}\n"
@@ -110,21 +113,28 @@ def _print_weather(data: Dict[str, Any]) -> None:
         forecast_table.add_column("Low")
 
         for day in data.get("daily_forecast", [])[:5]:
-            date = day.get('date', 'N/A')
-            condition = day.get('condition', 'N/A')
-            max_temp = day.get('max_temp_c')
-            min_temp = day.get('min_temp_c')
-            max_temp_str = f"{max_temp:.1f}°C" if isinstance(max_temp, (int, float)) else str(max_temp)
-            min_temp_str = f"{min_temp:.1f}°C" if isinstance(min_temp, (int, float)) else str(min_temp)
+            date = day.get("date", "N/A")
+            condition = day.get("condition", "N/A")
+            max_temp = day.get("max_temp_c")
+            min_temp = day.get("min_temp_c")
+            max_temp_str = (
+                f"{max_temp:.1f}°C" if isinstance(max_temp, (int, float)) else str(max_temp)
+            )
+            min_temp_str = (
+                f"{min_temp:.1f}°C" if isinstance(min_temp, (int, float)) else str(min_temp)
+            )
             forecast_table.add_row(date, condition, max_temp_str, min_temp_str)
         console.print(forecast_table)
 
+
 app: CLI = CLI(name="webscout", help="Search the web with a simple UI", version=__version__)
+
 
 @app.command()
 def version() -> None:
     """Show the version of webscout."""
     rprint(f"[bold cyan]webscout version:[/bold cyan] {__version__}")
+
 
 @app.command()
 @option("--keywords", "-k", help="Search keywords", required=True)
@@ -149,16 +159,21 @@ def text(
             region = "wt-wt" if engine.lower() in ["ddg", "duckduckgo"] else "us"
 
         # Most engines use .text(), some use .search() or .run()
-        if hasattr(search_engine, 'text'):
-            results = search_engine.text(keywords, region=region, safesearch=safesearch, max_results=max_results)
-        elif hasattr(search_engine, 'run'):
-            results = search_engine.run(keywords, region=region, safesearch=safesearch, max_results=max_results)
+        if hasattr(search_engine, "text"):
+            results = search_engine.text(
+                keywords, region=region, safesearch=safesearch, max_results=max_results
+            )
+        elif hasattr(search_engine, "run"):
+            results = search_engine.run(
+                keywords, region=region, safesearch=safesearch, max_results=max_results
+            )
         else:
             results = search_engine.search(keywords, max_results=max_results)
 
         _print_data(results, title=f"{engine.upper()} Text Search: {keywords}")
     except Exception as e:
         rprint(f"[bold red]Error:[/bold red] {str(e)}")
+
 
 @app.command()
 @option("--keywords", "-k", help="Search keywords", required=True)
@@ -173,6 +188,7 @@ def images(keywords: str, engine: str, max_results: int) -> None:
     except Exception as e:
         rprint(f"[bold red]Error:[/bold red] {str(e)}")
 
+
 @app.command()
 @option("--keywords", "-k", help="Search keywords", required=True)
 @option("--engine", "-e", help="Search engine (ddg, yahoo)", default="ddg")
@@ -185,6 +201,7 @@ def videos(keywords: str, engine: str, max_results: int) -> None:
         _print_data(results, title=f"{engine.upper()} Video Search: {keywords}")
     except Exception as e:
         rprint(f"[bold red]Error:[/bold red] {str(e)}")
+
 
 @app.command()
 @option("--keywords", "-k", help="Search keywords", required=True)
@@ -199,6 +216,7 @@ def news(keywords: str, engine: str, max_results: int) -> None:
     except Exception as e:
         rprint(f"[bold red]Error:[/bold red] {str(e)}")
 
+
 @app.command()
 @option("--location", "-l", help="Location to get weather for", required=True)
 @option("--engine", "-e", help="Search engine (ddg, yahoo)", default="ddg")
@@ -211,6 +229,7 @@ def weather(location: str, engine: str) -> None:
     except Exception as e:
         rprint(f"[bold red]Error:[/bold red] {str(e)}")
 
+
 @app.command()
 @option("--keywords", "-k", help="Search keywords", required=True)
 @option("--engine", "-e", help="Search engine (ddg, yahoo)", default="ddg")
@@ -222,6 +241,7 @@ def answers(keywords: str, engine: str) -> None:
         _print_data(results, title=f"{engine.upper()} Answers: {keywords}")
     except Exception as e:
         rprint(f"[bold red]Error:[/bold red] {str(e)}")
+
 
 @app.command()
 @option("--query", "-q", help="Search query", required=True)
@@ -240,19 +260,23 @@ def suggestions(query: str, engine: str) -> None:
     except Exception as e:
         rprint(f"[bold red]Error:[/bold red] {str(e)}")
 
+
 @app.command()
 @option("--keywords", "-k", help="Text for translation", required=True)
-@option("--from", "-f", help="Language to translate from", default=None)
+@option("--from-lang", "-f", help="Language to translate from", default=None)
 @option("--to", "-t", help="Language to translate to", default="en")
 @option("--engine", "-e", help="Search engine (ddg, yahoo)", default="ddg")
-def translate(keywords: str, from_: Optional[str] = None, to: str = "en", engine: str = "ddg") -> None:
+def translate(
+    keywords: str, from_lang: Optional[str] = None, to: str = "en", engine: str = "ddg"
+) -> None:
     """Perform translation."""
     try:
         search_engine = _get_engine(engine)
-        results = search_engine.translate(keywords, from_lang=from_, to_lang=to)
+        results = search_engine.translate(keywords, from_lang=from_lang, to_lang=to)
         _print_data(results, title=f"{engine.upper()} Translation: {keywords}")
     except Exception as e:
         rprint(f"[bold red]Error:[/bold red] {str(e)}")
+
 
 @app.command()
 @option("--keywords", "-k", help="Search keywords", required=True)
@@ -268,6 +292,7 @@ def maps(keywords: str, place: Optional[str] = None, radius: int = 0, engine: st
     except Exception as e:
         rprint(f"[bold red]Error:[/bold red] {str(e)}")
 
+
 # Keep search for compatibility/convenience
 @app.command()
 @option("--keywords", "-k", help="Search keywords", required=True)
@@ -278,6 +303,7 @@ def search(keywords: str, engine: str, max_results: int) -> None:
     # Call the local `text` function implementation (not a command object)
     text(keywords=keywords, engine=engine, max_results=max_results)
 
+
 def main():
     """Main entry point for the CLI."""
     try:
@@ -285,6 +311,7 @@ def main():
     except Exception as e:
         rprint(f"[bold red]CLI Error:[/bold red] {str(e)}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

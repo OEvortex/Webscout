@@ -58,7 +58,6 @@ dependencies = [
     "requests",
     "google-generativeai",
     "lxml>=5.2.2",
-    "orjson",
     "PyYAML",
     "pillow",
     "cloudscraper",

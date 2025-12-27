@@ -4,38 +4,31 @@ All notable changes to this project will be documented in this file.
 
 ## [2026.01.01] - 2026-01-01
 
-### ✨ Added
-- **feat**: webscout/AIbase.py - Added `ModelList` abstract class and `SimpleModelList` implementation for standardized model list management across providers
-- **feat**: webscout/AIbase.py - Enhanced `Response` type alias to include `str` type for better type safety
-- **feat**: webscout/AIbase.py - Added `required_auth` attribute to `Provider` base class for authentication requirement tracking
-- **feat**: webscout/AIbase.py - Enhanced `TTSProvider.stream_audio()` method with additional parameters: `model`, `response_format`, and `instructions` for more flexible audio generation
-- **feat**: webscout/AIauto.py - Added `last_response` setter property for better response management in AUTO provider
-- **feat**: AGENTS.md - Added comprehensive AI agent instructions with detailed guidance for code modifications, provider patterns, and development workflows
-
 ### 🐛 Fixed
-- **fix**: webscout/Provider/QwenLM.py - Fixed proxy handling to only update proxies when provided, preventing None value assignments
-- **fix**: webscout/Provider/QwenLM.py - Fixed conversation intro handling to properly apply AwesomePrompts acts when specified
-- **fix**: webscout/Provider/QwenLM.py - Moved `raw` parameter from method signature to `**kwargs` for consistency with provider patterns
-- **fix**: webscout/AIauto.py - Fixed provider initialization to use separate variable before assignment, improving error handling
-- **fix**: webscout/AIauto.py - Fixed type hints to use proper `Optional` types for nullable attributes
+- **fix**: webscout/prompt_manager.py - Fixed import handling to prevent "possibly unbound" errors for `Session` and `requests` modules; changed `impersonate` parameter type from `str` to `Optional[str]` to match curl_cffi expectations; removed invalid `session.timeout` assignment; added exception handling for curl_cffi Session with fallback to requests; fixed HTTP timeout handling for both sessions; split exception handling to catch `requests.exceptions.RequestException` first for safe response access; improved error messages with HTTP status extraction; fixed JSON serialization by filtering integer keys (prevents "'<' not supported between 'int' and 'str'" error); added `_rebuild_numeric_indices()` for reconstructing indices after loading
+- **fix**: webscout/Provider/toolbaz.py - Fixed missing `cast` import and removed redundant local import; initialized `resp = None` in `get_auth()` try block to prevent "possibly unbound" error
+- **fix**: webscout/Provider/__init__.py - Fixed export name from `"Deepinfra"` to `"DeepInfra"` to match import, resolving AttributeError
+- **fix**: webscout/sanitize.py - Fixed infinite recursion in `__getattr__` by removing self-referential calls to `sanitize_stream` and `LITSTREAM`; updated type annotation from `Iterable[bytes]` to `AsyncIterable[bytes]` in `_decode_byte_stream_async`; renamed duplicate `_yield_single` to `_yield_single_bytes` and `_yield_single_data`; removed invalid `__decorator__` assignments on functions
+- **fix**: webscout/update_checker.py - Replaced `requests` with `curl_cffi.requests` for consistency; fixed Windows UnicodeEncodeError in Rich output with box-drawing characters
+- **fix**: webscout/Provider/QwenLM.py - Fixed proxy handling to update only when provided (avoids None assignments); fixed conversation intro for AwesomePrompts acts; moved `raw` parameter to `**kwargs` for consistency
+- **fix**: webscout/AIauto.py - Fixed provider initialization with separate variable for better error handling; updated type hints to use proper `Optional` types for nullable attributes
+- **fix**: webscout/models.py - Fixed type hint mismatches in `summary()` methods (changed return type from `Dict[str, int]` to `Dict[str, Any]` to accommodate nested dictionaries); fixed `_TTSModels.list()` return type to `Dict[str, Union[List[str], Dict[str, str]]]` for proper voice data handling; fixed unsafe attribute access by using `getattr()` with defaults instead of direct attribute access for TTI models (prevents AttributeError for missing AVAILABLE_MODELS)
+ - **fix**: webscout/client.py - Fixed `tools` parameter type hint to `List[Union[Tool, Dict[str, Any]]]` matching base class; resolved duplicate `run_api` and `start_server` definitions with single try/except implementation; added `cast(ChatCompletion)` for type narrowing in non-streaming response handling; fixed fallback queue to check `inspect.isgenerator()` before accessing `.choices`; added `None` checks for `message.content` to prevent subscript errors
+ - **fix**: webscout/cli.py - Fixed parameter mapping issue in `translate` command by changing option name from `--from` to `--from-lang` to avoid Python keyword conflict and ensure proper CLI argument binding to function parameter `from_lang`
+
+### 🚮 Removed
+- **remove**: Completely removed `orjson` dependency from codebase (including imports, `HAS_ORJSON` flag, and pyproject.toml entry) for better compatibility and simpler dependencies
 
 ### 🔧 Improved
-- **refactor**: webscout/AIbase.py - Converted `last_response` from simple attribute to property with getter/setter for better encapsulation
-- **refactor**: webscout/AIbase.py - Updated `Provider` base class with proper type hints for `conversation` and `last_response` attributes
-- **refactor**: Comprehensive type hint improvements across 200+ provider files with proper `Optional`, `Union`, and `Dict` type annotations
-- **refactor**: webscout/Provider/ - Standardized parameter handling across all providers with consistent `**kwargs` usage
-- **refactor**: webscout/Provider/OPENAI/ - Updated all OpenAI-compatible providers with improved type hints and parameter validation
-- **refactor**: webscout/Provider/AISEARCH/ - Standardized `raw` parameter handling in search providers
-- **refactor**: webscout/Provider/TTS/ - Enhanced all TTS providers with improved `stream_audio()` method signatures and type hints
-- **refactor**: webscout/Provider/TTI/ - Improved type hints and parameter handling in TTI providers
-- **refactor**: webscout/Extra/GitToolkit/ - Updated GitToolkit API classes with better type hints and method signatures
-- **refactor**: webscout/Extra/YTToolkit/ - Enhanced YTToolkit classes with improved type hints and error handling
-- **refactor**: webscout/Extra/tempmail/ - Improved tempmail providers with better type annotations
-- **refactor**: webscout/Extra/gguf.py - Updated GGUF converter with improved type hints
-- **refactor**: webscout/search/ - Enhanced search engine classes with better type hints
-- **refactor**: webscout/server/ - Updated server components with improved type safety
-- **refactor**: webscout/swiftcli/ - Enhanced CLI decorators with better type annotations
-- **refactor**: webscout/update_checker.py - Improved update checking logic with better error handling
+- **refactor**: webscout/utils.py - Simplified `json_dumps()` and `json_loads()` to standard `json` library; added comprehensive docstrings; improved formatting and organization per project standards
+- **refactor**: webscout/prompt_manager.py - Enhanced formatting for 100-character line limit; improved structure, readability, cache persistence (save only string keys, rebuild numeric indices on load), and automatic index rebuilding after deserialization
+- **refactor**: webscout/update_checker.py - Migrated HTTP requests to `curl_cffi.requests.Session` for consistency; improved checking logic and error handling
+- **refactor**: webscout/AIbase.py - Converted `last_response` to property with getter/setter; updated `Provider` base with type hints for `conversation` and `last_response`; added `ModelList` abstract class and `SimpleModelList` implementation for model management; enhanced `Response` type alias with `str`; added `required_auth` to `Provider`; enhanced `TTSProvider.stream_audio()` with `model`, `response_format`, and `instructions` parameters
+- **refactor**: webscout/AIauto.py - Added `last_response` setter property for better management
+- **refactor**: Comprehensive type hint improvements across 200+ provider files (`Optional`, `Union`, `Dict`); standardized `**kwargs` parameter handling in all providers; updated OpenAI-compatible providers with better hints and validation; standardized `raw` in AISEARCH; enhanced TTS providers' `stream_audio()` signatures and hints; improved TTI type hints and params; updated GitToolkit, YTToolkit, tempmail, GGUF converter, search engines, server components, and CLI decorators with better type safety and handling
+
+### ✨ Added
+- **feat**: AGENTS.md - Added comprehensive AI agent instructions with guidance on code modifications, provider patterns, and development workflows
 
 ### 📝 Documentation
 - **docs**: AGENTS.md - Added comprehensive development guide covering provider patterns, CLI commands, logging, error handling, release notes, and testing guidelines

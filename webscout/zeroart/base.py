@@ -1,11 +1,13 @@
 """
 ZeroArt Base: Core classes and utilities for ASCII art generation
 """
-from typing import Optional, Dict, List
+
+from typing import Dict, List, Optional
 
 
 class ZeroArtFont:
     """Base class for ASCII art fonts"""
+
     def __init__(self, name: str) -> None:
         self.name: str = name
         self.letters: Dict[str, List[str]] = {}
@@ -36,18 +38,19 @@ class ZeroArtFont:
         :param char: Character to retrieve
         :return: List of art lines or default space
         """
-        return self.letters.get(char.upper(), self.letters.get(' ', [' ']))
+        return self.letters.get(char.upper(), self.letters.get(" ", [" "]))
 
     def render(self, text: str) -> str:
         """
         Render text as ASCII art
 
         :param text: Text to render as ASCII art
-        :return: ASCII art representation of the text
+        :return: ASCII art representation of text
         """
         if not text:
             return ""
-              # Get the maximum height of any character in the font
+
+        # Get maximum height of any character in font
         max_height: int = max(len(self.get_letter(c)) for c in text)
 
         # Initialize art_lines with empty strings

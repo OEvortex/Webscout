@@ -1,3 +1,4 @@
+import json
 import re
 from decimal import Decimal
 from html import unescape
@@ -7,34 +8,45 @@ from urllib.parse import unquote
 
 from .exceptions import WebscoutE
 
-try:
-    HAS_ORJSON = True
-    import orjson
-    import json
-except ImportError:
-    HAS_ORJSON = False
-    import json
-    orjson = None # type: ignore
-
 REGEX_STRIP_TAGS = re.compile("<.*?>")
+
 
 def _expand_proxy_tb_alias(proxy: Optional[str]) -> Optional[str]:
     """Expand "tb" to a full proxy URL if applicable."""
     return "socks5://127.0.0.1:9150" if proxy == "tb" else proxy
 
+
 def json_dumps(obj: Any) -> str:
+    """Serialize object to JSON string.
+
+    Args:
+        obj: Object to serialize
+
+    Returns:
+        JSON string representation
+
+    Raises:
+        WebscoutE: If serialization fails
+    """
     try:
-        if HAS_ORJSON and orjson is not None:
-            return orjson.dumps(obj, option=orjson.OPT_INDENT_2).decode()
         return json.dumps(obj, ensure_ascii=False, indent=2)
     except Exception as ex:
         raise WebscoutE(f"{type(ex).__name__}: {ex}") from ex
 
 
 def json_loads(obj: Union[str, bytes]) -> Any:
+    """Deserialize JSON string to Python object.
+
+    Args:
+        obj: JSON string or bytes to deserialize
+
+    Returns:
+        Deserialized Python object
+
+    Raises:
+        WebscoutE: If deserialization fails
+    """
     try:
-        if HAS_ORJSON and orjson is not None:
-            return orjson.loads(obj)
         return json.loads(obj)
     except Exception as ex:
         raise WebscoutE(f"{type(ex).__name__}: {ex}") from ex

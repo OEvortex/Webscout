@@ -44,7 +44,6 @@ class ModelList(ABC):
 class SimpleModelList(ModelList):
     def __init__(self, models: List[str]):
         self._models = models
-    
     def list(self) -> List[str]:
         return self._models
 

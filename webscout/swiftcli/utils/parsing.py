@@ -4,7 +4,7 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import Optional, Any, Dict, List, Type, Union
+from typing import Any, Dict, List, Optional, Type, Union
 
 import yaml
 

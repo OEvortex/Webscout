@@ -71,7 +71,7 @@ __all__ = [
     "Cleeai",
     "Cohere",
     "DeepAI",
-    "Deepinfra",
+    "DeepInfra",
     "Elmo",
     "EssentialAI",
     "ExaAI",

@@ -17,9 +17,14 @@ import importlib
 import inspect
 import pkgutil
 import random
-from typing import Any, Dict, Generator, List, Optional, Set, Tuple, Type, Union
+from typing import Any, Dict, Generator, List, Optional, Set, Tuple, Type, Union, cast
 
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import (
+    BaseChat,
+    BaseCompletions,
+    OpenAICompatibleProvider,
+    Tool,
+)
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -304,7 +309,7 @@ class ClientCompletions(BaseCompletions):
         stream: bool = False,
         temperature: Optional[float] = None,
         top_p: Optional[float] = None,
-        tools: Optional[List[Dict[str, Any]]] = None,
+        tools: Optional[List[Union[Tool, Dict[str, Any]]]] = None,
         tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
         timeout: Optional[int] = None,
         proxies: Optional[dict] = None,
@@ -350,36 +355,45 @@ class ClientCompletions(BaseCompletions):
                         first_chunk = next(response)
                         self._last_provider = resolved_provider.__name__
 
-                        def chained_gen(first, rest, pname) -> Any:
+                        def _chained_gen_stream(
+                            first: ChatCompletionChunk,
+                            rest: Generator[ChatCompletionChunk, None, None],
+                            pname: str,
+                        ) -> Generator[ChatCompletionChunk, None, None]:
                             if self._client.print_provider_info:
                                 print(f"\033[1;34m{pname}:{resolved_model}\033[0m\n")
                             yield first
                             yield from rest
 
-                        return chained_gen(first_chunk, response, resolved_provider.__name__)
+                        return _chained_gen_stream(
+                            first_chunk, response, resolved_provider.__name__
+                        )
                     except StopIteration:
                         pass
                     except Exception:
                         pass
                 else:
-                    if (
-                        response
-                        and hasattr(response, "choices")
-                        and response.choices
-                        and response.choices[0].message
-                        and response.choices[0].message.content
-                        and response.choices[0].message.content.strip()
-                    ):
-                        self._last_provider = resolved_provider.__name__
-                        if self._client.print_provider_info:
-                            print(
-                                f"\033[1;34m{resolved_provider.__name__}:{resolved_model}\033[0m\n"
+                    # Type narrowing for non-streaming response
+                    if not inspect.isgenerator(response):
+                        completion_response = cast(ChatCompletion, response)
+                        if (
+                            completion_response
+                            and hasattr(completion_response, "choices")
+                            and completion_response.choices
+                            and completion_response.choices[0].message
+                            and completion_response.choices[0].message.content
+                            and completion_response.choices[0].message.content.strip()
+                        ):
+                            self._last_provider = resolved_provider.__name__
+                            if self._client.print_provider_info:
+                                print(
+                                    f"\033[1;34m{resolved_provider.__name__}:{resolved_model}\033[0m\n"
+                                )
+                            return completion_response
+                        else:
+                            raise ValueError(
+                                f"Provider {resolved_provider.__name__} returned empty content"
                             )
-                        return response
-                    else:
-                        raise ValueError(
-                            f"Provider {resolved_provider.__name__} returned empty content"
-                        )
             except Exception:
                 pass
 
@@ -437,31 +451,33 @@ class ClientCompletions(BaseCompletions):
                         first_chunk = next(response)
                         self._last_provider = p_name
 
-                        def chained_gen(first, rest, pname, mname):
+                        def _chained_gen_fallback(first, rest, pname, mname):
                             if self._client.print_provider_info:
                                 print(f"\033[1;34m{pname}:{mname} (Fallback)\033[0m\n")
                             yield first
                             yield from rest
 
-                        return chained_gen(first_chunk, response, p_name, p_model)
+                        return _chained_gen_fallback(first_chunk, response, p_name, p_model)
                     except (StopIteration, Exception):
                         continue
 
-                if (
-                    response
-                    and hasattr(response, "choices")
-                    and response.choices
-                    and response.choices[0].message
-                    and response.choices[0].message.content
-                    and response.choices[0].message.content.strip()
-                ):
-                    self._last_provider = p_name
-                    if self._client.print_provider_info:
-                        print(f"\033[1;34m{p_name}:{p_model} (Fallback)\033[0m\n")
-                    return response
-                else:
-                    errors.append(f"{p_name}: Returned empty response.")
-                    continue
+                if not inspect.isgenerator(response):
+                    completion_response = cast(ChatCompletion, response)
+                    if (
+                        completion_response
+                        and hasattr(completion_response, "choices")
+                        and completion_response.choices
+                        and completion_response.choices[0].message
+                        and completion_response.choices[0].message.content
+                        and completion_response.choices[0].message.content.strip()
+                    ):
+                        self._last_provider = p_name
+                        if self._client.print_provider_info:
+                            print(f"\033[1;34m{p_name}:{p_model} (Fallback)\033[0m\n")
+                        return completion_response
+                    else:
+                        errors.append(f"{p_name}: Returned empty response.")
+                        continue
             except Exception as e:
                 errors.append(f"{p_name}: {str(e)}")
                 continue
@@ -771,24 +787,25 @@ class Client:
 
 
 try:
+    from webscout.server.server import run_api as _run_api_impl
+    from webscout.server.server import run_api as _start_server_impl
 
-    def run_api(*args, **kwargs):
+    def run_api(*args: Any, **kwargs: Any) -> Any:
         """Runs the FastAPI server."""
-        from webscout.server.server import run_api as _run_api
+        return _run_api_impl(*args, **kwargs)
 
-        return _run_api(*args, **kwargs)
-
-    def start_server(**kwargs):
+    def start_server(*args: Any, **kwargs: Any) -> Any:
         """Starts the FastAPI server."""
-        from webscout.server.server import run_api as _run_api
+        return _start_server_impl(*args, **kwargs)
 
-        return _run_api(**kwargs)
 except ImportError:
 
-    def run_api(*args, **kwargs):
+    def run_api(*args: Any, **kwargs: Any) -> Any:
+        """Runs the FastAPI server."""
         raise ImportError("webscout.server.server.run_api is not available.")
 
-    def start_server(*args, **kwargs):
+    def start_server(*args: Any, **kwargs: Any) -> Any:
+        """Starts the FastAPI server."""
         raise ImportError("webscout.server.server.start_server is not available.")
 
 
@@ -799,6 +816,18 @@ if __name__ == "__main__":
         response = client.chat.completions.create(
             model="auto", messages=[{"role": "user", "content": "Hi"}]
         )
-        print(f"Auto Result: {response.choices[0].message.content[:50]}...")
+        if not inspect.isgenerator(response):
+            completion = cast(ChatCompletion, response)
+            if (
+                completion
+                and completion.choices
+                and completion.choices[0].message
+                and completion.choices[0].message.content
+            ):
+                print(f"Auto Result: {completion.choices[0].message.content[:50]}...")
+            else:
+                print("Auto Result: Empty response")
+        else:
+            print("Streaming response received")
     except Exception as e:
         print(f"Error: {e}")
