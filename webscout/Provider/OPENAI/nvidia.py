@@ -311,6 +311,7 @@ if __name__ == "__main__":
     #     model="meta/llama-3.3-70b-instruct",
     #     messages=[{"role": "user", "content": "Hello!"}]
     # )
-    # if not isinstance(response, Generator):
-    #     print(response.choices[0].message.content)
+    # if isinstance(response, ChatCompletion):
+    #     if response.choices[0].message and response.choices[0].message.content:
+    #         print(response.choices[0].message.content)
     pass

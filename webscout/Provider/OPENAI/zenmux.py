@@ -287,7 +287,7 @@ class Zenmux(OpenAICompatibleProvider):
 
                 curl_available = True
             except Exception:
-                CurlSession = None
+                CurlSession = None  # type: ignore
                 curl_available = False
             try:
                 from ...litagent import LitAgent

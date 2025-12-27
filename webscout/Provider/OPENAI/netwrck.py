@@ -30,8 +30,9 @@ BOLD = "\033[1m"
 RED = "\033[91m"
 RESET = "\033[0m"
 
+
 class Completions(BaseCompletions):
-    def __init__(self, client: 'Netwrck'):
+    def __init__(self, client: "Netwrck"):
         self._client = client
 
     def create(
@@ -45,7 +46,7 @@ class Completions(BaseCompletions):
         top_p: Optional[float] = None,
         timeout: Optional[int] = None,
         proxies: Optional[Dict[str, str]] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
         """
         Creates a model response for the given chat conversation.
@@ -55,14 +56,13 @@ class Completions(BaseCompletions):
         # This creates a conversation in the format: "User: message\nAssistant: response\nUser: message\nAssistant:"
         formatted_prompt = format_prompt(messages, add_special_tokens=True, do_continue=True)
 
-
         # Prepare the payload for Netwrck API
         payload = {
             "query": formatted_prompt,
             "context": get_system_prompt(messages),
             "examples": [],
             "model_name": self._client.convert_model_name(model),
-            "greeting": self._client.greeting
+            "greeting": self._client.greeting,
         }
 
         request_id = f"chatcmpl-{uuid.uuid4()}"
@@ -71,10 +71,18 @@ class Completions(BaseCompletions):
         if stream:
             return self._create_stream(request_id, created_time, model, payload, timeout, proxies)
         else:
-            return self._create_non_stream(request_id, created_time, model, payload, timeout, proxies)
+            return self._create_non_stream(
+                request_id, created_time, model, payload, timeout, proxies
+            )
 
     def _create_stream(
-        self, request_id: str, created_time: int, model: str, payload: Dict[str, Any], timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        payload: Dict[str, Any],
+        timeout: Optional[int] = None,
+        proxies: Optional[Dict[str, str]] = None,
     ) -> Generator[ChatCompletionChunk, None, None]:
         try:
             response = self._client.session.post(
@@ -83,7 +91,7 @@ class Completions(BaseCompletions):
                 headers=self._client.headers,
                 timeout=timeout or self._client.timeout,
                 proxies=proxies or getattr(self._client, "proxies", None),
-                stream=True
+                stream=True,
             )
             response.raise_for_status()
 
@@ -96,7 +104,7 @@ class Completions(BaseCompletions):
                     continue
 
                 try:
-                    decoded_line = line.decode('utf-8').strip('"')
+                    decoded_line = line.decode("utf-8").strip('"')
                     if decoded_line:
                         # Format the decoded line using the client's formatter
                         formatted_content = self._client.format_text(decoded_line)
@@ -136,7 +144,13 @@ class Completions(BaseCompletions):
             raise IOError(f"Netwrck request failed: {e}") from e
 
     def _create_non_stream(
-        self, request_id: str, created_time: int, model: str, payload: Dict[str, Any], timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        payload: Dict[str, Any],
+        timeout: Optional[int] = None,
+        proxies: Optional[Dict[str, str]] = None,
     ) -> ChatCompletion:
         try:
             response = self._client.session.post(
@@ -144,7 +158,7 @@ class Completions(BaseCompletions):
                 json=payload,
                 headers=self._client.headers,
                 timeout=timeout or self._client.timeout,
-                proxies=proxies or getattr(self._client, "proxies", None)
+                proxies=proxies or getattr(self._client, "proxies", None),
             )
             response.raise_for_status()
 
@@ -161,21 +175,14 @@ class Completions(BaseCompletions):
             usage = CompletionUsage(
                 prompt_tokens=prompt_tokens,
                 completion_tokens=completion_tokens,
-                total_tokens=total_tokens
+                total_tokens=total_tokens,
             )
 
             # Create the message object
-            message = ChatCompletionMessage(
-                role="assistant",
-                content=full_response
-            )
+            message = ChatCompletionMessage(role="assistant", content=full_response)
 
             # Create the choice object
-            choice = Choice(
-                index=0,
-                message=message,
-                finish_reason="stop"
-            )
+            choice = Choice(index=0, message=message, finish_reason="stop")
 
             # Create the completion object
             completion = ChatCompletion(
@@ -192,9 +199,11 @@ class Completions(BaseCompletions):
             print(f"{RED}Error during Netwrck non-stream request: {e}{RESET}")
             raise IOError(f"Netwrck request failed: {e}") from e
 
+
 class Chat(BaseChat):
-    def __init__(self, client: 'Netwrck'):
+    def __init__(self, client: "Netwrck"):
         self.completions = Completions(client)
+
 
 class Netwrck(OpenAICompatibleProvider):
     """
@@ -208,6 +217,7 @@ class Netwrck(OpenAICompatibleProvider):
         )
         print(response.choices[0].message.content)
     """
+
     required_auth = False
 
     AVAILABLE_MODELS = [
@@ -228,7 +238,7 @@ class Netwrck(OpenAICompatibleProvider):
         timeout: int = 30,
         temperature: float = 0.7,
         top_p: float = 0.8,
-        system_prompt: str = "You are a helpful assistant."
+        system_prompt: str = "You are a helpful assistant.",
     ):
         """
         Initialize the Netwrck client.
@@ -248,13 +258,13 @@ class Netwrck(OpenAICompatibleProvider):
         agent = LitAgent()
 
         self.headers = {
-            'authority': 'netwrck.com',
-            'accept': '*/*',
-            'accept-language': 'en-US,en;q=0.9',
-            'content-type': 'application/json',
-            'origin': 'https://netwrck.com',
-            'referer': 'https://netwrck.com/',
-            'user-agent': agent.random()
+            "authority": "netwrck.com",
+            "accept": "*/*",
+            "accept-language": "en-US,en;q=0.9",
+            "content-type": "application/json",
+            "origin": "https://netwrck.com",
+            "referer": "https://netwrck.com/",
+            "user-agent": agent.random(),
         }
 
         self.session = requests.Session()
@@ -276,12 +286,12 @@ class Netwrck(OpenAICompatibleProvider):
         # Use a more comprehensive approach to handle all escape sequences
         try:
             # First handle double backslashes to avoid issues
-            text = text.replace('\\\\', '\\')
+            text = text.replace("\\\\", "\\")
 
             # Handle common escape sequences
-            text = text.replace('\\n', '\n')
-            text = text.replace('\\r', '\r')
-            text = text.replace('\\t', '\t')
+            text = text.replace("\\n", "\n")
+            text = text.replace("\\r", "\r")
+            text = text.replace("\\t", "\t")
             text = text.replace('\\"', '"')
             text = text.replace("\\'", "'")
 
@@ -314,12 +324,15 @@ class Netwrck(OpenAICompatibleProvider):
                 return available_model
 
         # Default to DeepSeek if no match
-        print(f"{BOLD}Warning: Model '{model}' not found, using default model 'deepseek/deepseek-r1'{RESET}")
+        print(
+            f"{BOLD}Warning: Model '{model}' not found, using default model 'deepseek/deepseek-r1'{RESET}"
+        )
         return "deepseek/deepseek-r1"
 
     @property
     def models(self) -> SimpleModelList:
         return SimpleModelList(type(self).AVAILABLE_MODELS)
+
 
 # Simple test if run directly
 if __name__ == "__main__":
@@ -328,11 +341,7 @@ if __name__ == "__main__":
     print("-" * 80)
 
     # Test a subset of models to avoid excessive API calls
-    test_models = [
-        "deepseek/deepseek-r1",
-        "deepseek/deepseek-chat",
-        "gryphe/mythomax-l2-13b"
-    ]
+    test_models = ["deepseek/deepseek-r1", "deepseek/deepseek-chat", "gryphe/mythomax-l2-13b"]
 
     for model in test_models:
         try:
@@ -344,10 +353,15 @@ if __name__ == "__main__":
                     {"role": "system", "content": "You are a helpful assistant."},
                     {"role": "user", "content": "Say 'Hello' in one word"},
                 ],
-                stream=False
+                stream=False,
             )
 
-            if response and response.choices and response.choices[0].message.content:
+            if (
+                isinstance(response, ChatCompletion)
+                and response.choices
+                and response.choices[0].message
+                and response.choices[0].message.content
+            ):
                 status = "✓"
                 # Truncate response if too long
                 display_text = response.choices[0].message.content.strip()

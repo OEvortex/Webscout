@@ -398,5 +398,6 @@ if __name__ == "__main__":
         max_tokens=10000,
         stream=False,
     )
-    if not isinstance(response, Generator):
-        print(response.choices[0].message.content)
+    if isinstance(response, ChatCompletion):
+        if response.choices[0].message and response.choices[0].message.content:
+            print(response.choices[0].message.content)

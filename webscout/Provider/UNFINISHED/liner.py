@@ -324,7 +324,8 @@ if __name__ == "__main__":
         stream=False
     )
     print("Non-streaming response:")
-    print(response.choices[0].message.content)
+    if isinstance(response, ChatCompletion) and response.choices and response.choices[0].message and response.choices[0].message.content:
+        print(response.choices[0].message.content)
 
     # Streaming example
     print("\nStreaming response:")
@@ -336,6 +337,6 @@ if __name__ == "__main__":
         stream=True
     )
     for chunk in stream:
-        if chunk.choices[0].delta.content:
+        if isinstance(chunk, ChatCompletionChunk) and chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
             print(chunk.choices[0].delta.content, end="", flush=True)
     print()

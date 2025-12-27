@@ -224,7 +224,8 @@ class TypefullyAI(Provider):
     def get_message(self, response: Response) -> str:
         if not isinstance(response, dict):
             return str(response)
-        text = response.get("text", "")
+        response_dict = cast(Dict[str, Any], response)
+        text = response_dict.get("text", "")
         try:
             formatted_text = text.replace("\\n", "\n").replace("\\n\\n", "\n\n")
             return formatted_text

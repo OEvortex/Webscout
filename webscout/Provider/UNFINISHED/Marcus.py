@@ -78,6 +78,7 @@ class Marcus(Provider):
         raw: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Union[Dict[str, Any], Generator[Any, None, None]]:
         """Sends a prompt to the AskMarcus API and returns the response."""
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
@@ -184,6 +185,7 @@ class Marcus(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """Generates a response from the AskMarcus API."""
         response_data = self.ask(
@@ -197,10 +199,15 @@ class Marcus(Provider):
         else:
             return self.get_message(response_data)
 
-    def get_message(self, response: Dict[str, Any]) -> str:
+    def get_message(self, response: Union[Dict[str, Any], Generator[Any, None, None], str]) -> str:
         """Extracts the message from the API response."""
-        assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response.get("text", "")
+        if isinstance(response, str):
+            return response
+        elif isinstance(response, dict):
+            return cast(Dict[str, Any], response).get("text", "")
+        else:
+            # Generator, not expected in this provider
+            raise ValueError("get_message does not support Generator response")
 
 if __name__ == "__main__":
     # Ensure curl_cffi is installed

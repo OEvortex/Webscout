@@ -2,17 +2,24 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Optional, TypedDict, List, Dict
 from urllib.parse import quote
 
 from ....exceptions import WebscoutE
 from .base import DuckDuckGoBase
 
 
+class WeatherData(TypedDict):
+    location: str
+    current: Dict[str, Any]
+    daily_forecast: List[Dict[str, Any]]
+    hourly_forecast: List[Dict[str, Any]]
+
+
 class DuckDuckGoWeather(DuckDuckGoBase):
     name = "duckduckgo"
     category = "weather"
-    def run(self, *args, **kwargs) -> dict[str, Any]:
+    def run(self, *args, **kwargs) -> WeatherData:
         location = args[0] if args else kwargs.get("location")
         language = args[1] if len(args) > 1 else kwargs.get("language", "en")
 
@@ -35,7 +42,7 @@ class DuckDuckGoWeather(DuckDuckGoBase):
         if not result or 'currentWeather' not in result or 'forecastDaily' not in result:
             raise WebscoutE(f"Invalid weather data format for {location}")
 
-        formatted_data = {
+        formatted_data: WeatherData = {
             "location": result["currentWeather"]["metadata"].get("ddg-location", "Unknown"),
             "current": {
                 "condition": result["currentWeather"].get("conditionCode"),

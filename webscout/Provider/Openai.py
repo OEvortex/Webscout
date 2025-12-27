@@ -14,6 +14,7 @@ class OPENAI(Provider):
     """
     A class to interact with the OpenAI API with LitAgent user-agent.
     """
+
     required_auth = True
 
     @classmethod
@@ -36,13 +37,13 @@ class OPENAI(Provider):
             }
 
             response = temp_session.get(
-                "https://api.openai.com/v1/models",
-                headers=headers,
-                impersonate="chrome110"
+                "https://api.openai.com/v1/models", headers=headers, impersonate="chrome110"
             )
 
             if response.status_code != 200:
-                raise Exception(f"API request failed with status {response.status_code}: {response.text}")
+                raise Exception(
+                    f"API request failed with status {response.status_code}: {response.text}"
+                )
 
             data = response.json()
             if "data" in data and isinstance(data["data"], list):
@@ -78,7 +79,7 @@ class OPENAI(Provider):
         act: Optional[str] = None,
         base_url: str = "https://api.openai.com/v1/chat/completions",
         system_prompt: str = "You are a helpful assistant.",
-        browser: str = "chrome"
+        browser: str = "chrome",
     ):
         """Initializes the OpenAI API client."""
         self.url = base_url
@@ -133,8 +134,14 @@ class OPENAI(Provider):
         self.conversation.history_offset = history_offset
 
         if act:
-            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
-            ) or self.conversation.intro
+            self.conversation.intro = (
+                AwesomePrompts().get_act(
+                    cast(Union[str, int], act),
+                    default=self.conversation.intro,
+                    case_insensitive=True,
+                )
+                or self.conversation.intro
+            )
         elif intro:
             self.conversation.intro = intro
 
@@ -149,10 +156,12 @@ class OPENAI(Provider):
         self.fingerprint = self.agent.generate_fingerprint(browser)
 
         # Update headers with new fingerprint (only relevant ones)
-        self.headers.update({
-            "Accept": self.fingerprint["accept"],
-            "Accept-Language": self.fingerprint["accept_language"],
-        })
+        self.headers.update(
+            {
+                "Accept": self.fingerprint["accept"],
+                "Accept-Language": self.fingerprint["accept_language"],
+            }
+        )
 
         # Update session headers
         self.session.headers.update(self.headers)
@@ -175,7 +184,9 @@ class OPENAI(Provider):
                     conversation_prompt if conversationally else prompt
                 )
             else:
-                raise exceptions.FailedToGenerateResponseError(f"Optimizer is not one of {self.__available_optimizers}")
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Optimizer is not one of {self.__available_optimizers}"
+                )
 
         # Payload construction
         payload = {
@@ -200,7 +211,7 @@ class OPENAI(Provider):
                     data=json.dumps(payload),
                     stream=True,
                     timeout=self.timeout,
-                    impersonate="chrome110"
+                    impersonate="chrome110",
                 )
                 response.raise_for_status()
 
@@ -212,7 +223,7 @@ class OPENAI(Provider):
                     skip_markers=["[DONE]"],
                     content_extractor=self._openai_extractor,
                     yield_raw_on_error=False,
-                    raw=raw
+                    raw=raw,
                 )
 
                 for content_chunk in processed_stream:
@@ -225,9 +236,13 @@ class OPENAI(Provider):
                             yield resp if not raw else content_chunk
 
             except CurlError as e:
-                raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {str(e)}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed (CurlError): {str(e)}"
+                ) from e
             except Exception as e:
-                raise exceptions.FailedToGenerateResponseError(f"Request failed ({type(e).__name__}): {str(e)}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed ({type(e).__name__}): {str(e)}"
+                ) from e
             finally:
                 if streaming_text:
                     self.last_response = {"text": streaming_text}
@@ -240,7 +255,7 @@ class OPENAI(Provider):
                     self.url,
                     data=json.dumps(payload),
                     timeout=self.timeout,
-                    impersonate="chrome110"
+                    impersonate="chrome110",
                 )
                 response.raise_for_status()
 
@@ -251,9 +266,13 @@ class OPENAI(Provider):
                     data=response_text,
                     to_json=True,
                     intro_value=None,
-                    content_extractor=lambda chunk: chunk.get("choices", [{}])[0].get("message", {}).get("content") if isinstance(chunk, dict) else None,
+                    content_extractor=lambda chunk: chunk.get("choices", [{}])[0]
+                    .get("message", {})
+                    .get("content")
+                    if isinstance(chunk, dict)
+                    else None,
                     yield_raw_on_error=False,
-                    raw=raw
+                    raw=raw,
                 )
                 # Extract the single result
                 content = next(processed_stream, None)
@@ -266,14 +285,18 @@ class OPENAI(Provider):
                 return self.last_response if not raw else content
 
             except CurlError as e:
-                raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {e}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed (CurlError): {e}"
+                ) from e
             except Exception as e:
                 err_text = ""
-                if hasattr(e, 'response'):
-                    response_obj = getattr(e, 'response')
-                    if hasattr(response_obj, 'text'):
-                        err_text = getattr(response_obj, 'text')
-                raise exceptions.FailedToGenerateResponseError(f"Request failed ({type(e).__name__}): {e} - {err_text}") from e
+                if hasattr(e, "response"):
+                    response_obj = getattr(e, "response")
+                    if hasattr(response_obj, "text"):
+                        err_text = getattr(response_obj, "text")
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed ({type(e).__name__}): {e} - {err_text}"
+                ) from e
 
         return for_stream() if stream else for_non_stream()
 
@@ -287,16 +310,22 @@ class OPENAI(Provider):
     ) -> Union[str, Generator[str, None, None]]:
         def for_stream_chat():
             gen = self.ask(
-                prompt, stream=True, raw=False,
-                optimizer=optimizer, conversationally=conversationally
+                prompt,
+                stream=True,
+                raw=False,
+                optimizer=optimizer,
+                conversationally=conversationally,
             )
             for response_dict in gen:
                 yield self.get_message(response_dict)
 
         def for_non_stream_chat():
             response_data = self.ask(
-                prompt, stream=False, raw=False,
-                optimizer=optimizer, conversationally=conversationally
+                prompt,
+                stream=False,
+                raw=False,
+                optimizer=optimizer,
+                conversationally=conversationally,
             )
             return self.get_message(response_data)
 
@@ -305,4 +334,4 @@ class OPENAI(Provider):
     def get_message(self, response: Response) -> str:
         if not isinstance(response, dict):
             return str(response)
-        return response.get("text", "")
+        return cast(Dict[str, Any], response).get("text", "")

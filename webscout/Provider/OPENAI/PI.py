@@ -455,7 +455,9 @@ if __name__ == "__main__":
 
     if isinstance(response, ChatCompletion):
         if not isinstance(response, Generator):
-            print(response.choices[0].message.content)
+            message = response.choices[0].message
+            if message and message.content:
+                print(message.content)
             print(f"Usage: {response.usage}")
     else:
         print(response)

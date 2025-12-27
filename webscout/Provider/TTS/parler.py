@@ -58,28 +58,33 @@ class ParlerTTS(BaseTTSProvider):
     def _generate_session_hash(self) -> str:
         return "".join(random.choices(string.ascii_lowercase + string.digits, k=10))
 
-    def tts(
-        self,
-        text: str,
-        description: str = "A female speaker delivers a slightly expressive and animated speech with a moderate speed. The recording features a low-pitch voice and very clear audio.",
-        use_large: bool = False,
-        response_format: str = "wav",
-        verbose: bool = True
-    ) -> str:
+    def tts(self, text: str, voice: Optional[str] = None, verbose: bool = False, **kwargs) -> str:
         """
         Convert text to speech using Parler-TTS API.
+
+        Args:
+            text (str): The text to convert to speech
+            voice (str): The voice to use
+            verbose (bool): Whether to print debug information
+            **kwargs: Additional parameters
         """
+        # Extract parameters from kwargs with defaults
+        description = kwargs.get('description', "A female speaker delivers a slightly expressive and animated speech with a moderate speed. The recording features a low-pitch voice and very clear audio.")
+        use_large = kwargs.get('use_large', False)
+        response_format = kwargs.get('response_format', "wav")
+        verbose = verbose if verbose is not None else kwargs.get('verbose', True)
+
         if not text:
             raise ValueError("Input text must be a non-empty string")
 
         session_hash = self._generate_session_hash()
-        filename = pathlib.Path(tempfile.mktemp(suffix=f".{response_format}", dir=self.temp_dir))
+        filename = pathlib.Path(tempfile.NamedTemporaryFile(suffix=f".{response_format}", dir=self.temp_dir, delete=False).name)
 
         if verbose:
             ic.configureOutput(prefix='DEBUG| ')
             ic(f"ParlerTTS: Generating speech for '{text[:20]}...'")
 
-        client_kwargs = {"headers": self.headers, "timeout": self.timeout}
+        client_kwargs: dict[str, Any] = {"headers": self.headers, "timeout": self.timeout}
         if self.proxy:
             client_kwargs["proxy"] = self.proxy
 
@@ -160,8 +165,7 @@ class ParlerTTS(BaseTTSProvider):
         voice: Optional[str] = None,
         response_format: Optional[str] = "mp3",
         instructions: Optional[str] = None,
-        verbose: bool = False,
-        **kwargs: Any
+        verbose: bool = False
     ) -> str:
         """
         OpenAI-compatible speech creation interface.

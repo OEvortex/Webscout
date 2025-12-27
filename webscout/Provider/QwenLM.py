@@ -13,6 +13,7 @@ class QwenLM(Provider):
     """
     A class to interact with the QwenLM API
     """
+
     required_auth = True
     AVAILABLE_MODELS = [
         "qwen3-max-2025-10-30",
@@ -34,7 +35,7 @@ class QwenLM(Provider):
         "qwen2.5-vl-32b-instruct",
         "qwen2.5-14b-instruct-1m",
         "qwen2.5-coder-32b-instruct",
-        "qwen2.5-72b-instruct"
+        "qwen2.5-72b-instruct",
     ]
 
     @staticmethod
@@ -63,13 +64,11 @@ class QwenLM(Provider):
         history_offset: int = 10250,
         act: Optional[str] = None,
         model: str = "qwen-plus-2025-09-11",
-        system_prompt: str = "You are a helpful AI assistant."
+        system_prompt: str = "You are a helpful AI assistant.",
     ):
         """Initializes the QwenLM API client."""
         if model not in self.AVAILABLE_MODELS:
-            raise ValueError(
-                f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}"
-            )
+            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
 
         self.session = Session(impersonate="chrome")
         self.is_conversation = is_conversation
@@ -97,7 +96,7 @@ class QwenLM(Provider):
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
-            "authorization": f"Bearer {self.token}" if self.token else '',
+            "authorization": f"Bearer {self.token}" if self.token else "",
         }
         self.session.headers.update(self.headers)
         self.session.cookies.update(self.cookies_dict)
@@ -108,8 +107,7 @@ class QwenLM(Provider):
         self.__available_optimizers = (
             method
             for method in dir(Optimizers)
-            if callable(getattr(Optimizers, method))
-            and not method.startswith("__")
+            if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
@@ -117,8 +115,14 @@ class QwenLM(Provider):
         self.conversation.history_offset = history_offset
 
         if act:
-            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
-            ) or self.conversation.intro
+            self.conversation.intro = (
+                AwesomePrompts().get_act(
+                    cast(Union[str, int], act),
+                    default=self.conversation.intro,
+                    case_insensitive=True,
+                )
+                or self.conversation.intro
+            )
         elif intro:
             self.conversation.intro = intro
 
@@ -127,13 +131,11 @@ class QwenLM(Provider):
         try:
             with open(self.cookies_path, "r") as f:
                 cookies = json.load(f)
-            cookies_dict = {cookie['name']: cookie['value'] for cookie in cookies}
+            cookies_dict = {cookie["name"]: cookie["value"] for cookie in cookies}
             token = cookies_dict.get("token", "")
             return cookies_dict, token
         except FileNotFoundError:
-            raise exceptions.InvalidAuthenticationError(
-                "Error: cookies.json file not found!"
-            )
+            raise exceptions.InvalidAuthenticationError("Error: cookies.json file not found!")
         except json.JSONDecodeError:
             raise exceptions.InvalidAuthenticationError(
                 "Error: Invalid JSON format in cookies.json!"
@@ -157,13 +159,11 @@ class QwenLM(Provider):
                     conversation_prompt if conversationally else prompt
                 )
             else:
-                raise Exception(
-                    f"Optimizer is not one of {list(self.__available_optimizers)}"
-                )
+                raise Exception(f"Optimizer is not one of {list(self.__available_optimizers)}")
 
         payload = {
-            'stream': stream,
-            'incremental_output': False,
+            "stream": stream,
+            "incremental_output": False,
             "chat_type": "t2t",
             "model": self.model,
             "messages": [
@@ -182,7 +182,11 @@ class QwenLM(Provider):
 
         def for_stream() -> Generator[Dict[str, Any], None, None]:
             response = self.session.post(
-                self.api_endpoint, json=payload, headers=self.headers, stream=True, timeout=self.timeout
+                self.api_endpoint,
+                json=payload,
+                headers=self.headers,
+                stream=True,
+                timeout=self.timeout,
             )
             if not response.ok:
                 raise exceptions.FailedToGenerateResponseError(
@@ -197,12 +201,12 @@ class QwenLM(Provider):
                 skip_markers=["[DONE]"],
                 content_extractor=self._qwenlm_extractor,
                 yield_raw_on_error=False,
-                raw=raw
+                raw=raw,
             )
 
             for content_chunk in processed_stream:
                 if isinstance(content_chunk, bytes):
-                    content_chunk = content_chunk.decode('utf-8', errors='ignore')
+                    content_chunk = content_chunk.decode("utf-8", errors="ignore")
 
                 if raw:
                     yield content_chunk
@@ -222,11 +226,15 @@ class QwenLM(Provider):
 
             # Create a non-streaming payload
             non_stream_payload = payload.copy()
-            non_stream_payload['stream'] = False
-            non_stream_payload['incremental_output'] = False
+            non_stream_payload["stream"] = False
+            non_stream_payload["incremental_output"] = False
 
             response = self.session.post(
-                self.api_endpoint, json=non_stream_payload, headers=self.headers, stream=False, timeout=self.timeout
+                self.api_endpoint,
+                json=non_stream_payload,
+                headers=self.headers,
+                stream=False,
+                timeout=self.timeout,
             )
             if not response.ok:
                 raise exceptions.FailedToGenerateResponseError(
@@ -238,9 +246,13 @@ class QwenLM(Provider):
                 data=response.text,
                 to_json=True,
                 intro_value=None,
-                content_extractor=lambda chunk: chunk.get("choices", [{}])[0].get("message", {}).get("content") if isinstance(chunk, dict) else None,
+                content_extractor=lambda chunk: chunk.get("choices", [{}])[0]
+                .get("message", {})
+                .get("content")
+                if isinstance(chunk, dict)
+                else None,
                 yield_raw_on_error=False,
-                raw=raw
+                raw=raw,
             )
             if raw:
                 return response.text
@@ -254,7 +266,6 @@ class QwenLM(Provider):
             return self.last_response
 
         return for_stream() if stream else for_non_stream()
-
 
     def chat(
         self,
@@ -293,15 +304,20 @@ class QwenLM(Provider):
             ...     print(chunk, end='', flush=True)
         """
         raw = kwargs.get("raw", False)
+
         def for_stream() -> Generator[str, None, None]:
-            for response in self.ask(prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally):
+            for response in self.ask(
+                prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
+            ):
                 if raw:
                     yield cast(str, response)
                 else:
                     yield cast(Dict[str, Any], response)["text"]
 
         def for_non_stream() -> str:
-            result = self.ask(prompt, False, raw=raw, optimizer=optimizer, conversationally=conversationally)
+            result = self.ask(
+                prompt, False, raw=raw, optimizer=optimizer, conversationally=conversationally
+            )
             if raw:
                 return cast(str, result)
             else:
@@ -313,10 +329,12 @@ class QwenLM(Provider):
         """Extracts the message content from a response dict."""
         if not isinstance(response, dict):
             return str(response)
-        return response.get("text", "")
+        return cast(Dict[str, Any], response).get("text", "")
+
 
 if __name__ == "__main__":
     from rich import print
+
     cookies_path = r"C:\Users\koula\Desktop\Webscout\cookies.json"
     for model in QwenLM.AVAILABLE_MODELS:
         ai = QwenLM(cookies_path=cookies_path, model=model)

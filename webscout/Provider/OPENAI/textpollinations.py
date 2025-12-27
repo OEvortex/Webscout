@@ -361,8 +361,9 @@ if __name__ == "__main__":
             response = client.chat.completions.create(
                 model=model_to_use, messages=[{"role": "user", "content": "Hello!"}]
             )
-            if not isinstance(response, Generator):
-                print(response.choices[0].message.content)
+            if isinstance(response, ChatCompletion):
+                if response.choices[0].message and response.choices[0].message.content:
+                    print(response.choices[0].message.content)
         except Exception as e:
             print(f"Error testing model: {e}")
     else:

@@ -29,11 +29,11 @@ from webscout.Provider.OPENAI.utils import (
 try:
     from ...litagent import LitAgent
 except ImportError:
-    LitAgent = None
+    LitAgent = None  # type: ignore
 
 
 class Completions(BaseCompletions):
-    def __init__(self, client: 'Sambanova'):
+    def __init__(self, client: "Sambanova"):
         self._client = client
 
     def create(
@@ -47,7 +47,7 @@ class Completions(BaseCompletions):
         top_p: Optional[float] = 0.9,
         timeout: Optional[int] = None,
         proxies: Optional[Dict[str, str]] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
         """
         Creates a model response for the given chat conversation.
@@ -71,7 +71,9 @@ class Completions(BaseCompletions):
         if stream:
             return self._create_stream(request_id, created_time, model, payload, timeout, proxies)
         else:
-            return self._create_non_stream(request_id, created_time, model, payload, timeout, proxies)
+            return self._create_non_stream(
+                request_id, created_time, model, payload, timeout, proxies
+            )
 
     def _create_stream(
         self,
@@ -80,7 +82,7 @@ class Completions(BaseCompletions):
         model: str,
         payload: Dict[str, Any],
         timeout: Optional[int] = None,
-        proxies: Optional[Dict[str, str]] = None
+        proxies: Optional[Dict[str, str]] = None,
     ) -> Generator[ChatCompletionChunk, None, None]:
         """Implementation for streaming chat completions."""
         try:
@@ -91,7 +93,7 @@ class Completions(BaseCompletions):
                 stream=True,
                 timeout=timeout or self._client.timeout,
                 proxies=proxies,
-                impersonate="chrome120"
+                impersonate="chrome120",
             )
             response.raise_for_status()
 
@@ -107,47 +109,49 @@ class Completions(BaseCompletions):
                             break
                         try:
                             data = json.loads(json_str)
-                            choices = data.get('choices')
+                            choices = data.get("choices")
                             if not choices and choices is not None:
                                 continue
                             choice_data = choices[0] if choices else {}
-                            delta_data = choice_data.get('delta', {})
-                            finish_reason = choice_data.get('finish_reason')
+                            delta_data = choice_data.get("delta", {})
+                            finish_reason = choice_data.get("finish_reason")
 
                             # Update usage if available
-                            usage_data = data.get('usage', {})
+                            usage_data = data.get("usage", {})
                             if usage_data:
-                                prompt_tokens = usage_data.get('prompt_tokens', prompt_tokens)
-                                completion_tokens = usage_data.get('completion_tokens', completion_tokens)
-                                total_tokens = usage_data.get('total_tokens', total_tokens)
+                                prompt_tokens = usage_data.get("prompt_tokens", prompt_tokens)
+                                completion_tokens = usage_data.get(
+                                    "completion_tokens", completion_tokens
+                                )
+                                total_tokens = usage_data.get("total_tokens", total_tokens)
 
-                            if delta_data.get('content'):
+                            if delta_data.get("content"):
                                 completion_tokens += 1
                                 total_tokens = prompt_tokens + completion_tokens
 
                             delta = ChoiceDelta(
-                                content=delta_data.get('content'),
-                                role=delta_data.get('role'),
-                                tool_calls=delta_data.get('tool_calls')
+                                content=delta_data.get("content"),
+                                role=delta_data.get("role"),
+                                tool_calls=delta_data.get("tool_calls"),
                             )
                             choice = Choice(
-                                index=choice_data.get('index', 0),
+                                index=choice_data.get("index", 0),
                                 delta=delta,
                                 finish_reason=finish_reason,
-                                logprobs=choice_data.get('logprobs')
+                                logprobs=choice_data.get("logprobs"),
                             )
                             chunk = ChatCompletionChunk(
                                 id=request_id,
                                 choices=[choice],
                                 created=created_time,
                                 model=model,
-                                system_fingerprint=data.get('system_fingerprint')
+                                system_fingerprint=data.get("system_fingerprint"),
                             )
                             chunk.usage = {
                                 "prompt_tokens": prompt_tokens,
                                 "completion_tokens": completion_tokens,
                                 "total_tokens": total_tokens,
-                                "estimated_cost": None
+                                "estimated_cost": None,
                             }
                             yield chunk
 
@@ -162,13 +166,13 @@ class Completions(BaseCompletions):
                 choices=[choice],
                 created=created_time,
                 model=model,
-                system_fingerprint=None
+                system_fingerprint=None,
             )
             chunk.usage = {
                 "prompt_tokens": prompt_tokens,
                 "completion_tokens": completion_tokens,
                 "total_tokens": total_tokens,
-                "estimated_cost": None
+                "estimated_cost": None,
             }
             yield chunk
 
@@ -184,7 +188,7 @@ class Completions(BaseCompletions):
         model: str,
         payload: Dict[str, Any],
         timeout: Optional[int] = None,
-        proxies: Optional[Dict[str, str]] = None
+        proxies: Optional[Dict[str, str]] = None,
     ) -> ChatCompletion:
         """Implementation for non-streaming chat completions."""
         try:
@@ -194,49 +198,48 @@ class Completions(BaseCompletions):
                 json=payload,
                 timeout=timeout or self._client.timeout,
                 proxies=proxies,
-                impersonate="chrome120"
+                impersonate="chrome120",
             )
             response.raise_for_status()
             data = response.json()
 
-            choices_data = data.get('choices', [])
-            usage_data = data.get('usage', {})
+            choices_data = data.get("choices", [])
+            usage_data = data.get("usage", {})
 
             choices = []
             for choice_d in choices_data:
-                message_d = choice_d.get('message')
-                if not message_d and 'delta' in choice_d:
+                message_d = choice_d.get("message")
+                if not message_d and "delta" in choice_d:
                     # Handle streaming-style response in non-stream mode
-                    delta = choice_d['delta']
+                    delta = choice_d["delta"]
                     message_d = {
-                        'role': delta.get('role', 'assistant'),
-                        'content': delta.get('content', '')
+                        "role": delta.get("role", "assistant"),
+                        "content": delta.get("content", ""),
                     }
                 if not message_d:
-                    message_d = {'role': 'assistant', 'content': ''}
+                    message_d = {"role": "assistant", "content": ""}
 
                 message = ChatCompletionMessage(
-                    role=message_d.get('role', 'assistant'),
-                    content=message_d.get('content', '')
+                    role=message_d.get("role", "assistant"), content=message_d.get("content", "")
                 )
                 choice = Choice(
-                    index=choice_d.get('index', 0),
+                    index=choice_d.get("index", 0),
                     message=message,
-                    finish_reason=choice_d.get('finish_reason', 'stop')
+                    finish_reason=choice_d.get("finish_reason", "stop"),
                 )
                 choices.append(choice)
 
             usage = CompletionUsage(
-                prompt_tokens=usage_data.get('prompt_tokens', 0),
-                completion_tokens=usage_data.get('completion_tokens', 0),
-                total_tokens=usage_data.get('total_tokens', 0)
+                prompt_tokens=usage_data.get("prompt_tokens", 0),
+                completion_tokens=usage_data.get("completion_tokens", 0),
+                total_tokens=usage_data.get("total_tokens", 0),
             )
 
             completion = ChatCompletion(
                 id=request_id,
                 choices=choices,
                 created=created_time,
-                model=data.get('model', model),
+                model=data.get("model", model),
                 usage=usage,
             )
             return completion
@@ -248,7 +251,7 @@ class Completions(BaseCompletions):
 
 
 class Chat(BaseChat):
-    def __init__(self, client: 'Sambanova'):
+    def __init__(self, client: "Sambanova"):
         self.completions = Completions(client)
 
 
@@ -257,6 +260,7 @@ class Sambanova(OpenAICompatibleProvider):
     OpenAI-compatible client for Sambanova API.
     Requires API key from https://cloud.sambanova.ai/
     """
+
     required_auth = True
 
     AVAILABLE_MODELS = []
@@ -275,27 +279,20 @@ class Sambanova(OpenAICompatibleProvider):
             }
 
             response = temp_session.get(
-                "https://api.sambanova.ai/v1/models",
-                headers=headers,
-                impersonate="chrome120"
+                "https://api.sambanova.ai/v1/models", headers=headers, impersonate="chrome120"
             )
 
             if response.status_code == 200:
                 data = response.json()
                 if "data" in data and isinstance(data["data"], list):
-                    return [model['id'] for model in data['data'] if 'id' in model]
+                    return [model["id"] for model in data["data"] if "id" in model]
 
             return cls.AVAILABLE_MODELS
 
         except Exception:
             return cls.AVAILABLE_MODELS
 
-    def __init__(
-        self,
-        api_key: str,
-        timeout: int = 60,
-        browser: str = "chrome"
-    ):
+    def __init__(self, api_key: str, timeout: int = 60, browser: str = "chrome"):
         """
         Initialize the Sambanova OpenAI-compatible client.
 
@@ -372,7 +369,7 @@ if __name__ == "__main__":
             model="Meta-Llama-3.1-8B-Instruct",
             messages=[{"role": "user", "content": "Hello!"}],
             max_tokens=100,
-            stream=False
+            stream=False,
         )
         if isinstance(response, ChatCompletion):
             print(f"Response: {response.choices[0].message.content}")
@@ -385,9 +382,11 @@ if __name__ == "__main__":
             model="Meta-Llama-3.1-8B-Instruct",
             messages=[{"role": "user", "content": "Say hello briefly"}],
             max_tokens=100,
-            stream=True
+            stream=True,
         )
-        if hasattr(stream_resp, "__iter__") and not isinstance(stream_resp, (str, bytes, ChatCompletion)):
+        if hasattr(stream_resp, "__iter__") and not isinstance(
+            stream_resp, (str, bytes, ChatCompletion)
+        ):
             for chunk in stream_resp:
                 if chunk.choices[0].delta.content:
                     print(chunk.choices[0].delta.content, end="", flush=True)

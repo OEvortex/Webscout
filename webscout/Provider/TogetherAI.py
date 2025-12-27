@@ -196,10 +196,11 @@ class TogetherAI(Provider):
 
         # Generate sec-ch-ua based on the user agent
         sec_ch_ua = ""
-        for browser_name in FINGERPRINTS["sec_ch_ua"]:
+        sec_ch_ua_dict = cast(Dict[str, str], FINGERPRINTS["sec_ch_ua"])
+        for browser_name in sec_ch_ua_dict:
             if browser_name in user_agent.lower():
                 version = random.randint(*BROWSERS[browser_name])
-                sec_ch_ua = FINGERPRINTS["sec_ch_ua"][browser_name].format(version, version)
+                sec_ch_ua = sec_ch_ua_dict[browser_name].format(version, version)
                 break
 
         # Use the instance's agent for consistent IP rotation
@@ -414,7 +415,8 @@ class TogetherAI(Provider):
     def get_message(self, response: Response) -> str:
         if not isinstance(response, dict):
             return str(response)
-        return response.get("text", "")
+        response_dict = cast(Dict[str, Any], response)
+        return response_dict.get("text", "")
 
 
 if __name__ == "__main__":
@@ -422,9 +424,15 @@ if __name__ == "__main__":
     print(f"{'Model':<50} {'Status':<10} {'Response'}")
     print("-" * 100)
 
+    import os
+
+    api_key = os.environ.get("TOGETHER_API_KEY", "")
+    if not api_key:
+        print("Please set TOGETHER_API_KEY environment variable")
+        exit(1)
     for model_name in TogetherAI.AVAILABLE_MODELS:
         try:
-            test_ai = TogetherAI(model=model_name, timeout=60)
+            test_ai = TogetherAI(api_key=api_key, model=model_name, timeout=60)
             response = test_ai.chat("Say 'Hello' in one word", stream=True)
             response_text = ""
             for chunk in response:

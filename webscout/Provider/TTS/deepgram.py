@@ -200,8 +200,7 @@ class DeepgramTTS(BaseTTSProvider):
         voice: Optional[str] = None,
         response_format: Optional[str] = None,
         instructions: Optional[str] = None,
-        verbose: bool = False,
-        **kwargs: Any
+        verbose: bool = False
     ) -> str:
         return self.tts(
             text=input_text,
