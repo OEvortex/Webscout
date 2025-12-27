@@ -214,8 +214,8 @@ class Cleeai(Provider):
                 conversationally=conversationally,
             )
             if raw:
-                return cast(str, result)
-            return self.get_message(cast(Response, result))
+                return result
+            return self.get_message(result)
 
         return for_stream() if stream else for_non_stream()
 

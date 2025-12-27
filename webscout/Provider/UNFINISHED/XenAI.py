@@ -8,7 +8,7 @@ import requests
 import urllib3
 
 from webscout import exceptions
-from webscout.AIbase import Provider
+from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 from webscout.litagent import LitAgent
 
@@ -279,8 +279,8 @@ class XenAI(Provider):
                 prompt, stream=True, raw=False,
                 optimizer=optimizer, conversationally=conversationally, **kwargs
             )
-            for response_dict in gen:
-                yield self.get_message(response_dict)
+            for response_item in gen:
+                yield self.get_message(response_item)
 
         def for_non_stream_chat() -> str:
             response_data = self.ask(
@@ -291,10 +291,13 @@ class XenAI(Provider):
 
         return for_stream_chat() if stream else for_non_stream_chat()
 
-    def get_message(self, response: Dict[str, Any]) -> str:
+    def get_message(self, response: Response) -> str:
         """Extracts the message from the API response."""
-        assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response.get("text", "")
+        if isinstance(response, str):
+            return response
+        if isinstance(response, dict):
+            return dict(response).get("text", "")
+        return str(response)
 
 # Example usage (no cookies file needed)
 if __name__ == "__main__":

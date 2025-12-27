@@ -340,9 +340,9 @@ class WrDoChat(Provider):
                 prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
             ):
                 if raw:
-                    yield cast(str, response)
+                    yield response
                 else:
-                    yield self.get_message(cast(Response, response))
+                    yield self.get_message(response)
 
         def for_non_stream():
             result = self.ask(
@@ -353,9 +353,9 @@ class WrDoChat(Provider):
                 conversationally=conversationally,
             )
             if raw:
-                return cast(str, result)
+                return result
             else:
-                return self.get_message(cast(Response, result))
+                return self.get_message(result)
 
         return for_stream() if stream else for_non_stream()
 

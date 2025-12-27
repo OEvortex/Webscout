@@ -1,10 +1,10 @@
 import json
-from typing import Any, Dict, Generator, Optional, Union, cast
+from typing import Any, Dict, Generator, Iterable, Optional, Union, cast
 
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider
+from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 
 
@@ -133,8 +133,10 @@ class samurai(Provider):
                 )
                 response.raise_for_status()
 
-                processed_stream = sanitize_stream(
-                    data=response.iter_lines(),
+                # Convert to list - using type: ignore for compatibility with sanitize_stream
+                lines_list = list(response.iter_lines())
+                processed_stream = sanitize_stream(  # type: ignore[no-overload-impl]
+                    data=lines_list,
                     intro_value="data:",
                     to_json=True,
                     skip_markers=["[DONE]"],
@@ -186,8 +188,8 @@ class samurai(Provider):
     ) -> Union[str, Generator[str, None, None]]:
         def for_stream_chat():
             gen = self.ask(prompt, stream=True, raw=False, optimizer=optimizer, conversationally=conversationally)
-            for response_dict in gen:
-                yield self.get_message(response_dict)
+            for response_item in gen:
+                yield self.get_message(response_item)
 
         def for_non_stream_chat():
             response_data = self.ask(prompt, stream=False, raw=False, optimizer=optimizer, conversationally=conversationally)
@@ -195,9 +197,12 @@ class samurai(Provider):
 
         return for_stream_chat() if stream else for_non_stream_chat()
 
-    def get_message(self, response: dict[str, Any]) -> str:
-        assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"]
+    def get_message(self, response: Response) -> str:
+        if isinstance(response, str):
+            return response
+        if isinstance(response, dict):
+            return dict(response)["text"]
+        return str(response)
 
 if __name__ == "__main__":
     # Ensure curl_cffi is installed

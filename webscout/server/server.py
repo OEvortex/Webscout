@@ -9,6 +9,7 @@ authentication, and provider management.
 from __future__ import annotations
 
 import os
+from contextlib import asynccontextmanager
 from typing import Optional
 
 import uvicorn
@@ -42,6 +43,16 @@ def get_config() -> ServerConfig:
     return config
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan context manager for startup/shutdown events."""
+    # Startup
+    if hasattr(app.state, "startup_event"):
+        await app.state.startup_event()
+    yield
+    # Shutdown (if needed in the future)
+
+
 def create_app():
     """Create and configure the FastAPI application."""
     app_title = os.getenv("WEBSCOUT_API_TITLE", "Webscout API")
@@ -60,6 +71,7 @@ def create_app():
         docs_url=None,  # Disable default docs
         redoc_url=app_redoc_url,
         openapi_url=app_openapi_url,
+        lifespan=lifespan,
     )
 
     # Simple Custom Swagger UI with WebScout footer
@@ -85,19 +97,13 @@ def create_app():
         return HTMLResponse(content=html)
 
     # Add CORS middleware
-    app.add_middleware(  # type: ignore[arg-type]
-        CORSMiddleware,
+    app.add_middleware(
+        CORSMiddleware,  # type: ignore[arg-type]
         allow_origins=["*"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
-    # Add startup event handler
-    @app.on_event("startup")
-    async def startup():
-        if hasattr(app.state, "startup_event"):
-            await app.state.startup_event()
 
     # Initialize API routes
     api = Api(app)

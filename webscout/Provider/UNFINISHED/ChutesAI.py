@@ -316,10 +316,14 @@ if __name__ == "__main__":
             stream=True
         )
         for chunk in response:
-            if hasattr(chunk, "model_dump"):
-                chunk_dict = chunk.model_dump(exclude_none=True)
+            if isinstance(chunk, (bytes, str)):
+                chunk_dict = {"chunk": chunk}
+            elif hasattr(chunk, "model_dump") and callable(chunk.model_dump):
+                chunk_dict = chunk.model_dump()  # type: ignore[call-arg]
+            elif hasattr(chunk, "dict") and callable(chunk.dict):
+                chunk_dict = chunk.dict()  # type: ignore[call-arg]
             else:
-                chunk_dict = chunk.dict(exclude_none=True)
+                chunk_dict = {"chunk": chunk}
             print(f"[green]Response Chunk:[/] {chunk_dict}")
 
     except Exception as e:

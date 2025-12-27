@@ -1,12 +1,12 @@
 import datetime
 import json
-from typing import Generator, Optional, Union, cast
+from typing import Any, Generator, Optional, Union, cast
 from uuid import uuid4
 
 import cloudscraper
 
 from webscout import exceptions
-from webscout.AIbase import Provider
+from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers
 
 
@@ -146,6 +146,7 @@ class YouChat(Provider):
         raw: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> dict:
         """Chat with AI
 
@@ -154,7 +155,8 @@ class YouChat(Provider):
             stream (bool, optional): Flag for streaming response. Defaults to False.
             raw (bool, optional): Stream back raw response as received. Defaults to False.
             optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
+            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to None.
+            **kwargs: Additional keyword arguments.
         Returns:
            dict : {}
         ```json
@@ -267,6 +269,7 @@ class YouChat(Provider):
         optimizer: Optional[str] = None,
         conversationally: bool = False,
         raw: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """Generate response `str`
         Args:
@@ -275,6 +278,7 @@ class YouChat(Provider):
             optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
             conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
             raw (bool, optional): Return raw response chunks. Defaults to False.
+            **kwargs: Additional keyword arguments.
         Returns:
             str: Response generated
         """
@@ -302,13 +306,16 @@ class YouChat(Provider):
 
         return for_stream() if stream else for_non_stream()
 
-    def get_message(self, response: dict) -> str:
+    def get_message(self, response: Response) -> str:
         """Retrieves message only from response
 
             str: Message extracted
         """
-        assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"]
+        if isinstance(response, str):
+            return response
+        if isinstance(response, dict):
+            return dict(response)["text"]
+        return str(response)
 
 if __name__ == '__main__':
     print("-" * 80)

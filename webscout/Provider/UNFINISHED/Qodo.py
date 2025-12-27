@@ -5,7 +5,7 @@ from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider
+from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 from webscout.litagent import LitAgent
 
@@ -346,7 +346,7 @@ class QodoAI(Provider):
                 if raw:
                     yield response
                 else:
-                    yield response.get("text", "")
+                    yield self.get_message(response)
 
         def for_non_stream():
             result = self.ask(
@@ -359,10 +359,13 @@ class QodoAI(Provider):
 
         return for_stream() if stream else for_non_stream()
 
-    def get_message(self, response: dict[str, Any]) -> str:
-        assert isinstance(response, dict), "Response should be of dict data-type only"
-        text = response.get("text", "")
-        return text.replace('\\n', '\n').replace('\\n\\n', '\n\n')
+    def get_message(self, response: Response) -> str:
+        if isinstance(response, str):
+            return response
+        if isinstance(response, dict):
+            text = dict(response).get("text", "")
+            return text.replace('\\n', '\n').replace('\\n\\n', '\n\n')
+        return str(response)
 
     def _get_session_id(self) -> str:
         """Get session ID from Qodo API."""
