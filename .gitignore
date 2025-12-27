@@ -170,3 +170,4 @@ blackbox_private_key.pem
 _plans/*
 !_plans/.gitkeep
 .zenflow/
+.blackboxrules
