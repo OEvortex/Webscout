@@ -102,6 +102,7 @@ class ChatHub(Provider):
         raw: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Union[Dict[str, Any], Generator]:
 
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)

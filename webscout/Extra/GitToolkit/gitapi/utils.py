@@ -26,7 +26,6 @@ class RequestError(GitError):
     """Raised for general request errors"""
     pass
 
-_USER_AGENT_GENERATOR = LitAgent() if LitAgent else None
 
 def request(url: str, retry_attempts: int = 3) -> Any:
     """

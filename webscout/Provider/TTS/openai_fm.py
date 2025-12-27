@@ -93,11 +93,9 @@ class OpenAIFMTTS(BaseTTSProvider):
     def tts(
         self,
         text: str,
-        model: str = "gpt-4o-mini-tts",
-        voice: str = "coral",
-        response_format: str = "mp3",
-        instructions: Optional[str] = None,
-        verbose: bool = True
+        voice: Optional[str] = None,
+        verbose: bool = False,
+        **kwargs
     ) -> str:
         """
         Convert text to speech using OpenAI.fm API with OpenAI-compatible parameters.
@@ -117,6 +115,11 @@ class OpenAIFMTTS(BaseTTSProvider):
             ValueError: If input parameters are invalid
             exceptions.FailedToGenerateResponseError: If there is an error generating or saving the audio
         """
+        # Extract optional parameters from kwargs
+        model = kwargs.get("model", "gpt-4o-mini-tts")
+        response_format = kwargs.get("response_format", "mp3")
+        instructions = kwargs.get("instructions", None)
+
         # Validate input parameters
         if not text or not isinstance(text, str):
             raise ValueError("Input text must be a non-empty string")
@@ -125,7 +128,7 @@ class OpenAIFMTTS(BaseTTSProvider):
 
         # Validate model, voice, and format using base class methods
         model = self.validate_model(model)
-        voice = self.validate_voice(voice)
+        voice = self.validate_voice(voice or "coral")
         response_format = self.validate_format(response_format)
 
         # Map voice to API format

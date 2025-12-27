@@ -213,6 +213,7 @@ class second_query:
     audio: dict
     related: list
     raw: dict
+    video_dict: Optional[dict]
 
     def __init__(self, query_one: first_query, item_no: int = 0):
         r"""Initializes second_query class
@@ -572,7 +573,7 @@ class Handler:
                         if not yes_download:
                             self.dropped.append(query_2.vid)
                             continue
-                        self.related.append(query_2.related)
+                        self.related.extend(query_2.related)
                         yield query_2
                         x += 1
                         if x >= self.total:
@@ -602,7 +603,7 @@ class Handler:
                                     self.dropped.append(query_2.vid)
                                     continue
 
-                                self.related.append(query_2.related)
+                                self.related.extend(query_2.related)
                                 yield query_2
                                 x += 1
                                 if x >= self.total:

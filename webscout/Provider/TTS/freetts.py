@@ -109,7 +109,6 @@ class FreeTTS(BaseTTSProvider):
         Convert text to speech.
         """
         response_format = kwargs.get("response_format", "mp3")
-        instructions = kwargs.get("instructions")
         if not text:
             raise ValueError("Input text must be a non-empty string")
 
@@ -175,7 +174,9 @@ class FreeTTS(BaseTTSProvider):
                         audio_file_resp.raise_for_status()
 
                         # Save to temp file
-                        filename = pathlib.Path(tempfile.mktemp(suffix=f".{response_format}", dir=self.temp_dir))
+                        temp_file = tempfile.NamedTemporaryFile(suffix=f".{response_format}", dir=self.temp_dir, delete=False)
+                        temp_file.close()
+                        filename = pathlib.Path(temp_file.name)
                         with open(filename, "wb") as f:
                             f.write(audio_file_resp.content)
 

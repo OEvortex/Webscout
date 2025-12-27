@@ -184,7 +184,7 @@ def resolve_provider_and_model(model_identifier: str) -> Tuple[Any, str]:
                 available = []
         # If still not iterable, fallback to empty list
         if not isinstance(available, (list, tuple, set)):
-            available = list(available) if hasattr(available, "__iter__") and not isinstance(available, str) else []
+            available = list(available) if available and hasattr(available, "__iter__") and not isinstance(available, str) else []
         if available and model_name not in available:
             raise APIError(
                 f"Model '{model_name}' not supported by provider '{provider_class.__name__}'. Available models: {available}",
@@ -232,7 +232,7 @@ def resolve_tti_provider_and_model(model_identifier: str) -> Tuple[Any, str]:
                 available = []
         # If still not iterable, fallback to empty list
         if not isinstance(available, (list, tuple, set)):
-            available = list(available) if hasattr(available, "__iter__") and not isinstance(available, str) else []
+            available = list(available) if available and hasattr(available, "__iter__") and not isinstance(available, str) else []
         if available and model_name not in available:
             raise APIError(
                 f"Model '{model_name}' not supported by TTI provider '{provider_class.__name__}'. Available models: {available}",

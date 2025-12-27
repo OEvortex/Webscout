@@ -121,7 +121,9 @@ class ElevenlabsTTS(BaseTTSProvider):
         voice_id = self.voice_mapping.get(voice.lower(), voice)
 
         file_extension = f".{response_format}"
-        filename = pathlib.Path(tempfile.mktemp(suffix=file_extension, dir=self.temp_dir))
+        temp_file = tempfile.NamedTemporaryFile(suffix=file_extension, dir=self.temp_dir, delete=False)
+        temp_file.close()
+        filename = pathlib.Path(temp_file.name)
 
         sentences = utils.split_sentences(text)
         if verbose:

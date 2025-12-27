@@ -89,7 +89,7 @@ def process_messages(messages: List[Message]) -> List[Dict[str, Any]]:
 
     for i, msg_in in enumerate(messages):
         try:
-            message_dict_out = {"role": msg_in.role}
+            message_dict_out: Dict[str, Any] = {"role": msg_in.role}
 
             if msg_in.content is None:
                 message_dict_out["content"] = None

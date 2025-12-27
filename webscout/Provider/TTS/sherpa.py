@@ -123,7 +123,7 @@ class SherpaTTS(BaseTTSProvider):
     def _generate_session_hash(self) -> str:
         return "".join(random.choices(string.ascii_lowercase + string.digits, k=11))
 
-    def tts(self, text: str, **kwargs) -> str:
+    def tts(self, text: str, voice: Optional[str] = None, verbose: bool = False, **kwargs) -> str:
         """
         Convert text to speech using Sherpa-ONNX API.
 

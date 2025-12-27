@@ -169,3 +169,4 @@ blackbox_private_key.pem
 # Vibe Flow plans
 _plans/*
 !_plans/.gitkeep
+.zenflow/

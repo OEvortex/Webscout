@@ -77,7 +77,7 @@ class MurfAITTS(BaseTTSProvider):
             self.session.proxies.update(proxies)
         self.timeout = timeout
 
-    def tts(self, text: str, voice: str = "Hazel", verbose: bool = False, **kwargs) -> str:
+    def tts(self, text: str, voice: Optional[str] = None, verbose: bool = False, **kwargs) -> str:
         """
         Converts text to speech using the MurfAITTS API and saves it to a file.
 
@@ -112,7 +112,9 @@ class MurfAITTS(BaseTTSProvider):
 
         # Create temporary file with appropriate extension
         file_extension = f".{response_format}" if response_format != "pcm" else ".wav"
-        filename = pathlib.Path(tempfile.mktemp(suffix=file_extension, dir=self.temp_dir))
+        temp_file = tempfile.NamedTemporaryFile(suffix=file_extension, dir=self.temp_dir, delete=False)
+        temp_file.close()
+        filename = pathlib.Path(temp_file.name)
 
         # Split text into sentences
         sentences = utils.split_sentences(text)
@@ -225,10 +227,10 @@ class MurfAITTS(BaseTTSProvider):
 
     def stream_audio(
         self,
-        input_text: str,
-        model: Optional[str] = "gpt-4o-mini-tts",
-        voice: Optional[str] = "Hazel",
-        response_format: Optional[str] = "mp3",
+        text: str,
+        model: Optional[str] = None,
+        voice: Optional[str] = None,
+        response_format: Optional[str] = None,
         instructions: Optional[str] = None,
         chunk_size: int = 1024,
         verbose: bool = False,
@@ -237,7 +239,7 @@ class MurfAITTS(BaseTTSProvider):
         Stream audio response in chunks.
 
         Args:
-            input_text (str): The text to convert to speech
+            text (str): The text to convert to speech
             model (str): The TTS model to use
             voice (str): The voice to use
             response_format (str): Audio format
@@ -250,7 +252,7 @@ class MurfAITTS(BaseTTSProvider):
         """
         # Generate the audio file using create_speech
         audio_file = self.create_speech(
-            input_text=input_text,
+            input_text=text,
             model=model,
             voice=voice,
             response_format=response_format,

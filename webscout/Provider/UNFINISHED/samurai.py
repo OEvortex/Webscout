@@ -101,6 +101,7 @@ class samurai(Provider):
         raw: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Union[Dict[str, Any], Generator]:
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -181,6 +182,7 @@ class samurai(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         def for_stream_chat():
             gen = self.ask(prompt, stream=True, raw=False, optimizer=optimizer, conversationally=conversationally)
@@ -193,7 +195,7 @@ class samurai(Provider):
 
         return for_stream_chat() if stream else for_non_stream_chat()
 
-    def get_message(self, response: dict) -> str:
+    def get_message(self, response: dict[str, Any]) -> str:
         assert isinstance(response, dict), "Response should be of dict data-type only"
         return response["text"]
 

@@ -158,7 +158,7 @@ class YahooWeather:
             List of weather data dictionaries
         """
         try:
-            weather_data = {"location": location}
+            weather_data: dict[str, Any] = {"location": location}
 
             # Extract current temperature
             temp_patterns = [

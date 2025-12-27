@@ -140,7 +140,6 @@ class Completions(BaseCompletions):
             # Track token usage across chunks
             prompt_tokens = 0
             completion_tokens = 0
-            total_tokens = 0
 
             # Estimate prompt tokens based on message length
             for msg in payload.get("messages", []):

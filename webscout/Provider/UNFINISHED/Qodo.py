@@ -212,6 +212,7 @@ class QodoAI(Provider):
         raw: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Union[Dict[str, Any], Generator]:
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -336,6 +337,7 @@ class QodoAI(Provider):
         optimizer: Optional[str] = None,
         conversationally: bool = False,
         raw: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         def for_stream():
             for response in self.ask(
@@ -357,7 +359,7 @@ class QodoAI(Provider):
 
         return for_stream() if stream else for_non_stream()
 
-    def get_message(self, response: dict) -> str:
+    def get_message(self, response: dict[str, Any]) -> str:
         assert isinstance(response, dict), "Response should be of dict data-type only"
         text = response.get("text", "")
         return text.replace('\\n', '\n').replace('\\n\\n', '\n\n')

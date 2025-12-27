@@ -1,6 +1,7 @@
 """
 Base class for TTS providers with OpenAI-compatible functionality.
 """
+import functools
 import os
 import tempfile
 from pathlib import Path
@@ -190,7 +191,7 @@ class BaseTTSProvider(TTSProvider):
 
     def stream_audio(
         self,
-        input_text: str,
+        text: str,
         model: Optional[str] = None,
         voice: Optional[str] = None,
         response_format: Optional[str] = None,
@@ -202,7 +203,7 @@ class BaseTTSProvider(TTSProvider):
         Stream audio in chunks with OpenAI-compatible parameters.
 
         Args:
-            input_text (str): The text to convert to speech
+            text (str): The text to convert to speech
             model (str, optional): The TTS model to use
             voice (str, optional): The voice to use
             response_format (str, optional): Audio format
@@ -215,7 +216,7 @@ class BaseTTSProvider(TTSProvider):
         """
         # Generate the audio file using create_speech
         audio_file = self.create_speech(
-            input_text=input_text,
+            input_text=text,
             model=model,
             voice=voice,
             response_format=response_format,
@@ -373,7 +374,7 @@ class AsyncBaseTTSProvider:
         os.makedirs(os.path.dirname(os.path.abspath(destination)), exist_ok=True)
 
         # Copy the file using asyncio to avoid blocking
-        await asyncio.to_thread(shutil.copy2, source_path, destination)
+        await asyncio.to_thread(functools.partial(shutil.copy2, str(source_path), destination))
 
         if verbose:
             ic.configureOutput(prefix='DEBUG| ')

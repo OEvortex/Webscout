@@ -85,7 +85,7 @@ def create_app():
         return HTMLResponse(content=html)
 
     # Add CORS middleware
-    app.add_middleware(
+    app.add_middleware(  # type: ignore[arg-type]
         CORSMiddleware,
         allow_origins=["*"],
         allow_credentials=True,
@@ -234,23 +234,31 @@ def run_api(
     )
 
     # Configure uvicorn settings
-    uvicorn_config = {
-        "app": uvicorn_app_str,
-        "host": host,
-        "port": int(port),
-        "factory": True,
-        "reload": debug,
-        "log_level": log_level.lower() if log_level else ("debug" if debug else "info"),
-    }
+    log_level_str: str = log_level.lower() if log_level else ("debug" if debug else "info")
+    port_int: int = int(port)
 
     # Add workers only if not in debug mode
     if not debug and workers > 1:
-        uvicorn_config["workers"] = workers
         print(f"Starting with {workers} workers...")
+        uvicorn.run(
+            app=uvicorn_app_str,
+            host=host,
+            port=port_int,
+            factory=True,
+            reload=debug,
+            log_level=log_level_str,
+            workers=workers,
+        )
     elif debug:
         print("Debug mode enabled - using single worker with reload...")
-
-    uvicorn.run(**uvicorn_config)
+        uvicorn.run(
+            app=uvicorn_app_str,
+            host=host,
+            port=port_int,
+            factory=True,
+            reload=debug,
+            log_level=log_level_str,
+        )
 
 
 def main():

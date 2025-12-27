@@ -176,7 +176,7 @@ class QwenTTS(BaseTTSProvider):
         """Generates a random session hash for Gradio."""
         return "".join(random.choices(string.ascii_lowercase + string.digits, k=10))
 
-    def tts(self, text: str, **kwargs) -> str:
+    def tts(self, text: str, voice: Optional[str] = None, verbose: bool = False, **kwargs) -> str:
         """
         Convert text to speech using Qwen3-TTS API with OpenAI-compatible parameters.
 

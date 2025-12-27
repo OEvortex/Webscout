@@ -3,14 +3,13 @@ Scout LXML Parser - Advanced HTML/XML Parsing with lxml
 """
 
 import re
-from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+
+from ..element import NavigableString, Tag
 
 # lxml is an optional dependency; import lazily at runtime to avoid hard dependency for type checking
 etree = None  # type: ignore
 lxml_html = None  # type: ignore
-
-
-from ..element import NavigableString, Tag
 
 
 class LXMLParser:

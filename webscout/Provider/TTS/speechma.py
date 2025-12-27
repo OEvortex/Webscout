@@ -428,6 +428,7 @@ class SpeechMaTTS(BaseTTSProvider):
             **kwargs: Additional parameters (model, voice, response_format, instructions, pitch, rate, verbose)
         """
         # Extract parameters from kwargs with defaults
+        model = kwargs.get("model", self.default_model)
         voice = voice or kwargs.get("voice", "emma")
         response_format = kwargs.get("response_format", "mp3")
         pitch = kwargs.get("pitch", 0)
@@ -440,7 +441,7 @@ class SpeechMaTTS(BaseTTSProvider):
             raise ValueError("Input text exceeds maximum allowed length of 10,000 characters")
 
         # Validate model, voice, and format using base class methods
-        model = self.validate_model(model or self.default_model)
+        model = self.validate_model(model)
         voice = self.validate_voice(voice)
         response_format = self.validate_format(response_format)
 
