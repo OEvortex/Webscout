@@ -1,7 +1,7 @@
 """Main CLI application class."""
 
 import sys
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from rich.console import Console
 
@@ -385,7 +385,7 @@ complete -c {self.name} -n "__fish_use_subcommand" -a "{" ".join(commands)}"
             for opt in func._options:
                 # Use the longest parameter name (usually the --long-form) for the parameter name
                 param_names = [p.lstrip("-").replace("-", "_") for p in opt["param_decls"]]
-                name = max(param_names, key=len)  # Use the longest name
+                name = cast(str, max(param_names, key=len))  # Use the longest name
 
                 # Check all possible parameter names in parsed args
                 value = None
@@ -414,11 +414,11 @@ complete -c {self.name} -n "__fish_use_subcommand" -a "{" ".join(commands)}"
                     elif opt.get("multiple", False):
                         items = value if isinstance(value, list) else [value]
                         if "type" in opt:
-                            items = [convert_type(v, opt["type"], name) for v in items]
+                            items = [convert_type(str(v), opt["type"], name) for v in items if v is not None]
                         if "choices" in opt and opt["choices"]:
                             for v in items:
                                 validate_choice(
-                                    v, opt["choices"], name, opt.get("case_sensitive", True)
+                                    str(v), opt["choices"], name, opt.get("case_sensitive", True)
                                 )
                         params[name] = items
                     else:
@@ -447,17 +447,18 @@ complete -c {self.name} -n "__fish_use_subcommand" -a "{" ".join(commands)}"
                                 value_to_convert = False
 
                         if "type" in opt and not opt.get("is_flag", False):
-                            value_to_convert = convert_type(value_to_convert, opt["type"], name)
+                            value_to_convert = convert_type(str(value_to_convert), opt["type"], name) if value_to_convert is not None else None
                         if "choices" in opt and opt["choices"]:
-                            validate_choice(
-                                value_to_convert,
-                                opt["choices"],
-                                name,
-                                opt.get("case_sensitive", True),
-                            )
+                            if value_to_convert is not None:
+                                validate_choice(
+                                    str(value_to_convert),
+                                    opt["choices"],
+                                    name,
+                                    opt.get("case_sensitive", True),
+                                )
 
                         # Apply validation rules
-                        if opt.get("validation"):
+                        if opt.get("validation") and value_to_convert is not None:
                             value_to_convert = validate_argument(
                                 str(value_to_convert), opt["validation"], name
                             )

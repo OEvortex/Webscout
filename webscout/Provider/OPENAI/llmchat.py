@@ -247,5 +247,7 @@ if __name__ == "__main__":
         stream=True,
     )
     for chunk in response:
-        if chunk.choices[0].delta.content:
-            print(chunk.choices[0].delta.content, end="", flush=True)
+        if hasattr(chunk, "choices") and chunk.choices:
+            delta = chunk.choices[0].delta
+            if delta and delta.content:
+                print(delta.content, end="", flush=True)

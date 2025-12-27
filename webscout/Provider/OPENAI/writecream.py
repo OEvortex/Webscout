@@ -60,7 +60,8 @@ class Completions(BaseCompletions):
     ) -> Generator[ChatCompletionChunk, None, None]:
         # Writecream does not support streaming, so yield the full response as a single chunk
         completion = self._create_non_stream(request_id, created_time, payload, timeout, proxies)
-        content = completion.choices[0].message.content
+        message = completion.choices[0].message
+        content = message.content if message else None
         # Yield as a single chunk
         delta = ChoiceDelta(content=content)
         choice = Choice(index=0, delta=delta, finish_reason=None)
@@ -178,6 +179,7 @@ if __name__ == "__main__":
     )
     if isinstance(response, ChatCompletion):
         if not isinstance(response, Generator):
-            print(response.choices[0].message.content)
+            message = response.choices[0].message
+            print(message.content if message else "")
     else:
         print(response)

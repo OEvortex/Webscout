@@ -250,7 +250,8 @@ class SonusAI(Provider):
     def get_message(self, response: Response) -> str:
         if not isinstance(response, dict):
             return str(response)
-        return response.get("text", "")
+        response_dict = cast(Dict[str, Any], response)
+        return response_dict.get("text", "")
 
 
 if __name__ == "__main__":

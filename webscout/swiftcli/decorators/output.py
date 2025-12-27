@@ -258,7 +258,7 @@ def progress(
                 columns.append(TimeRemainingColumn())
 
             with Progress(*columns, transient=transient) as progress:
-                task = progress.add_task(description or f.__name__, total=total)
+                task = progress.add_task(description or getattr(f, '__name__', 'unknown'), total=total)
 
                 try:
                     for update in f(*args, **kwargs):

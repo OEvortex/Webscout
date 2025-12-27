@@ -3,7 +3,7 @@ Scout HTML5 Parser - Advanced HTML5 Parsing with html5lib
 """
 
 import re
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 import html5lib
 
@@ -28,12 +28,12 @@ class HTML5Parser:
         self._debug = debug
         self._parsing_errors = []
 
-    def parse(self, markup: str) -> Tag:
+    def parse(self, markup: Union[str, bytes]) -> Tag:
         """
         Parse HTML5 markup and return the root tag.
 
         Args:
-            markup (str): HTML5 content to parse
+            markup (str | bytes): HTML5 content to parse
 
         Returns:
             Tag: Parsed document root
@@ -49,14 +49,15 @@ class HTML5Parser:
                 transport_encoding='utf-8'
             )
 
-            # Convert parsed tree to Scout Tag
-            return self._convert_element(tree.getroot())
+            # Convert parsed tree to Scout Tag. html5lib may return an ElementTree or an Element
+            root_elem = getattr(tree, "getroot", lambda: tree)()
+            return self._convert_element(root_elem)
 
         except Exception as e:
             self._parsing_errors.append(str(e))
             return Tag('root')
 
-    def _preprocess_markup(self, markup: str) -> str:
+    def _preprocess_markup(self, markup: Union[str, bytes]) -> str:
         """
         Preprocess HTML markup to handle common parsing issues.
 
@@ -66,6 +67,13 @@ class HTML5Parser:
         Returns:
             str: Preprocessed HTML markup
         """
+        # Ensure we are working with a text string
+        if isinstance(markup, (bytes, bytearray)):
+            try:
+                markup = cast(bytes, markup).decode("utf-8")
+            except Exception:
+                markup = cast(bytes, markup).decode("utf-8", errors="ignore")
+
         # Remove HTML comments
         markup = re.sub(r'<!--.*?-->', '', markup, flags=re.DOTALL)
 

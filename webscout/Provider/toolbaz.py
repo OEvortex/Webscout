@@ -313,14 +313,15 @@ class Toolbaz(Provider):
             if raw:
                 return cast(str, response_dict)
             else:
-                return self.get_message(cast(Response, response_dict))
+                return self.get_message(response_dict)
 
         return for_stream_chat() if stream else for_non_stream_chat()
 
     def get_message(self, response: Response) -> str:
         if not isinstance(response, dict):
             return str(response)
-        return response.get("text", "")
+        response_dict = cast(Dict[str, Any], response)
+        return response_dict.get("text", "")
 
 
 if __name__ == "__main__":

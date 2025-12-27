@@ -20,7 +20,8 @@ class BaseImages(ABC):
         timeout: Optional[int] = None,
         image_format: str = "png",
         seed: Optional[int] = None,
-        **kwargs
+        convert_format: bool = False,
+        **kwargs,
     ) -> ImageResponse:
         """
         Abstract method to create images from a prompt.
@@ -43,6 +44,7 @@ class BaseImages(ABC):
             ImageResponse: The generated images.
         """
         raise NotImplementedError
+
 
 # class ProxyAutoMeta(ABCMeta):
 #     """Metaclass providing seamless proxy injection for providers."""
@@ -109,6 +111,7 @@ class BaseImages(ABC):
 
 #         return instance
 
+
 class TTICompatibleProvider(ABC):
     """
     Abstract Base Class for TTI providers mimicking the OpenAI Python client structure.
@@ -124,6 +127,7 @@ class TTICompatibleProvider(ABC):
     - self.get_proxied_curl_session() - returns a curl_cffi.Session with proxies
     - self.get_proxied_curl_async_session() - returns a curl_cffi.AsyncSession with proxies
     """
+
     images: BaseImages
     required_auth: bool = False  # Default: no auth required
     working: bool = True  # Default: provider is working

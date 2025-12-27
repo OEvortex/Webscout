@@ -295,8 +295,8 @@ class TypliAI(Provider):
         """
         if not isinstance(response, dict):
             return str(response)
-        # Ensure text exists before processing
-        return response.get("text", "").replace("\\n", "\n").replace("\\n\\n", "\n\n")
+        response_dict = cast(Dict[str, Any], response)
+        return response_dict.get("text", "").replace("\\n", "\n").replace("\\n\\n", "\n\n")
 
 
 if __name__ == "__main__":

@@ -49,7 +49,7 @@ class WrDoChat(Provider):
         "llama3-70b-8192",
         "mai-ds-r1",
         "qwen-qwq-32b",
-        "qwen3-30b-a3b"
+        "qwen3-30b-a3b",
     ]
 
     def __init__(
@@ -107,7 +107,7 @@ class WrDoChat(Provider):
             "content-type": "application/json",
             "origin": "https://oi.wr.do",
             "user-agent": self.agent.random(),
-            "x-requested-with": "XMLHttpRequest"
+            "x-requested-with": "XMLHttpRequest",
         }
 
         self.__available_optimizers = (
@@ -132,8 +132,14 @@ class WrDoChat(Provider):
         self.conversation.history_offset = history_offset
 
         if act:
-            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
-            ) or self.conversation.intro
+            self.conversation.intro = (
+                AwesomePrompts().get_act(
+                    cast(Union[str, int], act),
+                    default=self.conversation.intro,
+                    case_insensitive=True,
+                )
+                or self.conversation.intro
+            )
         elif intro:
             self.conversation.intro = intro
 
@@ -142,9 +148,13 @@ class WrDoChat(Provider):
     def _load_cookies(self) -> Optional[Dict[str, str]]:
         """Load cookies from a JSON file and return them as a dictionary."""
         try:
-            with open(self.cookies_path, 'r') as f:
+            with open(self.cookies_path, "r") as f:
                 cookies_data = json.load(f)
-            return {cookie['name']: cookie['value'] for cookie in cookies_data if 'name' in cookie and 'value' in cookie}
+            return {
+                cookie["name"]: cookie["value"]
+                for cookie in cookies_data
+                if "name" in cookie and "value" in cookie
+            }
         except Exception as e:
             raise exceptions.AuthenticationError(f"Failed to load cookies: {str(e)}")
 
@@ -162,21 +172,23 @@ class WrDoChat(Provider):
             match = re.search(r'0:"(.*?)"', line)
             if match:
                 # Decode potential unicode escapes like \u00e9
-                content = match.group(1).encode().decode('unicode_escape')
-                return content.replace('\\\\', '\\').replace('\\"', '"')  # Handle escaped backslashes and quotes
+                content = match.group(1).encode().decode("unicode_escape")
+                return content.replace("\\\\", "\\").replace(
+                    '\\"', '"'
+                )  # Handle escaped backslashes and quotes
 
             # Store message ID from 'f:' response
-            elif line.startswith('f:'):
+            elif line.startswith("f:"):
                 try:
                     msg_data = json.loads(line[2:])  # Skip 'f:' prefix
-                    self.last_message_id = msg_data.get('messageId')
+                    self.last_message_id = msg_data.get("messageId")
                 except json.JSONDecodeError:
                     pass
             # Check for error messages in 'e:' response
-            elif line.startswith('e:'):
+            elif line.startswith("e:"):
                 try:
                     error_data = json.loads(line[2:])  # Skip 'e:' prefix
-                    if error_data.get('error'):
+                    if error_data.get("error"):
                         raise exceptions.FailedToGenerateResponseError(
                             f"API Error: {error_data['error']}"
                         )
@@ -220,29 +232,22 @@ class WrDoChat(Provider):
         chat_id = str(uuid4())
         message_id = str(uuid4())
         from datetime import timezone
+
         current_time = datetime.now(timezone.utc).isoformat() + "Z"
 
         payload = {
             "id": chat_id,
             "messages": [
-                {
-                    "role": "system",
-                    "content": self.system_prompt
-                },
+                {"role": "system", "content": self.system_prompt},
                 {
                     "id": message_id,
                     "createdAt": current_time,
                     "role": "user",
                     "content": conversation_prompt,
-                    "parts": [
-                        {
-                            "type": "text",
-                            "text": conversation_prompt
-                        }
-                    ]
-                }
+                    "parts": [{"type": "text", "text": conversation_prompt}],
+                },
             ],
-            "selectedChatModel": self.model
+            "selectedChatModel": self.model,
         }
 
         def for_stream():
@@ -253,25 +258,27 @@ class WrDoChat(Provider):
                     json=payload,
                     stream=True,
                     timeout=self.timeout,
-                    impersonate="chrome110"
+                    impersonate="chrome110",
                 )
                 if response.status_code == 401:
-                    raise exceptions.AuthenticationError("Authentication failed. Please check your cookies.")
+                    raise exceptions.AuthenticationError(
+                        "Authentication failed. Please check your cookies."
+                    )
                 response.raise_for_status()
                 streaming_response = ""
                 has_content = False
                 processed_stream = sanitize_stream(
                     data=response.iter_lines(),
                     intro_value=None,  # No intro to remove
-                    to_json=False,     # Response is not JSON
+                    to_json=False,  # Response is not JSON
                     content_extractor=self._wrdo_extractor,
                     yield_raw_on_error=False,
-                    raw=raw
+                    raw=raw,
                 )
                 for content in processed_stream:
                     # Always yield as string, even in raw mode
                     if isinstance(content, bytes):
-                        content = content.decode('utf-8', errors='ignore')
+                        content = content.decode("utf-8", errors="ignore")
                     if content and isinstance(content, str):
                         streaming_response += content
                         has_content = True
@@ -282,13 +289,12 @@ class WrDoChat(Provider):
                         prompt, self.get_message(self.last_response)
                     )
                 else:
-                    raise exceptions.FailedToGenerateResponseError(
-                        "No content received from API"
-                    )
+                    raise exceptions.FailedToGenerateResponseError("No content received from API")
             except CurlError as e:
                 raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {e}")
             except Exception as e:
                 raise exceptions.FailedToGenerateResponseError(f"An error occurred: {str(e)}")
+
         def for_non_stream():
             response_text = ""
             try:
@@ -299,8 +305,11 @@ class WrDoChat(Provider):
                         response_text += chunk
             except Exception as e:
                 if not response_text:
-                    raise exceptions.FailedToGenerateResponseError(f"Failed to get response: {str(e)}")
+                    raise exceptions.FailedToGenerateResponseError(
+                        f"Failed to get response: {str(e)}"
+                    )
             return response_text if raw else {"text": response_text}
+
         return for_stream() if stream else for_non_stream()
 
     def chat(
@@ -325,6 +334,7 @@ class WrDoChat(Provider):
             Union[str, Generator[str, None, None]]: The generated response.
         """
         raw = kwargs.get("raw", False)
+
         def for_stream():
             for response in self.ask(
                 prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
@@ -333,6 +343,7 @@ class WrDoChat(Provider):
                     yield cast(str, response)
                 else:
                     yield self.get_message(cast(Response, response))
+
         def for_non_stream():
             result = self.ask(
                 prompt,
@@ -345,6 +356,7 @@ class WrDoChat(Provider):
                 return cast(str, result)
             else:
                 return self.get_message(cast(Response, result))
+
         return for_stream() if stream else for_non_stream()
 
     def get_message(self, response: Response) -> str:
@@ -359,7 +371,8 @@ class WrDoChat(Provider):
         """
         if not isinstance(response, dict):
             return str(response)
-        return response.get("text", "")
+        response_dict = cast(Dict[str, Any], response)
+        return response_dict.get("text", "")
 
 
 if __name__ == "__main__":

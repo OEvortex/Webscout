@@ -127,6 +127,7 @@ class oivscode(Provider):
         raw: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Any:
         """Chat with AI (DeepInfra-style streaming and non-streaming)"""
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)

@@ -372,7 +372,8 @@ if __name__ == "__main__":
             stream=False,
         )
         if isinstance(response, ChatCompletion):
-            print(f"Response: {response.choices[0].message.content}")
+            message = response.choices[0].message if response.choices else None
+            print(f"Response: {message.content if message else ''}")
         else:
             print(f"Response: {response}")
 
@@ -388,8 +389,9 @@ if __name__ == "__main__":
             stream_resp, (str, bytes, ChatCompletion)
         ):
             for chunk in stream_resp:
-                if chunk.choices[0].delta.content:
-                    print(chunk.choices[0].delta.content, end="", flush=True)
+                delta = chunk.choices[0].delta if chunk.choices else None
+                if delta and delta.content:
+                    print(delta.content, end="", flush=True)
         else:
             print(stream_resp)
         print()

@@ -21,8 +21,10 @@ except ImportError:
     # Handle direct execution
     import os
     import sys
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
     from webscout.Provider.TTS.base import BaseTTSProvider
+
 
 class QwenTTS(BaseTTSProvider):
     """
@@ -35,6 +37,7 @@ class QwenTTS(BaseTTSProvider):
     - Multiple output formats
     - Streaming response simulation
     """
+
     required_auth = False
 
     BASE_URL = "https://qwen-qwen3-tts-demo.hf.space"
@@ -51,12 +54,55 @@ class QwenTTS(BaseTTSProvider):
 
     # Supported voices
     SUPPORTED_VOICES = [
-        "cherry", "serena", "ethan", "chelsie", "momo", "vivian", "moon", "maia",
-        "kai", "nofish", "bella", "jennifer", "ryan", "katerina", "aiden", "bodega",
-        "alek", "dolce", "sohee", "ono_anna", "lenn", "sonrisa", "emilien", "andre",
-        "radio_gol", "eldric_sage", "mia", "mochi", "bellona", "vincent", "bunny",
-        "neil", "elias", "arthur", "nini", "ebona", "seren", "pip", "stella", "li",
-        "marcus", "roy", "peter", "eric", "rocky", "kiki", "sunny", "jada", "dylan"
+        "cherry",
+        "serena",
+        "ethan",
+        "chelsie",
+        "momo",
+        "vivian",
+        "moon",
+        "maia",
+        "kai",
+        "nofish",
+        "bella",
+        "jennifer",
+        "ryan",
+        "katerina",
+        "aiden",
+        "bodega",
+        "alek",
+        "dolce",
+        "sohee",
+        "ono_anna",
+        "lenn",
+        "sonrisa",
+        "emilien",
+        "andre",
+        "radio_gol",
+        "eldric_sage",
+        "mia",
+        "mochi",
+        "bellona",
+        "vincent",
+        "bunny",
+        "neil",
+        "elias",
+        "arthur",
+        "nini",
+        "ebona",
+        "seren",
+        "pip",
+        "stella",
+        "li",
+        "marcus",
+        "roy",
+        "peter",
+        "eric",
+        "rocky",
+        "kiki",
+        "sunny",
+        "jada",
+        "dylan",
     ]
 
     # Voice mapping for API compatibility
@@ -109,7 +155,7 @@ class QwenTTS(BaseTTSProvider):
         "kiki": "Kiki / 粤语-阿清",
         "sunny": "Sunny / 四川-晴儿",
         "jada": "Jada / 上海-阿珍",
-        "dylan": "Dylan / 北京-晓东"
+        "dylan": "Dylan / 北京-晓东",
     }
 
     def __init__(self, timeout: int = 60, proxy: Optional[str] = None):
@@ -139,11 +185,10 @@ class QwenTTS(BaseTTSProvider):
             **kwargs: Additional parameters (model, voice, response_format, language, verbose)
         """
         # Extract parameters from kwargs with defaults
-        model = kwargs.get('model', "qwen3-tts")
-        voice = kwargs.get('voice', "cherry")
-        response_format = kwargs.get('response_format', "wav")
-        language = kwargs.get('language', "Auto / 自动")
-        verbose = kwargs.get('verbose', True)
+        voice = kwargs.get("voice", "cherry")
+        response_format = kwargs.get("response_format", "wav")
+        language = kwargs.get("language", "Auto / 自动")
+        verbose = kwargs.get("verbose", True)
         if not text or not isinstance(text, str):
             raise ValueError("Input text must be a non-empty string")
 
@@ -152,18 +197,17 @@ class QwenTTS(BaseTTSProvider):
 
         # Create temporary file
         file_extension = f".{response_format}"
-        filename = pathlib.Path(tempfile.NamedTemporaryFile(suffix=file_extension, dir=self.temp_dir, delete=False).name)
+        filename = pathlib.Path(
+            tempfile.NamedTemporaryFile(suffix=file_extension, dir=self.temp_dir, delete=False).name
+        )
 
         session_hash = self._generate_session_hash()
 
         if verbose:
-            ic.configureOutput(prefix='DEBUG| ')
+            ic.configureOutput(prefix="DEBUG| ")
             ic(f"Joining queue for voice: {voice} ({qwen_voice})")
 
-        client_kwargs: dict[str, Any] = {
-            "headers": self.headers,
-            "timeout": self.timeout
-        }
+        client_kwargs: dict[str, Any] = {"headers": self.headers, "timeout": self.timeout}
         if self.proxy:
             client_kwargs["proxy"] = self.proxy
 
@@ -176,7 +220,7 @@ class QwenTTS(BaseTTSProvider):
                     "event_data": None,
                     "fn_index": 1,
                     "trigger_id": 7,
-                    "session_hash": session_hash
+                    "session_hash": session_hash,
                 }
 
                 response = client.post(join_url, json=payload)
@@ -202,16 +246,24 @@ class QwenTTS(BaseTTSProvider):
                                     output_data = data.get("output", {}).get("data", [])
                                     if output_data:
                                         audio_info = output_data[0]
-                                        path = audio_info["path"] if isinstance(audio_info, dict) else audio_info
+                                        path = (
+                                            audio_info["path"]
+                                            if isinstance(audio_info, dict)
+                                            else audio_info
+                                        )
                                         audio_url = f"{self.BASE_URL}/gradio_api/file={path}"
                                     break
                                 else:
-                                    raise exceptions.FailedToGenerateResponseError(f"Generation failed: {data}")
+                                    raise exceptions.FailedToGenerateResponseError(
+                                        f"Generation failed: {data}"
+                                    )
                             elif msg == "queue_full":
                                 raise exceptions.FailedToGenerateResponseError("Queue is full")
 
                 if not audio_url:
-                    raise exceptions.FailedToGenerateResponseError("Failed to get audio URL from stream")
+                    raise exceptions.FailedToGenerateResponseError(
+                        "Failed to get audio URL from stream"
+                    )
 
                 # Step 3: Download the audio file
                 audio_response = client.get(audio_url)
@@ -221,14 +273,14 @@ class QwenTTS(BaseTTSProvider):
                     f.write(audio_response.content)
 
                 if verbose:
-                    ic.configureOutput(prefix='DEBUG| ')
+                    ic.configureOutput(prefix="DEBUG| ")
                     ic(f"Speech generated successfully: {filename}")
 
                 return filename.as_posix()
 
         except Exception as e:
             if verbose:
-                ic.configureOutput(prefix='DEBUG| ')
+                ic.configureOutput(prefix="DEBUG| ")
                 ic(f"Error in QwenTTS: {e}")
             raise exceptions.FailedToGenerateResponseError(f"Failed to generate audio: {e}")
 
@@ -239,7 +291,7 @@ class QwenTTS(BaseTTSProvider):
         voice: Optional[str] = "alloy",
         response_format: Optional[str] = "mp3",
         instructions: Optional[str] = None,
-        verbose: bool = False
+        verbose: bool = False,
     ) -> str:
         """
         OpenAI-compatible speech creation interface.
@@ -261,19 +313,22 @@ class QwenTTS(BaseTTSProvider):
             voice=voice or "alloy",
             model=model or "gpt-4o-mini-tts",
             response_format=response_format or "mp3",
-            verbose=verbose
+            verbose=verbose,
         )
+
 
 # ... (keep other classes as is)
 
 if __name__ == "__main__":
     qwen = QwenTTS()
     try:
-        ic.configureOutput(prefix='DEBUG| ')
+        ic.configureOutput(prefix="DEBUG| ")
         ic("Testing Qwen3-TTS...")
-        path = qwen.create_speech(input_text="Hello, this is a test.", voice="jennifer", verbose=True)
-        ic.configureOutput(prefix='INFO| ')
+        path = qwen.create_speech(
+            input_text="Hello, this is a test.", voice="jennifer", verbose=True
+        )
+        ic.configureOutput(prefix="INFO| ")
         ic(f"Saved to {path}")
     except Exception as e:
-        ic.configureOutput(prefix='ERROR| ')
+        ic.configureOutput(prefix="ERROR| ")
         ic(f"Error: {e}")

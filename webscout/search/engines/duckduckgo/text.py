@@ -38,6 +38,9 @@ class DuckDuckGoTextSearch(DuckDuckGoBase):
         backend = args[4] if len(args) > 4 else kwargs.get("backend", "auto")
         max_results = args[5] if len(args) > 5 else kwargs.get("max_results")
 
+        if keywords is None:
+            raise ValueError("keywords cannot be None")
+
         if backend in ("api", "ecosia"):
             warnings.warn(f"{backend=} is deprecated, using backend='auto'", stacklevel=2)
             backend = "auto"

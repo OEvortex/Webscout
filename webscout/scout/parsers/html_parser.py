@@ -3,6 +3,7 @@ Scout HTML Parser - Advanced HTML Parsing with Python's Built-in Parser
 """
 
 import html
+import html.entities as html_entities
 import re
 from html.parser import HTMLParser as StdHTMLParser
 from typing import List
@@ -209,7 +210,7 @@ class _ScoutHTMLParser(StdHTMLParser):
             name (str): Entity reference name
         """
         # Convert entity references to their actual characters
-        char = html.entities.html5.get(name, f'&{name};')
+        char = html_entities.html5.get(name, f'&{name};')
         self._scout_parser.add_text(char)
 
     def handle_charref(self, name: str):

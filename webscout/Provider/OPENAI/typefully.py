@@ -413,6 +413,7 @@ if __name__ == "__main__":
     )
 
     if isinstance(response, ChatCompletion):
-        print(f"{BOLD}Response:{RESET} {response.choices[0].message.content}")
+        message = response.choices[0].message if response.choices else None
+        print(f"{BOLD}Response:{RESET} {message.content if message else ''}")
     else:
         print(f"{BOLD}Response:{RESET} {response}")

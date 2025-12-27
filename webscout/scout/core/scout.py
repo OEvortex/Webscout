@@ -7,7 +7,7 @@ import json
 import re
 import unicodedata
 import urllib.parse
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from ..element import NavigableString, Tag
 from ..parsers import ParserRegistry
@@ -26,11 +26,11 @@ class Scout:
 
     def __init__(
         self,
-        markup="",
-        features="html.parser",
-        from_encoding=None,
-        exclude_encodings=None,
-        element_classes=None,
+        markup: Union[str, bytes] = "",
+        features: str = "html.parser",
+        from_encoding: Optional[str] = None,
+        exclude_encodings: Optional[List[str]] = None,
+        element_classes: Optional[Dict[str, Any]] = None,
         **kwargs,
     ):
         """
@@ -90,13 +90,13 @@ class Scout:
         self.text_analyzer = ScoutTextAnalyzer()
         self.web_analyzer = ScoutWebAnalyzer()
 
-    def normalize_text(self, text: str, form="NFKD") -> str:
+    def normalize_text(self, text: str, form: Literal["NFC", "NFD", "NFKC", "NFKD"] = "NFKD") -> str:
         """
         Normalize text using Unicode normalization.
 
         Args:
             text (str): Input text
-            form (str, optional): Normalization form
+            form (Literal["NFC", "NFD", "NFKC", "NFKD"], optional): Normalization form
 
         Returns:
             str: Normalized text
@@ -262,13 +262,15 @@ class Scout:
         for meta in self.find_all("meta", attrs={"property": re.compile(r"^og:")}):
             key = meta.get("property")
             if key and key.startswith("og:"):
-                metadata["og_metadata"][key[3:]] = meta.get("content")
+                if isinstance(metadata["og_metadata"], dict):
+                    metadata["og_metadata"][key[3:]] = meta.get("content")
 
         # Twitter Card metadata
         for meta in self.find_all("meta", attrs={"name": re.compile(r"^twitter:")}):
             key = meta.get("name")
             if key and key.startswith("twitter:"):
-                metadata["twitter_metadata"][key[8:]] = meta.get("content")
+                if isinstance(metadata["twitter_metadata"], dict):
+                    metadata["twitter_metadata"][key[8:]] = meta.get("content")
 
         return metadata
 
@@ -604,7 +606,7 @@ class Scout:
         """
         return self._soup.prettify(formatter)
 
-    def decompose(self, tag: Tag = None) -> None:
+    def decompose(self, tag: Optional[Tag] = None) -> None:
         """
         Remove a tag and its contents from the document.
 
@@ -613,9 +615,10 @@ class Scout:
         """
         if tag is None:
             tag = self._soup
+        assert tag is not None
         tag.decompose()
 
-    def extract(self, tag: Tag = None) -> Tag:
+    def extract(self, tag: Optional[Tag] = None) -> Tag:
         """
         Remove a tag from the document and return it.
 
@@ -627,9 +630,10 @@ class Scout:
         """
         if tag is None:
             tag = self._soup
+        assert tag is not None
         return tag.extract()
 
-    def clear(self, tag: Tag = None) -> None:
+    def clear(self, tag: Optional[Tag] = None) -> None:
         """
         Remove a tag's contents while keeping the tag itself.
 
@@ -638,6 +642,7 @@ class Scout:
         """
         if tag is None:
             tag = self._soup
+        assert tag is not None
         tag.clear()
 
     def replace_with(self, old_tag: Tag, new_tag: Tag) -> None:
@@ -658,9 +663,13 @@ class Scout:
             return str(self._soup).encode("utf-8", errors)
 
     def decode(self, encoding="utf-8", errors="strict") -> str:
-        """Decode the document from a specific encoding with error handling."""
+        """Decode the document from a specific encoding with error handling.
+
+        Note: The parsed soup is represented as a str in memory, so decoding
+        simply returns the string representation.
+        """
         try:
-            return str(self._soup).decode(encoding, errors)
+            return str(self._soup)
         except Exception:
             return str(self._soup)
 
@@ -682,7 +691,7 @@ class Scout:
         """
         return f"Scout(features='{self.features}', content_length={len(self.markup)})"
 
-    def _preprocess_markup(self, markup: str, encoding: Optional[str] = None) -> str:
+    def _preprocess_markup(self, markup: Union[str, bytes], encoding: Optional[str] = None) -> str:
         """
         Preprocess markup before parsing.
 

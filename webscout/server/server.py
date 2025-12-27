@@ -144,7 +144,7 @@ def start_server(
 
 def run_api(
     host: str = "0.0.0.0",
-    port: int = None,
+    port: Optional[int] = None,
     default_provider: Optional[str] = None,
     base_url: Optional[str] = None,
     debug: bool = False,

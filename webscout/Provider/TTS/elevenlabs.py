@@ -102,14 +102,19 @@ class ElevenlabsTTS(BaseTTSProvider):
     def tts(
         self,
         text: str,
-        model: str = "eleven_multilingual_v2",
-        voice: str = "brian",
-        response_format: str = "mp3",
-        verbose: bool = True
+        voice: str | None = None,
+        verbose: bool = False,
+        **kwargs
     ) -> str:
         """
         Convert text to speech using ElevenLabs API.
         """
+        model = kwargs.get("model", "eleven_multilingual_v2")
+        response_format = kwargs.get("response_format", "mp3")
+        if voice is None:
+            voice = "brian"
+        if verbose is False:
+            verbose = kwargs.get("verbose", True)
         if not text:
             raise ValueError("Input text must be a non-empty string")
 

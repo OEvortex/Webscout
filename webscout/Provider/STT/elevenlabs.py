@@ -252,7 +252,8 @@ if __name__ == "__main__":
         transcription = client.audio.transcriptions.create(
             model="scribe_v1", file=audio_file, stream=False
         )
-        print(transcription.text)
+        if hasattr(transcription, 'text'):
+            print(transcription.text)
 
     print("\n=== Streaming example ===")
     with open(audio_file_path, "rb") as audio_file:

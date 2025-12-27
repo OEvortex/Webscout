@@ -5,7 +5,7 @@ import re
 import tempfile
 import time
 from io import BytesIO
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import requests
 from requests.exceptions import RequestException
@@ -16,13 +16,14 @@ from webscout.Provider.TTI.base import BaseImages, TTICompatibleProvider
 from webscout.Provider.TTI.utils import ImageData, ImageResponse
 
 # Optional Pillow import for image format conversion
+Image: Any = None
+PILLOW_AVAILABLE = False
 try:
     from PIL import Image
 
     PILLOW_AVAILABLE = True
 except ImportError:
-    Image = None
-    PILLOW_AVAILABLE = False
+    pass
 
 if TYPE_CHECKING:
     from PIL import Image as PILImage

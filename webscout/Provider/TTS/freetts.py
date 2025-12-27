@@ -101,15 +101,15 @@ class FreeTTS(BaseTTSProvider):
     def tts(
         self,
         text: str,
-        model: Optional[str] = None, # Dummy for compatibility
         voice: Optional[str] = None,
-        response_format: str = "mp3",
-        instructions: Optional[str] = None,
-        verbose: bool = True
+        verbose: bool = False,
+        **kwargs
     ) -> str:
         """
         Convert text to speech.
         """
+        response_format = kwargs.get("response_format", "mp3")
+        instructions = kwargs.get("instructions")
         if not text:
             raise ValueError("Input text must be a non-empty string")
 

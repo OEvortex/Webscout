@@ -48,9 +48,7 @@ class Llama3Mitril(Provider):
             for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
-        self.conversation = Conversation(
-            is_conversation, self.max_tokens_to_sample, filepath, update_file
-        )
+        self.conversation = Conversation(is_conversation, self.max_tokens, filepath, update_file)
         act_prompt = (
             AwesomePrompts().get_act(
                 cast(Union[str, int], act), default=None, case_insensitive=True
@@ -64,8 +62,6 @@ class Llama3Mitril(Provider):
         # Update curl_cffi session headers and proxies
         self.session.headers.update(self.headers)
         if proxies:
-            from typing import cast
-
             self.session.proxies.update(cast(Any, proxies))
 
     def _format_prompt(self, prompt: str) -> str:

@@ -217,7 +217,7 @@ class TypefullyAI(Provider):
             if raw:
                 return cast(str, result)
             else:
-                return self.get_message(cast(Response, result))
+                return self.get_message(result)
 
         return for_stream() if stream else for_non_stream()
 

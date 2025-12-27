@@ -5,7 +5,7 @@ from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider
+from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 
 
@@ -137,6 +137,7 @@ class LLMChat(Provider):
         raw: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Union[Dict[str, Any], Generator[Any, None, None], str]:
         """Chat with LLMChat with logging capabilities and raw output support using sanitize_stream."""
 
@@ -228,6 +229,7 @@ class LLMChat(Provider):
         optimizer: Optional[str] = None,
         conversationally: bool = False,
         raw: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """Generate response with logging capabilities and raw output support"""
 
@@ -260,10 +262,12 @@ class LLMChat(Provider):
 
         return for_stream_chat() if stream else for_non_stream_chat()
 
-    def get_message(self, response: Dict[str, Any]) -> str:
+    def get_message(self, response: Response) -> str:
         """Retrieves message from response with validation"""
-        assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"]
+        if not isinstance(response, dict):
+            return str(response)
+        response_dict = cast(Dict[str, Any], response)
+        return response_dict.get("text", "")
 
 
 if __name__ == "__main__":

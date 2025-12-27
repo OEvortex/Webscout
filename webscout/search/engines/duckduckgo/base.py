@@ -109,11 +109,11 @@ class DuckDuckGoBase:
                     remove_comments=True,
                     remove_pis=True,
                     collect_ids=False
-                )
+                ) if LHTMLParser else None
                 self.etree = __import__('lxml.etree', fromlist=['Element'])
 
             def fromstring(self, html: bytes | str) -> Any:
-                return document_fromstring(html, parser=self.lhtml_parser)
+                return document_fromstring(html, parser=self.lhtml_parser) if document_fromstring and self.lhtml_parser else None
 
         return Parser()
 

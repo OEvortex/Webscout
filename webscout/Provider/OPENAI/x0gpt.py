@@ -163,7 +163,6 @@ class Completions(BaseCompletions):
 
                         # Update token counts
                         completion_tokens += count_tokens(content)
-                        total_tokens = prompt_tokens + completion_tokens
 
                         # Create the delta object
                         delta = ChoiceDelta(
@@ -460,4 +459,5 @@ if __name__ == "__main__":
         ],
     )
     if not isinstance(response, Generator):
-        print(response.choices[0].message.content)
+        message = response.choices[0].message if response.choices else None
+        print(message.content if message else "")

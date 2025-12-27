@@ -87,7 +87,7 @@ class BaseSearchEngine(ABC, Generic[T]):
             ic.configureOutput(prefix='WARNING| ')
             ic("lxml not available, HTML parsing disabled")
             return None
-        return LHTMLParser(remove_blank_text=True, remove_comments=True, remove_pis=True, collect_ids=False)
+        return LHTMLParser(remove_blank_text=True, remove_comments=True, remove_pis=True, collect_ids=False) if LHTMLParser else None
 
     def extract_tree(self, html_text: str) -> Any:
         """Extract html tree from html text."""

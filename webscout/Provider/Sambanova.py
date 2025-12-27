@@ -282,7 +282,7 @@ class Sambanova(Provider):
              )
              if raw:
                  return cast(str, response_data)
-             return self.get_message(cast(Response, response_data))
+             return self.get_message(response_data)
 
         return for_stream_chat() if stream else for_non_stream_chat()
 

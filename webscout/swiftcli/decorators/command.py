@@ -37,7 +37,7 @@ def command(
 
     def decorator(f: Callable) -> Callable:
         f._command = {  # type: ignore[attr-defined]
-            "name": name or f.__name__,
+            "name": name or getattr(f, '__name__', 'unknown'),
             "help": help or f.__doc__,
             "aliases": aliases or [],
             "hidden": hidden,
@@ -88,7 +88,7 @@ def group(
 
     def decorator(f: Callable) -> Callable:
         f._group = {  # type: ignore[attr-defined]
-            "name": name or f.__name__,
+            "name": name or getattr(f, '__name__', 'unknown'),
             "help": help or f.__doc__,
             "chain": chain,
             "invoke_without_command": invoke_without_command,

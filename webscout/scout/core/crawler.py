@@ -14,7 +14,7 @@ from urllib import robotparser
 try:
     from webscout.litagent import LitAgent
 except ImportError:
-    LitAgent = None
+    LitAgent: Any = None
 
 try:
     from curl_cffi.requests import Session
@@ -70,7 +70,7 @@ class ScoutCrawler:
     """
     Ultra-advanced web crawling utility optimized for LLM data collection.
     """
-    def __init__(self, base_url: str, max_pages: int = 50, tags_to_remove: List[str] = None, session: Optional[Any] = None, delay: float = 0.5, obey_robots: bool = True, allowed_domains: Optional[List[str]] = None):
+    def __init__(self, base_url: str, max_pages: int = 50, tags_to_remove: Optional[List[str]] = None, session: Optional[Any] = None, delay: float = 0.5, obey_robots: bool = True, allowed_domains: Optional[List[str]] = None):
         """
         Initialize the web crawler.
 
@@ -88,10 +88,43 @@ class ScoutCrawler:
         self.visited_urls = set()
         self.crawled_pages = []
         self.session = session or Session()
-        self.agent = LitAgent()
-        # Use all headers and generate fingerprint
-        self.session.headers = self.agent.generate_fingerprint()
-        self.session.headers.setdefault("User-Agent", self.agent.chrome())
+        # LitAgent may not be available in minimal installs - provide a safe fallback
+        if LitAgent is not None:
+            self.agent = LitAgent()
+        else:
+            class _SimpleAgent:
+                def generate_fingerprint(self) -> Dict[str, str]:
+                    return {"user_agent": "Mozilla/5.0"}
+
+                def chrome(self) -> str:
+                    return "Mozilla/5.0"
+
+            self.agent = _SimpleAgent()
+
+        # Use fingerprint to update session headers (normalize keys)
+        fingerprint = self.agent.generate_fingerprint()
+        headers: Dict[str, str] = {}
+        if isinstance(fingerprint, dict):
+            for k, v in fingerprint.items():
+                if k == "user_agent":
+                    headers["User-Agent"] = str(v)
+                else:
+                    headers[k.replace("_", "-").title()] = str(v)
+        try:
+            self.session.headers.update(headers)
+        except Exception:
+            # Some session implementations may not expose update() directly
+            for hk, hv in headers.items():
+                try:
+                    self.session.headers[hk] = hv
+                except Exception:
+                    pass
+
+        # Ensure a User-Agent is always present
+        try:
+            self.session.headers.setdefault("User-Agent", self.agent.chrome())
+        except Exception:
+            pass
         self.delay = delay
         self.obey_robots = obey_robots
         self.features = "lxml" if "lxml" in ParserRegistry.list_parsers() else "html.parser"
@@ -147,7 +180,9 @@ class ScoutCrawler:
                 return False
 
             if self.obey_robots and self.robots:
-                return self.robots.can_fetch(self.session.headers.get("User-Agent", "*"), url)
+                # Ensure we pass a str user-agent to robotparser.can_fetch
+                ua = str(self.session.headers.get("User-Agent", "*"))
+                return self.robots.can_fetch(ua, url)
             return True
         except Exception:
             return False
@@ -174,7 +209,7 @@ class ScoutCrawler:
             return body.get_text(separator=" ", strip=True)
         return soup.get_text(separator=" ", strip=True)
 
-    def _crawl_page(self, url: str, depth: int = 0) -> Dict[str, Union[str, List[str]]]:
+    def _crawl_page(self, url: str, depth: int = 0) -> Dict[str, Any]:
         """
         Crawl a single page and extract information.
 
@@ -183,7 +218,7 @@ class ScoutCrawler:
             depth (int, optional): Current crawl depth
 
         Returns:
-            Dict[str, Union[str, List[str]]]: Crawled page information
+            Dict[str, Any]: Crawled page information
         """
         if url in self.visited_urls or self._is_duplicate(url):
             return {}
@@ -203,8 +238,8 @@ class ScoutCrawler:
             if not response.headers.get('Content-Type', '').startswith('text/html'):
                 return {}
             scout = Scout(response.content, features=self.features)
-            title_result = scout.find("title")
-            title = title_result[0].get_text() if title_result else ""
+            title_tag = scout.find("title")
+            title = title_tag.get_text() if title_tag else ""
 
             # Remove only script and style tags before extracting text
             for tag_name in self.tags_to_remove:
@@ -239,7 +274,7 @@ class ScoutCrawler:
                 'links': combined_links,
                 'text': visible_text,
                 'depth': depth,
-                'timestamp': datetime.utcnow().isoformat(),
+                'timestamp': datetime.now().isoformat(),
                 'headers': dict(response.headers),
             }
             self.visited_urls.add(url)
@@ -288,7 +323,7 @@ class ScoutCrawler:
                                     executor.submit(
                                         self._crawl_page,
                                         link,
-                                        page_info.get("depth", 0) + 1,
+                                        int(page_info.get("depth", 0)) + 1,
                                     )
                                 )
                     else:
