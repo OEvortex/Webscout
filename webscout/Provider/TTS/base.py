@@ -228,7 +228,7 @@ class BaseTTSProvider(TTSProvider):
             while chunk := f.read(chunk_size):
                 yield chunk
 
-    def tts(self, text: str, **kwargs) -> str:
+    def tts(self, text: str, voice: Optional[str] = None, verbose: bool = False, **kwargs) -> str:
         """
         Abstract method for text-to-speech conversion.
         Must be implemented by subclasses.

@@ -7,9 +7,10 @@ from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers
 
 
-#------------------------------------------------------KOBOLDAI-----------------------------------------------------------
+# ------------------------------------------------------KOBOLDAI-----------------------------------------------------------
 class KOBOLDAI(Provider):
     required_auth = False
+
     def __init__(
         self,
         is_conversation: bool = True,
@@ -67,8 +68,14 @@ class KOBOLDAI(Provider):
         self.conversation.history_offset = history_offset
 
         if act:
-            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
-            ) or self.conversation.intro
+            self.conversation.intro = (
+                AwesomePrompts().get_act(
+                    cast(Union[str, int], act),
+                    default=self.conversation.intro,
+                    case_insensitive=True,
+                )
+                or self.conversation.intro
+            )
         elif intro:
             self.conversation.intro = intro
         if proxies:
@@ -106,9 +113,7 @@ class KOBOLDAI(Provider):
                     conversation_prompt if conversationally else prompt
                 )
             else:
-                raise Exception(
-                    f"Optimizer is not one of {self.__available_optimizers}"
-                )
+                raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
 
         self.session.headers.update(self.headers)
         payload = {
@@ -143,9 +148,7 @@ class KOBOLDAI(Provider):
                     pass
             if final_resp:
                 yield final_resp if not raw else json.dumps(final_resp)
-                self.conversation.update_chat_history(
-                    prompt, self.get_message(self.last_response)
-                )
+                self.conversation.update_chat_history(prompt, self.get_message(self.last_response))
 
         def for_non_stream():
             # let's make use of stream
@@ -174,6 +177,7 @@ class KOBOLDAI(Provider):
             str: Response generated
         """
         raw = kwargs.get("raw", False)
+
         def for_stream():
             for response in self.ask(
                 prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
@@ -194,7 +198,7 @@ class KOBOLDAI(Provider):
             if raw:
                 return cast(str, result)
             else:
-                return self.get_message(cast(Response, result))
+                return self.get_message(result)
 
         return for_stream() if stream else for_non_stream()
 
@@ -209,7 +213,8 @@ class KOBOLDAI(Provider):
         """
         if not isinstance(response, dict):
             return str(response)
-        return response.get("token", "")
+        return cast(Dict[str, Any], response).get("token", "")
+
 
 if __name__ == "__main__":
     koboldai = KOBOLDAI(is_conversation=True, max_tokens=600, temperature=0.7)

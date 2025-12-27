@@ -332,10 +332,11 @@ class TogetherAI(OpenAICompatibleProvider):
 
         # Generate sec-ch-ua based on the user agent
         sec_ch_ua = ""
-        for browser_name in FINGERPRINTS["sec_ch_ua"]:
+        sec_ch_ua_map = cast(Dict[str, str], FINGERPRINTS["sec_ch_ua"])
+        for browser_name in sec_ch_ua_map:
             if browser_name in user_agent.lower():
                 version = random.randint(*BROWSERS[browser_name])
-                sec_ch_ua = FINGERPRINTS["sec_ch_ua"][browser_name].format(version, version)
+                sec_ch_ua = sec_ch_ua_map[browser_name].format(version, version)
                 break
 
         # Use the instance's agent for consistent IP rotation
@@ -399,6 +400,6 @@ if __name__ == "__main__":
     )
 
     for chunk in cast(Generator[ChatCompletionChunk, None, None], stream_gen):
-        if chunk.choices[0].delta.content:
+        if chunk.choices[0].delta and chunk.choices[0].delta.content:
             print(chunk.choices[0].delta.content, end="")
     print()

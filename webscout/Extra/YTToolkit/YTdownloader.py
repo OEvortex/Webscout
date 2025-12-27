@@ -18,7 +18,7 @@ from webscout.swiftcli import CLI, argument, option
 from webscout.version import __prog__
 
 # Define cache directory using tempfile
-user_cache_dir = os.path.join(tempfile.gettempdir(), 'webscout')
+user_cache_dir = os.path.join(tempfile.gettempdir(), "webscout")
 if not os.path.exists(user_cache_dir):
     os.makedirs(user_cache_dir)
 
@@ -35,8 +35,10 @@ headers = {
 
 session.headers.update(headers)
 
+
 def get_excep(e):
     return e.args[1] if len(e.args) > 1 else e
+
 
 appdir = user_cache_dir
 
@@ -44,10 +46,7 @@ if not path.isdir(appdir):
     try:
         makedirs(appdir)
     except Exception as e:
-        print(
-            f"Error : {get_excep(e)}  while creating site directory - "
-            + appdir
-        )
+        print(f"Error : {get_excep(e)}  while creating site directory - " + appdir)
 
 history_path = path.join(appdir, "history.json")
 
@@ -202,9 +201,7 @@ class first_query:
             self.is_link = not hasattr(self, "vitems")
             self.processed = True
         else:
-            raise Exception(
-                f"First query failed - [{resp.status_code} : {resp.reason}]"
-            )
+            raise Exception(f"First query failed - [{resp.status_code} : {resp.reason}]")
         return self
 
 
@@ -282,6 +279,7 @@ class second_query:
     ]
 }
             """
+
     def get_item(self, item_no: Optional[int] = None):
         r"""Return specific items on `self.query_one.vitems`"""
         if self.video_dict:
@@ -289,9 +287,9 @@ class second_query:
         if self.query_one.is_link:
             return {"v": self.query_one.vid, "t": self.query_one.title}
         all_items = self.query_one.vitems
-        assert (
-            self.item_no < len(all_items) - 1
-        ), "The item_no  is greater than largest item's index -  try lower value"
+        assert self.item_no < len(all_items) - 1, (
+            "The item_no  is greater than largest item's index -  try lower value"
+        )
 
         return self.query_one.vitems[item_no or self.item_no]
 
@@ -322,9 +320,7 @@ class second_query:
         self.processed = False
         if item_no:
             self.item_no = item_no
-        okay_status, resp = utils.post(
-            self.url, data=self.get_payload(), timeout=timeout
-        )
+        okay_status, resp = utils.post(self.url, data=self.get_payload(), timeout=timeout)
 
         if okay_status:
             dict_data = resp.json()
@@ -408,13 +404,11 @@ class third_query:
             resolver = "mp4" if format == "mp4" else "mp3"
         if format == "mp3" and quality == "auto":
             quality = "128kbps"
-        assert (
-            format in self.formats
-        ), f"'{format}' is not in supported formats - {self.formats}"
+        assert format in self.formats, f"'{format}' is not in supported formats - {self.formats}"
 
-        assert (
-            quality in self.qualities[format]
-        ), f"'{quality}' is not in supported qualities - {self.qualities[format]}"
+        assert quality in self.qualities[format], (
+            f"'{quality}' is not in supported qualities - {self.qualities[format]}"
+        )
 
         items = self.query_two.video if format == "mp4" else self.query_two.audio
         hunted = []
@@ -547,13 +541,13 @@ class Handler:
                 return False, "Duplicate"
             if self.confirm:
                 choice = confirm_from_user(
-                    f">> Re-download : {Fore.GREEN+video_title+Fore.RESET} by {Fore.YELLOW+video_author+Fore.RESET}"
+                    f">> Re-download : {Fore.GREEN}{video_title}{Fore.RESET} by {Fore.YELLOW}{video_author}{Fore.RESET}"
                 )
                 print("\n[*] Ok processing...", end="\r")
                 return choice, "User's choice"
         if self.confirm:
             choice = confirm_from_user(
-                f">> Download : {Fore.GREEN+video_title+Fore.RESET} by {Fore.YELLOW+video_author+Fore.RESET}"
+                f">> Download : {Fore.GREEN}{video_title}{Fore.RESET} by {Fore.YELLOW}{video_author}{Fore.RESET}"
             )
             print("\n[*] Ok processing...", end="\r")
             return choice, "User's choice"
@@ -584,9 +578,7 @@ class Handler:
                         if x >= self.total:
                             break
                 else:
-                    print(
-                        f"Dropping unprocessed query_two object of index {x}"
-                    )
+                    print(f"Dropping unprocessed query_two object of index {x}")
                     yield
 
         else:
@@ -602,15 +594,11 @@ class Handler:
                         init_query_two.video_dict = video_dict
                         query_2 = init_query_two.main(timeout=self.timeout)
                         if query_2.processed:
-                            if (
-                                self.author
-                                and self.author.lower() not in query_2.a.lower()
-                            ):
+                            if self.author and self.author.lower() not in query_2.a.lower():
                                 continue
                             else:
                                 yes_download, reason = self.__verify_item(query_2)
                                 if not yes_download:
-
                                     self.dropped.append(query_2.vid)
                                     continue
 
@@ -659,7 +647,6 @@ class Handler:
                     resolver=resolver,
                     timeout=self.timeout,
                 )
-
 
     def generate_filename(self, third_dict: dict, naming_format: Optional[str] = None) -> str:
         r"""Generate filename based on the response of `third_query`
@@ -795,9 +782,9 @@ class Handler:
         :rtype: None
         """
         if third_dict:
-            assert third_dict.get(
-                "dlink"
-            ), "The video selected does not support that quality, try lower qualities."
+            assert third_dict.get("dlink"), (
+                "The video selected does not support that quality, try lower qualities."
+            )
             if third_dict.get("mess"):
                 pass
 
@@ -819,27 +806,19 @@ class Handler:
             resp = requests.get(third_dict["dlink"], stream=True, headers=mod_headers)
 
             default_content_length = 0
-            size_in_bytes = int(
-                resp.headers.get("content-length", default_content_length)
-            )
+            size_in_bytes = int(resp.headers.get("content-length", default_content_length))
             if not size_in_bytes:
                 if resume:
-                    raise FileExistsError(
-                        f"Download completed for the file in path - '{save_to}'"
-                    )
+                    raise FileExistsError(f"Download completed for the file in path - '{save_to}'")
                 else:
-                    raise Exception(
-                        f"Cannot download file of content-length {size_in_bytes} bytes"
-                    )
+                    raise Exception(f"Cannot download file of content-length {size_in_bytes} bytes")
 
             if resume:
-                assert (
-                    size_in_bytes != current_downloaded_size
-                ), f"Download completed for the file in path - '{save_to}'"
+                assert size_in_bytes != current_downloaded_size, (
+                    f"Download completed for the file in path - '{save_to}'"
+                )
 
-            size_in_mb = (
-                round(size_in_bytes / 1000000, 2) + current_downloaded_size_in_mb
-            )
+            size_in_mb = round(size_in_bytes / 1000000, 2) + current_downloaded_size_in_mb
             chunk_size_in_bytes = chunk_size * 1024
 
             third_dict["saved_to"] = (
@@ -847,8 +826,10 @@ class Handler:
                 if any([save_to.startswith("/"), ":" in save_to])
                 else path.join(getcwd(), dir, filename)
             )
+
             def try_play_media():
-                return (launch_media(third_dict["saved_to"]) if play else None)
+                return launch_media(third_dict["saved_to"]) if play else None
+
             saving_mode = "ab" if resume else "wb"
             if progress_bar:
                 if not quiet:
@@ -880,7 +861,6 @@ class Handler:
                 return save_to
 
 
-
 mp4_qualities = [
     "4k",
     "1080p",
@@ -897,17 +877,18 @@ mp3_qualities = ["mp3", "m4a", ".m4a", "128kbps", "192kbps", "328kbps"]
 resolvers = ["m4a", "3gp", "mp4", "mp3"]
 media_qualities = mp4_qualities + mp3_qualities
 
+
 def launch_media(filepath):
     """
     Launch media file using default system application
     """
     try:
-        if sys.platform.startswith('darwin'):  # macOS
-            subprocess.call(('open', filepath))
-        elif sys.platform.startswith('win'):  # Windows
+        if sys.platform.startswith("darwin"):  # macOS
+            subprocess.call(("open", filepath))
+        elif sys.platform.startswith("win"):  # Windows
             os.startfile(filepath)
-        elif sys.platform.startswith('linux'):  # Linux
-            subprocess.call(('xdg-open', filepath))
+        elif sys.platform.startswith("linux"):  # Linux
+            subprocess.call(("xdg-open", filepath))
     except Exception as e:
         print(f"Error launching media: {e}")
 
@@ -916,8 +897,7 @@ def confirm_from_user(message, default=False):
     """
     Prompt user for confirmation
     """
-    valid = {"yes": True, "y": True, "ye": True,
-             "no": False, "n": False}
+    valid = {"yes": True, "y": True, "ye": True, "no": False, "n": False}
 
     if default is None:
         prompt = " [y/n] "
@@ -928,7 +908,7 @@ def confirm_from_user(message, default=False):
 
     while True:
         choice = input(message + prompt).lower()
-        if default is not None and choice == '':
+        if default is not None and choice == "":
             return default
         elif choice in valid:
             return valid[choice]
@@ -938,6 +918,7 @@ def confirm_from_user(message, default=False):
 
 # Create CLI app
 app = CLI(name="ytdownloader", help="YouTube Video Downloader CLI")
+
 
 @app.command()
 @option("--author", help="Specify video author/channel")
@@ -955,25 +936,17 @@ def download(query, author, timeout, confirm, unique, thread, format, quality, l
 
     # Create handler with parsed arguments
     handler = Handler(
-        query=query,
-        author=author,
-        timeout=timeout,
-        confirm=confirm,
-        unique=unique,
-        thread=thread
+        query=query, author=author, timeout=timeout, confirm=confirm, unique=unique, thread=thread
     )
 
     # Run download process
-    handler.auto_save(
-        format=format,
-        quality=quality,
-        limit=limit,
-        keyword=keyword
-    )
+    handler.auto_save(format=format, quality=quality, limit=limit, keyword=keyword)
+
 
 # Replace get_args function with swiftcli's argument parsing
 def main():
     app.run()
+
 
 if __name__ == "__main__":
     main()

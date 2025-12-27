@@ -4,7 +4,7 @@ import re
 import string
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union, cast
+from typing import Any, Dict, Generator, List, Optional, Union
 
 import cloudscraper
 import requests
@@ -153,7 +153,7 @@ class Completions(BaseCompletions):
                         try:
                             data = json.loads(json_str)
                             choices = data.get('choices')
-                            if not choices and choices is not None:
+                            if not choices:
                                 continue
                             choice_data = choices[0] if choices else {}
                             delta_data = choice_data.get('delta', {})

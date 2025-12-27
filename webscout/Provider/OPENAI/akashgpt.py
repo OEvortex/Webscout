@@ -32,18 +32,22 @@ AVAILABLE_MODELS = [
     "Meta-Llama-3-3-70B-Instruct",
 ]
 
+
 def _akash_extractor(chunk: Union[str, Dict[str, Any]]) -> Optional[str]:
     """Extracts content from the AkashGPT stream format '0:"..."'."""
     if isinstance(chunk, str):
         match = re.search(r'0:"(.*?)"', chunk)
         if match:
             # Decode potential unicode escapes like \u00e9
-            content = match.group(1).encode().decode('unicode_escape')
-            return content.replace('\\\\', '\\').replace('\\"', '"') # Handle escaped backslashes and quotes
+            content = match.group(1).encode().decode("unicode_escape")
+            return content.replace("\\\\", "\\").replace(
+                '\\"', '"'
+            )  # Handle escaped backslashes and quotes
     return None
 
+
 class Completions(BaseCompletions):
-    def __init__(self, client: 'AkashGPT'):
+    def __init__(self, client: "AkashGPT"):
         self._client = client
 
     def create(
@@ -57,7 +61,7 @@ class Completions(BaseCompletions):
         top_p: Optional[float] = None,
         timeout: Optional[int] = None,
         proxies: Optional[dict] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
         """
         Create a chat completion with AkashGPT API.
@@ -78,19 +82,43 @@ class Completions(BaseCompletions):
 
         if stream:
             return self._create_streaming(
-                request_id, created_time, akash_model, conversation_prompt, messages,
-                max_tokens, temperature, top_p, timeout, proxies
+                request_id,
+                created_time,
+                akash_model,
+                conversation_prompt,
+                messages,
+                max_tokens,
+                temperature,
+                top_p,
+                timeout,
+                proxies,
             )
         else:
             return self._create_non_streaming(
-                request_id, created_time, akash_model, conversation_prompt, messages,
-                max_tokens, temperature, top_p, timeout, proxies
+                request_id,
+                created_time,
+                akash_model,
+                conversation_prompt,
+                messages,
+                max_tokens,
+                temperature,
+                top_p,
+                timeout,
+                proxies,
             )
 
     def _create_streaming(
-        self, request_id: str, created_time: int, model: str, conversation_prompt: str, messages: List[Dict[str, str]],
-        max_tokens: Optional[int], temperature: Optional[float], top_p: Optional[float],
-        timeout: Optional[int], proxies: Optional[dict]
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        conversation_prompt: str,
+        messages: List[Dict[str, str]],
+        max_tokens: Optional[int],
+        temperature: Optional[float],
+        top_p: Optional[float],
+        timeout: Optional[int],
+        proxies: Optional[dict],
     ) -> Generator[ChatCompletionChunk, None, None]:
         """Implementation for streaming chat completions."""
         try:
@@ -106,7 +134,7 @@ class Completions(BaseCompletions):
                 "model": model,
                 "temperature": temperature or 0.6,
                 "topP": top_p or 0.9,
-                "context": []
+                "context": [],
             }
 
             response = self._client.session.post(
@@ -115,11 +143,13 @@ class Completions(BaseCompletions):
                 json=payload,
                 stream=True,
                 timeout=timeout or 30,
-                proxies=proxies
+                proxies=proxies,
             )
 
             if not response.ok:
-                raise Exception(f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}")
+                raise Exception(
+                    f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
+                )
 
             full_content = ""
 
@@ -144,7 +174,11 @@ class Completions(BaseCompletions):
 
                         if new_content and new_content != full_content:
                             # Calculate delta (new content since last chunk)
-                            delta_content = new_content[len(full_content):] if new_content.startswith(full_content) else new_content
+                            delta_content = (
+                                new_content[len(full_content) :]
+                                if new_content.startswith(full_content)
+                                else new_content
+                            )
                             full_content = new_content
                             completion_tokens = count_tokens(full_content)
                             total_tokens = prompt_tokens + completion_tokens
@@ -157,12 +191,12 @@ class Completions(BaseCompletions):
                                     id=request_id,
                                     choices=[choice],
                                     created=created_time,
-                                    model=model
+                                    model=model,
                                 )
                                 chunk_response.usage = {
                                     "prompt_tokens": prompt_tokens,
                                     "completion_tokens": completion_tokens,
-                                    "total_tokens": total_tokens
+                                    "total_tokens": total_tokens,
                                 }
                                 yield chunk_response
 
@@ -170,7 +204,11 @@ class Completions(BaseCompletions):
                         # Handle non-JSON responses
                         extracted = _akash_extractor(data_str)
                         if extracted and extracted != full_content:
-                            delta_content = extracted[len(full_content):] if extracted.startswith(full_content) else extracted
+                            delta_content = (
+                                extracted[len(full_content) :]
+                                if extracted.startswith(full_content)
+                                else extracted
+                            )
                             full_content = extracted
                             completion_tokens = count_tokens(full_content)
                             total_tokens = prompt_tokens + completion_tokens
@@ -182,12 +220,12 @@ class Completions(BaseCompletions):
                                     id=request_id,
                                     choices=[choice],
                                     created=created_time,
-                                    model=model
+                                    model=model,
                                 )
                                 chunk_response.usage = {
                                     "prompt_tokens": prompt_tokens,
                                     "completion_tokens": completion_tokens,
-                                    "total_tokens": total_tokens
+                                    "total_tokens": total_tokens,
                                 }
                                 yield chunk_response
 
@@ -195,15 +233,12 @@ class Completions(BaseCompletions):
             delta = ChoiceDelta(content=None)
             choice = Choice(index=0, delta=delta, finish_reason="stop")
             final_chunk = ChatCompletionChunk(
-                id=request_id,
-                choices=[choice],
-                created=created_time,
-                model=model
+                id=request_id, choices=[choice], created=created_time, model=model
             )
             final_chunk.usage = {
                 "prompt_tokens": prompt_tokens,
                 "completion_tokens": completion_tokens,
-                "total_tokens": total_tokens
+                "total_tokens": total_tokens,
             }
             yield final_chunk
 
@@ -211,9 +246,17 @@ class Completions(BaseCompletions):
             raise IOError(f"AkashGPT streaming request failed: {e}") from e
 
     def _create_non_streaming(
-        self, request_id: str, created_time: int, model: str, conversation_prompt: str, messages: List[Dict[str, str]],
-        max_tokens: Optional[int], temperature: Optional[float], top_p: Optional[float],
-        timeout: Optional[int], proxies: Optional[dict]
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        conversation_prompt: str,
+        messages: List[Dict[str, str]],
+        max_tokens: Optional[int],
+        temperature: Optional[float],
+        top_p: Optional[float],
+        timeout: Optional[int],
+        proxies: Optional[dict],
     ) -> ChatCompletion:
         """Implementation for non-streaming chat completions."""
         try:
@@ -227,7 +270,7 @@ class Completions(BaseCompletions):
                 "model": model,
                 "temperature": temperature or 0.6,
                 "topP": top_p or 0.9,
-                "context": []
+                "context": [],
             }
 
             response = self._client.session.post(
@@ -235,11 +278,13 @@ class Completions(BaseCompletions):
                 headers=self._client.headers,
                 json=payload,
                 timeout=timeout or 30,
-                proxies=proxies
+                proxies=proxies,
             )
 
             if not response.ok:
-                raise Exception(f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}")
+                raise Exception(
+                    f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
+                )
 
             # Collect the full response
             full_content = ""
@@ -270,22 +315,15 @@ class Completions(BaseCompletions):
             total_tokens = prompt_tokens + completion_tokens
 
             # Create the completion message
-            message = ChatCompletionMessage(
-                role="assistant",
-                content=full_content
-            )
+            message = ChatCompletionMessage(role="assistant", content=full_content)
 
             # Create the choice
-            choice = Choice(
-                index=0,
-                message=message,
-                finish_reason="stop"
-            )
+            choice = Choice(index=0, message=message, finish_reason="stop")
 
             usage = CompletionUsage(
                 prompt_tokens=prompt_tokens,
                 completion_tokens=completion_tokens,
-                total_tokens=total_tokens
+                total_tokens=total_tokens,
             )
 
             # Create the completion object
@@ -304,7 +342,7 @@ class Completions(BaseCompletions):
 
 
 class Chat(BaseChat):
-    def __init__(self, client: 'AkashGPT'):
+    def __init__(self, client: "AkashGPT"):
         self.completions = Completions(client)
 
 
@@ -320,15 +358,13 @@ class AkashGPT(OpenAICompatibleProvider):
         )
         print(response.choices[0].message.content)
     """
+
     required_auth = True
 
     AVAILABLE_MODELS = AVAILABLE_MODELS
 
     def __init__(
-        self,
-        api_key: str,
-        tools: Optional[List] = None,
-        proxies: Optional[Dict[str, str]] = None
+        self, api_key: str, tools: Optional[List] = None, proxies: Optional[Dict[str, str]] = None
     ):
         """
         Initialize the AkashGPT-compatible client.
@@ -368,7 +404,7 @@ class AkashGPT(OpenAICompatibleProvider):
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
             "sec-gpc": "1",
-            "user-agent": user_agent
+            "user-agent": user_agent,
         }
 
         self.session.headers.update(self.headers)
@@ -385,9 +421,9 @@ if __name__ == "__main__":
     # Example usage
     client = AkashGPT(api_key="your_api_key_here")
     response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": "Hello! How are you?"}]
+        model="gpt-4o", messages=[{"role": "user", "content": "Hello! How are you?"}]
     )
-    if not isinstance(response, Generator):
-        print(response.choices[0].message.content)
-    print(f"Usage: {response.usage}")
+    if isinstance(response, ChatCompletion):
+        if response.choices[0].message and response.choices[0].message.content:
+            print(response.choices[0].message.content)
+        print(f"Usage: {response.usage}")

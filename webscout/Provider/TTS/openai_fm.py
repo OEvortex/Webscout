@@ -74,7 +74,7 @@ class OpenAIFMTTS(BaseTTSProvider):
         "shimmer": "shimmer"
     }
 
-    def __init__(self, timeout: int = 20, proxies: dict = None):
+    def __init__(self, timeout: int = 20, proxies: Optional[dict] = None):
         """
         Initialize the OpenAI.fm TTS client.
 

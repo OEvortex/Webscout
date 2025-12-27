@@ -2,7 +2,7 @@ import json
 import time
 import uuid
 from copy import deepcopy
-from typing import Any, Dict, Generator, List, Optional, Union, cast
+from typing import Any, Dict, Generator, List, Optional, Union
 
 import requests
 
@@ -143,7 +143,7 @@ class Completions(BaseCompletions):
                 headers=self._client.headers,
                 cookies=self._client.cookies,
                 json=payload,
-                stream=True,
+                stream=False,
                 timeout=timeout or self._client.timeout,
                 proxies=proxies
             )

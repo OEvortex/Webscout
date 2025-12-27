@@ -25,7 +25,7 @@ from webscout.Provider.OPENAI.utils import (
 
 
 class Completions(BaseCompletions):
-    def __init__(self, client: 'LLMChat'):
+    def __init__(self, client: "LLMChat"):
         self._client = client
 
     def create(
@@ -39,52 +39,51 @@ class Completions(BaseCompletions):
         top_p: Optional[float] = None,
         timeout: Optional[int] = None,
         proxies: Optional[dict] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
-
         # In this case, we pass messages directly to the API
         request_id = f"chatcmpl-{uuid.uuid4()}"
         created_time = int(time.time())
 
         if stream:
             return self._create_streaming(
-                request_id, created_time, model, messages,
-                max_tokens, timeout, proxies
+                request_id, created_time, model, messages, max_tokens, timeout, proxies
             )
         else:
             return self._create_non_streaming(
-                request_id, created_time, model, messages,
-                max_tokens, timeout, proxies
+                request_id, created_time, model, messages, max_tokens, timeout, proxies
             )
 
     def _create_streaming(
-        self, request_id: str, created_time: int, model: str, messages: List[Dict[str, str]],
-        max_tokens: Optional[int], timeout: Optional[int], proxies: Optional[dict]
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        messages: List[Dict[str, str]],
+        max_tokens: Optional[int],
+        timeout: Optional[int],
+        proxies: Optional[dict],
     ) -> Generator[ChatCompletionChunk, None, None]:
         try:
             prompt_tokens = count_tokens(json.dumps(messages))
             completion_tokens = 0
 
             url = f"{self._client.api_endpoint}?model={model}"
-            payload = {
-                "messages": messages,
-                "max_tokens": max_tokens or 2048,
-                "stream": True
-            }
+            payload = {"messages": messages, "max_tokens": max_tokens or 2048, "stream": True}
 
             response = self._client.session.post(
                 url,
                 json=payload,
                 stream=True,
                 timeout=timeout or self._client.timeout,
-                impersonate="chrome110"
+                impersonate="chrome110",
             )
             response.raise_for_status()
 
             full_content = ""
             for line in response.iter_lines():
                 if line:
-                    line = line.decode('utf-8')
+                    line = line.decode("utf-8")
                     if line.startswith("data: "):
                         data_str = line[6:]
                         if data_str.strip() == "[DONE]":
@@ -92,7 +91,7 @@ class Completions(BaseCompletions):
 
                         try:
                             data = json.loads(data_str)
-                            content = data.get('response', '')
+                            content = data.get("response", "")
                             if content:
                                 full_content += content
                                 completion_tokens += 1
@@ -103,7 +102,7 @@ class Completions(BaseCompletions):
                                     id=request_id,
                                     choices=[choice],
                                     created=created_time,
-                                    model=model
+                                    model=model,
                                 )
                                 yield chunk
                         except json.JSONDecodeError:
@@ -113,15 +112,12 @@ class Completions(BaseCompletions):
             delta = ChoiceDelta(content=None)
             choice = Choice(index=0, delta=delta, finish_reason="stop")
             final_chunk = ChatCompletionChunk(
-                id=request_id,
-                choices=[choice],
-                created=created_time,
-                model=model
+                id=request_id, choices=[choice], created=created_time, model=model
             )
             usage_obj = CompletionUsage(
                 prompt_tokens=prompt_tokens,
                 completion_tokens=count_tokens(full_content),
-                total_tokens=prompt_tokens + count_tokens(full_content)
+                total_tokens=prompt_tokens + count_tokens(full_content),
             )
             final_chunk.usage = usage_obj.model_dump(exclude_none=True)
             yield final_chunk
@@ -130,15 +126,23 @@ class Completions(BaseCompletions):
             raise IOError(f"LLMChat streaming request failed: {e}") from e
 
     def _create_non_streaming(
-        self, request_id: str, created_time: int, model: str, messages: List[Dict[str, str]],
-        max_tokens: Optional[int], timeout: Optional[int], proxies: Optional[dict]
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        messages: List[Dict[str, str]],
+        max_tokens: Optional[int],
+        timeout: Optional[int],
+        proxies: Optional[dict],
     ) -> ChatCompletion:
         try:
             full_content = ""
             prompt_tokens = count_tokens(json.dumps(messages))
 
-            for chunk in self._create_streaming(request_id, created_time, model, messages, max_tokens, timeout, proxies):
-                if chunk.choices[0].delta.content:
+            for chunk in self._create_streaming(
+                request_id, created_time, model, messages, max_tokens, timeout, proxies
+            ):
+                if chunk.choices[0].delta and chunk.choices[0].delta.content:
                     full_content += chunk.choices[0].delta.content
 
             message = ChatCompletionMessage(role="assistant", content=full_content)
@@ -146,22 +150,20 @@ class Completions(BaseCompletions):
             usage = CompletionUsage(
                 prompt_tokens=prompt_tokens,
                 completion_tokens=count_tokens(full_content),
-                total_tokens=prompt_tokens + count_tokens(full_content)
+                total_tokens=prompt_tokens + count_tokens(full_content),
             )
 
             return ChatCompletion(
-                id=request_id,
-                choices=[choice],
-                created=created_time,
-                model=model,
-                usage=usage
+                id=request_id, choices=[choice], created=created_time, model=model, usage=usage
             )
         except Exception as e:
             raise IOError(f"LLMChat request failed: {e}") from e
 
+
 class Chat(BaseChat):
-    def __init__(self, client: 'LLMChat'):
+    def __init__(self, client: "LLMChat"):
         self.completions = Completions(client)
+
 
 class LLMChat(OpenAICompatibleProvider):
     required_auth = False
@@ -212,7 +214,7 @@ class LLMChat(OpenAICompatibleProvider):
         "@hf/thebloke/mistral-7b-instruct-v0.1-awq",
         "@hf/thebloke/neural-chat-7b-v3-1-awq",
         "@hf/thebloke/openhermes-2.5-mistral-7b-awq",
-        "@hf/thebloke/zephyr-7b-beta-awq"
+        "@hf/thebloke/zephyr-7b-beta-awq",
     ]
 
     def __init__(self, proxies: dict = {}, timeout: int = 30):
@@ -227,7 +229,7 @@ class LLMChat(OpenAICompatibleProvider):
             "Content-Type": "application/json",
             "Accept": "*/*",
             "Origin": "https://llmchat.in",
-            "Referer": "https://llmchat.in/"
+            "Referer": "https://llmchat.in/",
         }
         self.session.headers.update(self.headers)
         self.chat = Chat(self)
@@ -236,12 +238,13 @@ class LLMChat(OpenAICompatibleProvider):
     def models(self) -> SimpleModelList:
         return SimpleModelList(type(self).AVAILABLE_MODELS)
 
+
 if __name__ == "__main__":
     client = LLMChat()
     response = client.chat.completions.create(
         model="@cf/meta/llama-3.1-70b-instruct",
         messages=[{"role": "user", "content": "Say 'Hello' in one word"}],
-        stream=True
+        stream=True,
     )
     for chunk in response:
         if chunk.choices[0].delta.content:

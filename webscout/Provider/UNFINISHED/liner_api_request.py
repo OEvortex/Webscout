@@ -1,6 +1,6 @@
 import json
 import random
-from typing import Dict, Generator, Optional, Union, cast
+from typing import Dict, Generator, Optional, Union
 from uuid import uuid4
 
 import requests

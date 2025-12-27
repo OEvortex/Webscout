@@ -84,7 +84,7 @@ class DeepgramTTS(BaseTTSProvider):
         "helios": "aura-helios-en"
     }
 
-    def __init__(self, timeout: int = 30, proxies: dict = None):
+    def __init__(self, timeout: int = 30, proxies: Optional[dict] = None):
         """
         Initialize the Deepgram TTS client.
 
@@ -101,27 +101,26 @@ class DeepgramTTS(BaseTTSProvider):
         self.timeout = timeout
         self.default_voice = "thalia"
 
-    def tts(
-        self,
-        text: str,
-        model: str = "aura-2", # Dummy model param for compatibility
-        voice: str = "thalia",
-        response_format: str = "mp3",
-        instructions: Optional[str] = None,
-        verbose: bool = True
-    ) -> str:
+    def tts(self, text: str, voice: Optional[str] = None, verbose: bool = False, **kwargs) -> str:
         """
         Convert text to speech using Deepgram Aura-2 API.
 
         Args:
             text (str): The text to convert to speech
             voice (str): The voice to use (thalia, odysseus, etc.)
-            response_format (str): Audio format (mp3, wav, aac, flac, opus, pcm)
             verbose (bool): Whether to print debug information
+            **kwargs: Additional parameters
 
         Returns:
             str: Path to the generated audio file
         """
+        # Extract parameters from kwargs with defaults
+        model = kwargs.get('model', "aura-2")
+        voice = voice or kwargs.get('voice', "thalia")
+        response_format = kwargs.get('response_format', "mp3")
+        instructions = kwargs.get('instructions', None)
+        verbose = verbose if verbose is not None else kwargs.get('verbose', True)
+
         if not text:
             raise ValueError("Input text must be a non-empty string")
 
@@ -130,9 +129,7 @@ class DeepgramTTS(BaseTTSProvider):
 
         # Create temporary file
         file_extension = f".{response_format}"
-        filename = pathlib.Path(tempfile.mktemp(suffix=file_extension, dir=self.temp_dir))
-
-        # Split text into sentences for long inputs
+        filename = pathlib.Path(tempfile.NamedTemporaryFile(suffix=file_extension, dir=self.temp_dir, delete=False).name)
         sentences = utils.split_sentences(text)
         if verbose:
             ic.configureOutput(prefix='DEBUG| ')

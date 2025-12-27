@@ -68,7 +68,7 @@ class MurfAITTS(BaseTTSProvider):
         "Priya": "en-IN-priya",
     }
 
-    def __init__(self, timeout: int = 20, proxies: dict = None):
+    def __init__(self, timeout: int = 20, proxies: Optional[dict] = None):
         """Initializes the MurfAITTS TTS client."""
         super().__init__()
         self.session = requests.Session()

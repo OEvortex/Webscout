@@ -37,7 +37,7 @@ class FreeTTS(BaseTTSProvider):
     # Supported formats
     SUPPORTED_FORMATS = ["mp3"]
 
-    def __init__(self, lang="ru-RU", timeout: int = 30, proxies: dict = None):
+    def __init__(self, lang="ru-RU", timeout: int = 30, proxies: Optional[dict] = None):
         """
         Initialize the FreeTTS TTS client.
 

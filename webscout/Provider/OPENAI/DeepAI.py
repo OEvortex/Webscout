@@ -158,7 +158,7 @@ class Completions(BaseCompletions):
             print(f"Unexpected error during DeepAI stream request: {e}")
             raise IOError(f"DeepAI request failed: {e}") from e
         finally:
-            self._client.session.proxies = original_proxies
+            self._client.session.proxies = cast(Any, original_proxies)
 
     def _create_non_stream(
         self,
@@ -225,7 +225,7 @@ class Completions(BaseCompletions):
             print(f"Unexpected error during DeepAI non-stream request: {e}")
             raise IOError(f"DeepAI request failed: {e}") from e
         finally:
-            self._client.session.proxies = original_proxies
+            self._client.session.proxies = cast(Any, original_proxies)
 
 
 class Chat(BaseChat):
@@ -480,7 +480,10 @@ if __name__ == "__main__":
     )
     if isinstance(response, ChatCompletion):
         if not isinstance(response, Generator):
-            print(response.choices[0].message.content)
+            message = response.choices[0].message
+            if message and message.content:
+                print(message.content)
     else:
-        for chunk in response:
-            print(chunk.choices[0].delta.content, end="")
+        for chunk in cast(Generator[ChatCompletionChunk, None, None], response):
+            if chunk.choices[0].delta and chunk.choices[0].delta.content:
+                print(chunk.choices[0].delta.content, end="")

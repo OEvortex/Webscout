@@ -78,7 +78,7 @@ class ElevenlabsTTS(BaseTTSProvider):
         "will": "bIHbv24MWmeRgasZH58o"
     }
 
-    def __init__(self, api_key: Optional[str] = None, timeout: int = 30, proxies: dict = None):
+    def __init__(self, api_key: Optional[str] = None, timeout: int = 30, proxies: Optional[dict] = None):
         """
         Initialize the ElevenLabs TTS client.
 

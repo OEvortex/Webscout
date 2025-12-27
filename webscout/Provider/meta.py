@@ -1,7 +1,7 @@
 import json
 import random
 import time
-import urllib
+import urllib.parse
 import uuid
 from typing import Any, Dict, Generator, List, Optional, Union, cast
 
@@ -10,7 +10,7 @@ from curl_cffi.requests import Session
 from litprinter import ic
 
 from webscout import exceptions
-from webscout.AIbase import Provider
+from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, retry
 from webscout.litagent import LitAgent as Lit
 from webscout.scout import Scout
@@ -125,10 +125,14 @@ def get_fb_session(email, password, proxies=None):
     scout = Scout(response.text)
 
     # Parse necessary parameters from the login form
-    lsd = scout.find_first('input[name="lsd"]').get('value')
-    jazoest = scout.find_first('input[name="jazoest"]').get('value')
-    li = scout.find_first('input[name="li"]').get('value')
-    m_ts = scout.find_first('input[name="m_ts"]').get('value')
+    lsd_tag = scout.find('input', attrs={'name': 'lsd'})
+    lsd = lsd_tag.get('value') if lsd_tag else None
+    jazoest_tag = scout.find('input', attrs={'name': 'jazoest'})
+    jazoest = jazoest_tag.get('value') if jazoest_tag else None
+    li_tag = scout.find('input', attrs={'name': 'li'})
+    li = li_tag.get('value') if li_tag else None
+    m_ts_tag = scout.find('input', attrs={'name': 'm_ts'})
+    m_ts = m_ts_tag.get('value') if m_ts_tag else None
 
     # Define the URL and body for the POST request to submit the login form
     post_url = "https://mbasic.facebook.com/login/device-based/regular/login/?refsrc=deprecated&lwv=100"
@@ -312,7 +316,7 @@ class Meta(Provider):
         self,
         fb_email: Optional[str] = None,
         fb_password: Optional[str] = None,
-        proxy: dict = None,
+        proxy: Optional[dict] = None,
         is_conversation: bool = True,
         max_tokens: int = 600,
         timeout: int = 30,
@@ -432,7 +436,7 @@ class Meta(Provider):
         try:
             response = self.session.get(test_url, proxies=self.proxy, timeout=10)
             if response.status_code == 200:
-                self.session.proxies = self.proxy
+                self.session.proxies = cast(Any, self.proxy)
                 return True
             return False
         except CurlError:
@@ -603,7 +607,7 @@ class Meta(Provider):
             headers["cookie"] = f'abra_sess={self.cookies["abra_sess"]}'
             # Recreate the session to avoid cookie leakage when user is authenticated
             self.session = Session()
-            self.session.proxies = self.proxy
+            self.session.proxies = cast(Any, self.proxy)
 
         if stream:
 
@@ -734,7 +738,8 @@ class Meta(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-    ) -> str:
+        **kwargs: Any,
+    ) -> Union[str, Generator[str, None, None]]:
         """
         Sends a message to the Meta AI and returns the response.
 
@@ -766,7 +771,7 @@ class Meta(Provider):
 
         return for_stream() if stream else for_non_stream()
 
-    def extract_last_response(self, response: str) -> Dict:
+    def extract_last_response(self, response: str) -> Optional[Dict]:
         """
         Extracts the last response from the Meta AI API.
 
@@ -965,7 +970,7 @@ class Meta(Provider):
         references = search_results["references"]
         return references
 
-    def get_message(self, response: dict) -> str:
+    def get_message(self, response: Response) -> str:
         """Retrieves message only from response
 
         Args:
@@ -979,8 +984,8 @@ class Meta(Provider):
 
 if __name__ == "__main__":
     try:
-        Meta = Meta()
-        ai = Meta.chat("hi")
+        meta_instance = Meta()
+        ai = meta_instance.chat("hi")
         for chunk in ai:
             print(chunk, end="", flush=True)
     except exceptions.FailedToGenerateResponseError as e:

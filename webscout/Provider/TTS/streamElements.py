@@ -130,7 +130,7 @@ class StreamElements(BaseTTSProvider):
 
 
 
-    def __init__(self, timeout: int = 20, proxies: dict = None):
+    def __init__(self, timeout: int = 20, proxies: Optional[dict] = None):
         """Initializes the StreamElements TTS client."""
         super().__init__()
         self.session = requests.Session()
@@ -139,29 +139,21 @@ class StreamElements(BaseTTSProvider):
             self.session.proxies.update(proxies)
         self.timeout = timeout
 
-    def tts(
-        self,
-        text: str,
-        model: Optional[str] = "gpt-4o-mini-tts",
-        voice: str = "Emma",
-        response_format: str = "mp3",
-        instructions: Optional[str] = None,
-        verbose: bool = True
-    ) -> str:
+    def tts(self, text: str, voice: Optional[str] = None, verbose: bool = False, **kwargs) -> str:
         """
         Converts text to speech using the StreamElements API and saves it to a file.
 
         Args:
             text (str): The text to convert to speech
-            model (str): The TTS model to use
-            voice (str): The voice to use for TTS (default: "Emma")
-            response_format (str): Audio format
-            instructions (str): Voice instructions
-            verbose (bool): Whether to print progress messages (default: True)
+            voice (str): The voice to use for TTS
+            verbose (bool): Whether to print progress messages
+            **kwargs: Additional parameters
 
         Returns:
             str: Path to the generated audio file
         """
+        voice = voice or kwargs.get('voice', "Emma")
+        verbose = verbose if verbose is not None else kwargs.get('verbose', True)
         if voice not in self.all_voices:
              # Try case-insensitive match
              found_voice = None
@@ -174,7 +166,7 @@ class StreamElements(BaseTTSProvider):
              else:
                  raise ValueError(f"Voice '{voice}' not one of [{', '.join(self.all_voices)}]")
 
-        filename = pathlib.Path(tempfile.mktemp(suffix=".mp3", dir=self.temp_dir))
+        filename = pathlib.Path(tempfile.NamedTemporaryFile(suffix=".mp3", dir=self.temp_dir, delete=False).name)
 
         # Split text into sentences
         sentences = utils.split_sentences(text)
@@ -257,8 +249,7 @@ class StreamElements(BaseTTSProvider):
         voice: Optional[str] = "Emma",
         response_format: Optional[str] = "mp3",
         instructions: Optional[str] = None,
-        verbose: bool = False,
-        **kwargs: Any
+        verbose: bool = False
     ) -> str:
         """
         OpenAI-compatible speech creation interface.

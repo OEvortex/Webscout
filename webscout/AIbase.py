@@ -93,7 +93,7 @@ class Provider(ABC):
 class TTSProvider(ABC):
 
     @abstractmethod
-    def tts(self, text: str, voice: Optional[str] = None, verbose: bool = False) -> str:
+    def tts(self, text: str, voice: Optional[str] = None, verbose: bool = False, **kwargs) -> str:
         """Convert text to speech and save to a temporary file.
 
         Args:

@@ -130,33 +130,20 @@ class QwenTTS(BaseTTSProvider):
         """Generates a random session hash for Gradio."""
         return "".join(random.choices(string.ascii_lowercase + string.digits, k=10))
 
-    def tts(
-        self,
-        text: str,
-        model: str = "qwen3-tts",
-        voice: str = "cherry",
-        response_format: str = "wav",
-        language: str = "Auto / 自动",
-        verbose: bool = True
-    ) -> str:
+    def tts(self, text: str, **kwargs) -> str:
         """
         Convert text to speech using Qwen3-TTS API with OpenAI-compatible parameters.
 
         Args:
             text (str): The text to convert to speech (max 10,000 characters)
-            model (str): The TTS model to use
-            voice (str): The voice to use for TTS (cherry, jennifer, dylan, etc.)
-            response_format (str): Audio format (wav recommended as source is wav)
-            language (str): Language selection (Auto / 自动, English / 英文, etc.)
-            verbose (bool): Whether to print debug information
-
-        Returns:
-            str: Path to the generated audio file
-
-        Raises:
-            ValueError: If input parameters are invalid
-            exceptions.FailedToGenerateResponseError: If there is an error generating or saving the audio
+            **kwargs: Additional parameters (model, voice, response_format, language, verbose)
         """
+        # Extract parameters from kwargs with defaults
+        model = kwargs.get('model', "qwen3-tts")
+        voice = kwargs.get('voice', "cherry")
+        response_format = kwargs.get('response_format', "wav")
+        language = kwargs.get('language', "Auto / 自动")
+        verbose = kwargs.get('verbose', True)
         if not text or not isinstance(text, str):
             raise ValueError("Input text must be a non-empty string")
 
@@ -165,7 +152,7 @@ class QwenTTS(BaseTTSProvider):
 
         # Create temporary file
         file_extension = f".{response_format}"
-        filename = pathlib.Path(tempfile.mktemp(suffix=file_extension, dir=self.temp_dir))
+        filename = pathlib.Path(tempfile.NamedTemporaryFile(suffix=file_extension, dir=self.temp_dir, delete=False).name)
 
         session_hash = self._generate_session_hash()
 
@@ -173,7 +160,7 @@ class QwenTTS(BaseTTSProvider):
             ic.configureOutput(prefix='DEBUG| ')
             ic(f"Joining queue for voice: {voice} ({qwen_voice})")
 
-        client_kwargs = {
+        client_kwargs: dict[str, Any] = {
             "headers": self.headers,
             "timeout": self.timeout
         }
@@ -252,8 +239,7 @@ class QwenTTS(BaseTTSProvider):
         voice: Optional[str] = "alloy",
         response_format: Optional[str] = "mp3",
         instructions: Optional[str] = None,
-        verbose: bool = False,
-        **kwargs: Any
+        verbose: bool = False
     ) -> str:
         """
         OpenAI-compatible speech creation interface.

@@ -138,7 +138,7 @@ class DuckDuckGoBase:
         """Make HTTP request."""
         self._sleep()
         try:
-            request_kwargs = {
+            request_kwargs: dict[str, Any] = {
                 "params": params,
                 "headers": headers,
                 "json": json,

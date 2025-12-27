@@ -25,6 +25,7 @@ class ChatHub(Provider):
         "gemma-2": 'google/gemma-2',
         "sonar-online": 'perplexity/sonar-online',
     }
+    default_model = "sonar-online"
 
 
     def __init__(
@@ -170,39 +171,40 @@ class ChatHub(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        raw: bool = False,
-    ) -> Union[str, Generator]:
+        **kwargs: Any,
+    ) -> Union[str, Generator[str, None, None]]:
         """Generate response `str`"""
 
         def for_stream():
             for response in self.ask(
-                prompt, stream=True, raw=raw, optimizer=optimizer, conversationally=conversationally
+                prompt, stream=True, raw=False, optimizer=optimizer, conversationally=conversationally
             ):
-                if raw:
-                    yield response
-                else:
-                    yield self.get_message(response)
+                yield self.get_message(response)
 
         def for_non_stream():
             result = self.ask(
                 prompt,
                 stream=False,
-                raw=raw,
+                raw=False,
                 optimizer=optimizer,
                 conversationally=conversationally,
             )
-            if raw:
-                return result
             return self.get_message(result)
 
         return for_stream() if stream else for_non_stream()
 
 
 
-    def get_message(self, response: dict) -> str:
+    def get_message(self, response: Union[Dict[str, Any], Generator[Any, None, None], str]) -> str:
         """Retrieves message only from response"""
-        assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response.get("text", "")
+        if isinstance(response, dict):
+            resp_dict = cast(Dict[str, Any], response)
+            return resp_dict.get("text", "")
+        elif isinstance(response, str):
+            return response
+        else:
+            # Generator case - shouldn't happen here
+            return ""
 
 
 if __name__ == "__main__":

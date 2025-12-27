@@ -32,7 +32,7 @@ from ...litagent import LitAgent
 
 
 class Completions(BaseCompletions):
-    def __init__(self, client: 'IBM'):
+    def __init__(self, client: "IBM"):
         self._client = client
 
     def create(
@@ -44,17 +44,14 @@ class Completions(BaseCompletions):
         stream: bool = False,
         temperature: Optional[float] = None,
         top_p: Optional[float] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
         """
         Creates a model response for the given chat conversation.
         Mimics openai.chat.completions.create
         """
         formatted_prompt = format_prompt(
-            messages,
-            add_special_tokens=False,
-            do_continue=True,
-            include_system=True
+            messages, add_special_tokens=False, do_continue=True, include_system=True
         )
 
         if not formatted_prompt:
@@ -78,15 +75,15 @@ class Completions(BaseCompletions):
                             "content_type": "text/plain",
                             "content": formatted_prompt,
                             "content_encoding": "plain",
-                            "role": "user"
+                            "role": "user",
                         }
                     ],
                     "created_at": now,
-                    "completed_at": now
+                    "completed_at": now,
                 }
             ],
             "mode": "stream",
-            "session_id": str(uuid.uuid4())
+            "session_id": str(uuid.uuid4()),
         }
 
         request_id = f"chatcmpl-{uuid.uuid4()}"
@@ -98,7 +95,12 @@ class Completions(BaseCompletions):
             return self._create_non_stream(request_id, created_time, model, payload, prompt_tokens)
 
     def _create_stream(
-        self, request_id: str, created_time: int, model: str, payload: Dict[str, Any], prompt_tokens: int
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        payload: Dict[str, Any],
+        prompt_tokens: int,
     ) -> Generator[ChatCompletionChunk, None, None]:
         """Stream chat completions using manual SSE parsing (no sanitize_stream)"""
         try:
@@ -107,7 +109,7 @@ class Completions(BaseCompletions):
                 data=json.dumps(payload),
                 stream=True,
                 timeout=self._client.timeout,
-                impersonate="chrome110"
+                impersonate="chrome110",
             )
 
             if response.status_code in [401, 403]:
@@ -118,11 +120,13 @@ class Completions(BaseCompletions):
                     data=json.dumps(payload),
                     stream=True,
                     timeout=self._client.timeout,
-                    impersonate="chrome110"
+                    impersonate="chrome110",
                 )
 
             if response.status_code != 200:
-                raise IOError(f"IBM request failed with status code {response.status_code}: {response.text}")
+                raise IOError(
+                    f"IBM request failed with status code {response.status_code}: {response.text}"
+                )
 
             # Track completion tokens
             completion_tokens = 0
@@ -134,15 +138,15 @@ class Completions(BaseCompletions):
 
                 # Decode bytes to string
                 try:
-                    chunk_str = chunk.decode('utf-8') if isinstance(chunk, bytes) else chunk
+                    chunk_str = chunk.decode("utf-8") if isinstance(chunk, bytes) else chunk
                 except UnicodeDecodeError:
                     continue
 
                 buffer += chunk_str
 
                 # Process complete lines
-                while '\n' in buffer:
-                    line, buffer = buffer.split('\n', 1)
+                while "\n" in buffer:
+                    line, buffer = buffer.split("\n", 1)
                     line = line.strip()
 
                     if not line:
@@ -169,17 +173,10 @@ class Completions(BaseCompletions):
                                     completion_tokens += 1
 
                                     # Create the delta object
-                                    delta = ChoiceDelta(
-                                        content=content,
-                                        role="assistant"
-                                    )
+                                    delta = ChoiceDelta(content=content, role="assistant")
 
                                     # Create the choice object
-                                    choice = Choice(
-                                        index=0,
-                                        delta=delta,
-                                        finish_reason=None
-                                    )
+                                    choice = Choice(index=0, delta=delta, finish_reason=None)
 
                                     # Create the chunk object
                                     chunk = ChatCompletionChunk(
@@ -187,7 +184,7 @@ class Completions(BaseCompletions):
                                         choices=[choice],
                                         created=created_time,
                                         model=model,
-                                        system_fingerprint=None
+                                        system_fingerprint=None,
                                     )
 
                                     yield chunk
@@ -198,17 +195,13 @@ class Completions(BaseCompletions):
 
             # Send final chunk with finish_reason
             final_delta = ChoiceDelta(content=None, role=None)
-            final_choice = Choice(
-                index=0,
-                delta=final_delta,
-                finish_reason="stop"
-            )
+            final_choice = Choice(index=0, delta=final_delta, finish_reason="stop")
             final_chunk = ChatCompletionChunk(
                 id=request_id,
                 choices=[final_choice],
                 created=created_time,
                 model=model,
-                system_fingerprint=None
+                system_fingerprint=None,
             )
             yield final_chunk
 
@@ -220,7 +213,12 @@ class Completions(BaseCompletions):
             raise
 
     def _create_non_stream(
-        self, request_id: str, created_time: int, model: str, payload: Dict[str, Any], prompt_tokens: int
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        payload: Dict[str, Any],
+        prompt_tokens: int,
     ) -> ChatCompletion:
         """Create non-streaming chat completion"""
         try:
@@ -228,7 +226,9 @@ class Completions(BaseCompletions):
             accumulated_content = ""
             completion_tokens = 0
 
-            for chunk in self._create_stream(request_id, created_time, model, payload, prompt_tokens):
+            for chunk in self._create_stream(
+                request_id, created_time, model, payload, prompt_tokens
+            ):
                 if chunk.choices and chunk.choices[0].delta.content:
                     accumulated_content += chunk.choices[0].delta.content
                     completion_tokens += 1
@@ -242,23 +242,17 @@ class Completions(BaseCompletions):
 
             # Create the message object
             message = ChatCompletionMessage(
-                role="assistant",
-                content=accumulated_content,
-                tool_calls=None
+                role="assistant", content=accumulated_content, tool_calls=None
             )
 
             # Create the choice object
-            choice = Choice(
-                index=0,
-                message=message,
-                finish_reason="stop"
-            )
+            choice = Choice(index=0, message=message, finish_reason="stop")
 
             # Create usage object with proper token counts
             usage = CompletionUsage(
                 prompt_tokens=int(prompt_tokens),
                 completion_tokens=completion_tokens,
-                total_tokens=int(prompt_tokens) + completion_tokens
+                total_tokens=int(prompt_tokens) + completion_tokens,
             )
 
             # Create the completion object
@@ -280,7 +274,7 @@ class Completions(BaseCompletions):
 
 
 class Chat(BaseChat):
-    def __init__(self, client: 'IBM'):
+    def __init__(self, client: "IBM"):
         self.completions = Completions(client)
 
 
@@ -289,6 +283,7 @@ class IBM(OpenAICompatibleProvider):
     OpenAI-compatible client for IBM Granite Playground API.
     Provides a familiar interface for interacting with IBM's Granite models.
     """
+
     required_auth = False  # No API key required for IBM Granite Playground
     AVAILABLE_MODELS = [
         "granite-chat",
@@ -314,7 +309,9 @@ class IBM(OpenAICompatibleProvider):
         except Exception as e:
             raise IOError(f"Error fetching auth token: {str(e)}")
 
-    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 30, browser: str = "chrome"):
+    def __init__(
+        self, api_key: Optional[str] = None, timeout: Optional[int] = 30, browser: str = "chrome"
+    ):
         """
         Initialize IBM client.
 
@@ -406,14 +403,12 @@ if __name__ == "__main__":
     print("Testing streaming:")
     response = client.chat.completions.create(
         model="granite-chat",
-        messages=[
-            {"role": "user", "content": "Say 'Hello World' in one sentence"}
-        ],
-        stream=True
+        messages=[{"role": "user", "content": "Say 'Hello World' in one sentence"}],
+        stream=True,
     )
 
-    for chunk in response:
-        if chunk.choices and chunk.choices[0].delta.content:
+    for chunk in cast(Generator[ChatCompletionChunk, None, None], response):
+        if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
             print(chunk.choices[0].delta.content, end="", flush=True)
     print("\n")
 
@@ -421,11 +416,10 @@ if __name__ == "__main__":
     print("Testing non-streaming:")
     response = client.chat.completions.create(
         model="granite-chat",
-        messages=[
-            {"role": "user", "content": "Say 'Hello' in one word"}
-        ],
-        stream=False
+        messages=[{"role": "user", "content": "Say 'Hello' in one word"}],
+        stream=False,
     )
 
-    if not isinstance(response, Generator):
-        print(response.choices[0].message.content)
+    if isinstance(response, ChatCompletion):
+        if response.choices[0].message and response.choices[0].message.content:
+            print(response.choices[0].message.content)

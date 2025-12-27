@@ -137,11 +137,20 @@ class HadadXYZ(Provider):
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         ]
 
-        self.conversation = Conversation(is_conversation, self.max_tokens_to_sample, filepath, update_file)
+        self.conversation = Conversation(
+            is_conversation, self.max_tokens_to_sample, filepath, update_file
+        )
         self.conversation.history_offset = history_offset
 
         if act:
-            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True) or self.conversation.intro
+            self.conversation.intro = (
+                AwesomePrompts().get_act(
+                    cast(Union[str, int], act),
+                    default=self.conversation.intro,
+                    case_insensitive=True,
+                )
+                or self.conversation.intro
+            )
         elif intro:
             self.conversation.intro = intro
 
@@ -191,10 +200,15 @@ class HadadXYZ(Provider):
         def for_stream():
             extractor = _DeltaExtractor()
             if not self.include_think_tags:
+
                 def extractor_no_tags(obj: Union[str, Dict[str, Any]]) -> Optional[str]:
-                    if isinstance(obj, dict) and obj.get("type") in {"reasoning-delta", "text-delta"}:
+                    if isinstance(obj, dict) and obj.get("type") in {
+                        "reasoning-delta",
+                        "text-delta",
+                    }:
                         return obj.get("delta") or ""
                     return None
+
                 extractor = extractor_no_tags  # type: ignore[assignment]
 
             streaming_text = ""
@@ -223,7 +237,7 @@ class HadadXYZ(Provider):
 
                 for content_chunk in processed_stream:
                     if isinstance(content_chunk, bytes):
-                        content_chunk = content_chunk.decode('utf-8', errors='ignore')
+                        content_chunk = content_chunk.decode("utf-8", errors="ignore")
 
                     if raw:
                         yield content_chunk
@@ -237,7 +251,9 @@ class HadadXYZ(Provider):
                     self.conversation.update_chat_history(prompt, streaming_text)
 
             except CurlError as e:
-                raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {e}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed (CurlError): {e}"
+                ) from e
             except Exception as e:
                 raise exceptions.FailedToGenerateResponseError(
                     f"Request failed ({type(e).__name__}): {e}"
@@ -265,6 +281,7 @@ class HadadXYZ(Provider):
         **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         raw = kwargs.get("raw", False)
+
         def for_stream_chat():
             for resp in self.ask(
                 prompt,
@@ -295,7 +312,7 @@ class HadadXYZ(Provider):
     def get_message(self, response: Response) -> str:
         if not isinstance(response, dict):
             return str(response)
-        return str(response.get("text", ""))
+        return str(cast(Dict[str, Any], response).get("text", ""))
 
 
 if __name__ == "__main__":
