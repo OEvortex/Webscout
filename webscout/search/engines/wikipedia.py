@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Optional, Any
+from typing import Any, Optional
 from urllib.parse import quote
 
 from ...utils import json_loads

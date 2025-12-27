@@ -11,7 +11,8 @@ from webscout.Provider.OPENAI.base import (
     BaseCompletions,
     FunctionDefinition,
     FunctionParameters,
-    OpenAICompatibleProvider, SimpleModelList,
+    OpenAICompatibleProvider,
+    SimpleModelList,
     Tool,
     ToolDefinition,
 )
@@ -66,7 +67,6 @@ from webscout.Provider.OPENAI.utils import (
     get_last_user_message,
     get_system_prompt,
 )
-from webscout.Provider.OPENAI.venice import Venice
 from webscout.Provider.OPENAI.wisecat import WiseCat
 from webscout.Provider.OPENAI.writecream import Writecream
 from webscout.Provider.OPENAI.x0gpt import X0GPT
@@ -133,7 +133,6 @@ __all__ = [
     "TextPollinations",
     "Toolbaz",
     "TypefullyAI",
-    "Venice",
     "WiseCat",
     "Writecream",
     "X0GPT",

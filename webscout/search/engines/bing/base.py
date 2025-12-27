@@ -25,7 +25,7 @@ class BingBase:
         self.lang = lang
         self.sleep_interval = sleep_interval
         self.base_url = "https://www.bing.com"
-        from typing import Optional, Any, cast
+        from typing import Any, Optional, cast
         self.session = Session(
             proxies=cast(Any, proxies),
             verify=verify,

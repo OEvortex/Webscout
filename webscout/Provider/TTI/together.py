@@ -1,13 +1,13 @@
 import json
 import random
-from typing import Union, cast, Dict, Optional
+from typing import Dict, Optional, Union, cast
 
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from webscout.litagent import LitAgent
 from webscout.AIbase import SimpleModelList
+from webscout.litagent import LitAgent
 from webscout.Provider.TTI.base import BaseImages, TTICompatibleProvider
 from webscout.Provider.TTI.utils import ImageData, ImageResponse
 

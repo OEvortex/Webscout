@@ -1,18 +1,20 @@
 import json
 import time
 import uuid
-from typing import cast, Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi import CurlError
 
 # Import curl_cffi for better request handling
 from curl_cffi.requests import Session
 
-# Import LitAgent for browser fingerprinting
-from ...litagent import LitAgent
-
 # Import base classes and utility structures
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
+from webscout.Provider.OPENAI.base import (
+    BaseChat,
+    BaseCompletions,
+    OpenAICompatibleProvider,
+    SimpleModelList,
+)
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -24,6 +26,9 @@ from webscout.Provider.OPENAI.utils import (
     format_prompt,
     get_system_prompt,
 )
+
+# Import LitAgent for browser fingerprinting
+from ...litagent import LitAgent
 
 # ANSI escape codes for formatting
 BOLD = "\033[1m"

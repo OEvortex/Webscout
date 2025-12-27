@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from typing import Optional, Any, Dict
+from typing import Any, Dict, Optional
 
 from ...http_client import HttpClient
 

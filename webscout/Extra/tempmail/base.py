@@ -146,7 +146,7 @@ def get_random_email(provider_name: str = "mailtm") -> Tuple[str, TempMailProvid
         Tuple containing the email address and the provider instance
     """
     provider = get_provider(provider_name)
-    
+
     if isinstance(provider, AsyncTempMailProvider):
         raise TypeError("get_random_email only supports synchronous providers")
 

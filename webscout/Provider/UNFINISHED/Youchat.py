@@ -1,6 +1,6 @@
 import datetime
 import json
-from typing import Any, Optional, cast, Generator, Union
+from typing import Any, Generator, Optional, Union, cast
 from uuid import uuid4
 
 import cloudscraper

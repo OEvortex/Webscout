@@ -6,7 +6,7 @@ import pathlib
 import random
 import string
 import tempfile
-from typing import Union, cast, Any, Generator, Optional
+from typing import Any, Generator, Optional, Union, cast
 
 import httpx
 from litprinter import ic

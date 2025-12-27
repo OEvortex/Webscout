@@ -4,7 +4,7 @@
 import pathlib
 import tempfile
 import time
-from typing import Union, cast, Any, Optional
+from typing import Any, Optional, Union, cast
 
 import requests
 from litprinter import ic

@@ -2,13 +2,15 @@ import json
 import re
 import time
 import uuid
-from typing import cast, Any, Dict, Generator, List, Optional, Union
-
-# Import LitAgent
-from ...litagent import LitAgent
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 # Import base classes and utility structures
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
+from webscout.Provider.OPENAI.base import (
+    BaseChat,
+    BaseCompletions,
+    OpenAICompatibleProvider,
+    SimpleModelList,
+)
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -18,6 +20,9 @@ from webscout.Provider.OPENAI.utils import (
     CompletionUsage,
     count_tokens,
 )
+
+# Import LitAgent
+from ...litagent import LitAgent
 
 
 class Completions(BaseCompletions):

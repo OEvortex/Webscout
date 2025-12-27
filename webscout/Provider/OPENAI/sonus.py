@@ -1,12 +1,16 @@
 import json
 import time
 import uuid
-from typing import cast, Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 import requests
 
-from ...litagent import LitAgent
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
+from webscout.Provider.OPENAI.base import (
+    BaseChat,
+    BaseCompletions,
+    OpenAICompatibleProvider,
+    SimpleModelList,
+)
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -17,6 +21,8 @@ from webscout.Provider.OPENAI.utils import (
     count_tokens,
     format_prompt,
 )
+
+from ...litagent import LitAgent
 
 # ANSI escape codes for formatting
 BOLD = "\033[1m"

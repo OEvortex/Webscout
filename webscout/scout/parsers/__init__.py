@@ -2,7 +2,7 @@
 Scout Parsers - Unified Parsing Interfaces
 """
 
-from typing import Optional, Any, Dict, Type
+from typing import Any, Dict, Optional, Type
 
 from .html5lib_parser import HTML5Parser
 from .html_parser import HTMLParser

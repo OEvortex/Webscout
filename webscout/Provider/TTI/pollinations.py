@@ -1,27 +1,98 @@
+import base64
 import json
 import os
 import random
 import tempfile
 import time
 from io import BytesIO
-from typing import Union, cast, Optional
+from typing import TYPE_CHECKING, Optional
 
 import requests
 from requests.exceptions import RequestException
 
-from webscout.litagent import LitAgent
 from webscout.AIbase import SimpleModelList
+from webscout.litagent import LitAgent
 from webscout.Provider.TTI.base import BaseImages, TTICompatibleProvider
 from webscout.Provider.TTI.utils import ImageData, ImageResponse
 
+# Optional Pillow import for image format conversion
 try:
     from PIL import Image
+
+    PILLOW_AVAILABLE = True
 except ImportError:
     Image = None
+    PILLOW_AVAILABLE = False
+
+if TYPE_CHECKING:
+    from PIL import Image as PILImage
+
+
+def _convert_image_format(img_bytes: bytes, target_format: str) -> bytes:
+    """
+    Convert image bytes to the specified format using Pillow.
+
+    Args:
+        img_bytes: Raw image bytes
+        target_format: Target format ('png' or 'jpeg')
+
+    Returns:
+        Converted image bytes
+
+    Raises:
+        ImportError: If Pillow is not installed
+    """
+    if not PILLOW_AVAILABLE or Image is None:
+        raise ImportError(
+            "Pillow (PIL) is required for image format conversion. "
+            "Install it with: pip install pillow"
+        )
+
+    with BytesIO(img_bytes) as input_io:
+        with Image.open(input_io) as im:
+            out_io = BytesIO()
+            if target_format.lower() == "jpeg":
+                im = im.convert("RGB")
+                im.save(out_io, format="JPEG")
+            else:
+                im.save(out_io, format="PNG")
+            return out_io.getvalue()
+
+
+def _detect_image_format(img_bytes: bytes) -> Optional[str]:
+    """
+    Detect image format from magic bytes.
+
+    Args:
+        img_bytes: Raw image bytes
+
+    Returns:
+        Format string ('png', 'jpeg', 'gif', 'webp') or None if unknown
+    """
+    if len(img_bytes) < 12:
+        return None
+
+    # PNG: 89 50 4E 47 0D 0A 1A 0A
+    if img_bytes[:8] == b"\x89PNG\r\n\x1a\n":
+        return "png"
+
+    # JPEG: FF D8 FF
+    if img_bytes[:3] == b"\xff\xd8\xff":
+        return "jpeg"
+
+    # GIF: GIF87a or GIF89a
+    if img_bytes[:6] in (b"GIF87a", b"GIF89a"):
+        return "gif"
+
+    # WebP: RIFF....WEBP
+    if img_bytes[:4] == b"RIFF" and img_bytes[8:12] == b"WEBP":
+        return "webp"
+
+    return None
 
 
 class Images(BaseImages):
-    def __init__(self, client):
+    def __init__(self, client: "PollinationsAI"):
         self._client = client
 
     def create(
@@ -35,29 +106,46 @@ class Images(BaseImages):
         user: Optional[str] = None,
         style: str = "none",
         aspect_ratio: str = "1:1",
-        timeout: int = 60,
+        timeout: Optional[int] = None,
         image_format: str = "png",
         seed: Optional[int] = None,
+        convert_format: bool = False,
         **kwargs,
     ) -> ImageResponse:
         """
-        image_format: "png" or "jpeg"
-        seed: Optional random seed for reproducibility. If not provided, a random seed is used.
+        Generate images using Pollinations API.
+
+        Args:
+            model: Model to use for generation
+            prompt: The image generation prompt
+            n: Number of images to generate
+            size: Image size (e.g., "1024x1024")
+            response_format: "url" or "b64_json"
+            user: Optional user identifier
+            style: Style parameter
+            aspect_ratio: Aspect ratio
+            timeout: Request timeout in seconds (default: 60)
+            image_format: Output format "png" or "jpeg" (used for upload filename)
+            seed: Optional random seed for reproducibility
+            convert_format: If True, convert image to specified format (requires Pillow)
+
+        Returns:
+            ImageResponse with generated image data
         """
-        if Image is None:
-            raise ImportError("Pillow (PIL) is required for image format conversion.")
+        # Use default timeout if not provided
+        effective_timeout = timeout if timeout is not None else 60
 
         images = []
         urls = []
 
-        def upload_file_with_retry(img_bytes, image_format, max_retries=3):
-            ext = "jpg" if image_format.lower() == "jpeg" else "png"
+        def upload_file_with_retry(img_bytes: bytes, image_format: str, max_retries: int = 3):
+            ext = "jpg" if image_format.lower() == "jpeg" else image_format.lower()
+            if ext not in ("jpg", "png", "gif", "webp"):
+                ext = "png"
             for attempt in range(max_retries):
                 tmp_path = None
                 try:
-                    with tempfile.NamedTemporaryFile(
-                        suffix=f".{ext}", delete=False
-                    ) as tmp:
+                    with tempfile.NamedTemporaryFile(suffix=f".{ext}", delete=False) as tmp:
                         tmp.write(img_bytes)
                         tmp.flush()
                         tmp_path = tmp.name
@@ -72,7 +160,7 @@ class Images(BaseImages):
                             files=files,
                             data=data,
                             headers=headers,
-                            timeout=timeout,
+                            timeout=effective_timeout,
                         )
                         if resp.status_code == 200 and resp.text.strip():
                             text = resp.text.strip()
@@ -96,9 +184,11 @@ class Images(BaseImages):
                             pass
             return None
 
-        def upload_file_alternative(img_bytes, image_format):
+        def upload_file_alternative(img_bytes: bytes, image_format: str):
             try:
-                ext = "jpg" if image_format.lower() == "jpeg" else "png"
+                ext = "jpg" if image_format.lower() == "jpeg" else image_format.lower()
+                if ext not in ("jpg", "png", "gif", "webp"):
+                    ext = "png"
                 with tempfile.NamedTemporaryFile(suffix=f".{ext}", delete=False) as tmp:
                     tmp.write(img_bytes)
                     tmp.flush()
@@ -108,7 +198,9 @@ class Images(BaseImages):
                         return None
                     with open(tmp_path, "rb") as img_file:
                         files = {"file": img_file}
-                        response = requests.post("https://0x0.st", files=files)
+                        response = requests.post(
+                            "https://0x0.st", files=files, timeout=effective_timeout
+                        )
                         response.raise_for_status()
                         image_url = response.text.strip()
                         if not image_url.startswith("http"):
@@ -140,30 +232,27 @@ class Images(BaseImages):
             try:
                 resp = self._client.session.get(
                     url,
-                    timeout=timeout,
+                    timeout=effective_timeout,
                 )
                 resp.raise_for_status()
                 img_bytes = resp.content
             except RequestException as e:
                 raise RuntimeError(f"Failed to fetch image from Pollinations API: {e}")
 
-            # Convert to png or jpeg in memory
-            with BytesIO(img_bytes) as input_io:
-                with Image.open(input_io) as im:
-                    out_io = BytesIO()
-                    if image_format.lower() == "jpeg":
-                        im = im.convert("RGB")
-                        im.save(out_io, format="JPEG")
-                    else:
-                        im.save(out_io, format="PNG")
-                    img_bytes = out_io.getvalue()
+            # Convert image format if requested
+            if convert_format:
+                img_bytes = _convert_image_format(img_bytes, image_format)
+                actual_format = image_format
+            else:
+                # Detect actual image format from bytes
+                actual_format = _detect_image_format(img_bytes) or image_format
 
             images.append(img_bytes)
 
             if response_format == "url":
-                uploaded_url = upload_file_with_retry(img_bytes, image_format)
+                uploaded_url = upload_file_with_retry(img_bytes, actual_format)
                 if not uploaded_url:
-                    uploaded_url = upload_file_alternative(img_bytes, image_format)
+                    uploaded_url = upload_file_alternative(img_bytes, actual_format)
                 if uploaded_url:
                     urls.append(uploaded_url)
                 else:
@@ -176,8 +265,6 @@ class Images(BaseImages):
             for url in urls:
                 result_data.append(ImageData(url=url))
         elif response_format == "b64_json":
-            import base64
-
             for img in images:
                 b64 = base64.b64encode(img).decode("utf-8")
                 result_data.append(ImageData(b64_json=b64))
@@ -204,7 +291,7 @@ class PollinationsAI(TTICompatibleProvider):
         "flux-3d",
         "any-dark",
         "turbo",
-        "gptimage"
+        "gptimage",
     ]
 
     def __init__(self):
@@ -238,5 +325,6 @@ if __name__ == "__main__":
         n=4,
         timeout=30,
         seed=None,  # You can set a specific seed for reproducibility
+        convert_format=False,  # Set to True to convert format (requires Pillow)
     )
     print(response)

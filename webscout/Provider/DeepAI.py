@@ -1,5 +1,5 @@
 import json
-from typing import cast, Any, Dict, Generator, Iterator, List, Optional, Union
+from typing import Any, Dict, Generator, Iterator, List, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
@@ -138,7 +138,7 @@ class DeepAI(Provider):
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
-        
+
         act_prompt = (
             AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True
             )

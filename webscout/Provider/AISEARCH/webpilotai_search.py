@@ -1,5 +1,5 @@
 import re
-from typing import cast, Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 import requests
 

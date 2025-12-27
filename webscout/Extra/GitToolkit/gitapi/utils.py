@@ -1,6 +1,6 @@
 import json
 import time
-from typing import Optional, Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
@@ -78,5 +78,5 @@ def request(url: str, retry_attempts: int = 3) -> Any:
             if attempt == retry_attempts - 1:
                 raise RequestError(f"Request failed: {str(e)}")
             time.sleep(1)
-    
+
     raise RequestError(f"Request to {url} failed after {retry_attempts} attempts")

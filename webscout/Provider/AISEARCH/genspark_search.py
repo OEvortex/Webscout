@@ -157,7 +157,7 @@ class Genspark(AISearch):
                 def _extract_genspark_content(data: Union[str, Dict[str, Any]]) -> Optional[str]:
                     if isinstance(data, str):
                         return None
-                    
+
                     event_type = data.get("type")
                     field_name = data.get("field_name")
                     result_id = data.get("result_id")

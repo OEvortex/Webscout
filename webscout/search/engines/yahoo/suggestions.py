@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import Optional, Any
+from typing import Any, Optional
 
 from .base import YahooSearchEngine
 

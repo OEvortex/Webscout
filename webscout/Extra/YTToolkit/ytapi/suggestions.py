@@ -1,6 +1,6 @@
 """YouTube search suggestions and autocomplete."""
 import json
-from typing import Optional, List
+from typing import List, Optional
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 

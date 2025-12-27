@@ -1,12 +1,17 @@
 import re
 import time
 import uuid
-from typing import cast, Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi.requests import Session
 
 from webscout.AIutel import sanitize_stream
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
+from webscout.Provider.OPENAI.base import (
+    BaseChat,
+    BaseCompletions,
+    OpenAICompatibleProvider,
+    SimpleModelList,
+)
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -17,6 +22,7 @@ from webscout.Provider.OPENAI.utils import (
 )
 
 from ...litagent import LitAgent
+
 
 class Completions(BaseCompletions):
     def __init__(self, client: 'Elmo'):

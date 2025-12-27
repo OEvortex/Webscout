@@ -5,7 +5,7 @@ Synchronous provider for Emailnator.com
 
 from json import loads
 from time import sleep
-from typing import Optional, Dict, List
+from typing import Dict, List, Optional
 
 from requests import Session
 

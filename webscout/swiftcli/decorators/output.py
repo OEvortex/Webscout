@@ -2,15 +2,14 @@
 
 import json
 from functools import wraps
-from typing import Callable, List, Optional, Union
+from typing import TYPE_CHECKING, Callable, List, Optional, Union
 
 import yaml
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-# Handle different versions of rich
-try:
+if TYPE_CHECKING:
     from rich.progress import (
         BarColumn,
         Progress,
@@ -19,57 +18,68 @@ try:
         TextColumn,
         TimeRemainingColumn,
     )
-except ImportError:
-    # If standard imports fail, try older rich versions or create minimal fallbacks
+else:
+    # Handle different versions of rich
     try:
-        from rich.progress import (  # type: ignore
+        from rich.progress import (
             BarColumn,
             Progress,
             SpinnerColumn,
+            TaskProgressColumn,
             TextColumn,
             TimeRemainingColumn,
         )
-
-        # Create a simple TaskProgressColumn replacement for older versions
-        class TaskProgressColumn:  # type: ignore
-            def __init__(self):
-                pass
-
-            def __call__(self, task):
-                return f"{task.percentage:.1f}%"
     except ImportError:
-        # If rich is too old or not installed, create minimal fallbacks
-        class Progress:  # type: ignore
-            def __init__(self, *args, **kwargs):
+        # If standard imports fail, try older rich versions or create minimal fallbacks
+        try:
+            from rich.progress import (  # type: ignore
+                BarColumn,
+                Progress,
+                SpinnerColumn,
+                TextColumn,
+                TimeRemainingColumn,
+            )
+
+            # Create a simple TaskProgressColumn replacement for older versions
+            class TaskProgressColumn:  # type: ignore
+                def __init__(self):
+                    pass
+
+                def __call__(self, task):
+                    return f"{task.percentage:.1f}%"
+        except ImportError:
+            # If rich is too old or not installed, create minimal fallbacks
+            class Progress:  # type: ignore
+                def __init__(self, *args, **kwargs):
+                    pass
+
+                def __enter__(self):
+                    return self
+
+                def __exit__(self, *args):
+                    pass
+
+                def add_task(self, description, total=None):
+                    return 0
+
+                def update(self, task_id, **kwargs):
+                    pass
+
+            class SpinnerColumn:  # type: ignore
                 pass
 
-            def __enter__(self):
-                return self
+            class TextColumn:  # type: ignore
+                def __init__(self, text):
+                    pass
 
-            def __exit__(self, *args):
+            class BarColumn:  # type: ignore
                 pass
 
-            def add_task(self, description, total=None):
-                return 0
-
-            def update(self, task_id, **kwargs):
+            class TaskProgressColumn:  # type: ignore
                 pass
 
-        class SpinnerColumn:  # type: ignore
-            pass
-
-        class TextColumn:  # type: ignore
-            def __init__(self, text):
+            class TimeRemainingColumn:  # type: ignore
                 pass
-
-        class BarColumn:  # type: ignore
-            pass
-
-        class TaskProgressColumn:  # type: ignore
-            pass
-
-        class TimeRemainingColumn:  # type: ignore
-            pass
 
 
 console = Console()

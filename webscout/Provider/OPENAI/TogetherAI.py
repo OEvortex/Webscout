@@ -1,12 +1,16 @@
 import json
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 import requests
 
-from ...litagent import LitAgent
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
+from webscout.Provider.OPENAI.base import (
+    BaseChat,
+    BaseCompletions,
+    OpenAICompatibleProvider,
+    SimpleModelList,
+)
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -17,9 +21,12 @@ from webscout.Provider.OPENAI.utils import (
     count_tokens,
 )
 
+from ...litagent import LitAgent
+from webscout.AIbase import Response
+
 
 class Completions(BaseCompletions):
-    def __init__(self, client: 'TogetherAI'):
+    def __init__(self, client: "TogetherAI"):
         self._client = client
 
     def create(
@@ -34,7 +41,7 @@ class Completions(BaseCompletions):
         timeout: Optional[int] = None,
         proxies: Optional[Dict[str, str]] = None,
         stop: Optional[Union[str, List[str]]] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
         """
         Creates a model response for the given chat conversation.
@@ -42,9 +49,9 @@ class Completions(BaseCompletions):
         """
         # Get API key if not already set
         if not self._client.headers.get("Authorization"):
-             # If no API key is set, we can't proceed.
-             # The user should have provided it in __init__.
-             pass
+            # If no API key is set, we can't proceed.
+            # The user should have provided it in __init__.
+            pass
 
         model_name = self._client.convert_model_name(model)
         payload = {
@@ -66,12 +73,22 @@ class Completions(BaseCompletions):
         created_time = int(time.time())
 
         if stream:
-            return self._create_stream(request_id, created_time, model_name, payload, timeout, proxies)
+            return self._create_stream(
+                request_id, created_time, model_name, payload, timeout, proxies
+            )
         else:
-            return self._create_non_stream(request_id, created_time, model_name, payload, timeout, proxies)
+            return self._create_non_stream(
+                request_id, created_time, model_name, payload, timeout, proxies
+            )
 
     def _create_stream(
-        self, request_id: str, created_time: int, model: str, payload: Dict[str, Any], timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        payload: Dict[str, Any],
+        timeout: Optional[int] = None,
+        proxies: Optional[Dict[str, str]] = None,
     ) -> Generator[ChatCompletionChunk, None, None]:
         try:
             response = self._client.session.post(
@@ -80,50 +97,52 @@ class Completions(BaseCompletions):
                 json=payload,
                 stream=True,
                 timeout=timeout or self._client.timeout,
-                proxies=proxies
+                proxies=proxies,
             )
             response.raise_for_status()
-            prompt_tokens = count_tokens([msg.get("content", "") for msg in payload.get("messages", [])])
+            prompt_tokens = count_tokens(
+                [msg.get("content", "") for msg in payload.get("messages", [])]
+            )
             completion_tokens = 0
             total_tokens = prompt_tokens
 
             for line in response.iter_lines():
                 if line:
-                    line = line.decode('utf-8')
-                    if line.startswith('data: '):
+                    line = line.decode("utf-8")
+                    if line.startswith("data: "):
                         line = line[6:]
-                        if line.strip() == '[DONE]':
+                        if line.strip() == "[DONE]":
                             break
                         try:
                             chunk_data = json.loads(line)
-                            if 'choices' in chunk_data and chunk_data['choices']:
-                                delta = chunk_data['choices'][0].get('delta', {})
-                                content = delta.get('content')
+                            if "choices" in chunk_data and chunk_data["choices"]:
+                                delta = chunk_data["choices"][0].get("delta", {})
+                                content = delta.get("content")
                                 if content:
                                     completion_tokens += count_tokens(content)
                                     total_tokens = prompt_tokens + completion_tokens
                                     choice_delta = ChoiceDelta(
                                         content=content,
-                                        role=delta.get('role', 'assistant'),
-                                        tool_calls=delta.get('tool_calls')
+                                        role=delta.get("role", "assistant"),
+                                        tool_calls=delta.get("tool_calls"),
                                     )
                                     choice = Choice(
                                         index=0,
                                         delta=choice_delta,
                                         finish_reason=None,
-                                        logprobs=None
+                                        logprobs=None,
                                     )
                                     chunk = ChatCompletionChunk(
                                         id=request_id,
                                         choices=[choice],
                                         created=created_time,
-                                        model=model
+                                        model=model,
                                     )
                                     chunk.usage = {
                                         "prompt_tokens": prompt_tokens,
                                         "completion_tokens": completion_tokens,
                                         "total_tokens": total_tokens,
-                                        "estimated_cost": None
+                                        "estimated_cost": None,
                                     }
                                     yield chunk
                         except Exception:
@@ -133,23 +152,26 @@ class Completions(BaseCompletions):
             delta = ChoiceDelta(content=None, role=None, tool_calls=None)
             choice = Choice(index=0, delta=delta, finish_reason="stop", logprobs=None)
             chunk = ChatCompletionChunk(
-                id=request_id,
-                choices=[choice],
-                created=created_time,
-                model=model
+                id=request_id, choices=[choice], created=created_time, model=model
             )
             chunk.usage = {
                 "prompt_tokens": prompt_tokens,
                 "completion_tokens": completion_tokens,
                 "total_tokens": total_tokens,
-                "estimated_cost": None
+                "estimated_cost": None,
             }
             yield chunk
         except Exception as e:
             raise IOError(f"TogetherAI stream request failed: {e}") from e
 
     def _create_non_stream(
-        self, request_id: str, created_time: int, model: str, payload: Dict[str, Any], timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        payload: Dict[str, Any],
+        timeout: Optional[int] = None,
+        proxies: Optional[Dict[str, str]] = None,
     ) -> ChatCompletion:
         try:
             payload_copy = payload.copy()
@@ -159,33 +181,28 @@ class Completions(BaseCompletions):
                 headers=self._client.headers,
                 json=payload_copy,
                 timeout=timeout or self._client.timeout,
-                proxies=proxies
+                proxies=proxies,
             )
             response.raise_for_status()
             data = response.json()
 
             full_text = ""
             finish_reason = "stop"
-            if 'choices' in data and data['choices']:
-                full_text = data['choices'][0]['message']['content']
-                finish_reason = data['choices'][0].get('finish_reason', 'stop')
+            if "choices" in data and data["choices"]:
+                full_text = data["choices"][0]["message"]["content"]
+                finish_reason = data["choices"][0].get("finish_reason", "stop")
 
-            message = ChatCompletionMessage(
-                role="assistant",
-                content=full_text
-            )
-            choice = Choice(
-                index=0,
-                message=message,
-                finish_reason=finish_reason
-            )
+            message = ChatCompletionMessage(role="assistant", content=full_text)
+            choice = Choice(index=0, message=message, finish_reason=finish_reason)
 
-            prompt_tokens = count_tokens([msg.get("content", "") for msg in payload.get("messages", [])])
+            prompt_tokens = count_tokens(
+                [msg.get("content", "") for msg in payload.get("messages", [])]
+            )
             completion_tokens = count_tokens(full_text)
             usage = CompletionUsage(
                 prompt_tokens=prompt_tokens,
                 completion_tokens=completion_tokens,
-                total_tokens=prompt_tokens + completion_tokens
+                total_tokens=prompt_tokens + completion_tokens,
             )
 
             completion = ChatCompletion(
@@ -201,7 +218,7 @@ class Completions(BaseCompletions):
 
 
 class Chat(BaseChat):
-    def __init__(self, client: 'TogetherAI'):
+    def __init__(self, client: "TogetherAI"):
         self.completions = Completions(client)
 
 
@@ -209,6 +226,7 @@ class TogetherAI(OpenAICompatibleProvider):
     """
     OpenAI-compatible client for TogetherAI API.
     """
+
     required_auth = True
     AVAILABLE_MODELS = []
 
@@ -220,15 +238,10 @@ class TogetherAI(OpenAICompatibleProvider):
 
         try:
             # Use a temporary session for fetching models
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json"
-            }
+            headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
             response = requests.get(
-                "https://api.together.xyz/v1/models",
-                headers=headers,
-                timeout=30
+                "https://api.together.xyz/v1/models", headers=headers, timeout=30
             )
 
             if response.status_code != 200:
@@ -254,7 +267,12 @@ class TogetherAI(OpenAICompatibleProvider):
         except Exception:
             pass
 
-    def __init__(self, api_key: Optional[str] = None, browser: str = "chrome", proxies: Optional[Dict[str, str]] = None):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        browser: str = "chrome",
+        proxies: Optional[Dict[str, str]] = None,
+    ):
         super().__init__(proxies=proxies)
         self.timeout = 60
         self.api_endpoint = "https://api.together.xyz/v1/chat/completions"
@@ -333,12 +351,12 @@ class TogetherAI(OpenAICompatibleProvider):
             "x-client-ip": ip,
             "forwarded": f"for={ip};proto=https",
             "x-forwarded-proto": "https",
-            "x-request-id": self._agent.random_id(8) if hasattr(self._agent, 'random_id') else ''.join(random.choices('0123456789abcdef', k=8)),
+            "x-request-id": self._agent.random_id(8)
+            if hasattr(self._agent, "random_id")
+            else "".join(random.choices("0123456789abcdef", k=8)),
         }
 
         return fingerprint
-
-
 
     def convert_model_name(self, model: str) -> str:
         """Convert model name - returns model if valid, otherwise default"""
@@ -358,7 +376,7 @@ if __name__ == "__main__":
     messages = [
         {"role": "user", "content": "Hello, how are you?"},
         {"role": "assistant", "content": "I'm fine, thank you! How can I help you today?"},
-        {"role": "user", "content": "Tell me a short joke."}
+        {"role": "user", "content": "Tell me a short joke."},
     ]
 
     # Non-streaming example
@@ -366,7 +384,7 @@ if __name__ == "__main__":
         model="meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
         messages=messages,
         max_tokens=50,
-        stream=False
+        stream=False,
     )
     print("Non-streaming response:")
     print(response)
@@ -377,7 +395,7 @@ if __name__ == "__main__":
         model="meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
         messages=messages,
         max_tokens=50,
-        stream=True
+        stream=True,
     )
 
     for chunk in cast(Generator[ChatCompletionChunk, None, None], stream_gen):

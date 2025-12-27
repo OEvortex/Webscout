@@ -33,7 +33,6 @@ Currently, the following providers are implemented with OpenAI-compatible interf
 - Glider
 - X0GPT
 - WiseCat
-- Venice
 - ExaAI
 - TypeGPT
 - LLMChatCo
@@ -253,52 +252,6 @@ client = WiseCat()
 # Create a streaming completion
 stream = client.chat.completions.create(
     model="chat-model-small",
-    messages=[
-        {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": "Write a short poem about programming."}
-    ],
-    stream=True
-)
-
-# Process the streaming response
-for chunk in stream:
-    if chunk.choices[0].delta.content:
-        print(chunk.choices[0].delta.content, end="", flush=True)
-print()  # Add a newline at the end
-```
-
-### Basic Usage with Venice
-
-```python
-from webscout.client import Venice
-
-# Initialize the client
-client = Venice(temperature=0.7, top_p=0.9)
-
-# Create a completion (non-streaming)
-response = client.chat.completions.create(
-    model="mistral-31-24b",
-    messages=[
-        {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": "Tell me about Python programming."}
-    ]
-)
-
-# Print the response
-print(response.choices[0].message.content)
-```
-
-### Streaming with Venice
-
-```python
-from webscout.client import Venice
-
-# Initialize the client
-client = Venice()
-
-# Create a streaming completion
-stream = client.chat.completions.create(
-    model="mistral-31-24b",
     messages=[
         {"role": "system", "content": "You are a helpful assistant."},
         {"role": "user", "content": "Write a short poem about programming."}
@@ -920,7 +873,6 @@ Want to add a new OpenAI-compatible provider? Follow these steps:
 - [Glider.so Website](https://glider.so/)
 - [X0GPT Website](https://x0-gpt.devwtf.in/)
 - [WiseCat Website](https://wise-cat-groq.vercel.app/)
-- [Venice AI Website](https://venice.ai/)
 - [ExaAI Website](https://o3minichat.exa.ai/)
 - [Sambanova Website](https://sambanova.ai/)
 - [DeepInfra Website](https://deepinfra.com/)

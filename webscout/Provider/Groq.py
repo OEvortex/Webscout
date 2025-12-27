@@ -1,5 +1,5 @@
 import json
-from typing import cast, Any, Callable, Dict, Generator, List, Optional, Union
+from typing import Any, Callable, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi import CurlError
 

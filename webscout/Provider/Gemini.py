@@ -1,7 +1,7 @@
 import warnings
 from json import dumps
 from os import path
-from typing import cast, Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from ..AIbase import Provider, Response
 

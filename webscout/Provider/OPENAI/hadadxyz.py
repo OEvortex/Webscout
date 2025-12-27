@@ -1,11 +1,16 @@
 import time
 import uuid
-from typing import cast, Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi.requests import Session
 
 # Import base classes and utility structures
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
+from webscout.Provider.OPENAI.base import (
+    BaseChat,
+    BaseCompletions,
+    OpenAICompatibleProvider,
+    SimpleModelList,
+)
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -18,6 +23,7 @@ from webscout.Provider.OPENAI.utils import (
 )
 
 from ...litagent import LitAgent
+
 
 class _DeltaExtractor:
     """Stateful extractor that merges `reasoning-delta` and `text-delta` into a single text stream.

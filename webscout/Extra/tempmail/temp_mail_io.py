@@ -84,7 +84,7 @@ class TempMailIOAsync(AsyncTempMailProvider):
         """Get available domains"""
         if not self._session:
             await self.initialize()
-        
+
         if not self._session:
             return []
 
@@ -104,7 +104,7 @@ class TempMailIOAsync(AsyncTempMailProvider):
         """Create a new temporary email"""
         if not self._session:
             await self.initialize()
-        
+
         if not self._session:
             return "", ""
 
@@ -124,7 +124,7 @@ class TempMailIOAsync(AsyncTempMailProvider):
         """Delete a temporary email"""
         if not self._session:
             await self.initialize()
-        
+
         if not self._session or not self.email or not self.token:
             return False
 
@@ -145,7 +145,7 @@ class TempMailIOAsync(AsyncTempMailProvider):
         """Get messages for a temporary email"""
         if not self._session:
             await self.initialize()
-            
+
         if not self._session or not self.email:
             return []
 

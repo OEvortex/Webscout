@@ -51,8 +51,7 @@ These providers have both standard and OpenAI-compatible implementations, giving
 | 24 | **Toolbaz** | `webscout/Provider/toolbaz.py` | `webscout/Provider/OPENAI/toolbaz.py` |
 | 25 | **TwoAI** | `webscout/Provider/TwoAI.py" | `webscout/Provider/OPENAI/TwoAI.py` |
 | 26 | **Typefully** | `webscout/Provider/typefully.py` | `webscout/Provider/OPENAI/typefully.py` |
-| 27 | **Venice** | `webscout/Provider/Venice.py` | `webscout/Provider/OPENAI/venice.py` |
-| 28 | **WiseCat** | `webscout/Provider/WiseCat.py` | `webscout/Provider/OPENAI/wisecat.py` |
+| 27 | **WiseCat** | `webscout/Provider/WiseCat.py` | `webscout/Provider/OPENAI/wisecat.py` |
 | 29 | **X0GPT** | `webscout/Provider/x0gpt.py` | `webscout/Provider/OPENAI/x0gpt.py` |
 | 30 | **Yep** | `webscout/Provider/yep.py` | `webscout/Provider/OPENAI/yep.py` |
 | 31 | **Gradient** | `webscout/Provider/Gradient.py` | `webscout/Provider/OPENAI/gradient.py` |
@@ -90,10 +89,9 @@ These providers are only available in the standard implementation format.
 | 16 | **QwenLM** | `webscout/Provider/QwenLM.py` |
 | 17 | **SearchChat** | `webscout/Provider/searchchat.py` |
 | 18 | **TurboSeek** | `webscout/Provider/turboseek.py` |
-| 19 | **VercelAI** | `webscout/Provider/VercelAI.py` |
-| 20 | **WrDoChat** | `webscout/Provider/WrDoChat.py` |
+| 19 | **WrDoChat** | `webscout/Provider/WrDoChat.py` |
 
-**Total: 20 providers with only normal implementation**
+**Total: 19 providers with only normal implementation**
 
 ---
 
@@ -163,7 +161,6 @@ Located in `webscout/Provider/TTI/`:
 - PixelMuse
 - Pollinations
 - Together
-- Venice
 
 ### Text-to-Speech Providers
 Located in `webscout/Provider/TTS/`:

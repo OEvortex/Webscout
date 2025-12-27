@@ -107,3 +107,13 @@ class MyProvider(OpenAICompatibleProvider):
 - each function should have its docstring explaining its purpose, parameters, and return values
 - Prefer f-strings for formatting
 - Use list/dict/set comprehensions where appropriate
+
+10) Important rules
+- Keep changes focused and include small usage examples in tests or docs.
+- Run `ruff .`  using `uv run ruff` locally; respect `line-length = 100` and the Ruff select/ignore rules in pyproject.toml.
+- Run `pyright` using `uv run pyright` to validate type correctness.
+- If the change affects runtime (server, CLI), include a short manual-test snippet that a maintainer can run (e.g., `webscout-server --debug` and a sample curl to /v1/chat/completions).
+- Always update files in small batches (manageable chunks)
+- Dont add unnecessary comments or redundant code
+- Remove unused imports, variables, comments 
+- Dont use `python <file>.py` instead of that use `uv run <file>.py`

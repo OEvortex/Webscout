@@ -4,37 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [2026.01.01] - 2026-01-01
 
-### 🐛 Fixed
-- **fix**: webscout/prompt_manager.py - Fixed import handling to prevent "possibly unbound" errors for `Session` and `requests` modules; changed `impersonate` parameter type from `str` to `Optional[str]` to match curl_cffi expectations; removed invalid `session.timeout` assignment; added exception handling for curl_cffi Session with fallback to requests; fixed HTTP timeout handling for both sessions; split exception handling to catch `requests.exceptions.RequestException` first for safe response access; improved error messages with HTTP status extraction; fixed JSON serialization by filtering integer keys (prevents "'<' not supported between 'int' and 'str'" error); added `_rebuild_numeric_indices()` for reconstructing indices after loading
-- **fix**: webscout/Provider/toolbaz.py - Fixed missing `cast` import and removed redundant local import; initialized `resp = None` in `get_auth()` try block to prevent "possibly unbound" error
-- **fix**: webscout/Provider/__init__.py - Fixed export name from `"Deepinfra"` to `"DeepInfra"` to match import, resolving AttributeError
-- **fix**: webscout/sanitize.py - Fixed infinite recursion in `__getattr__` by removing self-referential calls to `sanitize_stream` and `LITSTREAM`; updated type annotation from `Iterable[bytes]` to `AsyncIterable[bytes]` in `_decode_byte_stream_async`; renamed duplicate `_yield_single` to `_yield_single_bytes` and `_yield_single_data`; removed invalid `__decorator__` assignments on functions
-- **fix**: webscout/update_checker.py - Replaced `requests` with `curl_cffi.requests` for consistency; fixed Windows UnicodeEncodeError in Rich output with box-drawing characters
-- **fix**: webscout/Provider/QwenLM.py - Fixed proxy handling to update only when provided (avoids None assignments); fixed conversation intro for AwesomePrompts acts; moved `raw` parameter to `**kwargs` for consistency
-- **fix**: webscout/AIauto.py - Fixed provider initialization with separate variable for better error handling; updated type hints to use proper `Optional` types for nullable attributes
-- **fix**: webscout/models.py - Fixed type hint mismatches in `summary()` methods (changed return type from `Dict[str, int]` to `Dict[str, Any]` to accommodate nested dictionaries); fixed `_TTSModels.list()` return type to `Dict[str, Union[List[str], Dict[str, str]]]` for proper voice data handling; fixed unsafe attribute access by using `getattr()` with defaults instead of direct attribute access for TTI models (prevents AttributeError for missing AVAILABLE_MODELS)
- - **fix**: webscout/client.py - Fixed `tools` parameter type hint to `List[Union[Tool, Dict[str, Any]]]` matching base class; resolved duplicate `run_api` and `start_server` definitions with single try/except implementation; added `cast(ChatCompletion)` for type narrowing in non-streaming response handling; fixed fallback queue to check `inspect.isgenerator()` before accessing `.choices`; added `None` checks for `message.content` to prevent subscript errors
- - **fix**: webscout/cli.py - Fixed parameter mapping issue in `translate` command by changing option name from `--from` to `--from-lang` to avoid Python keyword conflict and ensure proper CLI argument binding to function parameter `from_lang`
-
 ### 🚮 Removed
 - **remove**: Completely removed `orjson` dependency from codebase (including imports, `HAS_ORJSON` flag, and pyproject.toml entry) for better compatibility and simpler dependencies
+- **remove**: Removed `webscout/Provider/VercelAI.py` provider file and updated related imports and documentation
 
-### 🔧 Improved
-- **refactor**: webscout/utils.py - Simplified `json_dumps()` and `json_loads()` to standard `json` library; added comprehensive docstrings; improved formatting and organization per project standards
-- **refactor**: webscout/prompt_manager.py - Enhanced formatting for 100-character line limit; improved structure, readability, cache persistence (save only string keys, rebuild numeric indices on load), and automatic index rebuilding after deserialization
-- **refactor**: webscout/update_checker.py - Migrated HTTP requests to `curl_cffi.requests.Session` for consistency; improved checking logic and error handling
-- **refactor**: webscout/AIbase.py - Converted `last_response` to property with getter/setter; updated `Provider` base with type hints for `conversation` and `last_response`; added `ModelList` abstract class and `SimpleModelList` implementation for model management; enhanced `Response` type alias with `str`; added `required_auth` to `Provider`; enhanced `TTSProvider.stream_audio()` with `model`, `response_format`, and `instructions` parameters
-- **refactor**: webscout/AIauto.py - Added `last_response` setter property for better management
-- **refactor**: Comprehensive type hint improvements across 200+ provider files (`Optional`, `Union`, `Dict`); standardized `**kwargs` parameter handling in all providers; updated OpenAI-compatible providers with better hints and validation; standardized `raw` in AISEARCH; enhanced TTS providers' `stream_audio()` signatures and hints; improved TTI type hints and params; updated GitToolkit, YTToolkit, tempmail, GGUF converter, search engines, server components, and CLI decorators with better type safety and handling
-
-### ✨ Added
-- **feat**: AGENTS.md - Added comprehensive AI agent instructions with guidance on code modifications, provider patterns, and development workflows
-
-### 📝 Documentation
-- **docs**: AGENTS.md - Added comprehensive development guide covering provider patterns, CLI commands, logging, error handling, release notes, and testing guidelines
-- **docs**: Provider.md - Updated provider documentation with new models and improved descriptions
-
-## [2025.12.23] - 2025-12-23
+### 🐛 Fixed
 
 ### ✨ Added
 - **feat**: Added new models to HadadXYZ providers: `"anthropic/claude-opus-4-5-20251101"`, `"anthropic/claude-sonnet-4-5-20250929"`, `"anthropic/claude-haiku-4-5-20251001/legacy"`, and `"google/gemini-3-pro-preview"` to both `webscout/Provider/HadadXYZ.py` and `webscout/Provider/OPENAI/hadadxyz.py`.
@@ -91,7 +65,6 @@ All notable changes to this project will be documented in this file.
 - **feat**: Updated documentation with new features and usage examples
 - **feat**: Enhanced error handling with detailed validation error messages
 - **feat**: Improved type safety with better runtime validation
-- **feat**: webscout/Provider/TTI/venice.py - Major update to Venice AI TTI provider with new headers and payload structure from recent reverse engineering. Added support for `z-image-turbo` and `stable-diffusion-3.5-large`.
 - **feat**: webscout/Provider/TTI/together.py - Refactored TogetherImage provider to require a user-provided API key, removing the brittle auto-authentication logic. This aligns it with the TogetherAI chat providers.
 
 ### 🔧 Maintenance
@@ -552,8 +525,6 @@ All notable changes to this project will be documented in this file.
 - **feat**: updated `sanitize_stream` to support both `extract_regexes` and `content_extractor` at same time
 - **chore**: updated `release-with-changelog.yml` to normalize version strings by stripping leading 'v' or 'V'
 - **chore**: updated `sanitize_stream` docstring to clarify usage of `extract_regexes` and `content_extractor`
-- **chore**: removed deprected models from venice provider
-- **chore**: updated venice provider model list in AVAILABLE_MODELS
 - **chore**: updated models list in textpollionations provider
 - **chore**: replaced `anthropic:claude-3-5-haiku-20241022` with `anthropic:claude-haiku-4-5-20251001` in typefully provider 
 

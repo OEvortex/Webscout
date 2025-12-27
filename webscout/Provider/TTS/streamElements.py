@@ -4,7 +4,7 @@ import time
 import urllib.parse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from io import BytesIO
-from typing import Union, cast, Any, Optional
+from typing import Any, Optional, Union, cast
 
 import requests
 from litprinter import ic

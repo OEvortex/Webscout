@@ -17,7 +17,7 @@ class YepBase:
     ):
         self.base_url = "https://api.yep.com/fs/2/search"
         self.timeout = timeout
-        from typing import Optional, Any, cast
+        from typing import Any, Optional, cast
         self.session = Session(
             proxies=cast(Any, proxies),
             verify=verify,

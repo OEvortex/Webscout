@@ -2,7 +2,7 @@ import base64
 import json
 import os
 import random
-from typing import Optional, cast, Any, Dict, Generator, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 from urllib import response
 
 from curl_cffi import CurlError

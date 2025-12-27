@@ -6,7 +6,7 @@ import pathlib
 import random
 import string
 import tempfile
-from typing import Union, cast, Any, Optional
+from typing import Any, Optional, Union, cast
 
 import httpx
 from litprinter import ic
@@ -179,7 +179,7 @@ class ParlerTTS(BaseTTSProvider):
         """
         description = instructions or "A female speaker delivers a slightly expressive and animated speech with a moderate speed. The recording features a low-pitch voice and very clear audio."
         use_large = (model == "parler-large-v1")
-        
+
         return self.tts(
             text=input_text,
             description=description,

@@ -1,5 +1,5 @@
 import re  # Import re for the extractor
-from typing import cast, Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session

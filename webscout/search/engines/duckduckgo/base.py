@@ -8,7 +8,7 @@ from functools import cached_property
 from itertools import cycle, islice
 from random import choice
 from time import sleep, time
-from typing import Optional, Any, cast
+from typing import Any, Optional, cast
 
 try:
     import trio  # type: ignore

@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
+from typing import Any, Optional
 from urllib.parse import quote
 
 from ....exceptions import WebscoutE
 from .base import DuckDuckGoBase
 
-
-from typing import Optional, Any
 
 class DuckDuckGoWeather(DuckDuckGoBase):
     name = "duckduckgo"

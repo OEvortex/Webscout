@@ -3,7 +3,7 @@
 ##################################################################################
 import pathlib
 import tempfile
-from typing import Union, cast, Any, Generator, List, Optional
+from typing import Any, Generator, List, Optional, Union, cast
 
 import requests
 from litprinter import ic

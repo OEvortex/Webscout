@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from random import choice
-from typing import Optional, Any, Literal
+from typing import Any, Literal, Optional
 
 try:
     import trio  # type: ignore

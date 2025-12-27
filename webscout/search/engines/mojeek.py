@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Optional, Any
+from typing import Any, Optional
 
 from ..base import BaseSearchEngine
 from ..results import TextResult

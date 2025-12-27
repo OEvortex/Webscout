@@ -23,7 +23,7 @@ class WiseCat(Provider):
     AVAILABLE_MODELS = [
         "chat-model-small",
         # "chat-model-large", # >>> NOT WORKING <<<
-        "chat-model-reasoning",
+        # "chat-model-reasoning", # >>> NOT WORKING <<<
     ]
 
     def __init__(self,

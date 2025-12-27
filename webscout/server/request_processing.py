@@ -5,7 +5,7 @@ Request processing utilities for the Webscout API.
 import json
 import time
 import uuid
-from typing import Optional, Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from fastapi.responses import StreamingResponse
 from litprinter import ic

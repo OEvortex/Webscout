@@ -313,9 +313,11 @@ class X0GPT(Provider):
 if __name__ == "__main__":
     from rich import print
     ai = X0GPT(timeout=5000)
+    # None Stream Test
+    response = ai.chat("write a poem about AI", stream=False, raw=False)
+    print(response)
+    print()
+    print("=====================Stream===============================")
     response = ai.chat("write a poem about AI", stream=True, raw=False)
-    if hasattr(response, "__iter__") and not isinstance(response, (str, bytes)):
-        for chunk in response:
-            print(chunk, end="", flush=True)
-    else:
-        print(response)
+    for chunk in response:
+        print(chunk, end="", flush=True)

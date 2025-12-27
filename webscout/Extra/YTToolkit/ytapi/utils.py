@@ -1,12 +1,11 @@
 from collections import OrderedDict
+from typing import Optional
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from webscout.litagent import LitAgent
 
 from .errors import InvalidURL, RequestError, TooManyRequests
-
-from typing import Optional
 
 __all__ = ['dup_filter', 'request']
 
@@ -52,7 +51,7 @@ def request(url: str, retry_attempts: int = 3) -> str:
         except Exception as e:
             if attempt == retry_attempts - 1:
                 raise RequestError(f'Request failed: {e!r}') from None
-    
+
     raise RequestError(f"Request to {url} failed after {retry_attempts} attempts")
 
 

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Union, cast, Any, List, Optional
+from typing import Any, List, Optional, Union, cast
 
 from .utils import ImageResponse
 

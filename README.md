@@ -51,7 +51,7 @@
 > Choose the approach that best fits your needs! For OpenAI compatibility, check the [OpenAI Providers README](webscout/Provider/OPENAI/README.md) or see the [OpenAI-Compatible API Server](#-openai-compatible-api-server) section below.
 
 > [!NOTE]
-> Webscout supports over 90 AI providers including: LLAMA, C4ai, Venice, Copilot, HuggingFaceChat, PerplexityLabs, DeepSeek, WiseCat, GROQ, OPENAI, GEMINI, DeepInfra, Meta, YEPCHAT, TypeGPT, ChatGPTClone, ExaAI, Claude, Anthropic, Cloudflare, AI21, Cerebras, and many more. All providers follow similar usage patterns with consistent interfaces.
+> Webscout supports over 90 AI providers including: LLAMA, C4ai, Copilot, HuggingFaceChat, PerplexityLabs, DeepSeek, WiseCat, GROQ, OPENAI, GEMINI, DeepInfra, Meta, YEPCHAT, TypeGPT, ChatGPTClone, ExaAI, Claude, Anthropic, Cloudflare, AI21, Cerebras, and many more. All providers follow similar usage patterns with consistent interfaces.
 
 <div align="center">
   <!-- Social/Support Links -->

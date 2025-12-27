@@ -1,12 +1,12 @@
 import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import cast, Any, Callable, Dict, Generator, List, Optional, TypedDict, Union
+from typing import Any, Callable, Dict, Generator, List, Optional, TypedDict, Union, cast
 
 import requests
 from litprinter import ic
 
-from webscout.AIbase import Response, ModelList, SimpleModelList
+from webscout.AIbase import ModelList, Response, SimpleModelList
 
 # Import the utils for response structures
 from webscout.Provider.OPENAI.utils import ChatCompletion, ChatCompletionChunk

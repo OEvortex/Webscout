@@ -5,6 +5,7 @@ from typing import Any, Callable, Dict, List, Optional, Union
 # Sentinel for unspecified defaults
 _NO_DEFAULT = object()
 
+
 def option(
     *param_decls: str,
     type: Any = str,
@@ -24,7 +25,7 @@ def option(
     callback: Optional[Callable] = None,
     hidden: bool = False,
     validation: Optional[Dict[str, Any]] = None,
-    mutually_exclusive: Optional[List[str]] = None
+    mutually_exclusive: Optional[List[str]] = None,
 ) -> Callable:
     """
     Decorator to add an option to a command.
@@ -57,47 +58,52 @@ def option(
         @option("--count", "-c", type=int, default=1)
         @option("--format", type=str, choices=["json", "yaml"])
         @option("--verbose", is_flag=True)
-        @option("--name", validation={{'min_length': 3, 'max_length': 20}})
+        @option("--name", validation={'min_length': 3, 'max_length': 20})
         def process(count: int, format: str, verbose: bool, name: str):
             '''Process data'''
             if verbose:
                 print(f"Processing {count} items as {format}")
     """
-    def decorator(f: Callable) -> Callable:
-        if not hasattr(f, '_options'):
-            f._options = []
 
-        f._options.append({
-            'param_decls': param_decls,
-            'type': type,
-            'required': required,
-            # Only include default explicitly if something other than the sentinel was provided
-            **({'default': default} if default is not _NO_DEFAULT else {}),
-            'help': help,
-            'is_flag': is_flag,
-            'multiple': multiple,
-            'count': count,
-            'prompt': prompt,
-            'hide_input': hide_input,
-            'confirmation_prompt': confirmation_prompt,
-            'prompt_required': prompt_required,
-            'show_default': show_default,
-            'choices': choices,
-            'case_sensitive': case_sensitive,
-            'callback': callback,
-            'hidden': hidden,
-            'validation': validation,
-            'mutually_exclusive': mutually_exclusive
-        })
+    def decorator(f: Callable) -> Callable:
+        if not hasattr(f, "_options"):
+            f._options = []  # type: ignore[attr-defined]
+
+        f._options.append(  # type: ignore[attr-defined]
+            {
+                "param_decls": param_decls,
+                "type": type,
+                "required": required,
+                # Only include default explicitly if something other than sentinel was provided
+                **({"default": default} if default is not _NO_DEFAULT else {}),
+                "help": help,
+                "is_flag": is_flag,
+                "multiple": multiple,
+                "count": count,
+                "prompt": prompt,
+                "hide_input": hide_input,
+                "confirmation_prompt": confirmation_prompt,
+                "prompt_required": prompt_required,
+                "show_default": show_default,
+                "choices": choices,
+                "case_sensitive": case_sensitive,
+                "callback": callback,
+                "hidden": hidden,
+                "validation": validation,
+                "mutually_exclusive": mutually_exclusive,
+            }
+        )
         return f
+
     return decorator
+
 
 def envvar(
     name: str,
     type: Any = str,
     required: bool = False,
     default: Any = None,
-    help: Optional[str] = None
+    help: Optional[str] = None,
 ) -> Callable:
     """
     Decorator to load option value from environment variable.
@@ -117,26 +123,31 @@ def envvar(
             '''Make API call'''
             print(f"Calling {api_url} with key {api_key}")
     """
-    def decorator(f: Callable) -> Callable:
-        if not hasattr(f, '_envvars'):
-            f._envvars = []
 
-        f._envvars.append({
-            'name': name,
-            'type': type,
-            'required': required,
-            'default': default,
-            'help': help
-        })
+    def decorator(f: Callable) -> Callable:
+        if not hasattr(f, "_envvars"):
+            f._envvars = []  # type: ignore[attr-defined]
+
+        f._envvars.append(  # type: ignore[attr-defined]
+            {
+                "name": name,
+                "type": type,
+                "required": required,
+                "default": default,
+                "help": help,
+            }
+        )
         return f
+
     return decorator
+
 
 def config_file(
     path: Optional[str] = None,
     section: Optional[str] = None,
     required: bool = False,
     auto_create: bool = True,
-    format: str = 'json'
+    format: str = "json",
 ) -> Callable:
     """
     Decorator to load configuration from file.
@@ -161,22 +172,25 @@ def config_file(
             '''Make API call'''
             print(f"URL: {config.get('url')}")
     """
+
     def decorator(f: Callable) -> Callable:
-        f._config = {
-            'path': path,
-            'section': section,
-            'required': required,
-            'auto_create': auto_create,
-            'format': format
+        f._config = {  # type: ignore[attr-defined]
+            "path": path,
+            "section": section,
+            "required": required,
+            "auto_create": auto_create,
+            "format": format,
         }
         return f
+
     return decorator
+
 
 def version_option(
     version: Optional[str] = None,
     prog_name: Optional[str] = None,
     message: Optional[str] = None,
-    package_name: Optional[str] = None
+    package_name: Optional[str] = None,
 ) -> Callable:
     """
     Decorator to add version option to command.
@@ -194,20 +208,20 @@ def version_option(
             '''Main command'''
             pass
     """
+
     def decorator(f: Callable) -> Callable:
-        f._version = {
-            'version': version,
-            'prog_name': prog_name,
-            'message': message,
-            'package_name': package_name
+        f._version = {  # type: ignore[attr-defined]
+            "version": version,
+            "prog_name": prog_name,
+            "message": message,
+            "package_name": package_name,
         }
         return f
+
     return decorator
 
-def help_option(
-    param_decls: List[str] = None,
-    help: Optional[str] = None
-) -> Callable:
+
+def help_option(param_decls: Optional[List[str]] = None, help: Optional[str] = None) -> Callable:
     """
     Decorator to customize help option.
 
@@ -222,10 +236,12 @@ def help_option(
             '''Main command'''
             pass
     """
+
     def decorator(f: Callable) -> Callable:
-        f._help_option = {
-            'param_decls': param_decls or ['--help', '-h'],
-            'help': help or 'Show this message and exit.'
+        f._help_option = {  # type: ignore[attr-defined]
+            "param_decls": param_decls or ["--help", "-h"],
+            "help": help or "Show this message and exit.",
         }
         return f
+
     return decorator

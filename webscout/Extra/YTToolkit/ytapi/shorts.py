@@ -1,6 +1,6 @@
 """YouTube Shorts functionality."""
 import re
-from typing import Optional, List
+from typing import List, Optional
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 

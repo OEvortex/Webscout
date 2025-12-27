@@ -1,5 +1,5 @@
 import re
-from typing import Optional, Any, Dict
+from typing import Any, Dict, Optional
 
 from .https import video_data
 from .patterns import _VideoPatterns as Patterns
@@ -21,7 +21,7 @@ class Video:
             )
         else:
             self._matched_id = None
-            
+
         if self._matched_id:
             self._url = self._HEAD + self._matched_id
             self._video_data = video_data(self._matched_id)

@@ -9,17 +9,29 @@ import json
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import cast, Any, BinaryIO, Dict, Generator, List, Optional, Union
+from typing import Any, BinaryIO, Dict, Generator, List, Optional, Union, cast
 
 # Import OpenAI response types from the main OPENAI module
 try:
     from webscout.Provider.OPENAI.utils import (
         ChatCompletion as _ChatCompletion,
+    )
+    from webscout.Provider.OPENAI.utils import (
         ChatCompletionChunk as _ChatCompletionChunk,
-        Choice as _Choice,
-        ChoiceDelta as _ChoiceDelta,
+    )
+    from webscout.Provider.OPENAI.utils import (
         ChatCompletionMessage as _Message,
+    )
+    from webscout.Provider.OPENAI.utils import (
+        Choice as _Choice,
+    )
+    from webscout.Provider.OPENAI.utils import (
+        ChoiceDelta as _ChoiceDelta,
+    )
+    from webscout.Provider.OPENAI.utils import (
         CompletionUsage as _Usage,
+    )
+    from webscout.Provider.OPENAI.utils import (
         count_tokens as _count_tokens,
     )
     ChatCompletion = _ChatCompletion # type: ignore

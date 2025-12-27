@@ -240,7 +240,7 @@ class MailTMAsync(AsyncTempMailProvider):
         """Get available domain for email creation"""
         if not self.session:
             await self.initialize()
-        
+
         if not self.session:
             return ""
 
@@ -256,7 +256,7 @@ class MailTMAsync(AsyncTempMailProvider):
         """Create a new email account"""
         if not self.session:
             await self.initialize()
-        
+
         if not self.session:
             return "", ""
 

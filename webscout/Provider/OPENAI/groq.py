@@ -1,12 +1,15 @@
 import json
 import time
 import uuid
-from typing import cast, Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi import CurlError
 
 # Import curl_cffi for improved request handling
 from curl_cffi.requests import Session
+
+# Attempt to import LitAgent, fallback if not available
+from ...litagent import LitAgent
 
 # Import base classes and utility structures
 from .base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
@@ -18,9 +21,6 @@ from .utils import (
     ChoiceDelta,
     CompletionUsage,
 )
-
-# Attempt to import LitAgent, fallback if not available
-from ...litagent import LitAgent
 
 # --- Groq Client ---
 

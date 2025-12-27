@@ -118,7 +118,7 @@ class TwoAI(Provider):
             self.conversation.intro = intro
 
     @staticmethod
-    def _twoai_extractor(chunk_json: Dict[str, Any]) -> Optional[str]:
+    def _twoai_extractor(chunk_json: Union[str, Dict[str, Any]]) -> Optional[str]:
         """Extracts content from TwoAI v2 stream JSON objects."""
         if not isinstance(chunk_json, dict) or "choices" not in chunk_json or not chunk_json["choices"]:
             return None
@@ -196,7 +196,7 @@ class TwoAI(Provider):
         }
 
         def for_stream():
-            streaming_text = "" # Initialize outside try block
+            streaming_text = ""  # Initialize outside try block
             try:
                 response = self.session.post(
                     self.url,
@@ -229,7 +229,7 @@ class TwoAI(Provider):
                 for content_chunk in processed_stream:
                     if content_chunk and isinstance(content_chunk, str):
                         streaming_text += content_chunk
-                        resp = dict(text=content_chunk)
+                        resp = {"text": content_chunk}
                         yield resp if not raw else content_chunk
 
                 # If stream completes successfully, update history
@@ -239,12 +239,12 @@ class TwoAI(Provider):
             except CurlError as e:
                 raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {e}") from e
             except exceptions.FailedToGenerateResponseError:
-                raise # Re-raise specific exception
+                raise  # Re-raise specific exception
             except Exception as e:
                 raise exceptions.FailedToGenerateResponseError(f"An unexpected error occurred during streaming ({type(e).__name__}): {e}") from e
             finally:
                 # Ensure history is updated even if stream ends abruptly but text was received
-                if streaming_text and not self.last_response: # Check if last_response wasn't set in the try block
+                if streaming_text and not self.last_response:  # Check if last_response wasn't set in the try block
                     self.last_response = {"text": streaming_text}
                     self.conversation.update_chat_history(prompt, streaming_text)
 
@@ -276,37 +276,23 @@ class TwoAI(Provider):
         optimizer: Optional[str] = None,
         conversationally: bool = False,
         **kwargs: Any,
-    ) -> Union[str, Generator[str, None, None]]:
+    ) -> Generator[str, None, None]:
         raw = kwargs.get("raw", False)
-        if stream:
-            def stream_generator():
-                gen = self.ask(
-                    prompt,
-                    stream=True,
-                    raw=raw,
-                    optimizer=optimizer,
-                    conversationally=conversationally,
-                    **kwargs
-                )
-                for response in gen:
-                    if raw:
-                        yield cast(str, response)
-                    else:
-                        yield self.get_message(cast(Response, response))
-            return stream_generator()
-        else:
-            response_data = self.ask(
+        def stream_generator():
+            gen = self.ask(
                 prompt,
-                stream=False,
+                stream=True,  # API always uses streaming
                 raw=raw,
                 optimizer=optimizer,
                 conversationally=conversationally,
                 **kwargs
             )
-            if raw:
-                return cast(str, response_data)
-            else:
-                return self.get_message(cast(Response, response_data))
+            for response in gen:
+                if raw:
+                    yield cast(str, response)
+                else:
+                    yield self.get_message(cast(Response, response))
+        return stream_generator()
 
     def get_message(self, response: Response) -> str:
         if not isinstance(response, dict):

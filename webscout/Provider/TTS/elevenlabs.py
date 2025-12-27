@@ -5,7 +5,7 @@ import os
 import pathlib
 import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Union, cast, Any, Optional
+from typing import Any, Optional, Union, cast
 
 import requests
 from litprinter import ic

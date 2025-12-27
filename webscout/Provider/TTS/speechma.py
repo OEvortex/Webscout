@@ -6,7 +6,7 @@ import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from io import BytesIO
-from typing import Union, cast, Any, Generator, Optional
+from typing import Any, Generator, Optional, Union, cast
 
 import requests
 from litprinter import ic

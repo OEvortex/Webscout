@@ -59,7 +59,6 @@ dependencies = [
     "google-generativeai",
     "lxml>=5.2.2",
     "PyYAML",
-    "pillow",
     "cloudscraper",
     "html5lib",
     "aiofiles",

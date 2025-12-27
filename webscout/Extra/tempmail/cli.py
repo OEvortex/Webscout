@@ -4,13 +4,13 @@ Command-line interface for temporary email generation using SwiftCLI
 
 import sys
 import time
+from typing import Optional, cast
 
 from rich.console import Console
 
 from webscout.swiftcli import CLI, option
 
-from typing import Optional, cast
-from .base import get_provider, TempMailProvider
+from .base import TempMailProvider, get_provider
 
 # Initialize console for rich output
 console = Console()

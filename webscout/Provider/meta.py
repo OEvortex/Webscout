@@ -3,7 +3,7 @@ import random
 import time
 import urllib
 import uuid
-from typing import Any, Optional, cast, Dict, Generator, List, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
