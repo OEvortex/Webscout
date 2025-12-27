@@ -300,7 +300,7 @@ class Apriel(Provider):
         """
         if not isinstance(response, dict):
             return str(response)
-        return response.get("text", "")
+        return cast(Dict[str, Any], response).get("text", "")
 
 if __name__ == "__main__":
     from rich import print

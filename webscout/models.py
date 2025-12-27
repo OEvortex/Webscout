@@ -5,13 +5,13 @@ from typing import Any, Dict, List, Mapping, Optional, Union
 from webscout.AIbase import Provider, TTSProvider
 
 # Import TTI base class
+BaseImages = None
 try:
-    from webscout.Provider.TTI.base import BaseImages
-
+    from webscout.Provider.TTI.base import BaseImages as BaseImagesClass
+    BaseImages = BaseImagesClass
     TTI_AVAILABLE = True
 except ImportError:
     TTI_AVAILABLE = False
-    BaseImages = None
 
 
 class _LLMModels:

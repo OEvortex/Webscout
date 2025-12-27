@@ -5,6 +5,7 @@ from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 import requests
 
+from webscout.AIbase import Response
 from webscout.Provider.OPENAI.base import (
     BaseChat,
     BaseCompletions,
@@ -22,7 +23,6 @@ from webscout.Provider.OPENAI.utils import (
 )
 
 from ...litagent import LitAgent
-from webscout.AIbase import Response
 
 
 class Completions(BaseCompletions):

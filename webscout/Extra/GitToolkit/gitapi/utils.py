@@ -1,13 +1,14 @@
 import json
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 try:
     from webscout.litagent.agent import LitAgent
+    _USER_AGENT_GENERATOR = LitAgent()
 except ImportError:
-    LitAgent = None
+    _USER_AGENT_GENERATOR = None
 
 class GitError(Exception):
     """Base exception for GitHub API errors"""

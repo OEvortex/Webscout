@@ -2,7 +2,6 @@ import uuid
 from typing import Any, Dict, Generator, Optional, Union, cast
 
 import cloudscraper
-
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
 

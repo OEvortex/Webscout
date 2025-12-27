@@ -310,7 +310,7 @@ class DeepAI(Provider):
             The message text
         """
         if isinstance(response, dict):
-            return response.get("text", "")
+            return cast(Dict[str, Any], response).get("text", "")
         elif isinstance(response, str):
             return response
         else:

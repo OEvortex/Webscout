@@ -34,6 +34,7 @@ class Toolbaz(Provider):
         "gemini-2.0-flash",
         "claude-sonnet-4",
         "gpt-5",
+        "gpt-5.2",
         "gpt-oss-120b",
         "o3-mini",
         "gpt-4o-latest",

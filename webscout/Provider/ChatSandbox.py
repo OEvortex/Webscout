@@ -279,7 +279,7 @@ class ChatSandbox(Provider):
         if not isinstance(response, dict):
             return str(response)
 
-        raw_text = response.get("text", "")
+        raw_text = cast(Dict[str, Any], response).get("text", "")
 
         # Try to parse as JSON
         try:

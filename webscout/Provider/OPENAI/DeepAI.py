@@ -6,6 +6,8 @@ from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi.requests import RequestsError, Session
 
+from webscout.AIbase import Response
+
 # Import base classes and utility structures
 from webscout.Provider.OPENAI.base import (
     BaseChat,
@@ -13,7 +15,6 @@ from webscout.Provider.OPENAI.base import (
     OpenAICompatibleProvider,
     SimpleModelList,
 )
-from webscout.AIbase import Response
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,

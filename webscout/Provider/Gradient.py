@@ -127,7 +127,7 @@ class Gradient(Provider):
         if isinstance(chunk, dict):
             chunk_type = chunk.get("type")
             if chunk_type == "reply":
-                data = chunk.get("data", {})
+                data = cast(Dict[str, Any], chunk.get("data", {}))
                 # Prefer "content" over "reasoningContent"
                 content = data.get("content") or data.get("reasoningContent")
                 if content:
@@ -223,7 +223,7 @@ class Gradient(Provider):
     def get_message(self, response: Response) -> str:
         if not isinstance(response, dict):
             return str(response)
-        return response.get("text", "")
+        return cast(Dict[str, Any], response).get("text", "")
 
     def chat(
         self,

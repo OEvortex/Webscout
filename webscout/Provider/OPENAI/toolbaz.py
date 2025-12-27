@@ -6,10 +6,11 @@ import string
 import time
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Generator, List, Optional, Union, cast
+from typing import Any, Dict, Generator, List, Optional, Union
 
-import cloudscraper
+from curl_cffi.requests import Session
 
+from webscout.litagent import LitAgent
 from webscout.Provider.OPENAI.base import (
     BaseChat,
     BaseCompletions,
@@ -26,15 +27,14 @@ from webscout.Provider.OPENAI.utils import (
     format_prompt,
 )
 
-from ...litagent import LitAgent
-
 # ANSI escape codes for formatting
 BOLD = "\033[1m"
 RED = "\033[91m"
 RESET = "\033[0m"
 
+
 class Completions(BaseCompletions):
-    def __init__(self, client: 'Toolbaz'):
+    def __init__(self, client: "Toolbaz"):
         self._client = client
 
     def create(
@@ -48,7 +48,7 @@ class Completions(BaseCompletions):
         top_p: Optional[float] = None,
         timeout: Optional[int] = None,
         proxies: Optional[Dict[str, str]] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
         """
         Creates a model response for the given chat conversation.
@@ -67,7 +67,7 @@ class Completions(BaseCompletions):
             "text": formatted_prompt,
             "capcha": auth["token"],
             "model": model,
-            "session_id": auth["session_id"]
+            "session_id": auth["session_id"],
         }
 
         # Generate a unique request ID
@@ -76,9 +76,13 @@ class Completions(BaseCompletions):
 
         # Handle streaming response
         if stream:
-            return self._handle_streaming_response(request_id, created_time, model, data, timeout, proxies)
+            return self._handle_streaming_response(
+                request_id, created_time, model, data, timeout, proxies
+            )
         else:
-            return self._handle_non_streaming_response(request_id, created_time, model, data, timeout, proxies)
+            return self._handle_non_streaming_response(
+                request_id, created_time, model, data, timeout, proxies
+            )
 
     def _handle_streaming_response(
         self,
@@ -87,7 +91,7 @@ class Completions(BaseCompletions):
         model: str,
         data: Dict[str, Any],
         timeout: Optional[int] = None,
-        proxies: Optional[Dict[str, str]] = None
+        proxies: Optional[Dict[str, str]] = None,
     ) -> Generator[ChatCompletionChunk, None, None]:
         """Handle streaming response from Toolbaz API"""
         try:
@@ -95,8 +99,8 @@ class Completions(BaseCompletions):
                 "https://data.toolbaz.com/writing.php",
                 data=data,
                 stream=True,
-                proxies=proxies or getattr(self._client, "proxies", None),
-                timeout=timeout or self._client.timeout
+                timeout=timeout or self._client.timeout,
+                impersonate="chrome110",
             )
             resp.raise_for_status()
 
@@ -114,7 +118,7 @@ class Completions(BaseCompletions):
                         match = re.search(r"\[model:.*?\]", buffer)
                         if not match:
                             break
-                        buffer = buffer[:match.start()] + buffer[match.end():]
+                        buffer = buffer[: match.start()] + buffer[match.end() :]
 
                     # Only yield up to the last possible start of a tag
                     last_tag = buffer.rfind(tag_start)
@@ -123,24 +127,14 @@ class Completions(BaseCompletions):
                             streaming_text += buffer
 
                             # Create the delta object
-                            delta = ChoiceDelta(
-                                content=buffer,
-                                role="assistant"
-                            )
+                            delta = ChoiceDelta(content=buffer, role="assistant")
 
                             # Create the choice object
-                            choice = Choice(
-                                index=0,
-                                delta=delta,
-                                finish_reason=None
-                            )
+                            choice = Choice(index=0, delta=delta, finish_reason=None)
 
                             # Create the chunk object
                             chunk = ChatCompletionChunk(
-                                id=request_id,
-                                choices=[choice],
-                                created=created_time,
-                                model=model
+                                id=request_id, choices=[choice], created=created_time, model=model
                             )
 
                             yield chunk
@@ -150,24 +144,14 @@ class Completions(BaseCompletions):
                             streaming_text += buffer[:last_tag]
 
                             # Create the delta object
-                            delta = ChoiceDelta(
-                                content=buffer[:last_tag],
-                                role="assistant"
-                            )
+                            delta = ChoiceDelta(content=buffer[:last_tag], role="assistant")
 
                             # Create the choice object
-                            choice = Choice(
-                                index=0,
-                                delta=delta,
-                                finish_reason=None
-                            )
+                            choice = Choice(index=0, delta=delta, finish_reason=None)
 
                             # Create the chunk object
                             chunk = ChatCompletionChunk(
-                                id=request_id,
-                                choices=[choice],
-                                created=created_time,
-                                model=model
+                                id=request_id, choices=[choice], created=created_time, model=model
                             )
 
                             yield chunk
@@ -177,45 +161,25 @@ class Completions(BaseCompletions):
             buffer = re.sub(r"\[model:.*?\]", "", buffer)
             if buffer:
                 # Create the delta object
-                delta = ChoiceDelta(
-                    content=buffer,
-                    role="assistant"
-                )
+                delta = ChoiceDelta(content=buffer, role="assistant")
 
                 # Create the choice object
-                choice = Choice(
-                    index=0,
-                    delta=delta,
-                    finish_reason="stop"
-                )
+                choice = Choice(index=0, delta=delta, finish_reason="stop")
 
                 # Create the chunk object
                 chunk = ChatCompletionChunk(
-                    id=request_id,
-                    choices=[choice],
-                    created=created_time,
-                    model=model
+                    id=request_id, choices=[choice], created=created_time, model=model
                 )
 
                 yield chunk
 
             # Final chunk with finish_reason
-            delta = ChoiceDelta(
-                content=None,
-                role=None
-            )
+            delta = ChoiceDelta(content=None, role=None)
 
-            choice = Choice(
-                index=0,
-                delta=delta,
-                finish_reason="stop"
-            )
+            choice = Choice(index=0, delta=delta, finish_reason="stop")
 
             chunk = ChatCompletionChunk(
-                id=request_id,
-                choices=[choice],
-                created=created_time,
-                model=model
+                id=request_id, choices=[choice], created=created_time, model=model
             )
 
             yield chunk
@@ -231,15 +195,15 @@ class Completions(BaseCompletions):
         model: str,
         data: Dict[str, Any],
         timeout: Optional[int] = None,
-        proxies: Optional[Dict[str, str]] = None
+        proxies: Optional[Dict[str, str]] = None,
     ) -> ChatCompletion:
         """Handle non-streaming response from Toolbaz API"""
         try:
             resp = self._client.session.post(
                 "https://data.toolbaz.com/writing.php",
                 data=data,
-                proxies=proxies or getattr(self._client, "proxies", None),
-                timeout=timeout or self._client.timeout
+                timeout=timeout or self._client.timeout,
+                impersonate="chrome110",
             )
             resp.raise_for_status()
 
@@ -248,28 +212,17 @@ class Completions(BaseCompletions):
             text = re.sub(r"\[model:.*?\]", "", text)
 
             # Create the message object
-            message = ChatCompletionMessage(
-                role="assistant",
-                content=text
-            )
+            message = ChatCompletionMessage(role="assistant", content=text)
 
             # Create the choice object
-            choice = Choice(
-                index=0,
-                message=message,
-                finish_reason="stop"
-            )
+            choice = Choice(index=0, message=message, finish_reason="stop")
 
             # Usage data is not provided by this API in a standard way, set to 0
             usage = CompletionUsage(prompt_tokens=0, completion_tokens=0, total_tokens=0)
 
             # Create the completion object
             completion = ChatCompletion(
-                id=request_id,
-                choices=[choice],
-                created=created_time,
-                model=model,
-                usage=usage
+                id=request_id, choices=[choice], created=created_time, model=model, usage=usage
             )
 
             return completion
@@ -278,9 +231,11 @@ class Completions(BaseCompletions):
             print(f"{RED}Error during Toolbaz non-stream request: {e}{RESET}")
             raise IOError(f"Toolbaz request failed: {e}") from e
 
+
 class Chat(BaseChat):
-    def __init__(self, client: 'Toolbaz'):
+    def __init__(self, client: "Toolbaz"):
         self.completions = Completions(client)
+
 
 class Toolbaz(OpenAICompatibleProvider):
     """
@@ -294,47 +249,36 @@ class Toolbaz(OpenAICompatibleProvider):
         )
         print(response.choices[0].message.content)
     """
+
     required_auth = False
     AVAILABLE_MODELS = [
         "gemini-2.5-flash",
         "gemini-2.5-pro",
         "gemini-2.0-flash-thinking",
         "gemini-2.0-flash",
-
         "claude-sonnet-4",
-
         "gpt-5",
+        "gpt-5.2",
         "gpt-oss-120b",
         "o3-mini",
         "gpt-4o-latest",
-
         "grok-4-fast",
         "grok-4.1-fast",
-
-
         "toolbaz-v4.5-fast",
         "toolbaz_v4",
         "toolbaz_v3.5_pro",
-
         "deepseek-r1",
         "deepseek-v3.1",
         "deepseek-v3",
-
         "Llama-4-Maverick",
         "Llama-3.3-70B",
-
         "mixtral_8x22b",
         "L3-70B-Euryale-v2.1",
         "midnight-rose",
-        "unfiltered_x"
+        "unfiltered_x",
     ]
 
-    def __init__(
-        self,
-        timeout: int = 30,
-        proxies: dict = {},
-        browser: str = "chrome"
-    ):
+    def __init__(self, timeout: int = 30, proxies: dict = {}, browser: str = "chrome"):
         """
         Initialize the Toolbaz client.
 
@@ -347,22 +291,28 @@ class Toolbaz(OpenAICompatibleProvider):
         self.timeout = timeout
         self.proxies = proxies
 
-        # Initialize session with cloudscraper
-        self.session = cloudscraper.create_scraper()
+        # Initialize session with curl_cffi
+        self.session = Session()
 
         # Set up headers
-        self.session.headers.update({
-            **LitAgent().generate_fingerprint(browser=browser),
-            "pragma": "no-cache",
-            "referer": "https://toolbaz.com/",
-        })
+        self.session.headers.update(
+            {
+                **LitAgent().generate_fingerprint(browser=browser),
+                "pragma": "no-cache",
+                "referer": "https://toolbaz.com/",
+            }
+        )
+
+        # Set proxies if provided
+        if proxies:
+            self.session.proxies.update(proxies)
 
         # Initialize chat property
         self.chat = Chat(self)
 
     def random_string(self, length):
         """Generate a random string of specified length"""
-        return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+        return "".join(random.choices(string.ascii_letters + string.digits, k=length))
 
     def generate_token(self):
         """Generate authentication token for Toolbaz API"""
@@ -374,15 +324,12 @@ class Toolbaz(OpenAICompatibleProvider):
                 "tY4hL": time.tzname[0] if time.tzname else "UTC",
                 "pL8mC": "Linux armv81",
                 "cQ3vD": datetime.now().year,
-                "hK7jN": datetime.now().hour
+                "hK7jN": datetime.now().hour,
             },
-            "uT4bX": {
-                "mM9wZ": [],
-                "kP8jY": []
-            },
+            "uT4bX": {"mM9wZ": [], "kP8jY": []},
             "tuTcS": int(time.time()),
             "tDfxy": None,
-            "RtyJt": str(uuid.uuid4())
+            "RtyJt": str(uuid.uuid4()),
         }
         return "d8TW0v" + base64.b64encode(json.dumps(payload).encode()).decode()
 
@@ -391,11 +338,12 @@ class Toolbaz(OpenAICompatibleProvider):
         try:
             session_id = self.random_string(36)
             token = self.generate_token()
-            data = {
-                "session_id": session_id,
-                "token": token
-            }
-            resp = self.session.post("https://data.toolbaz.com/token.php", data=data)
+            data = {"session_id": session_id, "token": token}
+            resp = self.session.post(
+                "https://data.toolbaz.com/token.php",
+                data=data,
+                impersonate="chrome110",
+            )
             resp.raise_for_status()
             result = resp.json()
             if result.get("success"):
@@ -409,6 +357,7 @@ class Toolbaz(OpenAICompatibleProvider):
     def models(self) -> SimpleModelList:
         return SimpleModelList(type(self).AVAILABLE_MODELS)
 
+
 # Example usage
 if __name__ == "__main__":
     # Test the provider
@@ -417,8 +366,10 @@ if __name__ == "__main__":
         model="gemini-2.0-flash",
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": "Hello! How are you today?"}
-        ]
+            {"role": "user", "content": "Hello! How are you today?"},
+        ],
     )
-    if not isinstance(response, Generator):
-        print(response.choices[0].message.content)
+    if isinstance(response, ChatCompletion):
+        message = response.choices[0].message
+        if message:
+            print(message.content)

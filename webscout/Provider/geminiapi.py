@@ -1,7 +1,8 @@
 """
-Install the Google AI Python SDK
+Gemini API Provider
 
-$ pip install google-generativeai
+Uses curl_cffi to interact with Google's Gemini API via OpenAI-compatible endpoint.
+Requires a valid Gemini API key.
 """
 
 import json

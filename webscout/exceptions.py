@@ -90,6 +90,15 @@ class FailedToGenerateResponseError(WebscoutE):
     """
     pass
 
+class InvalidResponseError(WebscoutE):
+    """
+    Exception raised when an API response is invalid or unexpected.
+
+    This exception is raised when the response from an API does not match the expected format or contains invalid data.
+    It indicates an issue with the API response parsing or structure.
+    """
+    pass
+
 class ProviderConnectionError(WebscoutE):
     """
     Exception raised when there are issues connecting to a specific provider.

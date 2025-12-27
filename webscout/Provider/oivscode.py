@@ -2,12 +2,12 @@ import random
 import secrets
 import string
 import uuid
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 import requests
 
 from webscout import exceptions
-from webscout.AIbase import Provider
+from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 
 
@@ -87,7 +87,11 @@ class oivscode(Provider):
         self.conversation.history_offset = history_offset
 
         act_prompt = (
-            AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True) if act else intro
+            AwesomePrompts().get_act(
+                cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
         )
         if act_prompt:
             self.conversation.intro = act_prompt
@@ -230,6 +234,7 @@ class oivscode(Provider):
         """
         raw = kwargs.get("raw", False)
         if stream:
+
             def for_stream():
                 gen = self.ask(
                     prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
@@ -240,6 +245,7 @@ class oivscode(Provider):
                             yield cast(str, response)
                         else:
                             yield self.get_message(response)
+
             return for_stream()
         else:
             result = self.ask(

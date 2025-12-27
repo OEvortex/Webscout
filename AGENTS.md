@@ -98,7 +98,7 @@ class MyProvider(OpenAICompatibleProvider):
 9) Small guidance Changes
 - Keep changes focused and include small usage examples in tests or docs.
 - Run `ruff .`  using `uv run ruff` locally; respect `line-length = 100` and the Ruff select/ignore rules in pyproject.toml.
-- Run `pyright` using `uv run pyright` to validate type correctness.
+- Run `uvx ty check <file>` to validate type correctness.
 - If the change affects runtime (server, CLI), include a short manual-test snippet that a maintainer can run (e.g., `webscout-server --debug` and a sample curl to /v1/chat/completions).
 
 9) Use Modern Python
@@ -111,7 +111,7 @@ class MyProvider(OpenAICompatibleProvider):
 10) Important rules
 - Keep changes focused and include small usage examples in tests or docs.
 - Run `ruff .`  using `uv run ruff` locally; respect `line-length = 100` and the Ruff select/ignore rules in pyproject.toml.
-- Run `pyright` using `uv run pyright` to validate type correctness.
+- Run `uvx ty check <file>` to validate type correctness.
 - If the change affects runtime (server, CLI), include a short manual-test snippet that a maintainer can run (e.g., `webscout-server --debug` and a sample curl to /v1/chat/completions).
 - Always update files in small batches (manageable chunks)
 - Dont add unnecessary comments or redundant code

@@ -5,6 +5,8 @@ This module provides the base structure for STT providers that follow
 the OpenAI Whisper API interface pattern.
 """
 
+from __future__ import annotations
+
 import json
 import time
 from abc import ABC, abstractmethod
@@ -34,13 +36,14 @@ try:
     from webscout.Provider.OPENAI.utils import (
         count_tokens as _count_tokens,
     )
-    ChatCompletion = _ChatCompletion # type: ignore
-    ChatCompletionChunk = _ChatCompletionChunk # type: ignore
-    Choice = _Choice # type: ignore
-    ChoiceDelta = _ChoiceDelta # type: ignore
-    Message = _Message # type: ignore
-    Usage = _Usage # type: ignore
-    count_tokens = _count_tokens # type: ignore
+
+    ChatCompletion = _ChatCompletion  # type: ignore
+    ChatCompletionChunk = _ChatCompletionChunk  # type: ignore
+    Choice = _Choice  # type: ignore
+    ChoiceDelta = _ChoiceDelta  # type: ignore
+    Message = _Message  # type: ignore
+    Usage = _Usage  # type: ignore
+    count_tokens = _count_tokens  # type: ignore
 except ImportError:
     # Fallback if pydantic_imports is not available
     from dataclasses import dataclass
@@ -203,7 +206,7 @@ class BaseSTTTranscriptions(ABC):
         stream: bool = False,
         timeout: Optional[int] = None,
         proxies: Optional[dict] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Union[TranscriptionResponse, Generator[str, None, None]]:
         """
         Create a transcription of the given audio file.
@@ -278,28 +281,23 @@ class STTModels:
     def list(self) -> List[Dict[str, Any]]:
         """List available models."""
         return [
-            {
-                "id": model,
-                "object": "model",
-                "created": int(time.time()),
-                "owned_by": "webscout"
-            }
+            {"id": model, "object": "model", "created": int(time.time()), "owned_by": "webscout"}
             for model in self._available_models
         ]
 
 
 __all__ = [
-    'TranscriptionResponse',
-    'BaseSTTTranscriptions',
-    'BaseSTTAudio',
-    'BaseSTTChat',
-    'STTCompatibleProvider',
-    'STTModels',
-    'ChatCompletion',
-    'ChatCompletionChunk',
-    'Choice',
-    'ChoiceDelta',
-    'Message',
-    'Usage',
-    'count_tokens'
+    "TranscriptionResponse",
+    "BaseSTTTranscriptions",
+    "BaseSTTAudio",
+    "BaseSTTChat",
+    "STTCompatibleProvider",
+    "STTModels",
+    "ChatCompletion",
+    "ChatCompletionChunk",
+    "Choice",
+    "ChoiceDelta",
+    "Message",
+    "Usage",
+    "count_tokens",
 ]

@@ -1,9 +1,12 @@
 import json
 import time
 import uuid
-from typing import cast, Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 import requests
+
+# Attempt to import LitAgent, fallback if not available
+from ...litagent import LitAgent
 
 # Import base classes and utility structures
 from .base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
@@ -17,11 +20,9 @@ from .utils import (
     count_tokens,
 )
 
-# Attempt to import LitAgent, fallback if not available
-from ...litagent import LitAgent
 
 class Completions(BaseCompletions):
-    def __init__(self, client: 'Writecream'):
+    def __init__(self, client: "Writecream"):
         self._client = client
 
     def create(
@@ -35,7 +36,7 @@ class Completions(BaseCompletions):
         top_p: Optional[float] = None,  # Not used by Writecream
         timeout: Optional[int] = None,
         proxies: Optional[Dict[str, str]] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
         """
         Creates a model response for the given chat conversation.
@@ -50,7 +51,12 @@ class Completions(BaseCompletions):
             return self._create_non_stream(request_id, created_time, payload, timeout, proxies)
 
     def _create_stream(
-        self, request_id: str, created_time: int, payload: List[Dict[str, str]], timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
+        self,
+        request_id: str,
+        created_time: int,
+        payload: List[Dict[str, str]],
+        timeout: Optional[int] = None,
+        proxies: Optional[Dict[str, str]] = None,
     ) -> Generator[ChatCompletionChunk, None, None]:
         # Writecream does not support streaming, so yield the full response as a single chunk
         completion = self._create_non_stream(request_id, created_time, payload, timeout, proxies)
@@ -77,19 +83,21 @@ class Completions(BaseCompletions):
         yield chunk
 
     def _create_non_stream(
-        self, request_id: str, created_time: int, payload: List[Dict[str, str]], timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
+        self,
+        request_id: str,
+        created_time: int,
+        payload: List[Dict[str, str]],
+        timeout: Optional[int] = None,
+        proxies: Optional[Dict[str, str]] = None,
     ) -> ChatCompletion:
         try:
-            params = {
-                "query": json.dumps(payload),
-                "link": "writecream.com"
-            }
+            params = {"query": json.dumps(payload), "link": "writecream.com"}
             response = self._client.session.get(
                 self._client.base_url,
                 params=params,
                 headers=self._client.headers,
                 timeout=timeout or self._client.timeout,
-                proxies=proxies or getattr(self._client, "proxies", None)
+                proxies=proxies or getattr(self._client, "proxies", None),
             )
             response.raise_for_status()
             data = response.json()
@@ -101,7 +109,7 @@ class Completions(BaseCompletions):
             usage = CompletionUsage(
                 prompt_tokens=prompt_tokens,
                 completion_tokens=completion_tokens,
-                total_tokens=prompt_tokens + completion_tokens
+                total_tokens=prompt_tokens + completion_tokens,
             )
             message = ChatCompletionMessage(role="assistant", content=content)
             choice = Choice(index=0, message=message, finish_reason="stop")
@@ -110,16 +118,18 @@ class Completions(BaseCompletions):
                 choices=[choice],
                 created=created_time,
                 model="writecream",
-                usage=usage
+                usage=usage,
             )
             return completion
         except Exception as e:
             print(f"Error during Writecream request: {e}")
             raise IOError(f"Writecream request failed: {e}") from e
 
+
 class Chat(BaseChat):
-    def __init__(self, client: 'Writecream'):
+    def __init__(self, client: "Writecream"):
         self.completions = Completions(client)
+
 
 class Writecream(OpenAICompatibleProvider):
     """
@@ -133,6 +143,7 @@ class Writecream(OpenAICompatibleProvider):
         )
         print(response.choices[0].message.content)
     """
+
     AVAILABLE_MODELS = ["writecream"]
 
     def __init__(self, browser: str = "chrome"):
@@ -142,7 +153,7 @@ class Writecream(OpenAICompatibleProvider):
         agent = LitAgent()
         self.headers = {
             "User-Agent": agent.random(),
-            "Referer": "https://www.writecream.com/chatgpt-chat/"
+            "Referer": "https://www.writecream.com/chatgpt-chat/",
         }
         self.session.headers.update(self.headers)
         self.chat = Chat(self)
@@ -154,6 +165,7 @@ class Writecream(OpenAICompatibleProvider):
     def models(self) -> SimpleModelList:
         return SimpleModelList(type(self).AVAILABLE_MODELS)
 
+
 # Simple test if run directly
 if __name__ == "__main__":
     client = Writecream()
@@ -161,11 +173,11 @@ if __name__ == "__main__":
         model="writecream",
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": "What is the capital of France?"}
-        ]
+            {"role": "user", "content": "What is the capital of France?"},
+        ],
     )
     if isinstance(response, ChatCompletion):
         if not isinstance(response, Generator):
-        print(response.choices[0].message.content)
+            print(response.choices[0].message.content)
     else:
         print(response)

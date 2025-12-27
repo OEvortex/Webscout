@@ -18,14 +18,14 @@ try:
 except ImportError:
 
     class _Dummy:
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *_args: Any, **_kwargs: Any) -> None:
             pass
 
-        def print(self, *args, **kwargs):
+        def print(self, *_args: Any, **_kwargs: Any) -> None:
             pass
 
         @staticmethod
-        def assemble(*args, **kwargs):
+        def assemble(*_args: Any, **_kwargs: Any) -> str:
             return ""
 
     Console = _Dummy  # type: ignore
@@ -48,13 +48,7 @@ def get_installed_version() -> str:
 
         return __version__
     except (ImportError, ValueError):
-        try:
-            import version
-
-            if hasattr(version, "__version__"):
-                return version.__version__
-        except (ImportError, AttributeError):
-            pass
+        pass
 
     try:
         import webscout.version

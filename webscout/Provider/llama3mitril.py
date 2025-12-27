@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
@@ -13,7 +13,9 @@ class Llama3Mitril(Provider):
     """
     A class to interact with the Llama3 Mitril API. Implements the WebScout provider interface.
     """
+
     required_auth = False
+
     def __init__(
         self,
         is_conversation: bool = True,
@@ -50,7 +52,8 @@ class Llama3Mitril(Provider):
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         act_prompt = (
-            AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True
+            AwesomePrompts().get_act(
+                cast(Union[str, int], act), default=None, case_insensitive=True
             )
             if act
             else intro
@@ -62,6 +65,7 @@ class Llama3Mitril(Provider):
         self.session.headers.update(self.headers)
         if proxies:
             from typing import cast
+
             self.session.proxies.update(cast(Any, proxies))
 
     def _format_prompt(self, prompt: str) -> str:
@@ -100,8 +104,8 @@ class Llama3Mitril(Provider):
             "parameters": {
                 "max_new_tokens": self.max_tokens,
                 "temperature": self.temperature,
-                "return_full_text": False
-            }
+                "return_full_text": False,
+            },
         }
 
         def for_stream():
@@ -115,7 +119,7 @@ class Llama3Mitril(Provider):
                     stream=True,
                     timeout=self.timeout,
                     # proxies are set on the session
-                    impersonate="chrome110"  # Use a common impersonation profile
+                    impersonate="chrome110",  # Use a common impersonation profile
                 )
                 response.raise_for_status()  # Check for HTTP errors
 
@@ -123,12 +127,12 @@ class Llama3Mitril(Provider):
                 for line_bytes in response.iter_lines():
                     if line_bytes:
                         try:
-                            line = line_bytes.decode('utf-8')
-                            if line.startswith('data: '):
-                                chunk_str = line.split('data: ', 1)[1]
+                            line = line_bytes.decode("utf-8")
+                            if line.startswith("data: "):
+                                chunk_str = line.split("data: ", 1)[1]
                                 chunk = json.loads(chunk_str)
-                                if token_text := chunk.get('token', {}).get('text'):
-                                    if '<|eot_id|>' not in token_text:
+                                if token_text := chunk.get("token", {}).get("text"):
+                                    if "<|eot_id|>" not in token_text:
                                         streaming_response += token_text
                                         resp = {"text": token_text}
                                         # Yield dict or raw string chunk
@@ -139,19 +143,21 @@ class Llama3Mitril(Provider):
 
                 # Update history after stream finishes
                 self.last_response = {"text": streaming_response}
-                self.conversation.update_chat_history(
-                    prompt, streaming_response
-                )
+                self.conversation.update_chat_history(prompt, streaming_response)
 
             except CurlError as e:  # Catch CurlError
-                raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {e}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed (CurlError): {e}"
+                ) from e
             except Exception as e:  # Catch other potential exceptions (like HTTPError)
                 err_text = ""
-                if hasattr(e, 'response'):
-                    response_obj = getattr(e, 'response')
-                    if hasattr(response_obj, 'text'):
-                        err_text = getattr(response_obj, 'text')
-                raise exceptions.FailedToGenerateResponseError(f"Failed to generate response ({type(e).__name__}): {e} - {err_text}") from e
+                if hasattr(e, "response"):
+                    response_obj = getattr(e, "response")
+                    if hasattr(response_obj, "text"):
+                        err_text = getattr(response_obj, "text")
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Failed to generate response ({type(e).__name__}): {e} - {err_text}"
+                ) from e
 
         def for_non_stream():
             # Aggregate the stream using the updated for_stream logic
@@ -163,11 +169,13 @@ class Llama3Mitril(Provider):
                         full_response_text += chunk_data["text"]
                     # Handle raw string case if raw=True was passed
                     elif raw and isinstance(chunk_data, str):
-                         full_response_text += chunk_data
+                        full_response_text += chunk_data
             except Exception as e:
-                 # If aggregation fails but some text was received, use it. Otherwise, re-raise.
-                 if not full_response_text:
-                     raise exceptions.FailedToGenerateResponseError(f"Failed to get non-stream response: {str(e)}") from e
+                # If aggregation fails but some text was received, use it. Otherwise, re-raise.
+                if not full_response_text:
+                    raise exceptions.FailedToGenerateResponseError(
+                        f"Failed to get non-stream response: {str(e)}"
+                    ) from e
 
             # last_response and history are updated within for_stream
             # Return the final aggregated response dict or raw string
@@ -188,8 +196,11 @@ class Llama3Mitril(Provider):
         def for_stream_chat():
             # ask() yields dicts or strings when streaming
             gen = self.ask(
-                prompt, stream=True, raw=False,  # Ensure ask yields dicts
-                optimizer=optimizer, conversationally=conversationally
+                prompt,
+                stream=True,
+                raw=False,  # Ensure ask yields dicts
+                optimizer=optimizer,
+                conversationally=conversationally,
             )
             for response_dict in gen:
                 yield self.get_message(response_dict)  # get_message expects dict
@@ -197,8 +208,11 @@ class Llama3Mitril(Provider):
         def for_non_stream_chat():
             # ask() returns dict or str when not streaming
             response_data = self.ask(
-                prompt, stream=False, raw=False,  # Ensure ask returns dict
-                optimizer=optimizer, conversationally=conversationally
+                prompt,
+                stream=False,
+                raw=False,  # Ensure ask returns dict
+                optimizer=optimizer,
+                conversationally=conversationally,
             )
             return self.get_message(response_data)  # get_message expects dict
 
@@ -214,11 +228,7 @@ if __name__ == "__main__":
     # Ensure curl_cffi is installed
     from rich import print
 
-    ai = Llama3Mitril(
-        max_tokens=2048,
-        temperature=0.8,
-        timeout=30
-    )
+    ai = Llama3Mitril(max_tokens=2048, temperature=0.8, timeout=30)
 
     for response in ai.chat("Hello", stream=True):
         print(response, end="", flush=True)

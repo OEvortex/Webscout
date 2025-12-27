@@ -159,16 +159,24 @@ def text(
             region = "wt-wt" if engine.lower() in ["ddg", "duckduckgo"] else "us"
 
         # Most engines use .text(), some use .search() or .run()
-        if hasattr(search_engine, "text"):
-            results = search_engine.text(
-                keywords, region=region, safesearch=safesearch, max_results=max_results
-            )
-        elif hasattr(search_engine, "run"):
-            results = search_engine.run(
+        text_method = getattr(search_engine, "text", None)
+        if text_method and callable(text_method):
+            results = text_method(
                 keywords, region=region, safesearch=safesearch, max_results=max_results
             )
         else:
-            results = search_engine.search(keywords, max_results=max_results)
+            run_method = getattr(search_engine, "run", None)
+            if run_method and callable(run_method):
+                results = run_method(
+                    keywords, region=region, safesearch=safesearch, max_results=max_results
+                )
+            else:
+                search_method = getattr(search_engine, "search", None)
+                if search_method and callable(search_method):
+                    results = search_method(keywords, max_results=max_results)
+                else:
+                    rprint("[bold red]Error: This engine does not support text search.[/bold red]")
+                    return
 
         _print_data(results, title=f"{engine.upper()} Text Search: {keywords}")
     except Exception as e:
@@ -183,8 +191,12 @@ def images(keywords: str, engine: str, max_results: int) -> None:
     """Perform an images search."""
     try:
         search_engine = _get_engine(engine)
-        results = search_engine.images(keywords, max_results=max_results)
-        _print_data(results, title=f"{engine.upper()} Image Search: {keywords}")
+        method = getattr(search_engine, "images", None)
+        if method and callable(method):
+            results = method(keywords, max_results=max_results)
+            _print_data(results, title=f"{engine.upper()} Image Search: {keywords}")
+        else:
+            rprint("[bold red]Error: This engine does not support image search.[/bold red]")
     except Exception as e:
         rprint(f"[bold red]Error:[/bold red] {str(e)}")
 
@@ -197,8 +209,12 @@ def videos(keywords: str, engine: str, max_results: int) -> None:
     """Perform a videos search."""
     try:
         search_engine = _get_engine(engine)
-        results = search_engine.videos(keywords, max_results=max_results)
-        _print_data(results, title=f"{engine.upper()} Video Search: {keywords}")
+        method = getattr(search_engine, "videos", None)
+        if method and callable(method):
+            results = method(keywords, max_results=max_results)
+            _print_data(results, title=f"{engine.upper()} Video Search: {keywords}")
+        else:
+            rprint("[bold red]Error: This engine does not support video search.[/bold red]")
     except Exception as e:
         rprint(f"[bold red]Error:[/bold red] {str(e)}")
 
@@ -211,8 +227,12 @@ def news(keywords: str, engine: str, max_results: int) -> None:
     """Perform a news search."""
     try:
         search_engine = _get_engine(engine)
-        results = search_engine.news(keywords, max_results=max_results)
-        _print_data(results, title=f"{engine.upper()} News Search: {keywords}")
+        method = getattr(search_engine, "news", None)
+        if method and callable(method):
+            results = method(keywords, max_results=max_results)
+            _print_data(results, title=f"{engine.upper()} News Search: {keywords}")
+        else:
+            rprint("[bold red]Error: This engine does not support news search.[/bold red]")
     except Exception as e:
         rprint(f"[bold red]Error:[/bold red] {str(e)}")
 
@@ -224,8 +244,12 @@ def weather(location: str, engine: str) -> None:
     """Get weather information."""
     try:
         search_engine = _get_engine(engine)
-        results = search_engine.weather(location)
-        _print_weather(results)
+        method = getattr(search_engine, "weather", None)
+        if method and callable(method):
+            results = method(location)
+            _print_weather(results)
+        else:
+            rprint("[bold red]Error: This engine does not support weather search.[/bold red]")
     except Exception as e:
         rprint(f"[bold red]Error:[/bold red] {str(e)}")
 
@@ -237,8 +261,12 @@ def answers(keywords: str, engine: str) -> None:
     """Perform an answers search."""
     try:
         search_engine = _get_engine(engine)
-        results = search_engine.answers(keywords)
-        _print_data(results, title=f"{engine.upper()} Answers: {keywords}")
+        method = getattr(search_engine, "answers", None)
+        if method and callable(method):
+            results = method(keywords)
+            _print_data(results, title=f"{engine.upper()} Answers: {keywords}")
+        else:
+            rprint("[bold red]Error: This engine does not support answers search.[/bold red]")
     except Exception as e:
         rprint(f"[bold red]Error:[/bold red] {str(e)}")
 
@@ -250,13 +278,17 @@ def suggestions(query: str, engine: str) -> None:
     """Get search suggestions."""
     try:
         search_engine = _get_engine(engine)
-        results = search_engine.suggestions(query)
+        method = getattr(search_engine, "suggestions", None)
+        if method and callable(method):
+            results = method(query)
 
-        # Format suggestions (Bing-style dicts)
-        if isinstance(results, list) and results and isinstance(results[0], dict):
-            results = [r.get("suggestion", str(r)) for r in results]
+            # Format suggestions (Bing-style dicts)
+            if isinstance(results, list) and results and isinstance(results[0], dict):
+                results = [r.get("suggestion", str(r)) for r in results]
 
-        _print_data(results, title=f"{engine.upper()} Suggestions: {query}")
+            _print_data(results, title=f"{engine.upper()} Suggestions: {query}")
+        else:
+            rprint("[bold red]Error: This engine does not support suggestions.[/bold red]")
     except Exception as e:
         rprint(f"[bold red]Error:[/bold red] {str(e)}")
 
@@ -272,8 +304,12 @@ def translate(
     """Perform translation."""
     try:
         search_engine = _get_engine(engine)
-        results = search_engine.translate(keywords, from_lang=from_lang, to_lang=to)
-        _print_data(results, title=f"{engine.upper()} Translation: {keywords}")
+        method = getattr(search_engine, "translate", None)
+        if method and callable(method):
+            results = method(keywords, from_lang=from_lang, to_lang=to)
+            _print_data(results, title=f"{engine.upper()} Translation: {keywords}")
+        else:
+            rprint("[bold red]Error: This engine does not support translation.[/bold red]")
     except Exception as e:
         rprint(f"[bold red]Error:[/bold red] {str(e)}")
 
@@ -287,8 +323,12 @@ def maps(keywords: str, place: Optional[str] = None, radius: int = 0, engine: st
     """Perform a maps search."""
     try:
         search_engine = _get_engine(engine)
-        results = search_engine.maps(keywords, place=place, radius=radius)
-        _print_data(results, title=f"{engine.upper()} Maps Search: {keywords}")
+        method = getattr(search_engine, "maps", None)
+        if method and callable(method):
+            results = method(keywords, place=place, radius=radius)
+            _print_data(results, title=f"{engine.upper()} Maps Search: {keywords}")
+        else:
+            rprint("[bold red]Error: This engine does not support maps search.[/bold red]")
     except Exception as e:
         rprint(f"[bold red]Error:[/bold red] {str(e)}")
 

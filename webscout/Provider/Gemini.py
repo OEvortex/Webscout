@@ -106,7 +106,7 @@ class GEMINI(Provider):
 
         def for_stream():
             response = self.session.ask(prompt)
-            self.last_response.update(response)
+            self.last_response = cast(Dict[str, Any], response)
             self.conversation.update_chat_history(prompt, self.get_message(self.last_response))
             if raw:
                 yield dumps(response)

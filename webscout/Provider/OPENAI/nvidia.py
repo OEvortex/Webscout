@@ -1,11 +1,16 @@
 import json
 import time
 import uuid
-from typing import cast, Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi.requests import Session
 
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
+from webscout.Provider.OPENAI.base import (
+    BaseChat,
+    BaseCompletions,
+    OpenAICompatibleProvider,
+    SimpleModelList,
+)
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -18,8 +23,9 @@ from webscout.Provider.OPENAI.utils import (
 
 from ...litagent import LitAgent
 
+
 class Completions(BaseCompletions):
-    def __init__(self, client: 'Nvidia'):
+    def __init__(self, client: "Nvidia"):
         self._client = client
 
     def create(
@@ -33,7 +39,7 @@ class Completions(BaseCompletions):
         top_p: Optional[float] = 0.9,
         timeout: Optional[int] = None,
         proxies: Optional[Dict[str, str]] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
         payload = {
             "model": model,
@@ -53,11 +59,18 @@ class Completions(BaseCompletions):
         if stream:
             return self._create_stream(request_id, created_time, model, payload, timeout, proxies)
         else:
-            return self._create_non_stream(request_id, created_time, model, payload, timeout, proxies)
+            return self._create_non_stream(
+                request_id, created_time, model, payload, timeout, proxies
+            )
 
     def _create_stream(
-        self, request_id: str, created_time: int, model: str, payload: Dict[str, Any],
-        timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        payload: Dict[str, Any],
+        timeout: Optional[int] = None,
+        proxies: Optional[Dict[str, str]] = None,
     ) -> Generator[ChatCompletionChunk, None, None]:
         try:
             response = self._client.session.post(
@@ -67,11 +80,13 @@ class Completions(BaseCompletions):
                 stream=True,
                 timeout=timeout or self._client.timeout,
                 proxies=proxies,
-                impersonate="chrome120"
+                impersonate="chrome120",
             )
             response.raise_for_status()
 
-            prompt_tokens = count_tokens([msg.get("content", "") for msg in payload.get("messages", [])])
+            prompt_tokens = count_tokens(
+                [msg.get("content", "") for msg in payload.get("messages", [])]
+            )
             completion_tokens = 0
             total_tokens = 0
 
@@ -84,48 +99,50 @@ class Completions(BaseCompletions):
                             break
                         try:
                             data = json.loads(json_str)
-                            choices = data.get('choices')
+                            choices = data.get("choices")
                             if not choices and choices is not None:
                                 continue
                             choice_data = choices[0] if choices else {}
-                            delta_data = choice_data.get('delta', {})
-                            finish_reason = choice_data.get('finish_reason')
+                            delta_data = choice_data.get("delta", {})
+                            finish_reason = choice_data.get("finish_reason")
 
                             # Update usage if available
-                            usage_data = data.get('usage', {})
+                            usage_data = data.get("usage", {})
                             if usage_data:
-                                prompt_tokens = usage_data.get('prompt_tokens', prompt_tokens)
-                                completion_tokens = usage_data.get('completion_tokens', completion_tokens)
-                                total_tokens = usage_data.get('total_tokens', total_tokens)
+                                prompt_tokens = usage_data.get("prompt_tokens", prompt_tokens)
+                                completion_tokens = usage_data.get(
+                                    "completion_tokens", completion_tokens
+                                )
+                                total_tokens = usage_data.get("total_tokens", total_tokens)
 
-                            content = delta_data.get('content')
+                            content = delta_data.get("content")
                             if content:
                                 completion_tokens += count_tokens(content)
                                 total_tokens = prompt_tokens + completion_tokens
 
                             delta = ChoiceDelta(
                                 content=content,
-                                role=delta_data.get('role'),
-                                tool_calls=delta_data.get('tool_calls')
+                                role=delta_data.get("role"),
+                                tool_calls=delta_data.get("tool_calls"),
                             )
                             choice = Choice(
-                                index=choice_data.get('index', 0),
+                                index=choice_data.get("index", 0),
                                 delta=delta,
                                 finish_reason=finish_reason,
-                                logprobs=choice_data.get('logprobs')
+                                logprobs=choice_data.get("logprobs"),
                             )
                             chunk = ChatCompletionChunk(
                                 id=request_id,
                                 choices=[choice],
                                 created=created_time,
                                 model=model,
-                                system_fingerprint=data.get('system_fingerprint')
+                                system_fingerprint=data.get("system_fingerprint"),
                             )
                             chunk.usage = {
                                 "prompt_tokens": prompt_tokens,
                                 "completion_tokens": completion_tokens,
                                 "total_tokens": total_tokens,
-                                "estimated_cost": None
+                                "estimated_cost": None,
                             }
                             yield chunk
                         except json.JSONDecodeError:
@@ -139,13 +156,13 @@ class Completions(BaseCompletions):
                 choices=[choice],
                 created=created_time,
                 model=model,
-                system_fingerprint=None
+                system_fingerprint=None,
             )
             chunk.usage = {
                 "prompt_tokens": prompt_tokens,
                 "completion_tokens": completion_tokens,
                 "total_tokens": total_tokens,
-                "estimated_cost": None
+                "estimated_cost": None,
             }
             yield chunk
 
@@ -153,8 +170,13 @@ class Completions(BaseCompletions):
             raise IOError(f"Nvidia stream request failed: {e}") from e
 
     def _create_non_stream(
-        self, request_id: str, created_time: int, model: str, payload: Dict[str, Any],
-        timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        payload: Dict[str, Any],
+        timeout: Optional[int] = None,
+        proxies: Optional[Dict[str, str]] = None,
     ) -> ChatCompletion:
         try:
             response = self._client.session.post(
@@ -163,53 +185,55 @@ class Completions(BaseCompletions):
                 json=payload,
                 timeout=timeout or self._client.timeout,
                 proxies=proxies,
-                impersonate="chrome120"
+                impersonate="chrome120",
             )
             response.raise_for_status()
             data = response.json()
 
-            choices_data = data.get('choices', [])
-            usage_data = data.get('usage', {})
+            choices_data = data.get("choices", [])
+            usage_data = data.get("usage", {})
 
             choices = []
             for choice_d in choices_data:
-                message_d = choice_d.get('message', {})
+                message_d = choice_d.get("message", {})
                 message = ChatCompletionMessage(
-                    role=message_d.get('role', 'assistant'),
-                    content=message_d.get('content', '')
+                    role=message_d.get("role", "assistant"), content=message_d.get("content", "")
                 )
                 choice = Choice(
-                    index=choice_d.get('index', 0),
+                    index=choice_d.get("index", 0),
                     message=message,
-                    finish_reason=choice_d.get('finish_reason', 'stop')
+                    finish_reason=choice_d.get("finish_reason", "stop"),
                 )
                 choices.append(choice)
 
             usage = CompletionUsage(
-                prompt_tokens=usage_data.get('prompt_tokens', 0),
-                completion_tokens=usage_data.get('completion_tokens', 0),
-                total_tokens=usage_data.get('total_tokens', 0)
+                prompt_tokens=usage_data.get("prompt_tokens", 0),
+                completion_tokens=usage_data.get("completion_tokens", 0),
+                total_tokens=usage_data.get("total_tokens", 0),
             )
 
             completion = ChatCompletion(
-                id=data.get('id', request_id),
+                id=data.get("id", request_id),
                 choices=choices,
-                created=data.get('created', created_time),
-                model=data.get('model', model),
+                created=data.get("created", created_time),
+                model=data.get("model", model),
                 usage=usage,
             )
             return completion
         except Exception as e:
             raise IOError(f"Nvidia non-stream request failed: {e}") from e
 
+
 class Chat(BaseChat):
-    def __init__(self, client: 'Nvidia'):
+    def __init__(self, client: "Nvidia"):
         self.completions = Completions(client)
+
 
 class Nvidia(OpenAICompatibleProvider):
     """
     OpenAI-compatible client for Nvidia NIM API.
     """
+
     required_auth = True
     AVAILABLE_MODELS = []
 
@@ -228,7 +252,7 @@ class Nvidia(OpenAICompatibleProvider):
             if response.status_code == 200:
                 data = response.json()
                 if isinstance(data, dict) and "data" in data:
-                    return [model['id'] for model in data['data'] if 'id' in model]
+                    return [model["id"] for model in data["data"] if "id" in model]
             return cls.AVAILABLE_MODELS
         except Exception:
             return cls.AVAILABLE_MODELS
@@ -262,7 +286,7 @@ class Nvidia(OpenAICompatibleProvider):
         else:
             fingerprint = {
                 "accept_language": "en-US,en;q=0.9",
-                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             }
 
         self.headers = {
@@ -279,6 +303,7 @@ class Nvidia(OpenAICompatibleProvider):
     def models(self) -> SimpleModelList:
         return SimpleModelList(type(self).AVAILABLE_MODELS)
 
+
 if __name__ == "__main__":
     # Example usage:
     # client = Nvidia(api_key="nvapi-...")
@@ -287,5 +312,5 @@ if __name__ == "__main__":
     #     messages=[{"role": "user", "content": "Hello!"}]
     # )
     # if not isinstance(response, Generator):
-        print(response.choices[0].message.content)
+    #     print(response.choices[0].message.content)
     pass

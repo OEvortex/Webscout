@@ -98,7 +98,7 @@ class utils:
         """
         try:
             if not path.isfile(history_path):
-                data1 = {__prog__: []}
+                data1: dict[str, list[Any]] = {__prog__: []}
                 with open(history_path, "w") as fh:
                     json.dump(data1, fh)
             with open(history_path) as fh:
@@ -120,7 +120,7 @@ class utils:
         try:
             resp = []
             if not path.isfile(history_path):
-                data1 = {__prog__: []}
+                data1: dict[str, list[Any]] = {__prog__: []}
                 with open(history_path, "w") as fh:
                     json.dump(data1, fh)
             with open(history_path) as fh:
@@ -489,13 +489,13 @@ class Handler:
         self.query = query
         self.author = author
         self.timeout = timeout
-        self.keyword = None
+        self.keyword: Optional[str] = None
         self.confirm = confirm
         self.unique = unique
         self.thread = thread
-        self.vitems = []
-        self.related = []
-        self.dropped = []
+        self.vitems: list[dict[str, str]] = []
+        self.related: list[dict[str, str]] = []
+        self.dropped: list[str] = []
         self.total = 1
         self.query_one: Optional[Any] = None
         self.saved_videos = utils.get_history()
@@ -802,10 +802,10 @@ class Handler:
                 pass
 
             current_downloaded_size = 0
-            current_downloaded_size_in_mb = 0
+            current_downloaded_size_in_mb = 0.0
             filename = self.generate_filename(third_dict, naming_format)
             save_to = path.join(dir, filename)
-            mod_headers = headers
+            mod_headers: dict[str, str] = headers
 
             if resume:
                 assert path.exists(save_to), f"File not found in path - '{save_to}'"

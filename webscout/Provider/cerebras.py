@@ -159,7 +159,7 @@ class Cerebras(Provider):
         self.session.headers.update(self.headers)
         if proxies:
             self.session.proxies.update(cast(Any, proxies))
-        self.last_response = None
+        self.last_response = {}
 
     # Rest of the class implementation remains the same...
     @staticmethod
@@ -226,7 +226,7 @@ class Cerebras(Provider):
         except KeyError:
             raise exceptions.InvalidResponseError("API key not found in response.")
 
-    def _make_request(self, messages: List[Dict], stream: bool = False) -> Union[Dict, Generator]:
+    def _make_request(self, messages: List[Dict], stream: bool = False) -> Union[Dict, Generator, str]:
         """Make a request to the Cerebras API."""
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -256,7 +256,7 @@ class Cerebras(Provider):
             response.raise_for_status()
 
             if stream:
-                def generate_stream():
+                def generate_stream() -> Generator[str, None, None]:
                     # Use sanitize_stream
                     processed_stream = sanitize_stream(
                         data=response.iter_content(chunk_size=None), # Pass byte iterator
@@ -328,7 +328,7 @@ class Cerebras(Provider):
 
             if stream:
                 # Wrap the generator to yield dicts or raw strings
-                def stream_wrapper():
+                def stream_wrapper() -> Generator[Union[str, Dict[str, str]], None, None]:
                     full_text = ""
                     for chunk in response:
                         full_text += chunk
@@ -361,25 +361,25 @@ class Cerebras(Provider):
 
         if stream:
             # Wrap the generator from ask() to get message text
-            def stream_wrapper():
+            def stream_wrapper() -> Generator[str, None, None]:
                 for chunk in response_gen_or_dict:
                     if raw:
-                        yield cast(str, chunk)
+                        yield chunk
                     else:
                         yield self.get_message(cast(Response, chunk))
             return stream_wrapper()
         else:
             # Non-streaming response
             if raw:
-                return cast(str, response_gen_or_dict)
-            return self.get_message(cast(Response, response_gen_or_dict))
+                return str(response_gen_or_dict)
+            return self.get_message(response_gen_or_dict)
 
     def get_message(self, response: Response) -> str:
         """Retrieves message from response."""
         # Updated to handle dict input from ask()
         if not isinstance(response, dict):
             return str(response)
-        return response.get("text", "")
+        return cast(Dict[str, Any], response).get("text", "")
 
 if __name__ == "__main__":
     from rich import print

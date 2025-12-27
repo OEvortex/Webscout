@@ -205,7 +205,7 @@ class EssentialAI(Provider):
     def get_message(self, response: Response) -> str:
         if not isinstance(response, dict):
             return str(response)
-        return response.get("text", "")
+        return cast(Dict[str, Any], response).get("text", "")
 
 if __name__ == "__main__":
     ai = EssentialAI()

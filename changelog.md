@@ -5,8 +5,20 @@ All notable changes to this project will be documented in this file.
 ## [2026.01.01] - 2026-01-01
 
 ### 🚮 Removed
+- **remove**: Completely removed `google-generativeai` package dependency from pyproject.toml - the package was not actually used in the codebase (geminiapi.py uses curl_cffi directly), removing it fixes Python 3.14 compatibility issues with pydantic-core
+- **remove**: Completely removed `openai` package dependency from pyproject.toml - the project now uses `curl_cffi` exclusively for HTTP requests, reducing dependencies and improving consistency
 - **remove**: Completely removed `orjson` dependency from codebase (including imports, `HAS_ORJSON` flag, and pyproject.toml entry) for better compatibility and simpler dependencies
 - **remove**: Removed `webscout/Provider/VercelAI.py` provider file and updated related imports and documentation
+
+### 🔧 Improved
+- **refactor**: Made `lxml` dependency optional and added `beautifulsoup4` as fallback parser
+  - Moved `lxml` and `beautifulsoup4` to new optional `parser` dependency group in pyproject.toml
+  - Updated `webscout/search/base.py` to support both lxml and beautifulsoup4 for HTML parsing
+  - Updated `webscout/search/engines/duckduckgo/base.py` to use beautifulsoup4 as fallback
+  - Updated `webscout/Provider/AISEARCH/iask_search.py` to use beautifulsoup4 as fallback
+  - Added basic XPath to CSS selector conversion for beautifulsoup4 compatibility
+  - This fixes Python 3.14 compatibility issues where lxml fails to compile from source on Windows
+  - Users can install parser support with: `uv pip install webscout[parser]`
 
 ### 🐛 Fixed
 
@@ -14,6 +26,12 @@ All notable changes to this project will be documented in this file.
 - **feat**: Added new models to HadadXYZ providers: `"anthropic/claude-opus-4-5-20251101"`, `"anthropic/claude-sonnet-4-5-20250929"`, `"anthropic/claude-haiku-4-5-20251001/legacy"`, and `"google/gemini-3-pro-preview"` to both `webscout/Provider/HadadXYZ.py` and `webscout/Provider/OPENAI/hadadxyz.py`.
 
 - **feat**: webscout/Provider/QwenLM.py - Added new models to this provider
+
+- **feat**: Added `gpt-5.2` model to Toolbaz providers in both `webscout/Provider/toolbaz.py` and `webscout/Provider/OPENAI/toolbaz.py`
+
+- **refactor**: Migrated `webscout/Provider/OPENAI/toolbaz.py` from `cloudscraper` to `curl_cffi` for consistent HTTP client implementation across providers
+
+- **refactor**: Migrated `webscout/Provider/OPENAI/sonus.py` from `requests` to `curl_cffi` for improved browser emulation and consistency; updated form data handling from multipart `files` to standard `data` parameter
 
 ## [2025.12.21] - 2025-12-21
 

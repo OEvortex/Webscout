@@ -276,7 +276,7 @@ class Elmo(Provider):
     def get_message(self, response: Response) -> str:
         if not isinstance(response, dict):
             return str(response)
-        return response.get("text", "") # Use .get for safety
+        return cast(Dict[str, Any], response).get("text", "") # Use .get for safety
 
 
 if __name__ == "__main__":
