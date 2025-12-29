@@ -40,6 +40,7 @@ from webscout.Provider.OPENAI.meta import Meta
 from webscout.Provider.OPENAI.netwrck import Netwrck
 from webscout.Provider.OPENAI.nvidia import Nvidia
 from webscout.Provider.OPENAI.oivscode import oivscode
+from webscout.Provider.OPENAI.openrouter import OpenRouter
 from webscout.Provider.OPENAI.PI import PiAI
 from webscout.Provider.OPENAI.sambanova import Sambanova
 from webscout.Provider.OPENAI.sonus import SonusAI
@@ -121,6 +122,7 @@ __all__ = [
     "FreeAssist",
     "Ayle",
     "HuggingFace",
+    "oivscode",
     "Groq",
     "HeckAI",
     "IBM",
@@ -128,6 +130,7 @@ __all__ = [
     "LLMChatCo",
     "Netwrck",
     "Nvidia",
+    "OpenRouter",
     "oivscode",
     "SonusAI",
     "TextPollinations",

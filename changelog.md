@@ -33,6 +33,8 @@ All notable changes to this project will be documented in this file.
 
 - **refactor**: Migrated `webscout/Provider/OPENAI/sonus.py` from `requests` to `curl_cffi` for improved browser emulation and consistency; updated form data handling from multipart `files` to standard `data` parameter
 
+- **feat**: Added new OpenRouter provider in both `webscout/Provider/OpenRouter.py` and `webscout/Provider/OPENAI/openrouter.py` with dynamic model fetching and LitAgent browser fingerprinting
+
 ## [2025.12.21] - 2025-12-21
 
 ### 🐛 Fixed

@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Generator, Optional, Union, cast
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
@@ -10,66 +10,49 @@ from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_s
 from webscout.litagent import LitAgent
 
 
-class OpenAI(Provider):
+class OpenRouter(Provider):
     """
-    A class to interact with the OpenAI API with LitAgent user-agent.
+    A class to interact with the OpenRouter API with LitAgent user-agent.
+    Follows the DeepInfra standalone provider pattern.
     """
 
     required_auth = True
+    AVAILABLE_MODELS = []
 
     @classmethod
-    def get_models(cls, api_key: Optional[str] = None):
-        """Fetch available models from OpenAI API.
-
-        Args:
-            api_key (str, optional): OpenAI API key
-
-        Returns:
-            list: List of available model IDs
-        """
-        if not api_key:
-            return []
+    def get_models(cls, api_key: Optional[str] = None) -> list[str]:
+        """Fetch available models from OpenRouter."""
+        url = "https://openrouter.ai/api/v1/models"
         try:
-            # Use a temporary curl_cffi session for this class method
             temp_session = Session()
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-            }
+            headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+            headers["Content-Type"] = "application/json"
 
-            response = temp_session.get(
-                "https://api.openai.com/v1/models", headers=headers, impersonate="chrome110"
-            )
+            response = temp_session.get(url, headers=headers, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, dict) and "data" in data:
+                    return [model["id"] for model in data["data"] if "id" in model]
+                return [model["id"] for model in data if "id" in model]
+            return cls.AVAILABLE_MODELS
+        except Exception:
+            return cls.AVAILABLE_MODELS
 
-            if response.status_code != 200:
-                raise Exception(
-                    f"API request failed with status {response.status_code}: {response.text}"
-                )
-
-            data = response.json()
-            if "data" in data and isinstance(data["data"], list):
-                return [model["id"] for model in data["data"] if "id" in model]
-            raise Exception("Invalid response format from API")
-
-        except (CurlError, Exception) as e:
-            raise Exception(f"Failed to fetch models: {str(e)}")
-
-    @staticmethod
-    def _openai_extractor(chunk: Union[str, Dict[str, Any]]) -> Optional[str]:
-        """Extracts content from OpenAI stream JSON objects."""
-        if isinstance(chunk, dict):
-            return chunk.get("choices", [{}])[0].get("delta", {}).get("content")
-        return None
+    @classmethod
+    def update_available_models(cls, api_key: Optional[str] = None):
+        """Update the available models list from OpenRouter API dynamically."""
+        try:
+            models = cls.get_models(api_key)
+            if models and len(models) > 0:
+                cls.AVAILABLE_MODELS = models
+        except Exception:
+            pass
 
     def __init__(
         self,
         api_key: str,
         is_conversation: bool = True,
-        max_tokens: int = 600,
-        temperature: float = 1,
-        presence_penalty: int = 0,
-        frequency_penalty: int = 0,
-        top_p: float = 1,
-        model: str = "gpt-3.5-turbo",
+        max_tokens: int = 2048,
         timeout: int = 30,
         intro: Optional[str] = None,
         filepath: Optional[str] = None,
@@ -77,32 +60,54 @@ class OpenAI(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: Optional[str] = None,
-        base_url: str = "https://api.openai.com/v1/chat/completions",
+        model: str = "openai/gpt-4o-mini",
         system_prompt: str = "You are a helpful assistant.",
+        temperature: float = 0.7,
+        top_p: float = 0.9,
         browser: str = "chrome",
     ):
-        """Initializes the OpenAI API client."""
-        self.url = base_url
+        """Initializes the OpenRouter API client."""
+        # Dynamic model fetching
+        self.update_available_models(api_key)
 
-        # Initialize LitAgent
+        if model not in self.AVAILABLE_MODELS:
+            # We allow it but warn if it's not in the detected list
+            pass
+
+        self.url = "https://openrouter.ai/api/v1/chat/completions"
+
         self.agent = LitAgent()
         self.fingerprint = self.agent.generate_fingerprint(browser)
-        self.api_key = api_key
-        # Use the fingerprint for headers
+        self.api = api_key
         self.headers = {
             "Accept": self.fingerprint["accept"],
             "Accept-Language": self.fingerprint["accept_language"],
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+            "Origin": "https://openrouter.ai",
+            "Pragma": "no-cache",
+            "Referer": "https://openrouter.ai/",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-site",
             "User-Agent": self.fingerprint.get("user_agent", ""),
+            "Sec-CH-UA": self.fingerprint.get("sec_ch_ua", ""),
+            "Sec-CH-UA-Mobile": "?0",
+            "Sec-CH-UA-Platform": f'"{self.fingerprint.get("platform", "")}"',
+            "X-Forwarded-For": self.fingerprint.get("x-forwarded-for", ""),
+            "X-Real-IP": self.fingerprint.get("x-real-ip", ""),
+            "X-Client-IP": self.fingerprint.get("x-client-ip", ""),
+            "Forwarded": self.fingerprint.get("forwarded", ""),
+            "X-Forwarded-Proto": self.fingerprint.get("x-forwarded-proto", ""),
+            "X-Request-Id": self.fingerprint.get("x-request-id", ""),
         }
-        if self.api_key:
-            self.headers["Authorization"] = f"Bearer {self.api_key}"
+        if self.api is not None:
+            self.headers["Authorization"] = f"Bearer {self.api}"
 
-        # Initialize curl_cffi Session
         self.session = Session()
-        # Update curl_cffi session headers and proxies
         self.session.headers.update(self.headers)
         if proxies:
-            self.session.proxies.update(cast(Any, proxies))  # Assign proxies directly
+            self.session.proxies.update(proxies)
         self.system_prompt = system_prompt
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
@@ -110,18 +115,7 @@ class OpenAI(Provider):
         self.last_response = {}
         self.model = model
         self.temperature = temperature
-        self.presence_penalty = presence_penalty
-        self.frequency_penalty = frequency_penalty
         self.top_p = top_p
-
-        # Fetch available models
-        try:
-            self.available_models = self.get_models(self.api_key)
-        except Exception:
-            self.available_models = []
-
-        if self.available_models and self.model not in self.available_models:
-            raise ValueError(f"Invalid model: {self.model}. Choose from: {self.available_models}")
 
         self.__available_optimizers = (
             method
@@ -155,7 +149,6 @@ class OpenAI(Provider):
         browser = browser or self.fingerprint.get("browser_type", "chrome")
         self.fingerprint = self.agent.generate_fingerprint(browser)
 
-        # Update headers with new fingerprint (only relevant ones)
         self.headers.update(
             {
                 "Accept": self.fingerprint["accept"],
@@ -163,7 +156,6 @@ class OpenAI(Provider):
             }
         )
 
-        # Update session headers
         self.session.headers.update(self.headers)
 
         return self.fingerprint
@@ -177,6 +169,38 @@ class OpenAI(Provider):
         conversationally: bool = False,
         **kwargs: Any,
     ) -> Response:
+        """
+        Sends a prompt to the OpenRouter API and returns the response.
+
+        Args:
+            prompt: The prompt to send to the API
+            stream: Whether to stream the response
+            raw: If True, returns unprocessed response chunks without any
+                processing or sanitization. Useful for debugging or custom
+                processing pipelines. Defaults to False.
+            optimizer: Optional prompt optimizer name
+            conversationally: Whether to use conversation context
+
+        Returns:
+            When raw=False: Dict with 'text' key (non-streaming) or
+                Generator yielding dicts (streaming)
+            When raw=True: Raw string response (non-streaming) or
+                Generator yielding raw string chunks (streaming)
+
+        Examples:
+            >>> or_client = OpenRouter(api_key="sk-or-v1-...")
+            >>> # Get processed response
+            >>> response = or_client.ask("What is the capital of France?")
+            >>> print(response["text"])
+
+            >>> # Get raw response
+            >>> raw_response = or_client.ask("Hello", raw=True)
+            >>> print(raw_response)
+
+            >>> # Stream raw chunks
+            >>> for chunk in or_client.ask("Hello", stream=True, raw=True):
+            ...     print(chunk, end='', flush=True)
+        """
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
@@ -184,11 +208,8 @@ class OpenAI(Provider):
                     conversation_prompt if conversationally else prompt
                 )
             else:
-                raise exceptions.FailedToGenerateResponseError(
-                    f"Optimizer is not one of {self.__available_optimizers}"
-                )
+                raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
 
-        # Payload construction
         payload = {
             "model": self.model,
             "messages": [
@@ -196,16 +217,14 @@ class OpenAI(Provider):
                 {"role": "user", "content": conversation_prompt},
             ],
             "stream": stream,
+            "max_tokens": self.max_tokens_to_sample,
             "temperature": self.temperature,
             "top_p": self.top_p,
-            "presence_penalty": self.presence_penalty,
-            "frequency_penalty": self.frequency_penalty,
         }
 
         def for_stream():
             streaming_text = ""
             try:
-                # Use curl_cffi session post with impersonate
                 response = self.session.post(
                     self.url,
                     data=json.dumps(payload),
@@ -214,26 +233,31 @@ class OpenAI(Provider):
                     impersonate="chrome110",
                 )
                 response.raise_for_status()
-
-                # Use sanitize_stream
                 processed_stream = sanitize_stream(
                     data=response.iter_content(chunk_size=None),
                     intro_value="data:",
                     to_json=True,
                     skip_markers=["[DONE]"],
-                    content_extractor=self._openai_extractor,
+                    content_extractor=lambda x: x.get("choices", [{}])[0]
+                    .get("delta", {})
+                    .get("content")
+                    or x.get("choices", [{}])[0].get("delta", {}).get("reasoning_content")
+                    if isinstance(x, dict)
+                    else None,
                     yield_raw_on_error=False,
                     raw=raw,
                 )
 
                 for content_chunk in processed_stream:
+                    if isinstance(content_chunk, bytes):
+                        content_chunk = content_chunk.decode("utf-8", errors="ignore")
+
                     if raw:
                         yield content_chunk
                     else:
                         if content_chunk and isinstance(content_chunk, str):
                             streaming_text += content_chunk
-                            resp = dict(text=content_chunk)
-                            yield resp if not raw else content_chunk
+                            yield dict(text=content_chunk)
 
             except CurlError as e:
                 raise exceptions.FailedToGenerateResponseError(
@@ -244,13 +268,12 @@ class OpenAI(Provider):
                     f"Request failed ({type(e).__name__}): {str(e)}"
                 ) from e
             finally:
-                if streaming_text:
+                if not raw and streaming_text:
                     self.last_response = {"text": streaming_text}
                     self.conversation.update_chat_history(prompt, streaming_text)
 
         def for_non_stream():
             try:
-                # Use curl_cffi session post with impersonate for non-streaming
                 response = self.session.post(
                     self.url,
                     data=json.dumps(payload),
@@ -259,11 +282,12 @@ class OpenAI(Provider):
                 )
                 response.raise_for_status()
 
-                response_text = response.text
+                if raw:
+                    return response.text
 
                 # Use sanitize_stream to parse the non-streaming JSON response
                 processed_stream = sanitize_stream(
-                    data=response_text,
+                    data=response.text,
                     to_json=True,
                     intro_value=None,
                     content_extractor=lambda chunk: chunk.get("choices", [{}])[0]
@@ -308,30 +332,55 @@ class OpenAI(Provider):
         conversationally: bool = False,
         **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
-        def for_stream_chat():
-            gen = self.ask(
-                prompt,
-                stream=True,
-                raw=False,
-                optimizer=optimizer,
-                conversationally=conversationally,
-            )
-            for response_dict in gen:
-                yield self.get_message(response_dict)
+        """
+        Generates a chat response from the OpenRouter API.
+        """
+        raw = kwargs.get("raw", False)
+        if stream:
 
-        def for_non_stream_chat():
-            response_data = self.ask(
+            def for_stream_chat():
+                gen = self.ask(
+                    prompt,
+                    stream=True,
+                    raw=raw,
+                    optimizer=optimizer,
+                    conversationally=conversationally,
+                )
+                if hasattr(gen, "__iter__"):
+                    for response in gen:
+                        if raw:
+                            yield cast(str, response)
+                        else:
+                            yield self.get_message(response)
+
+            return for_stream_chat()
+        else:
+            result = self.ask(
                 prompt,
                 stream=False,
-                raw=False,
+                raw=raw,
                 optimizer=optimizer,
                 conversationally=conversationally,
             )
-            return self.get_message(response_data)
-
-        return for_stream_chat() if stream else for_non_stream_chat()
+            if raw:
+                return cast(str, result)
+            else:
+                return self.get_message(result)
 
     def get_message(self, response: Response) -> str:
+        """Retrieves message from response dict."""
         if not isinstance(response, dict):
             return str(response)
         return cast(Dict[str, Any], response).get("text", "")
+
+
+if __name__ == "__main__":
+    or_client = OpenRouter(api_key="")
+    models = or_client.AVAILABLE_MODELS
+    print(models)
+    response = or_client.chat("Hi!", stream=True)
+    if hasattr(response, "__iter__") and not isinstance(response, (str, bytes)):
+        for chunk in response:
+            print(chunk, end="", flush=True)
+    else:
+        print(response)
