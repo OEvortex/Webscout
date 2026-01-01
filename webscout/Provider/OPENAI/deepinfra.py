@@ -1,11 +1,16 @@
 import json
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 import requests
 
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import (
+    BaseChat,
+    BaseCompletions,
+    OpenAICompatibleProvider,
+    SimpleModelList,
+)
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -15,10 +20,7 @@ from webscout.Provider.OPENAI.utils import (
     CompletionUsage,
 )
 
-try:
-    from webscout.litagent import LitAgent
-except ImportError:
-    pass
+from ...litagent import LitAgent
 
 
 class Completions(BaseCompletions):
@@ -339,7 +341,7 @@ class DeepInfra(OpenAICompatibleProvider):
             return cls.AVAILABLE_MODELS
 
     @classmethod
-    def update_available_models(cls, api_key=None):
+    def update_available_models(cls, api_key: Optional[str] = None):
         """Update the available models list from DeepInfra API"""
         try:
             models = cls.get_models(api_key)
@@ -349,7 +351,7 @@ class DeepInfra(OpenAICompatibleProvider):
             # Fallback to default models list if fetching fails
             pass
 
-    def __init__(self, browser: str = "chrome", api_key: str = None):
+    def __init__(self, browser: str = "chrome", api_key: Optional[str] = None):
         # Update available models from API
         self.update_available_models(api_key)
 
@@ -384,12 +386,8 @@ class DeepInfra(OpenAICompatibleProvider):
         self.chat = Chat(self)
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return DeepInfra.AVAILABLE_MODELS
-
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 
 if __name__ == "__main__":
@@ -400,4 +398,6 @@ if __name__ == "__main__":
         max_tokens=10000,
         stream=False,
     )
-    print(response.choices[0].message.content)
+    if isinstance(response, ChatCompletion):
+        if response.choices[0].message and response.choices[0].message.content:
+            print(response.choices[0].message.content)

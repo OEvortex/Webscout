@@ -1,16 +1,18 @@
 import importlib
 import pkgutil
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Mapping, Optional, Union
 
 from webscout.AIbase import Provider, TTSProvider
 
 # Import TTI base class
+BaseImages = None
 try:
-    from webscout.Provider.TTI.base import BaseImages
+    from webscout.Provider.TTI.base import BaseImages as BaseImagesClass
+    BaseImages = BaseImagesClass
     TTI_AVAILABLE = True
 except ImportError:
     TTI_AVAILABLE = False
-    BaseImages = None
+
 
 class _LLMModels:
     """
@@ -39,7 +41,7 @@ class _LLMModels:
         all_models = self._get_provider_models()
         return all_models.get(provider_name, [])
 
-    def summary(self) -> Dict[str, int]:
+    def summary(self) -> Dict[str, Any]:
         """
         Returns a summary of available providers and models.
 
@@ -48,8 +50,10 @@ class _LLMModels:
         """
         provider_models = self._get_provider_models()
         total_providers = len(provider_models)
-        total_models = sum(len(models) if isinstance(models, (list, tuple, set))
-                          else 1 for models in provider_models.values())
+        total_models = sum(
+            len(models) if isinstance(models, (list, tuple, set)) else 1
+            for models in provider_models.values()
+        )
 
         return {
             "providers": total_providers,
@@ -57,7 +61,7 @@ class _LLMModels:
             "provider_model_counts": {
                 provider: len(models) if isinstance(models, (list, tuple, set)) else 1
                 for provider, models in provider_models.items()
-            }
+            },
         }
 
     def providers(self) -> Dict[str, Dict[str, Any]]:
@@ -98,17 +102,19 @@ class _LLMModels:
                 for attr_name in dir(module):
                     attr = getattr(module, attr_name)
                     if isinstance(attr, type) and issubclass(attr, Provider) and attr != Provider:
-                        if hasattr(attr, 'get_models'):
+                        get_models = getattr(attr, "get_models", None)
+                        available_models = getattr(attr, "AVAILABLE_MODELS", None)
+                        if get_models and callable(get_models):
                             try:
-                                models = attr.get_models()
+                                models = get_models()
                                 if isinstance(models, set):
                                     models = list(models)
                                 provider_models[attr_name] = models
                             except Exception:
                                 provider_models[attr_name] = []
-                        elif hasattr(attr, 'AVAILABLE_MODELS'):
+                        elif available_models is not None:
                             # Convert any sets to lists to ensure serializability
-                            models = attr.AVAILABLE_MODELS
+                            models = available_models
                             if isinstance(models, set):
                                 models = list(models)
                             provider_models[attr_name] = models
@@ -137,19 +143,20 @@ class _LLMModels:
                     if isinstance(attr, type) and issubclass(attr, Provider) and attr != Provider:
                         # Get available models
                         models = []
-                        if hasattr(attr, 'get_models'):
+                        get_models = getattr(attr, "get_models", None)
+                        available_models = getattr(attr, "AVAILABLE_MODELS", None)
+                        if get_models and callable(get_models):
                             try:
-                                available_models = attr.get_models()
-                                if isinstance(available_models, set):
-                                    models = list(available_models)
-                                elif isinstance(available_models, (list, tuple)):
-                                    models = list(available_models)
+                                fetched_models = get_models()
+                                if isinstance(fetched_models, set):
+                                    models = list(fetched_models)
+                                elif isinstance(fetched_models, (list, tuple)):
+                                    models = list(fetched_models)
                                 else:
-                                    models = [str(available_models)] if available_models else []
+                                    models = [str(fetched_models)] if fetched_models else []
                             except Exception:
                                 models = []
-                        elif hasattr(attr, 'AVAILABLE_MODELS'):
-                            available_models = attr.AVAILABLE_MODELS
+                        elif available_models is not None:
                             if isinstance(available_models, set):
                                 models = list(available_models)
                             elif isinstance(available_models, (list, tuple)):
@@ -162,14 +169,22 @@ class _LLMModels:
 
                         # Get supported parameters (common OpenAI-compatible parameters)
                         supported_params = [
-                            "model", "messages", "max_tokens", "temperature", "top_p",
-                            "presence_penalty", "frequency_penalty", "stop", "stream", "user"
+                            "model",
+                            "messages",
+                            "max_tokens",
+                            "temperature",
+                            "top_p",
+                            "presence_penalty",
+                            "frequency_penalty",
+                            "stop",
+                            "stream",
+                            "user",
                         ]
 
                         # Get additional metadata
                         metadata = {}
-                        if hasattr(attr, '__doc__') and attr.__doc__:
-                            metadata['description'] = attr.__doc__.strip().split('\n')[0]
+                        if hasattr(attr, "__doc__") and attr.__doc__:
+                            metadata["description"] = attr.__doc__.strip().split("\n")[0]
 
                         provider_details[attr_name] = {
                             "name": attr_name,
@@ -178,19 +193,20 @@ class _LLMModels:
                             "models": models,
                             "parameters": supported_params,
                             "model_count": len(models),
-                            "metadata": metadata
+                            "metadata": metadata,
                         }
             except Exception:
                 pass
 
         return provider_details
 
+
 class _TTSModels:
     """
     A class for managing TTS provider voices in the webscout package.
     """
 
-    def list(self) -> Dict[str, List[str]]:
+    def list(self) -> Dict[str, Union[List[str], Dict[str, str]]]:
         """
         Gets all available voices from each TTS provider that has an all_voices attribute.
 
@@ -240,7 +256,7 @@ class _TTSModels:
         return {
             "providers": total_providers,
             "voices": total_voices,
-            "provider_voice_counts": provider_voice_counts
+            "provider_voice_counts": provider_voice_counts,
         }
 
     def _get_tts_voices(self) -> Dict[str, Union[List[str], Dict[str, str]]]:
@@ -262,17 +278,22 @@ class _TTSModels:
                     module = importlib.import_module(f"webscout.Provider.TTS.{module_name}")
                     for attr_name in dir(module):
                         attr = getattr(module, attr_name)
-                        if isinstance(attr, type) and issubclass(attr, TTSProvider) and attr != TTSProvider:
+                        if (
+                            isinstance(attr, type)
+                            and issubclass(attr, TTSProvider)
+                            and attr != TTSProvider
+                        ):
                             # TTS providers typically use 'all_voices' instead of 'AVAILABLE_MODELS'
-                            if hasattr(attr, 'all_voices'):
-                                voices = attr.all_voices
-                                provider_voices[attr_name] = voices
+                            all_voices = getattr(attr, "all_voices", None)
+                            if all_voices is not None:
+                                provider_voices[attr_name] = all_voices
                 except Exception:
                     pass
         except Exception:
             pass
 
         return provider_voices
+
 
 class _TTIModels:
     """
@@ -323,7 +344,7 @@ class _TTIModels:
         all_providers = self._get_tti_provider_details()
         return all_providers.get(provider_name, {})
 
-    def summary(self) -> Dict[str, int]:
+    def summary(self) -> Dict[str, Any]:
         """
         Returns a summary of available TTI providers and models.
 
@@ -332,8 +353,10 @@ class _TTIModels:
         """
         provider_models = self._get_tti_models()
         total_providers = len(provider_models)
-        total_models = sum(len(models) if isinstance(models, (list, tuple, set))
-                          else 1 for models in provider_models.values())
+        total_models = sum(
+            len(models) if isinstance(models, (list, tuple, set)) else 1
+            for models in provider_models.values()
+        )
 
         return {
             "providers": total_providers,
@@ -341,7 +364,7 @@ class _TTIModels:
             "provider_model_counts": {
                 provider: len(models) if isinstance(models, (list, tuple, set)) else 1
                 for provider, models in provider_models.items()
-            }
+            },
         }
 
     def _get_tti_models(self) -> Dict[str, List[str]]:
@@ -362,11 +385,15 @@ class _TTIModels:
                 module = importlib.import_module(f"webscout.Provider.TTI.{module_name}")
                 for attr_name in dir(module):
                     attr = getattr(module, attr_name)
-                    if (isinstance(attr, type) and BaseImages and
-                        issubclass(attr, BaseImages) and attr != BaseImages):
-                        if hasattr(attr, 'AVAILABLE_MODELS'):
+                    if (
+                        isinstance(attr, type)
+                        and BaseImages
+                        and issubclass(attr, BaseImages)
+                        and attr != BaseImages
+                    ):
+                        if hasattr(attr, "AVAILABLE_MODELS"):
                             # Convert any sets to lists to ensure serializability
-                            models = attr.AVAILABLE_MODELS
+                            models = getattr(attr, "AVAILABLE_MODELS", [])
                             if isinstance(models, set):
                                 models = list(models)
                             provider_models[attr_name] = models
@@ -393,23 +420,28 @@ class _TTIModels:
                 module = importlib.import_module(f"webscout.Provider.TTI.{module_name}")
                 for attr_name in dir(module):
                     attr = getattr(module, attr_name)
-                    if (isinstance(attr, type) and BaseImages and
-                        issubclass(attr, BaseImages) and attr != BaseImages):
+                    if (
+                        isinstance(attr, type)
+                        and BaseImages
+                        and issubclass(attr, BaseImages)
+                        and attr != BaseImages
+                    ):
                         # Get available models
                         models = []
-                        if hasattr(attr, 'get_models'):
+                        get_models = getattr(attr, "get_models", None)
+                        available_models = getattr(attr, "AVAILABLE_MODELS", None)
+                        if get_models and callable(get_models):
                             try:
-                                available_models = attr.get_models()
-                                if isinstance(available_models, set):
-                                    models = list(available_models)
-                                elif isinstance(available_models, (list, tuple)):
-                                    models = list(available_models)
+                                fetched_models = get_models()
+                                if isinstance(fetched_models, set):
+                                    models = list(fetched_models)
+                                elif isinstance(fetched_models, (list, tuple)):
+                                    models = list(fetched_models)
                                 else:
-                                    models = [str(available_models)] if available_models else []
+                                    models = [str(fetched_models)] if fetched_models else []
                             except Exception:
                                 models = []
-                        elif hasattr(attr, 'AVAILABLE_MODELS'):
-                            available_models = attr.AVAILABLE_MODELS
+                        elif available_models is not None:
                             if isinstance(available_models, set):
                                 models = list(available_models)
                             elif isinstance(available_models, (list, tuple)):
@@ -422,14 +454,23 @@ class _TTIModels:
 
                         # Get supported parameters (common TTI parameters)
                         supported_params = [
-                            "prompt", "model", "n", "size", "response_format", "user",
-                            "style", "aspect_ratio", "timeout", "image_format", "seed"
+                            "prompt",
+                            "model",
+                            "n",
+                            "size",
+                            "response_format",
+                            "user",
+                            "style",
+                            "aspect_ratio",
+                            "timeout",
+                            "image_format",
+                            "seed",
                         ]
 
                         # Get additional metadata
                         metadata = {}
-                        if hasattr(attr, '__doc__') and attr.__doc__:
-                            metadata['description'] = attr.__doc__.strip().split('\n')[0]
+                        if hasattr(attr, "__doc__") and attr.__doc__:
+                            metadata["description"] = attr.__doc__.strip().split("\n")[0]
 
                         provider_details[attr_name] = {
                             "name": attr_name,
@@ -438,17 +479,19 @@ class _TTIModels:
                             "models": models,
                             "parameters": supported_params,
                             "model_count": len(models),
-                            "metadata": metadata
+                            "metadata": metadata,
                         }
             except Exception:
                 pass
 
         return provider_details
 
+
 # Create singleton instances
 llm = _LLMModels()
 tts = _TTSModels()
 tti = _TTIModels()
+
 
 # Container class for all model types
 class Models:
@@ -456,6 +499,7 @@ class Models:
         self.llm: _LLMModels = llm
         self.tts: _TTSModels = tts
         self.tti: _TTIModels = tti
+
 
 # Create a singleton instance
 model = Models()

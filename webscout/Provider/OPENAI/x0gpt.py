@@ -6,8 +6,12 @@ from typing import Any, Dict, Generator, List, Optional, Union
 from curl_cffi.const import CurlHttpVersion
 from curl_cffi.requests import Session
 
-# Import base classes and utility structures
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import (
+    BaseChat,
+    BaseCompletions,
+    OpenAICompatibleProvider,
+    SimpleModelList,
+)
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -18,40 +22,55 @@ from webscout.Provider.OPENAI.utils import (
     count_tokens,
 )
 
-# Attempt to import LitAgent, fallback if not available
 try:
     from webscout.litagent import LitAgent
 except ImportError:
-    print("Warning: LitAgent not found. Some functionality may be limited.")
+    LitAgent = None  # type: ignore
 
-# --- X0GPT Client ---
 
 class Completions(BaseCompletions):
-    def __init__(self, client: 'X0GPT'):
+    """Completions handler for X0GPT API."""
+
+    def __init__(self, client: "X0GPT") -> None:
+        """Initialize Completions with X0GPT client."""
         self._client = client
 
     def create(
         self,
         *,
         model: str,
-        messages: List[Dict[str, str]],
+        messages: List[Dict[str, Any]],
         max_tokens: Optional[int] = 2049,
         stream: bool = False,
         temperature: Optional[float] = None,
         top_p: Optional[float] = None,
         timeout: Optional[int] = None,
         proxies: Optional[Dict[str, str]] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
-        """
-        Creates a model response for the given chat conversation.
+        """Create a model response for the given chat conversation.
+
         Mimics openai.chat.completions.create
+
+        Args:
+            model: Model name to use
+            messages: List of message dictionaries
+            max_tokens: Maximum tokens to generate
+            stream: Whether to stream the response
+            temperature: Sampling temperature
+            top_p: Nucleus sampling parameter
+            timeout: Request timeout in seconds
+            proxies: Proxy configuration
+            **kwargs: Additional parameters
+
+        Returns:
+            ChatCompletion or generator of ChatCompletionChunk
         """
         # Prepare the payload for X0GPT API
-        payload = {
+        payload: Dict[str, Any] = {
             "messages": messages,
             "chatId": uuid.uuid4().hex,
-            "namespace": None
+            "namespace": None,
         }
 
         # Add optional parameters if provided
@@ -72,34 +91,55 @@ class Completions(BaseCompletions):
 
         if stream:
             return self._create_stream(request_id, created_time, model, payload, timeout, proxies)
-        else:
-            return self._create_non_stream(request_id, created_time, model, payload, timeout, proxies)
+        return self._create_non_stream(request_id, created_time, model, payload, timeout, proxies)
 
     def _create_stream(
-        self, request_id: str, created_time: int, model: str, payload: Dict[str, Any], timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        payload: Dict[str, Any],
+        timeout: Optional[int] = None,
+        proxies: Optional[Dict[str, str]] = None,
     ) -> Generator[ChatCompletionChunk, None, None]:
+        """Create a streaming response from X0GPT API.
+
+        Args:
+            request_id: Unique request identifier
+            created_time: Timestamp of request creation
+            model: Model name
+            payload: Request payload
+            timeout: Request timeout
+            proxies: Proxy configuration
+
+        Yields:
+            ChatCompletionChunk objects
+
+        Raises:
+            IOError: If request fails
+        """
         try:
             response = self._client.session.post(
                 self._client.api_endpoint,
                 headers=self._client.headers,
                 json=payload,
                 stream=True,
-                timeout=timeout or self._client.timeout,
+                timeout=timeout if timeout is not None else self._client.timeout,
                 proxies=proxies or getattr(self._client, "proxies", None),
                 impersonate="chrome120",
-                http_version=CurlHttpVersion.V1_1
+                http_version=CurlHttpVersion.V1_1,
             )
 
             # Handle non-200 responses
             if response.status_code != 200:
                 raise IOError(
-                    f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
+                    f"Failed to generate response - ({response.status_code}, "
+                    f"{response.reason}) - {response.text}"
                 )
 
             # Track token usage across chunks
             prompt_tokens = 0
             completion_tokens = 0
-            total_tokens = 0
 
             # Estimate prompt tokens based on message length
             for msg in payload.get("messages", []):
@@ -107,25 +147,27 @@ class Completions(BaseCompletions):
 
             for line in response.iter_lines():
                 if line:
-                    decoded_line = line.decode('utf-8').strip()
+                    # Handle both bytes and string responses
+                    decoded_line = (
+                        line.strip() if isinstance(line, str) else line.decode("utf-8").strip()
+                    )
 
-                    # X0GPT uses a different format, so we need to extract the content
-                    match = re.search(r'0:"(.*?)"', decoded_line)
+                    # X0GPT uses a different format, extract the content
+                    match = re.search(r'"([^"]*)"', decoded_line)
                     if match:
                         content = match.group(1)
 
-                        # Format the content (replace escaped newlines and unicode escapes)
+                        # Format the content (replace escaped sequences)
                         content = self._client.format_text(content)
 
                         # Update token counts
                         completion_tokens += count_tokens(content)
-                        total_tokens = prompt_tokens + completion_tokens
 
                         # Create the delta object
                         delta = ChoiceDelta(
                             content=content,
                             role="assistant",
-                            tool_calls=None
+                            tool_calls=None,
                         )
 
                         # Create the choice object
@@ -133,7 +175,7 @@ class Completions(BaseCompletions):
                             index=0,
                             delta=delta,
                             finish_reason=None,
-                            logprobs=None
+                            logprobs=None,
                         )
 
                         # Create the chunk object
@@ -142,24 +184,8 @@ class Completions(BaseCompletions):
                             choices=[choice],
                             created=created_time,
                             model=model,
-                            system_fingerprint=None
+                            system_fingerprint=None,
                         )
-
-                        # Convert chunk to dict using Pydantic's API
-                        if hasattr(chunk, "model_dump"):
-                            chunk_dict = chunk.model_dump(exclude_none=True)
-                        else:
-                            chunk_dict = chunk.dict(exclude_none=True)
-
-                        # Add usage information to match OpenAI format
-                        usage_dict = {
-                            "prompt_tokens": prompt_tokens,
-                            "completion_tokens": completion_tokens,
-                            "total_tokens": total_tokens,
-                            "estimated_cost": None
-                        }
-
-                        chunk_dict["usage"] = usage_dict
 
                         # Return the chunk object for internal processing
                         yield chunk
@@ -168,14 +194,14 @@ class Completions(BaseCompletions):
             delta = ChoiceDelta(
                 content=None,
                 role=None,
-                tool_calls=None
+                tool_calls=None,
             )
 
             choice = Choice(
                 index=0,
                 delta=delta,
                 finish_reason="stop",
-                logprobs=None
+                logprobs=None,
             )
 
             chunk = ChatCompletionChunk(
@@ -183,59 +209,73 @@ class Completions(BaseCompletions):
                 choices=[choice],
                 created=created_time,
                 model=model,
-                system_fingerprint=None
+                system_fingerprint=None,
             )
-
-            if hasattr(chunk, "model_dump"):
-                chunk_dict = chunk.model_dump(exclude_none=True)
-            else:
-                chunk_dict = chunk.dict(exclude_none=True)
-            chunk_dict["usage"] = {
-                "prompt_tokens": prompt_tokens,
-                "completion_tokens": completion_tokens,
-                "total_tokens": total_tokens,
-                "estimated_cost": None
-            }
 
             yield chunk
 
         except Exception as e:
-            print(f"Error during X0GPT stream request: {e}")
             raise IOError(f"X0GPT request failed: {e}") from e
 
     def _create_non_stream(
-        self, request_id: str, created_time: int, model: str, payload: Dict[str, Any], timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        payload: Dict[str, Any],
+        timeout: Optional[int] = None,
+        proxies: Optional[Dict[str, str]] = None,
     ) -> ChatCompletion:
+        """Create a non-streaming response from X0GPT API.
+
+        Args:
+            request_id: Unique request identifier
+            created_time: Timestamp of request creation
+            model: Model name
+            payload: Request payload
+            timeout: Request timeout
+            proxies: Proxy configuration
+
+        Returns:
+            ChatCompletion object
+
+        Raises:
+            IOError: If request fails
+        """
         try:
-            # For non-streaming, we still use streaming internally to collect the full response
+            # For non-streaming, we still use streaming internally
             response = self._client.session.post(
                 self._client.api_endpoint,
                 headers=self._client.headers,
                 json=payload,
                 stream=True,
-                timeout=timeout or self._client.timeout,
+                timeout=timeout if timeout is not None else self._client.timeout,
                 proxies=proxies or getattr(self._client, "proxies", None),
                 impersonate="chrome120",
-                http_version=CurlHttpVersion.V1_1
+                http_version=CurlHttpVersion.V1_1,
             )
 
             # Handle non-200 responses
             if response.status_code != 200:
                 raise IOError(
-                    f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
+                    f"Failed to generate response - ({response.status_code}, "
+                    f"{response.reason}) - {response.text}"
                 )
 
             # Collect the full response
             full_text = ""
             for line in response.iter_lines():
                 if line:
-                    decoded_line = line.decode('utf-8').strip()
-                    match = re.search(r'0:"(.*?)"', decoded_line)
+                    # Handle both bytes and string responses
+                    decoded_line = (
+                        line.strip() if isinstance(line, str) else line.decode("utf-8").strip()
+                    )
+                    match = re.search(r'"([^"]*)"', decoded_line)
                     if match:
                         content = match.group(1)
                         full_text += content
 
-            # Format the text (replace escaped newlines)
+            # Format the text (replace escaped sequences)
             full_text = self._client.format_text(full_text)
 
             # Estimate token counts
@@ -247,23 +287,16 @@ class Completions(BaseCompletions):
             total_tokens = prompt_tokens + completion_tokens
 
             # Create the message object
-            message = ChatCompletionMessage(
-                role="assistant",
-                content=full_text
-            )
+            message = ChatCompletionMessage(role="assistant", content=full_text)
 
             # Create the choice object
-            choice = Choice(
-                index=0,
-                message=message,
-                finish_reason="stop"
-            )
+            choice = Choice(index=0, message=message, finish_reason="stop")
 
             # Create the usage object
             usage = CompletionUsage(
                 prompt_tokens=prompt_tokens,
                 completion_tokens=completion_tokens,
-                total_tokens=total_tokens
+                total_tokens=total_tokens,
             )
 
             # Create the completion object
@@ -278,16 +311,19 @@ class Completions(BaseCompletions):
             return completion
 
         except Exception as e:
-            print(f"Error during X0GPT non-stream request: {e}")
             raise IOError(f"X0GPT request failed: {e}") from e
 
+
 class Chat(BaseChat):
-    def __init__(self, client: 'X0GPT'):
+    """Chat handler for X0GPT API."""
+
+    def __init__(self, client: "X0GPT") -> None:
+        """Initialize Chat with X0GPT client."""
         self.completions = Completions(client)
 
+
 class X0GPT(OpenAICompatibleProvider):
-    """
-    OpenAI-compatible client for X0GPT API.
+    """OpenAI-compatible client for X0GPT API.
 
     Usage:
         client = X0GPT()
@@ -296,16 +332,12 @@ class X0GPT(OpenAICompatibleProvider):
             messages=[{"role": "user", "content": "Hello!"}]
         )
     """
+
     required_auth = False
     AVAILABLE_MODELS = ["X0GPT"]
 
-    def __init__(
-        self,
-        timeout: Optional[int] = None,
-        browser: str = "chrome"
-    ):
-        """
-        Initialize the X0GPT client.
+    def __init__(self, timeout: Optional[int] = None, browser: str = "chrome") -> None:
+        """Initialize the X0GPT client.
 
         Args:
             timeout: Request timeout in seconds (None for no timeout)
@@ -313,13 +345,12 @@ class X0GPT(OpenAICompatibleProvider):
         """
         self.timeout = timeout
         self.api_endpoint = "https://x0-gpt.devwtf.in/api/stream/reply"
-        self.session = Session()
+        self.session: Session = Session()
 
-        # Initialize LitAgent for user agent generation
-        agent = LitAgent()
-        self.fingerprint = agent.generate_fingerprint(browser)
+        # Initialize user agent
+        user_agent = self._get_user_agent(browser)
 
-        self.headers = {
+        self.headers: Dict[str, str] = {
             "authority": "x0-gpt.devwtf.in",
             "method": "POST",
             "path": "/api/stream/reply",
@@ -331,20 +362,50 @@ class X0GPT(OpenAICompatibleProvider):
             "dnt": "1",
             "origin": "https://x0-gpt.devwtf.in",
             "referer": "https://x0-gpt.devwtf.in/chat",
-            "sec-ch-ua": '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
+            "sec-ch-ua": ('"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"'),
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": '"Windows"',
-            "user-agent": self.fingerprint["user_agent"]
+            "user-agent": user_agent,
         }
 
         self.session.headers.update(self.headers)
 
         # Initialize the chat interface
-        self.chat = Chat(self)
+        self.chat: Chat = Chat(self)
+
+    @staticmethod
+    def _get_user_agent(browser: str) -> str:
+        """Get a user agent string, with fallback if LitAgent unavailable.
+
+        Args:
+            browser: Browser to emulate
+
+        Returns:
+            User agent string
+        """
+        if LitAgent is not None:
+            try:
+                agent = LitAgent()
+                fingerprint = agent.generate_fingerprint(browser)
+                return fingerprint.get("user_agent", X0GPT._default_user_agent())
+            except Exception:
+                return X0GPT._default_user_agent()
+        return X0GPT._default_user_agent()
+
+    @staticmethod
+    def _default_user_agent() -> str:
+        """Return a default user agent string.
+
+        Returns:
+            Default user agent
+        """
+        return (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0"
+        )
 
     def format_text(self, text: str) -> str:
-        """
-        Format text by replacing escaped newlines with actual newlines.
+        """Format text by replacing escaped sequences with actual characters.
 
         Args:
             text: Text to format
@@ -353,18 +414,19 @@ class X0GPT(OpenAICompatibleProvider):
             Formatted text
         """
         try:
-            # Handle unicode escaping and quote unescaping
-            text = text.encode().decode('unicode_escape')
-            text = text.replace('\\\\', '\\').replace('\\"', '"')
+            # Replace common escape sequences
+            text = text.replace("\\n", "\n")
+            text = text.replace("\\r", "\r")
+            text = text.replace("\\t", "\t")
+            text = text.replace('\\"', '"')
+            text = text.replace("\\\\", "\\")
             return text
-        except Exception as e:
+        except Exception:
             # If any error occurs, return the original text
-            print(f"Warning: Error formatting text: {e}")
             return text
 
     def convert_model_name(self, model: str) -> str:
-        """
-        Convert model names to ones supported by X0GPT.
+        """Convert model names to ones supported by X0GPT.
 
         Args:
             model: Model name to convert
@@ -372,15 +434,18 @@ class X0GPT(OpenAICompatibleProvider):
         Returns:
             X0GPT model name
         """
-        # X0GPT doesn't actually use model names, but we'll keep this for compatibility
+        # X0GPT doesn't use model names, but keep for compatibility
         return model
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return X0GPT.AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        """Get available models.
+
+        Returns:
+            SimpleModelList of available models
+        """
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
+
 
 if __name__ == "__main__":
     # Test the provider
@@ -389,7 +454,9 @@ if __name__ == "__main__":
         model="X0GPT",
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": "Hello! How are you today?"}
-        ]
+            {"role": "user", "content": "Hello! How are you today?"},
+        ],
     )
-    print(response.choices[0].message.content)
+    if not isinstance(response, Generator):
+        message = response.choices[0].message if response.choices else None
+        print(message.content if message else "")

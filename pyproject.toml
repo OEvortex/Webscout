@@ -48,23 +48,14 @@ dependencies = [
     "setuptools",
     "wheel",
     "pip",
-    "nodriver",
     "mistune",
     "curl_cffi",
     "nest-asyncio",
     "colorama",
     "rich",
     "markdownify",
-    "requests",
-    "google-generativeai",
-    "lxml>=5.2.2",
-    "orjson",
     "PyYAML",
-    "pillow",
-    "cloudscraper",
     "html5lib",
-    "aiofiles",
-    "openai",
     "psutil",
     "aiohttp",
     "zstandard",
@@ -96,6 +87,9 @@ api = [
     "websockets>=11.0",
     "starlette",
     "regex"
+]
+parser = [
+    "lxml>=5.2.2",  # Optional: faster HTML/XML parsing with lxml
 ]
 
 [tool.setuptools]

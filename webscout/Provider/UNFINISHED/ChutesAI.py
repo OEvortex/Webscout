@@ -7,13 +7,18 @@ import uuid
 from typing import Any, Dict, Generator, List, Optional, Union
 
 import cloudscraper
-import requests
+from curl_cffi.requests import Session
 from rich import print
 
 from webscout.litagent.agent import LitAgent
 
 # Import base classes and utility structures
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import (
+    BaseChat,
+    BaseCompletions,
+    OpenAICompatibleProvider,
+    SimpleModelList,
+)
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -148,7 +153,7 @@ class Completions(BaseCompletions):
                         try:
                             data = json.loads(json_str)
                             choices = data.get('choices')
-                            if not choices and choices is not None:
+                            if not choices:
                                 continue
                             choice_data = choices[0] if choices else {}
                             delta_data = choice_data.get('delta', {})
@@ -198,7 +203,7 @@ class Completions(BaseCompletions):
                         except json.JSONDecodeError:
                             print(f"Warning: Could not decode JSON line: {json_str}")
                             continue
-        except requests.exceptions.RequestException as e:
+        except Exception as e:
             print(f"Error during ChutesAI stream request: {e}")
             raise IOError(f"ChutesAI request failed: {e}") from e
         except Exception as e:
@@ -245,7 +250,7 @@ class Completions(BaseCompletions):
                 usage=usage,
             )
             return completion
-        except requests.exceptions.RequestException as e:
+        except Exception as e:
             print(f"Error during ChutesAI non-stream request: {e}")
             raise IOError(f"ChutesAI request failed: {e}") from e
         except Exception as e:
@@ -263,7 +268,7 @@ class ChutesAI(OpenAICompatibleProvider):
         "NousResearch/DeepHermes-3-Mistral-24B-Preview",
         "chutesai/Llama-4-Maverick-17B-128E-Instruct-FP8",
     ]
-    def __init__(self, api_key: str = None,):
+    def __init__(self, api_key: Optional[str] = None,):
         self.timeout = None  # Infinite timeout
         self.base_url = "https://llm.chutes.ai/v1/chat/completions"
 
@@ -290,11 +295,8 @@ class ChutesAI(OpenAICompatibleProvider):
         self.chat = Chat(self)
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 if __name__ == "__main__":
     try:
@@ -314,10 +316,14 @@ if __name__ == "__main__":
             stream=True
         )
         for chunk in response:
-            if hasattr(chunk, "model_dump"):
-                chunk_dict = chunk.model_dump(exclude_none=True)
+            if isinstance(chunk, (bytes, str)):
+                chunk_dict = {"chunk": chunk}
+            elif hasattr(chunk, "model_dump") and callable(chunk.model_dump):
+                chunk_dict = chunk.model_dump()  # type: ignore[call-arg]
+            elif hasattr(chunk, "dict") and callable(chunk.dict):
+                chunk_dict = chunk.dict()  # type: ignore[call-arg]
             else:
-                chunk_dict = chunk.dict(exclude_none=True)
+                chunk_dict = {"chunk": chunk}
             print(f"[green]Response Chunk:[/] {chunk_dict}")
 
     except Exception as e:

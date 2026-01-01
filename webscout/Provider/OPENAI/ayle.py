@@ -1,12 +1,16 @@
 import json
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 import requests
 
-from webscout.litagent import LitAgent
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import (
+    BaseChat,
+    BaseCompletions,
+    OpenAICompatibleProvider,
+    SimpleModelList,
+)
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -16,6 +20,8 @@ from webscout.Provider.OPENAI.utils import (
     CompletionUsage,
     count_tokens,
 )
+
+from ...litagent import LitAgent
 
 # ANSI escape codes for formatting
 BOLD = "\033[1m"
@@ -35,14 +41,14 @@ MODEL_CONFIGS = {
             "qwen-3-235b-a22b-instruct-2507",
             "llama3.1-8b",
             "llama-4-scout-17b-16e-instruct",
-            "qwen-3-32b"
+            "qwen-3-32b",
         ],
     }
 }
 
 
 class Completions(BaseCompletions):
-    def __init__(self, client: 'Ayle'):
+    def __init__(self, client: "Ayle"):
         self._client = client
 
     def create(
@@ -56,7 +62,7 @@ class Completions(BaseCompletions):
         top_p: Optional[float] = None,
         timeout: Optional[int] = None,
         proxies: Optional[Dict[str, str]] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
         """
         Creates a model response for the given chat conversation.
@@ -66,21 +72,29 @@ class Completions(BaseCompletions):
         provider = self._client._get_provider_from_model(model)
 
         # Build the appropriate payload
-        payload = {
-            "messages": messages,
-            "model": model
-        }
+        payload = {"messages": messages, "model": model}
 
         request_id = f"chatcmpl-{uuid.uuid4()}"
         created_time = int(time.time())
 
         if stream:
-            return self._create_stream(request_id, created_time, model, provider, payload, timeout, proxies)
+            return self._create_stream(
+                request_id, created_time, model, provider, payload, timeout, proxies
+            )
         else:
-            return self._create_non_stream(request_id, created_time, model, provider, payload, timeout, proxies)
+            return self._create_non_stream(
+                request_id, created_time, model, provider, payload, timeout, proxies
+            )
 
     def _create_stream(
-        self, request_id: str, created_time: int, model: str, provider: str, payload: Dict[str, Any], timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        provider: str,
+        payload: Dict[str, Any],
+        timeout: Optional[int] = None,
+        proxies: Optional[Dict[str, str]] = None,
     ) -> Generator[ChatCompletionChunk, None, None]:
         try:
             endpoint = self._client._get_endpoint(provider)
@@ -90,7 +104,7 @@ class Completions(BaseCompletions):
                 json=payload,
                 stream=True,
                 timeout=timeout or self._client.timeout,
-                proxies=proxies or getattr(self._client, "proxies", None)
+                proxies=proxies or getattr(self._client, "proxies", None),
             )
             response.raise_for_status()
 
@@ -103,7 +117,7 @@ class Completions(BaseCompletions):
                     continue
 
                 try:
-                    line_str = line.decode('utf-8')
+                    line_str = line.decode("utf-8")
                     if line_str.startswith('0:"'):
                         content = json.loads(line_str[2:])
                         if content:
@@ -143,7 +157,14 @@ class Completions(BaseCompletions):
             raise IOError(f"Ayle request failed: {e}") from e
 
     def _create_non_stream(
-        self, request_id: str, created_time: int, model: str, provider: str, payload: Dict[str, Any], timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        provider: str,
+        payload: Dict[str, Any],
+        timeout: Optional[int] = None,
+        proxies: Optional[Dict[str, str]] = None,
     ) -> ChatCompletion:
         try:
             endpoint = self._client._get_endpoint(provider)
@@ -152,7 +173,7 @@ class Completions(BaseCompletions):
                 headers=self._client.headers,
                 json=payload,
                 timeout=timeout or self._client.timeout,
-                proxies=proxies or getattr(self._client, "proxies", None)
+                proxies=proxies or getattr(self._client, "proxies", None),
             )
             response.raise_for_status()
 
@@ -160,7 +181,7 @@ class Completions(BaseCompletions):
             for line in response.iter_lines():
                 if line:
                     try:
-                        line_str = line.decode('utf-8')
+                        line_str = line.decode("utf-8")
                         if line_str.startswith('0:"'):
                             content = json.loads(line_str[2:])
                             if content:
@@ -176,21 +197,14 @@ class Completions(BaseCompletions):
             usage = CompletionUsage(
                 prompt_tokens=prompt_tokens,
                 completion_tokens=completion_tokens,
-                total_tokens=total_tokens
+                total_tokens=total_tokens,
             )
 
             # Create the message object
-            message = ChatCompletionMessage(
-                role="assistant",
-                content=full_response
-            )
+            message = ChatCompletionMessage(role="assistant", content=full_response)
 
             # Create the choice object
-            choice = Choice(
-                index=0,
-                message=message,
-                finish_reason="stop"
-            )
+            choice = Choice(index=0, message=message, finish_reason="stop")
 
             # Create the completion object
             completion = ChatCompletion(
@@ -207,9 +221,11 @@ class Completions(BaseCompletions):
             print(f"{RED}Error during Ayle non-stream request: {e}{RESET}")
             raise IOError(f"Ayle request failed: {e}") from e
 
+
 class Chat(BaseChat):
-    def __init__(self, client: 'Ayle'):
+    def __init__(self, client: "Ayle"):
         self.completions = Completions(client)
+
 
 class Ayle(OpenAICompatibleProvider):
     """
@@ -223,6 +239,7 @@ class Ayle(OpenAICompatibleProvider):
         )
         print(response.choices[0].message.content)
     """
+
     required_auth = False
     AVAILABLE_MODELS = [
         "gemini-2.5-flash",
@@ -233,15 +250,10 @@ class Ayle(OpenAICompatibleProvider):
         "qwen-3-235b-a22b-instruct-2507",
         "llama3.1-8b",
         "llama-4-scout-17b-16e-instruct",
-        "qwen-3-32b"
+        "qwen-3-32b",
     ]
 
-    def __init__(
-        self,
-        timeout: int = 30,
-        temperature: float = 0.5,
-        top_p: float = 1.0
-    ):
+    def __init__(self, timeout: int = 30, temperature: float = 0.5, top_p: float = 1.0):
         """
         Initialize the Ayle client.
 
@@ -274,14 +286,12 @@ class Ayle(OpenAICompatibleProvider):
         self.chat = Chat(self)
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
+
     def _get_endpoint(self, provider: str) -> str:
         """Get the API endpoint for the specified provider."""
-        return MODEL_CONFIGS[provider]["endpoint"]
+        return cast(str, MODEL_CONFIGS[provider]["endpoint"])
 
     def _get_provider_from_model(self, model: str) -> str:
         """Determine the provider based on the model name."""
@@ -306,7 +316,9 @@ class Ayle(OpenAICompatibleProvider):
                 return available_model
 
         # Default to gemini-2.5-flash if no match
-        print(f"{BOLD}Warning: Model '{model}' not found, using default model 'gemini-2.5-flash'{RESET}")
+        print(
+            f"{BOLD}Warning: Model '{model}' not found, using default model 'gemini-2.5-flash'{RESET}"
+        )
         return "gemini-2.5-flash"
 
 
@@ -331,10 +343,15 @@ if __name__ == "__main__":
                     {"role": "system", "content": "You are a helpful assistant."},
                     {"role": "user", "content": "Say 'Hello' in one word"},
                 ],
-                stream=False
+                stream=False,
             )
 
-            if response and response.choices and response.choices[0].message.content:
+            if (
+                isinstance(response, ChatCompletion)
+                and response.choices
+                and response.choices[0].message
+                and response.choices[0].message.content
+            ):
                 status = "✓"
                 # Truncate response if too long
                 display_text = response.choices[0].message.content.strip()

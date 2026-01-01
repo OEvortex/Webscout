@@ -1,6 +1,6 @@
 import json
 import time
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
@@ -106,17 +106,17 @@ class GithubChat(Provider):
         )
 
         # Set up conversation
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
-
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
+        act_prompt = (
+            AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
+        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
 
         # Store conversation data
@@ -314,12 +314,6 @@ class GithubChat(Provider):
                             yield resp if not raw else content_chunk
 
             except Exception as e:
-                if isinstance(e, CurlError): # Check for CurlError
-                    if hasattr(e, 'response') and e.response is not None:
-                        status_code = e.response.status_code
-                        if status_code == 401:
-                            raise exceptions.AuthenticationError("Authentication failed. Please check your cookies.")
-
                 # If anything else fails
                 raise exceptions.FailedToGenerateResponseError(f"Request failed: {str(e)}")
             finally:
@@ -344,28 +338,35 @@ class GithubChat(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """Generate a response to a prompt"""
-        def for_stream():
-            for response in self.ask(
-                prompt, True, optimizer=optimizer, conversationally=conversationally
-            ):
-                yield self.get_message(response)
-
-        def for_non_stream():
-            return self.get_message(
-                self.ask(
-                    prompt, False, optimizer=optimizer, conversationally=conversationally
+        raw = kwargs.get("raw", False)
+        if stream:
+            def for_stream():
+                gen = self.ask(
+                    prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
                 )
+                if hasattr(gen, "__iter__"):
+                    for response in gen:
+                        if raw:
+                            yield cast(str, response)
+                        else:
+                            yield self.get_message(response)
+            return for_stream()
+        else:
+            result = self.ask(
+                prompt, False, raw=raw, optimizer=optimizer, conversationally=conversationally
             )
-
-        return for_stream() if stream else for_non_stream()
+            if raw:
+                return cast(str, result)
+            return self.get_message(result)
 
     def get_message(self, response: Response) -> str:
         """Extract message text from response"""
         if not isinstance(response, dict):
             return str(response)
-        return response.get("text", "")
+        return cast(Dict[str, Any], response).get("text", "")
 
 if __name__ == "__main__":
     # Simple test code

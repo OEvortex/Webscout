@@ -1,5 +1,5 @@
 import re
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from .https import video_data
 from .patterns import _VideoPatterns as Patterns
@@ -12,11 +12,16 @@ class Video:
 
     def __init__(self, video_id: str):
         pattern = re.compile(r'.be/(.*?)$|=(.*?)$|^(\w{11})$')  # noqa
-        self._matched_id = (
-                pattern.search(video_id).group(1)
-                or pattern.search(video_id).group(2)
-                or pattern.search(video_id).group(3)
-        )
+        match = pattern.search(video_id)
+        if match:
+            self._matched_id = (
+                    match.group(1)
+                    or match.group(2)
+                    or match.group(3)
+            )
+        else:
+            self._matched_id = None
+
         if self._matched_id:
             self._url = self._HEAD + self._matched_id
             self._video_data = video_data(self._matched_id)

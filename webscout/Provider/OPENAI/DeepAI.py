@@ -1,14 +1,20 @@
-
 # Standard library imports
 import json
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi.requests import RequestsError, Session
 
+from webscout.AIbase import Response
+
 # Import base classes and utility structures
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import (
+    BaseChat,
+    BaseCompletions,
+    OpenAICompatibleProvider,
+    SimpleModelList,
+)
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -20,27 +26,13 @@ from webscout.Provider.OPENAI.utils import (
 )
 
 # Attempt to import LitAgent, fallback if not available
-try:
-    from webscout.litagent import LitAgent
-except ImportError:
-    # Define a dummy LitAgent if webscout is not installed or accessible
-    class LitAgent:
-        def generate_fingerprint(self, browser: str = "chrome") -> Dict[str, Any]:
-            # Return minimal default headers if LitAgent is unavailable
-            print("Warning: LitAgent not found. Using default minimal headers.")
-            return {
-                "accept": "*/*",
-                "accept_language": "en-US,en;q=0.9",
-                "platform": "Windows",
-                "sec_ch_ua": '"Not/A)Brand";v="99", "Google Chrome";v="127", "Chromium";v="127"',
-                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
-                "browser_type": browser,
-            }
+from ...litagent import LitAgent
 
 # --- DeepAI Client ---
 
+
 class Completions(BaseCompletions):
-    def __init__(self, client: 'DeepAI'):
+    def __init__(self, client: "DeepAI"):
         self._client = client
 
     def create(
@@ -56,18 +48,18 @@ class Completions(BaseCompletions):
         tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
         timeout: Optional[int] = None,
         proxies: Optional[Dict[str, str]] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
         """
         Creates a model response for the given chat conversation.
         Mimics openai.chat.completions.create
         """
-        payload = {
+        payload: Dict[str, Any] = {
             "chat_style": self._client.chat_style,
             "chatHistory": json.dumps(messages),
             "model": model,
             "hacker_is_stinky": "very_stinky",
-            "enabled_tools": json.dumps(self._client.enabled_tools)
+            "enabled_tools": json.dumps(self._client.enabled_tools),
         }
 
         # Add optional parameters if provided
@@ -87,31 +79,44 @@ class Completions(BaseCompletions):
         created_time = int(time.time())
 
         if stream:
-            return self._create_stream(request_id, created_time, model, payload, timeout=timeout, proxies=proxies)
+            return self._create_stream(
+                request_id, created_time, model, payload, timeout=timeout, proxies=proxies
+            )
         else:
-            return self._create_non_stream(request_id, created_time, model, payload, timeout=timeout, proxies=proxies)
+            return self._create_non_stream(
+                request_id, created_time, model, payload, timeout=timeout, proxies=proxies
+            )
 
     def _create_stream(
-        self, request_id: str, created_time: int, model: str, payload: Dict[str, Any],
-        timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        payload: Dict[str, Any],
+        timeout: Optional[int] = None,
+        proxies: Optional[Dict[str, str]] = None,
     ) -> Generator[ChatCompletionChunk, None, None]:
         # DeepAI doesn't actually support streaming, but we'll implement it for compatibility
         # For now, just yield the non-stream response as a single chunk
-        original_proxies = self._client.session.proxies
+        original_proxies = dict(cast(Any, self._client.session.proxies))
         if proxies is not None:
-            self._client.session.proxies = proxies
+            self._client.session.proxies.update(cast(Any, proxies))
         else:
-            self._client.session.proxies = {}
+            self._client.session.proxies.update(
+                cast(Any, {})
+            )  # Use update with empty dict instead of clear
         try:
             timeout_val = timeout if timeout is not None else self._client.timeout
             response = self._client.session.post(
                 "https://api.deepai.org/hacking_is_a_serious_crime",
                 data=payload,
-                timeout=timeout_val
+                timeout=timeout_val,
             )
 
             if response.status_code != 200:
-                raise IOError(f"DeepAI request failed with status code {response.status_code}: {response.text}")
+                raise IOError(
+                    f"DeepAI request failed with status code {response.status_code}: {response.text}"
+                )
 
             # Get response text
             content = response.text.strip()
@@ -122,19 +127,10 @@ class Completions(BaseCompletions):
             total_tokens = prompt_tokens + completion_tokens
 
             # Create the delta object
-            delta = ChoiceDelta(
-                content=content,
-                role="assistant",
-                tool_calls=None
-            )
+            delta = ChoiceDelta(content=content, role="assistant", tool_calls=None)
 
             # Create the choice object
-            choice = Choice(
-                index=0,
-                delta=delta,
-                finish_reason="stop",
-                logprobs=None
-            )
+            choice = Choice(index=0, delta=delta, finish_reason="stop", logprobs=None)
 
             # Create the chunk object
             chunk = ChatCompletionChunk(
@@ -142,7 +138,7 @@ class Completions(BaseCompletions):
                 choices=[choice],
                 created=created_time,
                 model=model,
-                system_fingerprint=None
+                system_fingerprint=None,
             )
 
             # Set usage directly on the chunk object
@@ -150,7 +146,7 @@ class Completions(BaseCompletions):
                 "prompt_tokens": prompt_tokens,
                 "completion_tokens": completion_tokens,
                 "total_tokens": total_tokens,
-                "estimated_cost": None
+                "estimated_cost": None,
             }
 
             yield chunk
@@ -162,27 +158,34 @@ class Completions(BaseCompletions):
             print(f"Unexpected error during DeepAI stream request: {e}")
             raise IOError(f"DeepAI request failed: {e}") from e
         finally:
-            self._client.session.proxies = original_proxies
+            self._client.session.proxies = cast(Any, original_proxies)
 
     def _create_non_stream(
-        self, request_id: str, created_time: int, model: str, payload: Dict[str, Any],
-        timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        payload: Dict[str, Any],
+        timeout: Optional[int] = None,
+        proxies: Optional[Dict[str, str]] = None,
     ) -> ChatCompletion:
-        original_proxies = self._client.session.proxies
+        original_proxies = dict(cast(Any, self._client.session.proxies))
         if proxies is not None:
-            self._client.session.proxies = proxies
+            self._client.session.proxies.update(cast(Any, proxies))
         else:
-            self._client.session.proxies = {}
+            self._client.session.proxies.update(cast(Any, {}))
         try:
             timeout_val = timeout if timeout is not None else self._client.timeout
             response = self._client.session.post(
                 "https://api.deepai.org/hacking_is_a_serious_crime",
                 data=payload,
-                timeout=timeout_val
+                timeout=timeout_val,
             )
 
             if response.status_code != 200:
-                raise IOError(f"DeepAI request failed with status code {response.status_code}: {response.text}")
+                raise IOError(
+                    f"DeepAI request failed with status code {response.status_code}: {response.text}"
+                )
 
             # Get response text
             content = response.text.strip()
@@ -193,23 +196,16 @@ class Completions(BaseCompletions):
             total_tokens = prompt_tokens + completion_tokens
 
             # Create the message object
-            message = ChatCompletionMessage(
-                role="assistant",
-                content=content
-            )
+            message = ChatCompletionMessage(role="assistant", content=content)
 
             # Create the choice object
-            choice = Choice(
-                index=0,
-                message=message,
-                finish_reason="stop"
-            )
+            choice = Choice(index=0, message=message, finish_reason="stop")
 
             # Create the usage object
             usage = CompletionUsage(
                 prompt_tokens=prompt_tokens,
                 completion_tokens=completion_tokens,
-                total_tokens=total_tokens
+                total_tokens=total_tokens,
             )
 
             # Create the completion object
@@ -229,11 +225,13 @@ class Completions(BaseCompletions):
             print(f"Unexpected error during DeepAI non-stream request: {e}")
             raise IOError(f"DeepAI request failed: {e}") from e
         finally:
-            self._client.session.proxies = original_proxies
+            self._client.session.proxies = cast(Any, original_proxies)
+
 
 class Chat(BaseChat):
-    def __init__(self, client: 'DeepAI'):
+    def __init__(self, client: "DeepAI"):
         self.completions = Completions(client)
+
 
 class DeepAI(OpenAICompatibleProvider):
     """
@@ -246,6 +244,7 @@ class DeepAI(OpenAICompatibleProvider):
             messages=[{"role": "user", "content": "Hello!"}]
         )
     """
+
     required_auth = True
     AVAILABLE_MODELS = []
 
@@ -258,7 +257,7 @@ class DeepAI(OpenAICompatibleProvider):
         chat_style: str = "chat",
         enabled_tools: Optional[List[str]] = None,
         proxies: Optional[Dict[str, str]] = None,
-        **kwargs
+        **kwargs,
     ):
         """
         Initialize the DeepAI client.
@@ -284,8 +283,17 @@ class DeepAI(OpenAICompatibleProvider):
         self.enabled_tools = enabled_tools or ["image_generator"]
 
         # Use LitAgent for fingerprint if available, else fallback
-        agent = LitAgent()
-        self.fingerprint = agent.generate_fingerprint(browser)
+        if LitAgent:
+            agent = LitAgent()
+            self.fingerprint = agent.generate_fingerprint(browser)
+        else:
+            self.fingerprint = {
+                "accept": "*/*",
+                "accept_language": "en-US,en;q=0.9",
+                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "sec_ch_ua": "",
+                "platform": "Windows",
+            }
 
         # Use the fingerprint for headers
         self.headers = {
@@ -296,13 +304,14 @@ class DeepAI(OpenAICompatibleProvider):
             "Accept-Language": self.fingerprint["accept_language"],
             "User-Agent": self.fingerprint["user_agent"],
             "DNT": "1",
-            "Sec-CH-UA": self.fingerprint["sec_ch_ua"] or '"Not/A)Brand";v="99", "Google Chrome";v="127", "Chromium";v="127"',
+            "Sec-CH-UA": self.fingerprint["sec_ch_ua"]
+            or '"Not/A)Brand";v="99", "Google Chrome";v="127", "Chromium";v="127"',
             "Sec-CH-UA-Mobile": "?0",
             "Sec-CH-UA-Platform": f'"{self.fingerprint["platform"]}"',
         }
 
         # Create session cookies with unique identifiers
-        self.cookies = {"__Host-session": uuid.uuid4().hex, '__cf_bm': uuid.uuid4().hex}
+        self.cookies = {"__Host-session": uuid.uuid4().hex, "__cf_bm": uuid.uuid4().hex}
 
         # Set consistent headers for the scraper session
         self.session = Session()
@@ -312,27 +321,29 @@ class DeepAI(OpenAICompatibleProvider):
         # Set cookies
         self.session.cookies.update(self.cookies)
 
-
     def refresh_identity(self, browser: Optional[str] = None, impersonate: str = "chrome120"):
         """Refreshes the browser identity fingerprint and curl_cffi session."""
         browser = browser or self.fingerprint.get("browser_type", "chrome")
-        self.fingerprint = LitAgent().generate_fingerprint(browser)
-        self.session = Session(impersonate=impersonate)
+        if LitAgent:
+            self.fingerprint = LitAgent().generate_fingerprint(browser)
+        self.session = Session(impersonate=cast(Any, impersonate))
         # Update headers with new fingerprint
-        self.headers.update({
-            "Accept": self.fingerprint["accept"],
-            "Accept-Language": self.fingerprint["accept_language"],
-            "Sec-CH-UA": self.fingerprint["sec_ch_ua"] or self.headers["Sec-CH-UA"],
-            "Sec-CH-UA-Platform": f'"{self.fingerprint["platform"]}"',
-            "User-Agent": self.fingerprint["user_agent"],
-        })
+        self.headers.update(
+            {
+                "Accept": self.fingerprint["accept"],
+                "Accept-Language": self.fingerprint["accept_language"],
+                "Sec-CH-UA": self.fingerprint["sec_ch_ua"] or self.headers["Sec-CH-UA"],
+                "Sec-CH-UA-Platform": f'"{self.fingerprint["platform"]}"',
+                "User-Agent": self.fingerprint["user_agent"],
+            }
+        )
 
         # Update session headers
         for header, value in self.headers.items():
             self.session.headers.update({header: value})
 
         # Generate new cookies
-        self.cookies = {"__Host-session": uuid.uuid4().hex, '__cf_bm': uuid.uuid4().hex}
+        self.cookies = {"__Host-session": uuid.uuid4().hex, "__cf_bm": uuid.uuid4().hex}
         self.session.cookies.update(self.cookies)
 
         return self.fingerprint
@@ -380,8 +391,8 @@ class DeepAI(OpenAICompatibleProvider):
         try:
             # Use a temporary session for this class method
             from curl_cffi.requests import Session
-            Session()
 
+            Session()
 
             # Note: DeepAI doesn't have a standard models endpoint, so we'll use a default list
             # If DeepAI has a models endpoint, you would call it here
@@ -458,21 +469,21 @@ class DeepAI(OpenAICompatibleProvider):
             pass
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
+
 
 if __name__ == "__main__":
     client = DeepAI()
     response = client.chat.completions.create(
-        model="standard",
-        messages=[{"role": "user", "content": "Hello!"}],
-        stream=False
+        model="standard", messages=[{"role": "user", "content": "Hello!"}], stream=False
     )
     if isinstance(response, ChatCompletion):
-        print(response.choices[0].message.content)
+        if not isinstance(response, Generator):
+            message = response.choices[0].message
+            if message and message.content:
+                print(message.content)
     else:
-        for chunk in response:
-            print(chunk.choices[0].delta.content, end="")
+        for chunk in cast(Generator[ChatCompletionChunk, None, None], response):
+            if chunk.choices[0].delta and chunk.choices[0].delta.content:
+                print(chunk.choices[0].delta.content, end="")

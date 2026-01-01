@@ -1,6 +1,6 @@
 import re
 import threading
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 from uuid import uuid4
 
 from curl_cffi import CurlError
@@ -26,6 +26,7 @@ class PiAI(Provider):
         AVAILABLE_VOICES (Dict[str, int]): Available voice options for audio responses
         AVAILABLE_MODELS (List[str]): Available model options for the API
     """
+
     required_auth = False
     AVAILABLE_MODELS = ["inflection_3_pi"]
     AVAILABLE_VOICES: Dict[str, int] = {
@@ -36,13 +37,13 @@ class PiAI(Provider):
         "voice5": 5,
         "voice6": 6,
         "voice7": 7,
-        "voice8": 8
+        "voice8": 8,
     }
 
     def __init__(
         self,
         is_conversation: bool = True,
-        max_tokens: int = 2048, # Note: max_tokens is not used by this API
+        max_tokens: int = 2048,  # Note: max_tokens is not used by this API
         timeout: int = 30,
         intro: Optional[str] = None,
         filepath: Optional[str] = None,
@@ -53,7 +54,7 @@ class PiAI(Provider):
         voice: bool = False,
         voice_name: str = "voice3",
         output_file: str = "PiAI.mp3",
-        model: str = "inflection_3_pi", # Note: model is not used by this API
+        model: str = "inflection_3_pi",  # Note: model is not used by this API
     ):
         """
         Initializes PiAI with voice support.
@@ -69,34 +70,35 @@ class PiAI(Provider):
         self.output_file = output_file
 
         if voice and voice_name and voice_name not in self.AVAILABLE_VOICES:
-            raise ValueError(f"Voice '{voice_name}' not available. Choose from: {list(self.AVAILABLE_VOICES.keys())}")
+            raise ValueError(
+                f"Voice '{voice_name}' not available. Choose from: {list(self.AVAILABLE_VOICES.keys())}"
+            )
 
         # Initialize curl_cffi Session instead of cloudscraper/requests
         self.session = Session()
-        self.primary_url = 'https://pi.ai/api/chat'
-        self.fallback_url = 'https://pi.ai/api/v2/chat'
+        self.primary_url = "https://pi.ai/api/chat"
+        self.fallback_url = "https://pi.ai/api/v2/chat"
         self.url = self.primary_url
         self.headers = {
-            'Accept': 'text/event-stream',
-            'Accept-Encoding': 'gzip, deflate, br, zstd',
-            'Accept-Language': 'en-US,en;q=0.9,en-IN;q=0.8',
-            'Content-Type': 'application/json',
-            'DNT': '1',
-            'Origin': 'https://pi.ai',
-            'Referer': 'https://pi.ai/talk',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-origin',
-            'User-Agent': LitAgent().random(),
-            'X-Api-Version': '3'
+            "Accept": "text/event-stream",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Accept-Language": "en-US,en;q=0.9,en-IN;q=0.8",
+            "Content-Type": "application/json",
+            "DNT": "1",
+            "Origin": "https://pi.ai",
+            "Referer": "https://pi.ai/talk",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "User-Agent": LitAgent().random(),
+            "X-Api-Version": "3",
         }
-        self.cookies = {
-            '__cf_bm': uuid4().hex
-        }
+        self.cookies = {"__cf_bm": uuid4().hex}
 
         # Update curl_cffi session headers, proxies, and cookies
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies # Assign proxies directly
+        if proxies:
+            self.session.proxies.update(cast(Any, proxies))  # Assign proxies directly
         # Set cookies on the session object for curl_cffi
         for name, value in self.cookies.items():
             self.session.cookies.set(name, value)
@@ -104,7 +106,7 @@ class PiAI(Provider):
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
         self.timeout = timeout
-        self.last_response = {} if self.is_conversation else {'text': ""}
+        self.last_response = {} if self.is_conversation else {"text": ""}
         self.conversation_id = None
 
         self.__available_optimizers = (
@@ -113,17 +115,24 @@ class PiAI(Provider):
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
 
-        # Setup conversation
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            ) if act else intro or Conversation.intro
-        )
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
-        self.session.proxies = proxies
+
+        if act:
+            self.conversation.intro = (
+                AwesomePrompts().get_act(
+                    cast(Union[str, int], act),
+                    default=self.conversation.intro,
+                    case_insensitive=True,
+                )
+                or self.conversation.intro
+            )
+        elif intro:
+            self.conversation.intro = intro
+        if proxies:
+            self.session.proxies.update(proxies)
 
         if self.is_conversation:
             self.start_conversation()
@@ -131,7 +140,7 @@ class PiAI(Provider):
     @staticmethod
     def _pi_extractor(chunk: Union[str, Dict[str, Any]]) -> Optional[str]:
         """Extracts text content from PiAI stream JSON objects."""
-        if isinstance(chunk, dict) and 'text' in chunk and chunk['text'] is not None:
+        if isinstance(chunk, dict) and "text" in chunk and chunk["text"] is not None:
             return chunk.get("text")
         return None
 
@@ -149,24 +158,36 @@ class PiAI(Provider):
                 json={},
                 timeout=self.timeout,
                 # proxies are set on the session
-                impersonate="chrome110" # Use a common impersonation profile
+                impersonate="chrome110",  # Use a common impersonation profile
             )
-            response.raise_for_status() # Check for HTTP errors
+            response.raise_for_status()  # Check for HTTP errors
 
             data = response.json()
             # Ensure the expected structure before accessing
-            if 'conversations' in data and data['conversations'] and 'sid' in data['conversations'][0]:
-                self.conversation_id = data['conversations'][0]['sid']
+            if (
+                "conversations" in data
+                and data["conversations"]
+                and "sid" in data["conversations"][0]
+            ):
+                self.conversation_id = data["conversations"][0]["sid"]
                 return self.conversation_id
             else:
-                 raise exceptions.FailedToGenerateResponseError(f"Unexpected response structure from start API: {data}")
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Unexpected response structure from start API: {data}"
+                )
 
-        except CurlError as e: # Catch CurlError
-            raise exceptions.FailedToGenerateResponseError(f"Failed to start conversation (CurlError): {e}") from e
-        except Exception as e: # Catch other potential exceptions (like HTTPError, JSONDecodeError)
+        except CurlError as e:  # Catch CurlError
+            raise exceptions.FailedToGenerateResponseError(
+                f"Failed to start conversation (CurlError): {e}"
+            ) from e
+        except Exception as e:  # Catch other potential exceptions (like HTTPError, JSONDecodeError)
             # Extract error text from the response if available
-            err_text = e.response.text if hasattr(e, 'response') and hasattr(e.response, 'text') else ''
-            raise exceptions.FailedToGenerateResponseError(f"Failed to start conversation ({type(e).__name__}): {e} - {err_text}") from e
+            err_text = (
+                e.response.text if hasattr(e, "response") and hasattr(e.response, "text") else ""
+            )
+            raise exceptions.FailedToGenerateResponseError(
+                f"Failed to start conversation ({type(e).__name__}): {e} - {err_text}"
+            ) from e
 
     def ask(
         self,
@@ -200,7 +221,9 @@ class PiAI(Provider):
         output_file = self.output_file if output_file is None else output_file
 
         if voice and voice_name and voice_name not in self.AVAILABLE_VOICES:
-            raise ValueError(f"Voice '{voice_name}' not available. Choose from: {list(self.AVAILABLE_VOICES.keys())}")
+            raise ValueError(
+                f"Voice '{voice_name}' not available. Choose from: {list(self.AVAILABLE_VOICES.keys())}"
+            )
 
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -211,10 +234,7 @@ class PiAI(Provider):
             else:
                 raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
 
-        data = {
-            'text': conversation_prompt,
-            'conversation': self.conversation_id
-        }
+        data = {"text": conversation_prompt, "conversation": self.conversation_id}
 
         def process_stream():
             try:
@@ -224,7 +244,7 @@ class PiAI(Provider):
                     json=data,
                     stream=True,
                     timeout=self.timeout,
-                    impersonate="chrome110"
+                    impersonate="chrome110",
                 )
                 if not response.ok and current_url == self.primary_url:
                     current_url = self.fallback_url
@@ -233,7 +253,7 @@ class PiAI(Provider):
                         json=data,
                         stream=True,
                         timeout=self.timeout,
-                        impersonate="chrome110"
+                        impersonate="chrome110",
                     )
                 response.raise_for_status()
 
@@ -246,7 +266,7 @@ class PiAI(Provider):
                     intro_value="data: ",
                     to_json=True,
                     content_extractor=self._pi_extractor,
-                    raw=raw
+                    raw=raw,
                 )
                 for content in processed_stream:
                     if raw:
@@ -258,23 +278,31 @@ class PiAI(Provider):
                 # SID extraction for voice
                 for line_bytes in response.iter_lines():
                     if line_bytes:
-                        line = line_bytes.decode('utf-8')
+                        line = line_bytes.decode("utf-8")
                         full_raw_data_for_sids += line + "\n"
                 sids = re.findall(r'"sid":"(.*?)"', full_raw_data_for_sids)
                 second_sid = sids[1] if len(sids) >= 2 else None
                 if voice and voice_name and second_sid:
                     threading.Thread(
                         target=self.download_audio_threaded,
-                        args=(voice_name, second_sid, output_file)
+                        args=(voice_name, second_sid, output_file),
                     ).start()
                 if not raw:
                     self.last_response = dict(text=streaming_text)
                     self.conversation.update_chat_history(prompt, streaming_text)
             except CurlError as e:
-                raise exceptions.FailedToGenerateResponseError(f"API request failed (CurlError): {e}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"API request failed (CurlError): {e}"
+                ) from e
             except Exception as e:
-                err_text = getattr(e, 'response', None) and getattr(e.response, 'text', '')
-                raise exceptions.FailedToGenerateResponseError(f"API request failed ({type(e).__name__}): {e} - {err_text}") from e
+                err_text = ""
+                if hasattr(e, "response"):
+                    response_obj = getattr(e, "response")
+                    if hasattr(response_obj, "text"):
+                        err_text = getattr(response_obj, "text")
+                raise exceptions.FailedToGenerateResponseError(
+                    f"API request failed ({type(e).__name__}): {e} - {err_text}"
+                ) from e
 
         if stream:
             return process_stream()
@@ -300,10 +328,6 @@ class PiAI(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        voice: Optional[bool] = None,
-        voice_name: Optional[str] = None,
-        output_file: Optional[str] = None,
-        raw: bool = False,  # Added raw parameter
         **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """
@@ -314,19 +338,20 @@ class PiAI(Provider):
             stream (bool): Whether to stream the response
             optimizer (str): Prompt optimizer to use
             conversationally (bool): Use conversation context
-            voice (bool): Override default voice setting
-            voice_name (str): Override default voice name
-            output_file (str): Override default output file path
+            **kwargs: Additional parameters including voice, voice_name, output_file, raw.
         """
-        # Use instance defaults if not specified
-        voice = self.voice_enabled if voice is None else voice
-        voice_name = self.voice_name if voice_name is None else voice_name
-        output_file = self.output_file if output_file is None else output_file
+        voice = kwargs.get("voice", self.voice_enabled)
+        voice_name = kwargs.get("voice_name", self.voice_name)
+        output_file = kwargs.get("output_file", self.output_file)
+        raw = kwargs.get("raw", False)
 
         if voice and voice_name and voice_name not in self.AVAILABLE_VOICES:
-            raise ValueError(f"Voice '{voice_name}' not available. Choose from: {list(self.AVAILABLE_VOICES.keys())}")
+            raise ValueError(
+                f"Voice '{voice_name}' not available. Choose from: {list(self.AVAILABLE_VOICES.keys())}"
+            )
 
         if stream:
+
             def stream_generator():
                 gen = self.ask(
                     prompt,
@@ -336,13 +361,14 @@ class PiAI(Provider):
                     conversationally=conversationally,
                     voice=voice,
                     voice_name=voice_name,
-                    output_file=output_file
+                    output_file=output_file,
                 )
                 for response in gen:
                     if raw:
-                        yield response
+                        yield cast(str, response)
                     else:
-                        yield self.get_message(response)
+                        yield self.get_message(cast(Response, response))
+
             return stream_generator()
         else:
             response_data = self.ask(
@@ -353,10 +379,10 @@ class PiAI(Provider):
                 conversationally=conversationally,
                 voice=voice,
                 voice_name=voice_name,
-                output_file=output_file
+                output_file=output_file,
             )
             if raw:
-                return response_data
+                return cast(str, response_data)
             else:
                 return self.get_message(response_data)
 
@@ -364,43 +390,45 @@ class PiAI(Provider):
         """Retrieves message only from response"""
         if not isinstance(response, dict):
             return str(response)
-        return response.get("text", "")
+        return cast(Dict[str, Any], response).get("text", "")
 
     def download_audio_threaded(self, voice_name: str, second_sid: str, output_file: str) -> None:
         """Downloads audio in a separate thread."""
         params = {
-            'mode': 'eager',
-            'voice': f'voice{self.AVAILABLE_VOICES[voice_name]}',
-            'messageSid': second_sid,
+            "mode": "eager",
+            "voice": f"voice{self.AVAILABLE_VOICES[voice_name]}",
+            "messageSid": second_sid,
         }
 
         try:
             # Use curl_cffi session get with impersonate
             audio_response = self.session.get(
-                'https://pi.ai/api/chat/voice',
+                "https://pi.ai/api/chat/voice",
                 params=params,
                 # cookies are handled by the session
                 # headers are set on the session
                 timeout=self.timeout,
                 # proxies are set on the session
-                impersonate="chrome110" # Use a common impersonation profile
+                impersonate="chrome110",  # Use a common impersonation profile
             )
-            audio_response.raise_for_status() # Check for HTTP errors
+            audio_response.raise_for_status()  # Check for HTTP errors
 
             with open(output_file, "wb") as file:
                 file.write(audio_response.content)
 
-        except CurlError: # Catch CurlError
+        except CurlError:  # Catch CurlError
             # Optionally log the error
             pass
-        except Exception: # Catch other potential exceptions
+        except Exception:  # Catch other potential exceptions
             # Optionally log the error
             pass
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # Ensure curl_cffi is installed
     from rich import print
-    try: # Add try-except block for testing
+
+    try:  # Add try-except block for testing
         ai = PiAI(timeout=60)
         print("[bold blue]Testing Chat (Stream):[/bold blue]")
         response = ai.chat("hi", stream=True, raw=False)

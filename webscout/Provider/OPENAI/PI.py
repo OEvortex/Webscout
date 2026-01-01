@@ -3,7 +3,7 @@ import re
 import threading
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 from uuid import uuid4
 
 from curl_cffi import CurlError
@@ -11,11 +11,13 @@ from curl_cffi.requests import Session
 
 from webscout import exceptions
 
-# Attempt to import LitAgent, fallback if not available
-from webscout.litagent import LitAgent
-
 # Import base classes and utility structures
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import (
+    BaseChat,
+    BaseCompletions,
+    OpenAICompatibleProvider,
+    SimpleModelList,
+)
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -25,10 +27,14 @@ from webscout.Provider.OPENAI.utils import (
     CompletionUsage,
 )
 
+# Attempt to import LitAgent, fallback if not available
+from ...litagent import LitAgent
+
 # --- PI.ai Client ---
 
+
 class Completions(BaseCompletions):
-    def __init__(self, client: 'PiAI'):
+    def __init__(self, client: "PiAI"):
         self._client = client
 
     def create(
@@ -45,7 +51,7 @@ class Completions(BaseCompletions):
         voice: bool = False,
         voice_name: str = "voice3",
         output_file: str = "PiAI.mp3",
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
         """
         Creates a model response for the given chat conversation.
@@ -53,10 +59,13 @@ class Completions(BaseCompletions):
         """
         # Validate voice settings
         if voice and voice_name not in self._client.AVAILABLE_VOICES:
-            raise ValueError(f"Voice '{voice_name}' not available. Choose from: {list(self._client.AVAILABLE_VOICES.keys())}")
+            raise ValueError(
+                f"Voice '{voice_name}' not available. Choose from: {list(self._client.AVAILABLE_VOICES.keys())}"
+            )
 
         # Use format_prompt from utils.py to convert OpenAI messages format to Pi.ai prompt
         from webscout.Provider.OPENAI.utils import count_tokens, format_prompt
+
         prompt = format_prompt(messages, do_continue=True, add_special_tokens=True)
 
         # Ensure conversation is started
@@ -71,28 +80,47 @@ class Completions(BaseCompletions):
 
         if stream:
             return self._create_stream(
-                request_id, created_time, model, prompt,
-                timeout, proxies, voice, voice_name, output_file, prompt_tokens
+                request_id,
+                created_time,
+                model,
+                prompt,
+                timeout,
+                proxies,
+                voice,
+                voice_name,
+                output_file,
+                prompt_tokens,
             )
         else:
             return self._create_non_stream(
-                request_id, created_time, model, prompt,
-                timeout, proxies, voice, voice_name, output_file, prompt_tokens
+                request_id,
+                created_time,
+                model,
+                prompt,
+                timeout,
+                proxies,
+                voice,
+                voice_name,
+                output_file,
+                prompt_tokens,
             )
 
     def _create_stream(
-        self, request_id: str, created_time: int, model: str, prompt: str,
-        timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None,
-        voice: bool = False, voice_name: str = "voice3", output_file: str = "PiAI.mp3",
-        prompt_tokens: Optional[int] = None
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        prompt: str,
+        timeout: Optional[int] = None,
+        proxies: Optional[Dict[str, str]] = None,
+        voice: bool = False,
+        voice_name: str = "voice3",
+        output_file: str = "PiAI.mp3",
+        prompt_tokens: Optional[int] = None,
     ) -> Generator[ChatCompletionChunk, None, None]:
-
         from webscout.Provider.OPENAI.utils import count_tokens
 
-        data = {
-            'text': prompt,
-            'conversation': self._client.conversation_id
-        }
+        data = {"text": prompt, "conversation": self._client.conversation_id}
 
         try:
             # Try primary URL first
@@ -102,7 +130,7 @@ class Completions(BaseCompletions):
                 json=data,
                 stream=True,
                 timeout=timeout or self._client.timeout,
-                impersonate="chrome110"
+                impersonate="chrome110",
             )
 
             # If primary URL fails, try fallback URL
@@ -113,7 +141,7 @@ class Completions(BaseCompletions):
                     json=data,
                     stream=True,
                     timeout=timeout or self._client.timeout,
-                    impersonate="chrome110"
+                    impersonate="chrome110",
                 )
 
             response.raise_for_status()
@@ -129,14 +157,14 @@ class Completions(BaseCompletions):
             # Process streaming response
             for line_bytes in response.iter_lines():
                 if line_bytes:
-                    line = line_bytes.decode('utf-8')
+                    line = line_bytes.decode("utf-8")
                     full_raw_data_for_sids += line + "\n"
 
                     if line.startswith("data: "):
                         json_line_str = line[6:]
                         try:
                             chunk_data = json.loads(json_line_str)
-                            content = chunk_data.get('text', '')
+                            content = chunk_data.get("text", "")
 
                             if content:
                                 # Assume content is incremental (new text since last chunk)
@@ -145,22 +173,15 @@ class Completions(BaseCompletions):
                                 completion_tokens += count_tokens(new_content) if new_content else 0
 
                                 # Create OpenAI-compatible chunk
-                                delta = ChoiceDelta(
-                                    content=new_content,
-                                    role="assistant"
-                                )
+                                delta = ChoiceDelta(content=new_content, role="assistant")
 
-                                choice = Choice(
-                                    index=0,
-                                    delta=delta,
-                                    finish_reason=None
-                                )
+                                choice = Choice(index=0, delta=delta, finish_reason=None)
 
                                 chunk = ChatCompletionChunk(
                                     id=request_id,
                                     choices=[choice],
                                     created=created_time,
-                                    model=model
+                                    model=model,
                                 )
 
                                 yield chunk
@@ -169,17 +190,10 @@ class Completions(BaseCompletions):
                             continue
 
             # Send final chunk with finish_reason
-            final_choice = Choice(
-                index=0,
-                delta=ChoiceDelta(),
-                finish_reason="stop"
-            )
+            final_choice = Choice(index=0, delta=ChoiceDelta(), finish_reason="stop")
 
             final_chunk = ChatCompletionChunk(
-                id=request_id,
-                choices=[final_choice],
-                created=created_time,
-                model=model
+                id=request_id, choices=[final_choice], created=created_time, model=model
             )
 
             yield final_chunk
@@ -191,21 +205,29 @@ class Completions(BaseCompletions):
                 if second_sid:
                     threading.Thread(
                         target=self._client.download_audio_threaded,
-                        args=(voice_name, second_sid, output_file)
+                        args=(voice_name, second_sid, output_file),
                     ).start()
 
         except CurlError as e:
-            raise exceptions.FailedToGenerateResponseError(f"PI.ai request failed (CurlError): {e}") from e
+            raise exceptions.FailedToGenerateResponseError(
+                f"PI.ai request failed (CurlError): {e}"
+            ) from e
         except Exception as e:
             raise exceptions.FailedToGenerateResponseError(f"PI.ai request failed: {e}") from e
 
     def _create_non_stream(
-        self, request_id: str, created_time: int, model: str, prompt: str,
-        timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None,
-        voice: bool = False, voice_name: str = "voice3", output_file: str = "PiAI.mp3",
-        prompt_tokens: Optional[int] = None
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        prompt: str,
+        timeout: Optional[int] = None,
+        proxies: Optional[Dict[str, str]] = None,
+        voice: bool = False,
+        voice_name: str = "voice3",
+        output_file: str = "PiAI.mp3",
+        prompt_tokens: Optional[int] = None,
     ) -> ChatCompletion:
-
         from webscout.Provider.OPENAI.utils import count_tokens
 
         # Collect streaming response into a single response
@@ -217,8 +239,16 @@ class Completions(BaseCompletions):
             prompt_tokens = count_tokens(prompt)
 
         for chunk in self._create_stream(
-            request_id, created_time, model, prompt,
-            timeout, proxies, voice, voice_name, output_file, prompt_tokens
+            request_id,
+            created_time,
+            model,
+            prompt,
+            timeout,
+            proxies,
+            voice,
+            voice_name,
+            output_file,
+            prompt_tokens,
         ):
             if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
                 full_content += chunk.choices[0].delta.content
@@ -227,36 +257,25 @@ class Completions(BaseCompletions):
         completion_tokens = count_tokens(full_content)
 
         # Create final completion response
-        message = ChatCompletionMessage(
-            role="assistant",
-            content=full_content
-        )
+        message = ChatCompletionMessage(role="assistant", content=full_content)
 
-        choice = Choice(
-            index=0,
-            message=message,
-            finish_reason="stop"
-        )
+        choice = Choice(index=0, message=message, finish_reason="stop")
 
         usage = CompletionUsage(
             prompt_tokens=prompt_tokens,
             completion_tokens=completion_tokens,
-            total_tokens=prompt_tokens + completion_tokens
+            total_tokens=prompt_tokens + completion_tokens,
         )
 
         completion = ChatCompletion(
-            id=request_id,
-            choices=[choice],
-            created=created_time,
-            model=model,
-            usage=usage
+            id=request_id, choices=[choice], created=created_time, model=model, usage=usage
         )
 
         return completion
 
 
 class Chat(BaseChat):
-    def __init__(self, client: 'PiAI'):
+    def __init__(self, client: "PiAI"):
         self.completions = Completions(client)
 
 
@@ -266,6 +285,7 @@ class PiAI(OpenAICompatibleProvider):
 
     Supports Pi.ai specific features like voice generation and conversation management.
     """
+
     required_auth = False
     AVAILABLE_MODELS = ["inflection_3_pi"]
     AVAILABLE_VOICES: Dict[str, int] = {
@@ -276,7 +296,7 @@ class PiAI(OpenAICompatibleProvider):
         "voice5": 5,
         "voice6": 6,
         "voice7": 7,
-        "voice8": 8
+        "voice8": 8,
     }
 
     def __init__(
@@ -284,7 +304,7 @@ class PiAI(OpenAICompatibleProvider):
         api_key: Optional[str] = None,
         timeout: int = 30,
         proxies: Optional[Dict[str, str]] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ):
         """
         Initialize PI.ai provider.
@@ -300,29 +320,27 @@ class PiAI(OpenAICompatibleProvider):
         self.conversation_id = None
 
         # Setup URLs
-        self.primary_url = 'https://pi.ai/api/chat'
-        self.fallback_url = 'https://pi.ai/api/v2/chat'
+        self.primary_url = "https://pi.ai/api/chat"
+        self.fallback_url = "https://pi.ai/api/v2/chat"
 
         # Setup headers
         self.headers = {
-            'Accept': 'text/event-stream',
-            'Accept-Encoding': 'gzip, deflate, br, zstd',
-            'Accept-Language': 'en-US,en;q=0.9,en-IN;q=0.8',
-            'Content-Type': 'application/json',
-            'DNT': '1',
-            'Origin': 'https://pi.ai',
-            'Referer': 'https://pi.ai/talk',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-origin',
-            'User-Agent': LitAgent().random(),
-            'X-Api-Version': '3'
+            "Accept": "text/event-stream",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Accept-Language": "en-US,en;q=0.9,en-IN;q=0.8",
+            "Content-Type": "application/json",
+            "DNT": "1",
+            "Origin": "https://pi.ai",
+            "Referer": "https://pi.ai/talk",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "User-Agent": LitAgent().random(),
+            "X-Api-Version": "3",
         }
 
         # Setup cookies
-        self.cookies = {
-            '__cf_bm': uuid4().hex
-        }
+        self.cookies = {"__cf_bm": uuid4().hex}
 
         # Replace the base session with curl_cffi Session
         self.session = Session()
@@ -330,7 +348,7 @@ class PiAI(OpenAICompatibleProvider):
         # Configure session
         self.session.headers.update(self.headers)
         if proxies:
-            self.session.proxies = proxies
+            self.session.proxies.update(cast(Any, proxies))
 
         # Set cookies on the session
         for name, value in self.cookies.items():
@@ -351,36 +369,46 @@ class PiAI(OpenAICompatibleProvider):
                 "https://pi.ai/api/chat/start",
                 json={},
                 timeout=self.timeout,
-                impersonate="chrome110"
+                impersonate="chrome110",
             )
             response.raise_for_status()
 
             data = response.json()
-            if 'conversations' in data and data['conversations'] and 'sid' in data['conversations'][0]:
-                self.conversation_id = data['conversations'][0]['sid']
+            if (
+                "conversations" in data
+                and data["conversations"]
+                and "sid" in data["conversations"][0]
+            ):
+                self.conversation_id = data["conversations"][0]["sid"]
                 return self.conversation_id
             else:
-                raise exceptions.FailedToGenerateResponseError(f"Unexpected response structure from start API: {data}")
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Unexpected response structure from start API: {data}"
+                )
 
         except CurlError as e:
-            raise exceptions.FailedToGenerateResponseError(f"Failed to start conversation (CurlError): {e}") from e
+            raise exceptions.FailedToGenerateResponseError(
+                f"Failed to start conversation (CurlError): {e}"
+            ) from e
         except Exception as e:
-            raise exceptions.FailedToGenerateResponseError(f"Failed to start conversation: {e}") from e
+            raise exceptions.FailedToGenerateResponseError(
+                f"Failed to start conversation: {e}"
+            ) from e
 
     def download_audio_threaded(self, voice_name: str, second_sid: str, output_file: str) -> None:
         """Downloads audio in a separate thread."""
         params = {
-            'mode': 'eager',
-            'voice': f'voice{self.AVAILABLE_VOICES[voice_name]}',
-            'messageSid': second_sid,
+            "mode": "eager",
+            "voice": f"voice{self.AVAILABLE_VOICES[voice_name]}",
+            "messageSid": second_sid,
         }
 
         try:
             audio_response = self.session.get(
-                'https://pi.ai/api/chat/voice',
+                "https://pi.ai/api/chat/voice",
                 params=params,
                 timeout=self.timeout,
-                impersonate="chrome110"
+                impersonate="chrome110",
             )
             audio_response.raise_for_status()
 
@@ -392,12 +420,8 @@ class PiAI(OpenAICompatibleProvider):
             pass
 
     @property
-    def models(self):
-        """Return available models in OpenAI-compatible format."""
-        class _ModelList:
-            def list(inner_self):
-                return PiAI.AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 
 # Example usage
@@ -409,10 +433,8 @@ if __name__ == "__main__":
     print("Testing streaming response:")
     response = client.chat.completions.create(
         model="inflection_3_pi",
-        messages=[
-            {"role": "user", "content": "Hello! Say 'Hi' in one word."}
-        ],
-        stream=True
+        messages=[{"role": "user", "content": "Hello! Say 'Hi' in one word."}],
+        stream=True,
     )
 
     if hasattr(response, "__iter__") and not isinstance(response, (str, bytes, ChatCompletion)):
@@ -427,14 +449,15 @@ if __name__ == "__main__":
     print("\nTesting non-streaming response:")
     response = client.chat.completions.create(
         model="inflection_3_pi",
-        messages=[
-            {"role": "user", "content": "Tell me a short joke."}
-        ],
-        stream=False
+        messages=[{"role": "user", "content": "Tell me a short joke."}],
+        stream=False,
     )
 
     if isinstance(response, ChatCompletion):
-        print(response.choices[0].message.content)
-        print(f"Usage: {response.usage}")
+        if not isinstance(response, Generator):
+            message = response.choices[0].message
+            if message and message.content:
+                print(message.content)
+            print(f"Usage: {response.usage}")
     else:
         print(response)

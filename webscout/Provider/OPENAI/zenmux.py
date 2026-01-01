@@ -1,11 +1,16 @@
 import json
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 import requests
 
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import (
+    BaseChat,
+    BaseCompletions,
+    OpenAICompatibleProvider,
+    SimpleModelList,
+)
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -15,10 +20,7 @@ from webscout.Provider.OPENAI.utils import (
     CompletionUsage,
 )
 
-try:
-    from webscout.litagent import LitAgent
-except ImportError:
-    pass
+from ...litagent import LitAgent
 
 
 class Completions(BaseCompletions):
@@ -285,10 +287,10 @@ class Zenmux(OpenAICompatibleProvider):
 
                 curl_available = True
             except Exception:
-                CurlSession = None
+                CurlSession = None  # type: ignore
                 curl_available = False
             try:
-                from webscout.litagent import LitAgent
+                from ...litagent import LitAgent
 
                 agent = LitAgent()
                 fingerprint = agent.generate_fingerprint("chrome")
@@ -374,9 +376,5 @@ class Zenmux(OpenAICompatibleProvider):
             pass
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(self.AVAILABLE_MODELS)

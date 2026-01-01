@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, Optional
 from urllib.parse import unquote_plus
 
 from ...results import TextResult

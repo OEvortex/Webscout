@@ -7,21 +7,21 @@ from ..core.context import Context
 
 
 def command(
-    name: str = None,
-    help: str = None,
-    aliases: List[str] = None,
-    hidden: bool = False
+    name: Optional[str] = None,
+    help: Optional[str] = None,
+    aliases: Optional[List[str]] = None,
+    hidden: bool = False,
 ) -> Callable:
     """
     Decorator to register a new command.
 
     This decorator marks a function as a CLI command and provides metadata
-    about how the command should be registered and displayed.
+    about how command should be registered and displayed.
 
     Args:
         name: Command name (defaults to function name)
         help: Help text (defaults to function docstring)
-        aliases: Alternative names for the command
+        aliases: Alternative names for command
         hidden: Whether to hide from help output
 
     Example:
@@ -34,21 +34,24 @@ def command(
             '''Say hello to someone'''
             print(f"Hello {name}!")
     """
+
     def decorator(f: Callable) -> Callable:
-        f._command = {
-            'name': name or f.__name__,
-            'help': help or f.__doc__,
-            'aliases': aliases or [],
-            'hidden': hidden
+        f._command = {  # type: ignore[attr-defined]
+            "name": name or getattr(f, '__name__', 'unknown'),
+            "help": help or f.__doc__,
+            "aliases": aliases or [],
+            "hidden": hidden,
         }
         return f
+
     return decorator
 
+
 def group(
-    name: str = None,
-    help: str = None,
+    name: Optional[str] = None,
+    help: Optional[str] = None,
     chain: bool = False,
-    invoke_without_command: bool = False
+    invoke_without_command: bool = False,
 ) -> Callable:
     """
     Decorator to create a command group.
@@ -82,21 +85,24 @@ def group(
             '''Validate data'''
             return {"valid": True}
     """
+
     def decorator(f: Callable) -> Callable:
-        f._group = {
-            'name': name or f.__name__,
-            'help': help or f.__doc__,
-            'chain': chain,
-            'invoke_without_command': invoke_without_command
+        f._group = {  # type: ignore[attr-defined]
+            "name": name or getattr(f, '__name__', 'unknown'),
+            "help": help or f.__doc__,
+            "chain": chain,
+            "invoke_without_command": invoke_without_command,
         }
         return f
+
     return decorator
+
 
 def pass_context(f: Callable) -> Callable:
     """
     Decorator to pass CLI context to command.
 
-    This decorator injects the current Context object as the first argument
+    This decorator injects current Context object as first argument
     to the decorated command function.
 
     Example:
@@ -107,15 +113,16 @@ def pass_context(f: Callable) -> Callable:
             print(f"App: {ctx.cli.name}")
             print(f"Debug: {ctx.debug}")
     """
-    f._pass_context = True
+    f._pass_context = True  # type: ignore[attr-defined]
     return f
+
 
 def completion(func: Optional[Callable] = None) -> Callable:
     """
     Decorator to provide shell completion for a command.
 
     The decorated function should return a list of possible completions
-    based on the current incomplete value.
+    based on current incomplete value.
 
     Example:
         @command()
@@ -129,6 +136,7 @@ def completion(func: Optional[Callable] = None) -> Callable:
             services = ["nginx", "apache", "mysql"]
             return [s for s in services if s.startswith(incomplete)]
     """
+
     def decorator(f: Callable) -> Callable:
         @wraps(f)
         def wrapper(ctx: Context, incomplete: str) -> List[str]:
@@ -136,20 +144,22 @@ def completion(func: Optional[Callable] = None) -> Callable:
                 return f(ctx, incomplete)
             except Exception:
                 return []
+
         return wrapper
 
     if func is None:
         return decorator
     return decorator(func)
 
+
 def argument(
     name: str,
     type: Any = str,
     required: bool = True,
-    help: str = None,
+    help: Optional[str] = None,
     default: Any = None,
     validation: Optional[Dict[str, Any]] = None,
-    mutually_exclusive: Optional[List[str]] = None
+    mutually_exclusive: Optional[List[str]] = None,
 ) -> Callable:
     """
     Decorator to add a command argument.
@@ -167,34 +177,35 @@ def argument(
 
     Example:
         @command()
-        @argument("name", validation={{'min_length': 2, 'max_length': 50}})
-        @argument("count", type=int, default=1, validation={{'min': 1, 'max': 100}})
+        @argument("name", validation={'min_length': 2, 'max_length': 50})
+        @argument("count", type=int, default=1, validation={'min': 1, 'max': 100})
         def greet(name: str, count: int):
             '''Greet someone multiple times'''
             for _ in range(count):
                 print(f"Hello {name}!")
     """
-    def decorator(f: Callable) -> Callable:
-        if not hasattr(f, '_arguments'):
-            f._arguments = []
 
-        f._arguments.append({
-            'name': name,
-            'type': type,
-            'required': required,
-            'help': help,
-            'default': default,
-            'validation': validation,
-            'mutually_exclusive': mutually_exclusive
-        })
+    def decorator(f: Callable) -> Callable:
+        if not hasattr(f, "_arguments"):
+            f._arguments = []  # type: ignore[attr-defined]
+
+        f._arguments.append(  # type: ignore[attr-defined]
+            {
+                "name": name,
+                "type": type,
+                "required": required,
+                "help": help,
+                "default": default,
+                "validation": validation,
+                "mutually_exclusive": mutually_exclusive,
+            }
+        )
         return f
+
     return decorator
 
-def flag(
-    name: str,
-    help: str = None,
-    hidden: bool = False
-) -> Callable:
+
+def flag(name: str, help: Optional[str] = None, hidden: bool = False) -> Callable:
     """
     Decorator to add a boolean flag option.
 
@@ -214,15 +225,19 @@ def flag(
             if verbose:
                 print("Verbose mode enabled")
     """
-    def decorator(f: Callable) -> Callable:
-        if not hasattr(f, '_options'):
-            f._options = []
 
-        f._options.append({
-            'param_decls': [name],
-            'is_flag': True,
-            'help': help,
-            'hidden': hidden
-        })
+    def decorator(f: Callable) -> Callable:
+        if not hasattr(f, "_options"):
+            f._options = []  # type: ignore[attr-defined]
+
+        f._options.append(  # type: ignore[attr-defined]
+            {
+                "param_decls": [name],
+                "is_flag": True,
+                "help": help,
+                "hidden": hidden,
+            }
+        )
         return f
+
     return decorator

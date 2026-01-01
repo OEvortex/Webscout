@@ -8,6 +8,9 @@ from .base import YahooSearchEngine
 class YahooMaps(YahooSearchEngine):
     """Yahoo maps search."""
 
+    def build_payload(self, *args, **kwargs) -> dict:
+        return {}
+
     def run(self, *args, **kwargs) -> list[dict[str, str]]:
         """Get maps results from Yahoo.
 

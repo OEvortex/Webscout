@@ -1,14 +1,18 @@
 import json
 import time
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi.const import CurlHttpVersion
 from curl_cffi.requests import Session
 
 from webscout import exceptions
 from webscout.AIutel import sanitize_stream
-from webscout.litagent import LitAgent
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import (
+    BaseChat,
+    BaseCompletions,
+    OpenAICompatibleProvider,
+    SimpleModelList,
+)
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -20,13 +24,16 @@ from webscout.Provider.OPENAI.utils import (
     format_prompt,
 )
 
+from ...litagent import LitAgent
+
 # ANSI escape codes for formatting
 BOLD = "\033[1m"
 RED = "\033[91m"
 RESET = "\033[0m"
 
+
 class Completions(BaseCompletions):
-    def __init__(self, client: 'ChatSandbox'):
+    def __init__(self, client: "ChatSandbox"):
         self._client = client
 
     @staticmethod
@@ -56,7 +63,7 @@ class Completions(BaseCompletions):
         top_p: Optional[float] = None,
         timeout: Optional[int] = None,
         proxies: Optional[dict] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
         """
         OpenAI-compatible chat/completions endpoint for ChatSandbox.
@@ -65,35 +72,33 @@ class Completions(BaseCompletions):
         model = self._client.convert_model_name(model)
         # Compose the conversation prompt using format_prompt
         question = format_prompt(messages, add_special_tokens=False, do_continue=True)
-        payload = {
-            "messages": [question],
-            "character": model
-        }
+        payload = {"messages": [question], "character": model}
         request_id = f"chatcmpl-{int(time.time() * 1000)}"
         created_time = int(time.time())
         url = "https://chatsandbox.com/api/chat"
         agent = LitAgent()
         headers = {
-            'authority': 'chatsandbox.com',
-            'accept': '*/*',
-            'accept-encoding': 'gzip, deflate, br',
-            'accept-language': 'en-US,en;q=0.9',
-            'content-type': 'application/json',
-            'origin': 'https://chatsandbox.com',
-            'referer': f'https://chatsandbox.com/chat/{model}',
-            'sec-ch-ua': '"Microsoft Edge";v="135", "Not-A.Brand";v="8", "Chromium";v="135"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"Windows"',
-            'sec-fetch-dest': 'empty',
-            'sec-fetch-mode': 'cors',
-            'sec-fetch-site': 'same-origin',
-            'user-agent': agent.random(),
-            'dnt': '1',
-            'sec-gpc': '1',
+            "authority": "chatsandbox.com",
+            "accept": "*/*",
+            "accept-encoding": "gzip, deflate, br",
+            "accept-language": "en-US,en;q=0.9",
+            "content-type": "application/json",
+            "origin": "https://chatsandbox.com",
+            "referer": f"https://chatsandbox.com/chat/{model}",
+            "sec-ch-ua": '"Microsoft Edge";v="135", "Not-A.Brand";v="8", "Chromium";v="135"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"Windows"',
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "user-agent": agent.random(),
+            "dnt": "1",
+            "sec-gpc": "1",
         }
         session = Session()
         session.headers.update(headers)
-        session.proxies = proxies if proxies is not None else {}
+        if proxies:
+            session.proxies.update(cast(Any, proxies))
 
         def for_stream():
             try:
@@ -103,7 +108,7 @@ class Completions(BaseCompletions):
                     stream=True,
                     timeout=timeout if timeout is not None else 30,
                     impersonate="chrome120",
-                    http_version=CurlHttpVersion.V1_1
+                    http_version=CurlHttpVersion.V1_1,
                 )
                 if not response.ok:
                     raise exceptions.FailedToGenerateResponseError(
@@ -115,8 +120,8 @@ class Completions(BaseCompletions):
                 processed_stream = sanitize_stream(
                     data=response.iter_content(chunk_size=None),  # Pass byte iterator
                     intro_value=None,  # No simple prefix to remove here
-                    to_json=False,     # Content is not JSON
-                    content_extractor=self._chatsandbox_extractor  # Use the specific extractor
+                    to_json=False,  # Content is not JSON
+                    content_extractor=self._chatsandbox_extractor,  # Use the specific extractor
                 )
 
                 for content_chunk in processed_stream:
@@ -144,6 +149,7 @@ class Completions(BaseCompletions):
                 yield chunk_obj
             except Exception as e:
                 raise RuntimeError(f"ChatSandbox streaming request failed: {e}")
+
         def for_non_stream():
             streaming_text = ""
             for chunk_obj in for_stream():
@@ -155,7 +161,7 @@ class Completions(BaseCompletions):
             usage = CompletionUsage(
                 prompt_tokens=prompt_tokens,
                 completion_tokens=completion_tokens,
-                total_tokens=total_tokens
+                total_tokens=total_tokens,
             )
             message = ChatCompletionMessage(role="assistant", content=streaming_text)
             choice = Choice(index=0, message=message, finish_reason="stop")
@@ -167,11 +173,14 @@ class Completions(BaseCompletions):
                 usage=usage,
             )
             return completion
+
         return for_stream() if stream else for_non_stream()
 
+
 class Chat(BaseChat):
-    def __init__(self, client: 'ChatSandbox'):
+    def __init__(self, client: "ChatSandbox"):
         self.completions = Completions(client)
+
 
 class ChatSandbox(OpenAICompatibleProvider):
     AVAILABLE_MODELS = [
@@ -186,18 +195,18 @@ class ChatSandbox(OpenAICompatibleProvider):
         "mistral",
         "mistral-large",
         "gemma-3",
-        "llama"
+        "llama",
     ]
     required_auth = False
     chat: Chat
+
     def __init__(self):
         self.chat = Chat(self)
+
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
+
     def convert_model_name(self, model: str) -> str:
         if model in self.AVAILABLE_MODELS:
             return model
@@ -208,14 +217,17 @@ class ChatSandbox(OpenAICompatibleProvider):
         print(f"{RED}{BOLD}Warning: Model '{model}' not found, using default model 'openai'{RESET}")
         return "openai"
 
+
 if __name__ == "__main__":
     client = ChatSandbox()
     response = client.chat.completions.create(
         model="openai",
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": "Explain the theory of relativity in simple terms."}
+            {"role": "user", "content": "Explain the theory of relativity in simple terms."},
         ],
-        stream=False
+        stream=False,
     )
-    print(response.choices[0].message.content)
+    if isinstance(response, ChatCompletion):
+        if response.choices[0].message and response.choices[0].message.content:
+            print(response.choices[0].message.content)

@@ -4,6 +4,7 @@
 import pathlib
 import tempfile
 import time
+from typing import Any, Optional, Union, cast
 
 import requests
 from litprinter import ic
@@ -36,7 +37,7 @@ class FreeTTS(BaseTTSProvider):
     # Supported formats
     SUPPORTED_FORMATS = ["mp3"]
 
-    def __init__(self, lang="ru-RU", timeout: int = 30, proxies: dict = None):
+    def __init__(self, lang="ru-RU", timeout: int = 30, proxies: Optional[dict] = None):
         """
         Initialize the FreeTTS TTS client.
 
@@ -100,15 +101,14 @@ class FreeTTS(BaseTTSProvider):
     def tts(
         self,
         text: str,
-        model: str = None, # Dummy for compatibility
-        voice: str = None,
-        response_format: str = "mp3",
-        instructions: str = None,
-        verbose: bool = True
+        voice: Optional[str] = None,
+        verbose: bool = False,
+        **kwargs
     ) -> str:
         """
         Convert text to speech.
         """
+        response_format = kwargs.get("response_format", "mp3")
         if not text:
             raise ValueError("Input text must be a non-empty string")
 
@@ -174,7 +174,9 @@ class FreeTTS(BaseTTSProvider):
                         audio_file_resp.raise_for_status()
 
                         # Save to temp file
-                        filename = pathlib.Path(tempfile.mktemp(suffix=f".{response_format}", dir=self.temp_dir))
+                        temp_file = tempfile.NamedTemporaryFile(suffix=f".{response_format}", dir=self.temp_dir, delete=False)
+                        temp_file.close()
+                        filename = pathlib.Path(temp_file.name)
                         with open(filename, "wb") as f:
                             f.write(audio_file_resp.content)
 
@@ -188,8 +190,24 @@ class FreeTTS(BaseTTSProvider):
         except Exception as e:
             raise exceptions.FailedToGenerateResponseError(f"FreeTTS failed: {e}")
 
-    def create_speech(self, input: str, **kwargs) -> str:
-        return self.tts(text=input, **kwargs)
+    def create_speech(
+        self,
+        input_text: str,
+        model: Optional[str] = None,
+        voice: Optional[str] = None,
+        response_format: Optional[str] = None,
+        instructions: Optional[str] = None,
+        verbose: bool = False,
+        **kwargs: Any
+    ) -> str:
+        return self.tts(
+            text=input_text,
+            model=model,
+            voice=voice,
+            response_format=response_format or "mp3",
+            instructions=instructions,
+            verbose=verbose
+        )
 
 if __name__ == "__main__":
     tts = FreeTTS()

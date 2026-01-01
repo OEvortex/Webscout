@@ -1,4 +1,4 @@
-import requests
+from curl_cffi.requests import Session
 
 
 def create_grammar_check_job(text: str):
@@ -28,7 +28,8 @@ def create_grammar_check_job(text: str):
         'translate_language': (None, 'English'),
     }
 
-    response = requests.post(url, headers=headers, files=files)
+    session = Session()
+    response = session.post(url, headers=headers, files=files)
     return response.json()
 
 if __name__ == "__main__":

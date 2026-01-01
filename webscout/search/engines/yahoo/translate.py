@@ -8,6 +8,9 @@ from .base import YahooSearchEngine
 class YahooTranslate(YahooSearchEngine):
     """Yahoo translation."""
 
+    def build_payload(self, *args, **kwargs) -> dict:
+        return {}
+
     def run(self, *args, **kwargs) -> list[dict[str, str]]:
         """Translate text using Yahoo.
 

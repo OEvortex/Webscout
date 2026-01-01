@@ -1,11 +1,12 @@
 import json
 import random
-from typing import Dict, Optional
+from typing import Any, Dict, Optional, Union, cast
 
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+from webscout.AIbase import SimpleModelList
 from webscout.litagent import LitAgent
 from webscout.Provider.TTI.base import BaseImages, TTICompatibleProvider
 from webscout.Provider.TTI.utils import ImageData, ImageResponse
@@ -38,7 +39,7 @@ class Images(BaseImages):
         api_key = self._client.api_key
 
         # Reuse or generate fingerprint once for the session
-        if not hasattr(self._client, '_fingerprint') or self._client._fingerprint is None:
+        if not hasattr(self._client, "_fingerprint") or self._client._fingerprint is None:
             self._client._fingerprint = self._generate_consistent_fingerprint()
 
         fp = self._client._fingerprint
@@ -76,7 +77,8 @@ class Images(BaseImages):
 
         # Generate sec-ch-ua for chrome
         version = random.randint(*BROWSERS["chrome"])
-        sec_ch_ua = FINGERPRINTS["sec_ch_ua"]["chrome"].format(version, version)
+        sec_ch_ua_dict = cast(Dict[str, str], FINGERPRINTS["sec_ch_ua"])
+        sec_ch_ua = sec_ch_ua_dict["chrome"].format(version, version)
 
         # Use the client's agent for consistent IP rotation
         ip = agent.rotate_ip()
@@ -91,48 +93,52 @@ class Images(BaseImages):
             "x-client-ip": ip,
             "forwarded": f"for={ip};proto=https",
             "x-forwarded-proto": "https",
-            "x-request-id": agent.random_id(8) if hasattr(agent, 'random_id') else ''.join(random.choices('0123456789abcdef', k=8)),
+            "x-request-id": agent.random_id(8)
+            if hasattr(agent, "random_id")
+            else "".join(random.choices("0123456789abcdef", k=8)),
         }
 
         return fingerprint
 
     def create(
         self,
-        model: str = None,
-        prompt: str = None,
+        *,
+        model: str,
+        prompt: str,
         n: int = 1,
         size: str = "1024x1024",
         response_format: str = "url",
         user: Optional[str] = None,
-        style: str = None,
-        aspect_ratio: str = None,
-        timeout: int = 120,
+        style: str = "none",
+        aspect_ratio: str = "1:1",
+        timeout: Optional[int] = None,
         image_format: str = "png",
+        seed: Optional[int] = None,
+        convert_format: bool = False,
         enhance: bool = True,
         steps: int = 20,
-        seed: Optional[int] = None,
         **kwargs,
     ) -> ImageResponse:
         """
         Create images using Together.xyz image models
         """
         if not prompt:
-            raise ValueError(
-                "Describe the image you want to create (use the 'prompt' property)."
-            )
+            raise ValueError("Describe the image you want to create (use the 'prompt' property).")
 
         if not self._client.api_key:
-            raise ValueError("API key is required for TogetherImage. Please provide it in __init__.")
+            raise ValueError(
+                "API key is required for TogetherImage. Please provide it in __init__."
+            )
 
-        # Use provided model or default to first available
-        if not model:
-            model = self._client.AVAILABLE_MODELS[0]
-        elif model not in self._client.AVAILABLE_MODELS:
-            raise ValueError(f"Model '{model}' not available. Choose from: {self._client.AVAILABLE_MODELS}")
+        # Validate model
+        if model not in self._client.AVAILABLE_MODELS:
+            raise ValueError(
+                f"Model '{model}' not available. Choose from: {self._client.AVAILABLE_MODELS}"
+            )
 
         # Parse size
-        if 'x' in size:
-            width, height = map(int, size.split('x'))
+        if "x" in size:
+            width, height = map(int, size.split("x"))
         else:
             width = height = int(size)
 
@@ -190,9 +196,11 @@ class Images(BaseImages):
             return ImageResponse(data=result_data)
 
         except requests.exceptions.Timeout:
-            raise RuntimeError(f"Request timed out after {timeout} seconds. Try reducing image size or steps.")
+            raise RuntimeError(
+                f"Request timed out after {timeout} seconds. Try reducing image size or steps."
+            )
         except requests.exceptions.RequestException as e:
-            if hasattr(e, 'response') and e.response is not None:
+            if hasattr(e, "response") and e.response is not None:
                 try:
                     print("[Together.xyz API error details]", e.response.text)
                 except Exception:
@@ -219,7 +227,7 @@ class TogetherImage(TTICompatibleProvider):
     AVAILABLE_MODELS = []
 
     @classmethod
-    def get_models(cls, api_key: str = None):
+    def get_models(cls, api_key: Optional[str] = None):
         """Fetch available image models from Together API."""
         if not api_key:
             # Return default models if no API key is provided
@@ -236,19 +244,14 @@ class TogetherImage(TTICompatibleProvider):
                 "black-forest-labs/FLUX.1-redux",
                 "black-forest-labs/FLUX.1-schnell",
                 "black-forest-labs/FLUX.1-schnell-Free",
-                "black-forest-labs/FLUX.1.1-pro"
+                "black-forest-labs/FLUX.1.1-pro",
             ]
 
         try:
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Accept": "application/json"
-            }
+            headers = {"Authorization": f"Bearer {api_key}", "Accept": "application/json"}
 
             response = requests.get(
-                "https://api.together.xyz/v1/models",
-                headers=headers,
-                timeout=30
+                "https://api.together.xyz/v1/models", headers=headers, timeout=30
             )
 
             if response.status_code != 200:
@@ -272,7 +275,7 @@ class TogetherImage(TTICompatibleProvider):
             return cls.get_models(None)
 
     @classmethod
-    def update_available_models(cls, api_key=None):
+    def update_available_models(cls, api_key: Optional[str] = None):
         """Update the available models list from Together API"""
         try:
             models = cls.get_models(api_key)
@@ -281,7 +284,7 @@ class TogetherImage(TTICompatibleProvider):
         except Exception:
             cls.AVAILABLE_MODELS = cls.get_models(None)
 
-    def __init__(self, api_key: str = None):
+    def __init__(self, api_key: Optional[str] = None):
         """
         Initialize the TogetherImage client.
 
@@ -301,12 +304,8 @@ class TogetherImage(TTICompatibleProvider):
         self._fingerprint = None
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return TogetherImage.AVAILABLE_MODELS
-
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
     def convert_model_name(self, model: str) -> str:
         """Convert model alias to full model name"""
@@ -319,9 +318,10 @@ class TogetherImage(TTICompatibleProvider):
 
 if __name__ == "__main__":
     from rich import print
+
     client = TogetherImage(api_key="YOUR_API_KEY")
 
-    # Test with a sample prompt
+    # Test with a sample prompt - now requires model and prompt as keyword args
     response = client.images.create(
         model="black-forest-labs/FLUX.1-schnell-Free",  # Free FLUX model
         prompt="A majestic dragon flying over a mystical forest, fantasy art, highly detailed",

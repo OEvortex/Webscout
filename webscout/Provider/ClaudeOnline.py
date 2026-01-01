@@ -1,4 +1,4 @@
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
@@ -80,7 +80,8 @@ class ClaudeOnline(Provider):
         # Initialize curl_cffi Session
         self.session = Session()
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies
+        if proxies:
+            self.session.proxies.update(proxies)
 
         self.system_prompt = system_prompt
         self.is_conversation = is_conversation
@@ -95,18 +96,16 @@ class ClaudeOnline(Provider):
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
 
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
-
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
+
+        if act:
+            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
+            ) or self.conversation.intro
+        elif intro:
+            self.conversation.intro = intro
 
     def _make_request(self, url: str, payload: Optional[Dict] = None, method: str = "POST") -> Dict:
         """
@@ -141,13 +140,18 @@ class ClaudeOnline(Provider):
             response.raise_for_status()
 
             # Check rate limit headers
-            if 'ratelimit-remaining' in response.headers:
-                remaining = int(response.headers['ratelimit-remaining'])
-                if remaining <= 0:
-                    reset_time = int(response.headers.get('ratelimit-reset', 60))
-                    raise exceptions.FailedToGenerateResponseError(
-                        f"Rate limit exceeded. Resets in {reset_time} seconds."
-                    )
+            remaining_str = response.headers.get('ratelimit-remaining')
+            if remaining_str is not None:
+                try:
+                    remaining = int(remaining_str)
+                    if remaining <= 0:
+                        reset_time_str = response.headers.get('ratelimit-reset', '60')
+                        reset_time = int(reset_time_str) if reset_time_str else 60
+                        raise exceptions.FailedToGenerateResponseError(
+                            f"Rate limit exceeded. Resets in {reset_time} seconds."
+                        )
+                except (ValueError, TypeError):
+                    pass
 
             return response.json()
 
@@ -281,6 +285,7 @@ class ClaudeOnline(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """
         Generate a response from Claude Online.
@@ -290,25 +295,33 @@ class ClaudeOnline(Provider):
             stream: Whether to stream the response
             optimizer: Optimizer to use
             conversationally: Whether to generate conversationally
+            **kwargs: Additional parameters including raw.
 
         Returns:
             Response string or generator for streaming
         """
-        def for_stream_chat():
-            for response in self.ask(
-                prompt, stream=True, raw=False,
-                optimizer=optimizer, conversationally=conversationally
-            ):
-                yield self.get_message(response)
-
-        def for_non_stream_chat():
+        raw = kwargs.get("raw", False)
+        if stream:
+            def for_stream_chat():
+                gen = self.ask(
+                    prompt, stream=True, raw=raw,
+                    optimizer=optimizer, conversationally=conversationally
+                )
+                if hasattr(gen, "__iter__"):
+                    for response in gen:
+                        if raw:
+                            yield cast(str, response)
+                        else:
+                            yield self.get_message(response)
+            return for_stream_chat()
+        else:
             response_data = self.ask(
-                prompt, stream=False, raw=False,
+                prompt, stream=False, raw=raw,
                 optimizer=optimizer, conversationally=conversationally
             )
+            if raw:
+                return cast(str, response_data)
             return self.get_message(response_data)
-
-        return for_stream_chat() if stream else for_non_stream_chat()
 
     def get_message(self, response: Response) -> str:
         """
@@ -322,7 +335,7 @@ class ClaudeOnline(Provider):
         """
         if not isinstance(response, dict):
             return str(response)
-        return response.get("text", "")
+        return cast(Dict[str, Any], response).get("text", "")
 
 
 if __name__ == "__main__":

@@ -1,11 +1,11 @@
 import uuid
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider
+from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 from webscout.litagent import LitAgent
 
@@ -39,16 +39,16 @@ class QodoAI(Provider):
 
     def __init__(
         self,
-        api_key: str = None,
+        api_key: Optional[str] = None,
         is_conversation: bool = True,
         max_tokens: int = 2049,
         timeout: int = 30,
-        intro: str = None,
-        filepath: str = None,
+        intro: Optional[str] = None,
+        filepath: Optional[str] = None,
         update_file: bool = True,
         proxies: dict = {},
         history_offset: int = 10250,
-        act: str = None,
+        act: Optional[str] = None,
         model: str = "claude-4-sonnet",
         browser: str = "chrome"
     ):
@@ -101,20 +101,20 @@ class QodoAI(Provider):
             for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
-
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
+        act_prompt = (
+            AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
+        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
 
-    def refresh_identity(self, browser: str = None):
+    def refresh_identity(self, browser: Optional[str] = None):
         """
         Refreshes the browser identity fingerprint.
 
@@ -210,8 +210,9 @@ class QodoAI(Provider):
         prompt: str,
         stream: bool = False,
         raw: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Union[Dict[str, Any], Generator]:
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -333,9 +334,10 @@ class QodoAI(Provider):
         self,
         prompt: str,
         stream: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
         raw: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         def for_stream():
             for response in self.ask(
@@ -344,7 +346,7 @@ class QodoAI(Provider):
                 if raw:
                     yield response
                 else:
-                    yield response.get("text", "")
+                    yield self.get_message(response)
 
         def for_non_stream():
             result = self.ask(
@@ -357,10 +359,13 @@ class QodoAI(Provider):
 
         return for_stream() if stream else for_non_stream()
 
-    def get_message(self, response: dict) -> str:
-        assert isinstance(response, dict), "Response should be of dict data-type only"
-        text = response.get("text", "")
-        return text.replace('\\n', '\n').replace('\\n\\n', '\n\n')
+    def get_message(self, response: Response) -> str:
+        if isinstance(response, str):
+            return response
+        if isinstance(response, dict):
+            text = dict(response).get("text", "")
+            return text.replace('\\n', '\n').replace('\\n\\n', '\n\n')
+        return str(response)
 
     def _get_session_id(self) -> str:
         """Get session ID from Qodo API."""

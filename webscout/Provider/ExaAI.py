@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 from uuid import uuid4
 
 import requests
@@ -97,18 +97,18 @@ class ExaAI(Provider):
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
         self.session.headers.update(self.headers)
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
-        self.session.proxies = proxies
+
+        if act:
+            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
+            ) or self.conversation.intro
+        elif intro:
+            self.conversation.intro = intro
+        if proxies:
+            self.session.proxies.update(proxies)
 
     def ask(
         self,
@@ -203,7 +203,7 @@ class ExaAI(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        raw: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """
         Generates a response from the ExaAI API.
@@ -213,7 +213,7 @@ class ExaAI(Provider):
             stream (bool): Whether to stream the response.
             optimizer (str): Optimizer to use for the prompt.
             conversationally (bool): Whether to generate the prompt conversationally.
-            raw (bool): Return raw response chunks.
+            **kwargs: Additional parameters including raw.
 
         Returns:
             Union[str, Generator[str, None, None]]: The API response as a string or a generator of string chunks.
@@ -224,7 +224,7 @@ class ExaAI(Provider):
             >>> print(response)
             'The weather today depends on your location...'
         """
-
+        raw = kwargs.get("raw", False)
         def for_stream():
             for response in self.ask(
                 prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
@@ -243,7 +243,7 @@ class ExaAI(Provider):
                 conversationally=conversationally,
             )
             if raw:
-                return result
+                return cast(str, result)
             return self.get_message(result)
 
         return for_stream() if stream else for_non_stream()

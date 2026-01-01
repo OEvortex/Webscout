@@ -1,26 +1,99 @@
 import base64
 import json
 import os
+import re
 import tempfile
 import time
 from io import BytesIO
-from typing import Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import requests
 from requests.exceptions import RequestException
 
+from webscout.AIbase import SimpleModelList
 from webscout.litagent import LitAgent
 from webscout.Provider.TTI.base import BaseImages, TTICompatibleProvider
 from webscout.Provider.TTI.utils import ImageData, ImageResponse
 
+# Optional Pillow import for image format conversion
+Image: Any = None
+PILLOW_AVAILABLE = False
 try:
     from PIL import Image
+
+    PILLOW_AVAILABLE = True
 except ImportError:
-    Image = None
+    pass
+
+if TYPE_CHECKING:
+    from PIL import Image as PILImage
+
+
+def _convert_image_format(img_bytes: bytes, image_format: str) -> bytes:
+    """
+    Convert image bytes to the specified format using Pillow.
+
+    Args:
+        img_bytes: Raw image bytes
+        image_format: Target format ("png" or "jpeg")
+
+    Returns:
+        Converted image bytes
+
+    Raises:
+        ImportError: If Pillow is not installed
+    """
+    if not PILLOW_AVAILABLE or Image is None:
+        raise ImportError(
+            "Pillow (PIL) is required for image format conversion. "
+            "Install it with: pip install pillow"
+        )
+
+    with BytesIO(img_bytes) as input_io:
+        with Image.open(input_io) as im:
+            out_io = BytesIO()
+            if image_format.lower() == "jpeg":
+                im = im.convert("RGB")
+                im.save(out_io, format="JPEG")
+            else:
+                im.save(out_io, format="PNG")
+            return out_io.getvalue()
+
+
+def _detect_image_format(img_bytes: bytes) -> Optional[str]:
+    """
+    Detect image format from magic bytes.
+
+    Args:
+        img_bytes: Raw image bytes
+
+    Returns:
+        Format string ('png', 'jpeg', 'gif', 'webp') or None if unknown
+    """
+    if len(img_bytes) < 12:
+        return None
+
+    # PNG: 89 50 4E 47 0D 0A 1A 0A
+    if img_bytes[:8] == b"\x89PNG\r\n\x1a\n":
+        return "png"
+
+    # JPEG: FF D8 FF
+    if img_bytes[:3] == b"\xff\xd8\xff":
+        return "jpeg"
+
+    # GIF: GIF87a or GIF89a
+    if img_bytes[:6] in (b"GIF87a", b"GIF89a"):
+        return "gif"
+
+    # WebP: RIFF....WEBP
+    if img_bytes[:4] == b"RIFF" and img_bytes[8:12] == b"WEBP":
+        return "webp"
+
+    return None
 
 
 class Images(BaseImages):
-    def __init__(self, client):
+    def __init__(self, client: "ClaudeOnlineTTI"):
         self._client = client
 
     def create(
@@ -34,9 +107,10 @@ class Images(BaseImages):
         user: Optional[str] = None,
         style: str = "none",
         aspect_ratio: str = "1:1",
-        timeout: int = 60,
+        timeout: Optional[int] = None,
         image_format: str = "png",
         seed: Optional[int] = None,
+        convert_format: bool = False,
         **kwargs,
     ) -> ImageResponse:
         """
@@ -48,15 +122,25 @@ class Images(BaseImages):
             n: Number of images to generate (max 1 for Claude Online)
             size: Image size (supports various sizes)
             response_format: "url" or "b64_json"
-            timeout: Request timeout in seconds
+            user: Optional user identifier
+            style: Style parameter (not used)
+            aspect_ratio: Aspect ratio (not used)
+            timeout: Request timeout in seconds (default: 60)
             image_format: Output format "png" or "jpeg"
+            seed: Optional random seed for reproducibility
+            convert_format: If True, convert image to specified format (requires Pillow)
             **kwargs: Additional parameters
 
         Returns:
             ImageResponse with generated image data
+
+        Raises:
+            ImportError: If convert_format is True and Pillow is not installed
+            ValueError: If n > 1 or invalid response_format
+            RuntimeError: If image generation or upload fails
         """
-        if Image is None:
-            raise ImportError("Pillow (PIL) is required for image format conversion.")
+        # Use default timeout if not provided
+        effective_timeout = timeout if timeout is not None else 60
 
         # Claude Online only supports 1 image per request
         if n > 1:
@@ -75,43 +159,38 @@ class Images(BaseImages):
 
             # Build the Pollinations.ai URL
             base_url = "https://image.pollinations.ai/prompt"
-            params = {
-                "width": width,
-                "height": height,
-                "nologo": "true",
-                "seed": seed_value
-            }
+            params = {"width": width, "height": height, "nologo": "true", "seed": seed_value}
 
             image_url = f"{base_url}/{clean_prompt}"
             query_params = "&".join([f"{k}={v}" for k, v in params.items()])
             full_image_url = f"{image_url}?{query_params}"
 
             # Download the image
-            response = requests.get(full_image_url, timeout=timeout, stream=True)
+            response = requests.get(full_image_url, timeout=effective_timeout, stream=True)
             response.raise_for_status()
 
             img_bytes = response.content
 
-            # Convert image format if needed
-            with BytesIO(img_bytes) as input_io:
-                with Image.open(input_io) as im:
-                    out_io = BytesIO()
-                    if image_format.lower() == "jpeg":
-                        im = im.convert("RGB")
-                        im.save(out_io, format="JPEG")
-                    else:
-                        im.save(out_io, format="PNG")
-                    processed_img_bytes = out_io.getvalue()
+            # Convert image format if requested
+            if convert_format:
+                img_bytes = _convert_image_format(img_bytes, image_format)
+                ext = "jpg" if image_format.lower() == "jpeg" else "png"
+            else:
+                # Detect actual format from bytes
+                detected_format = _detect_image_format(img_bytes)
+                ext = detected_format if detected_format else "png"
+                if ext == "jpeg":
+                    ext = "jpg"
 
             # Handle response format
             if response_format == "url":
                 # Upload to image hosting service
-                uploaded_url = self._upload_image(processed_img_bytes, image_format)
+                uploaded_url = self._upload_image(img_bytes, ext, effective_timeout)
                 if not uploaded_url:
                     raise RuntimeError("Failed to upload generated image")
                 result_data = [ImageData(url=uploaded_url)]
             elif response_format == "b64_json":
-                b64 = base64.b64encode(processed_img_bytes).decode("utf-8")
+                b64 = base64.b64encode(img_bytes).decode("utf-8")
                 result_data = [ImageData(b64_json=b64)]
             else:
                 raise ValueError("response_format must be 'url' or 'b64_json'")
@@ -120,6 +199,8 @@ class Images(BaseImages):
 
         except RequestException as e:
             raise RuntimeError(f"Failed to generate image with Claude Online: {e}")
+        except ImportError:
+            raise
         except Exception as e:
             raise RuntimeError(f"Unexpected error during image generation: {e}")
 
@@ -155,30 +236,30 @@ class Images(BaseImages):
         """Clean the prompt by removing command prefixes."""
         # Remove common image generation command prefixes
         prefixes_to_remove = [
-            r'^/imagine\s*',
-            r'^/image\s*',
-            r'^/picture\s*',
-            r'^/draw\s*',
-            r'^/create\s*',
-            r'^/generate\s*',
-            r'^создай изображение\s*',
-            r'^нарисуй\s*',
-            r'^сгенерируй картинку\s*',
+            r"^/imagine\s*",
+            r"^/image\s*",
+            r"^/picture\s*",
+            r"^/draw\s*",
+            r"^/create\s*",
+            r"^/generate\s*",
+            r"^создай изображение\s*",
+            r"^нарисуй\s*",
+            r"^сгенерируй картинку\s*",
         ]
 
-        import re
         clean_prompt = prompt
         for prefix in prefixes_to_remove:
-            clean_prompt = re.sub(prefix, '', clean_prompt, flags=re.IGNORECASE)
+            clean_prompt = re.sub(prefix, "", clean_prompt, flags=re.IGNORECASE)
 
         return clean_prompt.strip()
 
-    def _upload_image(self, img_bytes: bytes, image_format: str, max_retries: int = 3) -> Optional[str]:
-        """Upload image to hosting service and return URL"""
+    def _upload_image(
+        self, img_bytes: bytes, ext: str, timeout: int = 30, max_retries: int = 3
+    ) -> Optional[str]:
+        """Upload image to hosting service and return URL."""
 
-        def upload_to_catbox(img_bytes, image_format):
-            """Upload to catbox.moe"""
-            ext = "jpg" if image_format.lower() == "jpeg" else "png"
+        def upload_to_catbox(img_bytes: bytes, ext: str) -> Optional[str]:
+            """Upload to catbox.moe."""
             tmp_path = None
             try:
                 with tempfile.NamedTemporaryFile(suffix=f".{ext}", delete=False) as tmp:
@@ -196,7 +277,7 @@ class Images(BaseImages):
                         files=files,
                         data=data,
                         headers=headers,
-                        timeout=30,
+                        timeout=timeout,
                     )
 
                     if resp.status_code == 200 and resp.text.strip():
@@ -219,9 +300,8 @@ class Images(BaseImages):
                         pass
             return None
 
-        def upload_to_0x0(img_bytes, image_format):
-            """Upload to 0x0.st as fallback"""
-            ext = "jpg" if image_format.lower() == "jpeg" else "png"
+        def upload_to_0x0(img_bytes: bytes, ext: str) -> Optional[str]:
+            """Upload to 0x0.st as fallback."""
             tmp_path = None
             try:
                 with tempfile.NamedTemporaryFile(suffix=f".{ext}", delete=False) as tmp:
@@ -231,7 +311,7 @@ class Images(BaseImages):
 
                 with open(tmp_path, "rb") as img_file:
                     files = {"file": img_file}
-                    response = requests.post("https://0x0.st", files=files, timeout=30)
+                    response = requests.post("https://0x0.st", files=files, timeout=timeout)
                     response.raise_for_status()
                     image_url = response.text.strip()
                     if image_url.startswith("http"):
@@ -248,14 +328,14 @@ class Images(BaseImages):
 
         # Try primary upload method
         for attempt in range(max_retries):
-            uploaded_url = upload_to_catbox(img_bytes, image_format)
+            uploaded_url = upload_to_catbox(img_bytes, ext)
             if uploaded_url:
                 return uploaded_url
             time.sleep(1 * (attempt + 1))
 
         # Try fallback method
         for attempt in range(max_retries):
-            uploaded_url = upload_to_0x0(img_bytes, image_format)
+            uploaded_url = upload_to_0x0(img_bytes, ext)
             if uploaded_url:
                 return uploaded_url
             time.sleep(1 * (attempt + 1))
@@ -290,12 +370,8 @@ class ClaudeOnlineTTI(TTICompatibleProvider):
         self.images = Images(self)
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 
 if __name__ == "__main__":
@@ -315,5 +391,3 @@ if __name__ == "__main__":
         print(response)
     except Exception as e:
         print(f"❌ Image generation failed: {e}")
-        import traceback
-        traceback.print_exc()

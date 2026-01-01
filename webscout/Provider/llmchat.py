@@ -1,10 +1,10 @@
-from typing import Any, Dict, Generator, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider
+from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 
 
@@ -12,6 +12,7 @@ class LLMChat(Provider):
     """
     A class to interact with the LLMChat API
     """
+
     required_auth = False
     AVAILABLE_MODELS = [
         "@cf/aisingapore/gemma-sea-lion-v4-27b-it",
@@ -60,7 +61,7 @@ class LLMChat(Provider):
         "@hf/thebloke/mistral-7b-instruct-v0.1-awq",
         "@hf/thebloke/neural-chat-7b-v3-1-awq",
         "@hf/thebloke/openhermes-2.5-mistral-7b-awq",
-        "@hf/thebloke/zephyr-7b-beta-awq"
+        "@hf/thebloke/zephyr-7b-beta-awq",
     ]
 
     def __init__(
@@ -68,14 +69,14 @@ class LLMChat(Provider):
         is_conversation: bool = True,
         max_tokens: int = 2048,
         timeout: int = 30,
-        intro: str = None,
-        filepath: str = None,
+        intro: Optional[str] = None,
+        filepath: Optional[str] = None,
         update_file: bool = True,
         proxies: dict = {},
         history_offset: int = 10250,
-        act: str = None,
+        act: Optional[str] = None,
         model: str = "@cf/meta/llama-3.1-70b-instruct",
-        system_prompt: str = "You are a helpful assistant."
+        system_prompt: str = "You are a helpful assistant.",
     ):
         """
         Initializes the LLMChat API with given parameters.
@@ -98,7 +99,7 @@ class LLMChat(Provider):
             "Content-Type": "application/json",
             "Accept": "*/*",
             "Origin": "https://llmchat.in",
-            "Referer": "https://llmchat.in/"
+            "Referer": "https://llmchat.in/",
         }
 
         self.__available_optimizers = (
@@ -107,30 +108,35 @@ class LLMChat(Provider):
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
 
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
-
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
+        act_prompt = (
+            AwesomePrompts().get_act(
+                cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
+        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
 
         # Update curl_cffi session headers and proxies
+        self.session = Session(impersonate="chrome110")
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies # Assign proxies directly
+        if proxies:
+            self.session.proxies.update(proxies)
+        self.system_prompt = system_prompt
 
     def ask(
         self,
         prompt: str,
         stream: bool = False,
         raw: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Union[Dict[str, Any], Generator[Any, None, None], str]:
         """Chat with LLMChat with logging capabilities and raw output support using sanitize_stream."""
 
@@ -149,21 +155,17 @@ class LLMChat(Provider):
         payload = {
             "messages": [
                 {"role": "system", "content": self.system_prompt},
-                {"role": "user", "content": conversation_prompt}
+                {"role": "user", "content": conversation_prompt},
             ],
             "max_tokens": self.max_tokens_to_sample,
-            "stream": True
+            "stream": True,
         }
 
         def for_stream():
             full_response = ""
             try:
                 response = self.session.post(
-                    url,
-                    json=payload,
-                    stream=True,
-                    timeout=self.timeout,
-                    impersonate="chrome110"
+                    url, json=payload, stream=True, timeout=self.timeout, impersonate="chrome110"
                 )
                 response.raise_for_status()
 
@@ -173,9 +175,11 @@ class LLMChat(Provider):
                     intro_value="data: ",
                     to_json=True,
                     skip_markers=["[DONE]"],
-                    content_extractor=lambda chunk: chunk.get('response') if isinstance(chunk, dict) else None,
+                    content_extractor=lambda chunk: chunk.get("response")
+                    if isinstance(chunk, dict)
+                    else None,
                     yield_raw_on_error=False,
-                    raw=raw
+                    raw=raw,
                 )
                 for content_chunk in processed_stream:
                     if content_chunk and isinstance(content_chunk, str):
@@ -185,14 +189,21 @@ class LLMChat(Provider):
                         else:
                             yield dict(text=content_chunk)
                 self.last_response = dict(text=full_response)
-                self.conversation.update_chat_history(
-                    prompt, full_response
-                )
+                self.conversation.update_chat_history(prompt, full_response)
             except CurlError as e:
-                raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {e}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed (CurlError): {e}"
+                ) from e
             except Exception as e:
-                err_text = getattr(e, 'response', None) and getattr(e.response, 'text', '')
-                raise exceptions.FailedToGenerateResponseError(f"Request failed ({type(e).__name__}): {e} - {err_text}") from e
+                err_text = ""
+                if hasattr(e, "response"):
+                    response_obj = getattr(e, "response")
+                    if hasattr(response_obj, "text"):
+                        err_text = getattr(response_obj, "text")
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed ({type(e).__name__}): {e} - {err_text}"
+                ) from e
+
         def for_non_stream():
             full_response = ""
             try:
@@ -203,47 +214,60 @@ class LLMChat(Provider):
                         full_response += content_chunk["text"]
             except Exception as e:
                 if not full_response:
-                    raise exceptions.FailedToGenerateResponseError(f"Failed to get non-stream response: {str(e)}") from e
+                    raise exceptions.FailedToGenerateResponseError(
+                        f"Failed to get non-stream response: {str(e)}"
+                    ) from e
             return full_response if raw else self.last_response
+
         return for_stream() if stream else for_non_stream()
 
     def chat(
         self,
         prompt: str,
         stream: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
-        raw: bool = False
+        raw: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """Generate response with logging capabilities and raw output support"""
+
         def for_stream_chat():
             gen = self.ask(
-                prompt, stream=True, raw=raw,
-                optimizer=optimizer, conversationally=conversationally
+                prompt, stream=True, raw=raw, optimizer=optimizer, conversationally=conversationally
             )
             for response in gen:
                 if raw:
                     yield response
                 else:
                     yield self.get_message(response)
+
         def for_non_stream_chat():
             response_data = self.ask(
                 prompt,
                 stream=False,
                 raw=raw,
                 optimizer=optimizer,
-                conversationally=conversationally
+                conversationally=conversationally,
             )
             if raw:
-                return response_data if isinstance(response_data, str) else self.get_message(response_data)
+                return (
+                    response_data
+                    if isinstance(response_data, str)
+                    else self.get_message(response_data)
+                )
             else:
                 return self.get_message(response_data)
+
         return for_stream_chat() if stream else for_non_stream_chat()
 
-    def get_message(self, response: Dict[str, Any]) -> str:
+    def get_message(self, response: Response) -> str:
         """Retrieves message from response with validation"""
-        assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"]
+        if not isinstance(response, dict):
+            return str(response)
+        response_dict = cast(Dict[str, Any], response)
+        return response_dict.get("text", "")
+
 
 if __name__ == "__main__":
     # Ensure curl_cffi is installed
@@ -267,7 +291,11 @@ if __name__ == "__main__":
             if response_text and len(response_text.strip()) > 0:
                 status = "✓"
                 # Truncate response if too long
-                display_text = response_text.strip()[:50] + "..." if len(response_text.strip()) > 50 else response_text.strip()
+                display_text = (
+                    response_text.strip()[:50] + "..."
+                    if len(response_text.strip()) > 50
+                    else response_text.strip()
+                )
             else:
                 status = "✗"
                 display_text = "Empty or invalid response"

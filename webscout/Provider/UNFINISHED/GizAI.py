@@ -2,8 +2,7 @@ import base64
 import json
 import os
 import random
-from typing import Any, Dict, Generator, Union
-from urllib import response
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.const import CurlHttpVersion
@@ -60,12 +59,12 @@ class GizAI(Provider):
         is_conversation: bool = True,
         max_tokens: int = 2049,
         timeout: int = 30,
-        intro: str = None,
-        filepath: str = None,
+        intro: Optional[str] = None,
+        filepath: Optional[str] = None,
         update_file: bool = True,
         proxies: dict = {},
         history_offset: int = 10250,
-        act: str = None,
+        act: Optional[str] = None,
         model: str = "gemini-2.0-flash-lite",
         system_prompt: str = "You are a helpful assistant."
     ):
@@ -95,7 +94,8 @@ class GizAI(Provider):
 
         # Update session headers and proxies
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies
+        if proxies:
+            self.session.proxies.update(proxies)
 
         # Store configuration
         self.system_prompt = system_prompt
@@ -111,17 +111,17 @@ class GizAI(Provider):
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
 
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
-
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
+        act_prompt = (
+            AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
+        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
 
     def _generate_id(self, length: int = 21) -> str:
@@ -137,11 +137,12 @@ class GizAI(Provider):
     def ask(
         self,
         prompt: str,
-        stream: bool = False,  # Parameter kept for compatibility but not used
+        stream: bool = False,
         raw: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
-    ) -> Dict[str, Any]:
+        **kwargs: Any,
+    ) -> Union[Dict[str, Any], str]:
         """
         Sends a prompt to the GizAI API and returns the response.
 
@@ -230,16 +231,17 @@ class GizAI(Provider):
         except CurlError as e:
             raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {str(e)}")
         except Exception as e:
-            error_text = getattr(e, 'response', None) and getattr(e.response, 'text', '')
+            error_text = getattr(e, 'response', None) and getattr(e.response, 'text', '') if hasattr(e, 'response') else ''
             raise exceptions.FailedToGenerateResponseError(f"Request failed ({type(e).__name__}): {str(e)} - {error_text}")
 
     def chat(
         self,
         prompt: str,
-        stream: bool = False,  # Parameter kept for compatibility but not used
-        optimizer: str = None,
+        stream: bool = False,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
-    ) -> 'Generator[str, None, None]':
+        **kwargs: Any,
+    ) -> Union[str, Generator[str, None, None]]:
         """
         Generates a response from the GizAI API.
 
@@ -267,7 +269,7 @@ class GizAI(Provider):
         else:
             return result
 
-    def get_message(self, response: Union[dict, str]) -> str:
+    def get_message(self, response: Union[Dict[str, Any], Generator[Any, None, None], str]) -> str:
         """
         Extracts the message from the API response.
 
@@ -284,8 +286,12 @@ class GizAI(Provider):
         """
         if isinstance(response, str):
             return response
-        assert isinstance(response, dict), "Response should be either dict or str"
-        return response.get("text", "")
+        elif isinstance(response, dict):
+            resp_dict = cast(Dict[str, Any], response)
+            return resp_dict.get("text", "")
+        else:
+            # Generator case - shouldn't happen
+            return ""
 
 if __name__ == "__main__":
     ai = GizAI()

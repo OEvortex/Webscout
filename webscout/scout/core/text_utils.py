@@ -1,5 +1,5 @@
 import re
-from typing import Dict, List, Pattern, Set, Tuple
+from typing import Dict, List, Optional, Pattern, Set, Tuple
 
 
 class SentenceTokenizer:

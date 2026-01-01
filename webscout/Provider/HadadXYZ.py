@@ -7,13 +7,13 @@ with items like `{type: 'reasoning-delta'|'text-delta', delta: '...'}`.
 from __future__ import annotations
 
 import uuid
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider
+from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 
 
@@ -119,7 +119,8 @@ class HadadXYZ(Provider):
 
         self.session = Session()
         if proxies:
-            self.session.proxies = proxies
+            if proxies:
+                self.session.proxies.update(proxies)
 
         self.headers = {
             "accept": "*/*",
@@ -136,13 +137,22 @@ class HadadXYZ(Provider):
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         ]
 
-        Conversation.intro = (
-            AwesomePrompts().get_act(act, raise_not_found=True, default=None, case_insensitive=True)
-            if act
-            else intro or Conversation.intro
+        self.conversation = Conversation(
+            is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
-        self.conversation = Conversation(is_conversation, self.max_tokens_to_sample, filepath, update_file)
         self.conversation.history_offset = history_offset
+
+        if act:
+            self.conversation.intro = (
+                AwesomePrompts().get_act(
+                    cast(Union[str, int], act),
+                    default=self.conversation.intro,
+                    case_insensitive=True,
+                )
+                or self.conversation.intro
+            )
+        elif intro:
+            self.conversation.intro = intro
 
     def _build_payload(self, prompt: str) -> Dict[str, Any]:
         return {
@@ -170,6 +180,7 @@ class HadadXYZ(Provider):
         raw: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Union[Dict[str, Any], Generator[Union[str, Dict[str, str]], None, None]]:
         """Send a prompt and return either a full response dict or a streaming generator."""
 
@@ -189,10 +200,15 @@ class HadadXYZ(Provider):
         def for_stream():
             extractor = _DeltaExtractor()
             if not self.include_think_tags:
+
                 def extractor_no_tags(obj: Union[str, Dict[str, Any]]) -> Optional[str]:
-                    if isinstance(obj, dict) and obj.get("type") in {"reasoning-delta", "text-delta"}:
+                    if isinstance(obj, dict) and obj.get("type") in {
+                        "reasoning-delta",
+                        "text-delta",
+                    }:
                         return obj.get("delta") or ""
                     return None
+
                 extractor = extractor_no_tags  # type: ignore[assignment]
 
             streaming_text = ""
@@ -221,7 +237,7 @@ class HadadXYZ(Provider):
 
                 for content_chunk in processed_stream:
                     if isinstance(content_chunk, bytes):
-                        content_chunk = content_chunk.decode('utf-8', errors='ignore')
+                        content_chunk = content_chunk.decode("utf-8", errors="ignore")
 
                     if raw:
                         yield content_chunk
@@ -235,7 +251,9 @@ class HadadXYZ(Provider):
                     self.conversation.update_chat_history(prompt, streaming_text)
 
             except CurlError as e:
-                raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {e}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed (CurlError): {e}"
+                ) from e
             except Exception as e:
                 raise exceptions.FailedToGenerateResponseError(
                     f"Request failed ({type(e).__name__}): {e}"
@@ -260,8 +278,10 @@ class HadadXYZ(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        raw: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
+        raw = kwargs.get("raw", False)
+
         def for_stream_chat():
             for resp in self.ask(
                 prompt,
@@ -271,9 +291,9 @@ class HadadXYZ(Provider):
                 conversationally=conversationally,
             ):
                 if raw:
-                    yield resp
+                    yield cast(str, resp)
                 else:
-                    yield self.get_message(resp)  # type: ignore[arg-type]
+                    yield self.get_message(cast(Dict[str, Any], resp))
 
         def for_non_stream_chat():
             resp = self.ask(
@@ -284,14 +304,15 @@ class HadadXYZ(Provider):
                 conversationally=conversationally,
             )
             if raw:
-                return resp
-            return self.get_message(resp)  # type: ignore[arg-type]
+                return cast(str, resp)
+            return self.get_message(cast(Dict[str, Any], resp))
 
         return for_stream_chat() if stream else for_non_stream_chat()
 
-    def get_message(self, response: Dict[str, Any]) -> str:
-        assert isinstance(response, dict), "Response should be of dict data-type only"
-        return str(response.get("text", ""))
+    def get_message(self, response: Response) -> str:
+        if not isinstance(response, dict):
+            return str(response)
+        return str(cast(Dict[str, Any], response).get("text", ""))
 
 
 if __name__ == "__main__":

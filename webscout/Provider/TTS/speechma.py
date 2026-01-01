@@ -6,6 +6,7 @@ import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from io import BytesIO
+from typing import Any, Generator, Optional, Union, cast
 
 import requests
 from litprinter import ic
@@ -20,9 +21,11 @@ except ImportError:
     # Handle direct execution
     import os
     import sys
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
     from webscout.Provider.TTS import utils
     from webscout.Provider.TTS.base import BaseTTSProvider
+
 
 class SpeechMaTTS(BaseTTSProvider):
     """
@@ -35,6 +38,7 @@ class SpeechMaTTS(BaseTTSProvider):
     - Multiple output formats
     - Streaming support
     """
+
     required_auth = False
 
     # Request headers
@@ -43,7 +47,7 @@ class SpeechMaTTS(BaseTTSProvider):
         "origin": "https://speechma.com",
         "referer": "https://speechma.com/",
         "content-type": "application/json",
-        **LitAgent().generate_fingerprint()
+        **LitAgent().generate_fingerprint(),
     }
 
     # SpeechMa doesn't support different models - set to None
@@ -51,33 +55,149 @@ class SpeechMaTTS(BaseTTSProvider):
 
     # All supported voices from SpeechMa API
     SUPPORTED_VOICES = [
-        "aditi", "amy", "astrid", "bianca", "carla", "carmen", "celine", "chant",
-        "conchita", "cristiano", "dora", "enrique", "ewa", "filiz", "geraint",
-        "giorgio", "gwyneth", "hans", "ines", "ivy", "jacek", "jan", "joanna",
-        "joey", "justin", "karl", "kendra", "kimberly", "lea", "liv", "lotte",
-        "lucia", "lupe", "mads", "maja", "marlene", "mathieu", "matthew", "maxim",
-        "mia", "miguel", "mizuki", "naja", "nicole", "penelope", "raveena",
-        "ricardo", "ruben", "russell", "salli", "seoyeon", "takumi", "tatyana",
-        "vicki", "vitoria", "zeina", "zhiyu", "aditi-neural", "amy-neural",
-        "aria-neural", "ayanda-neural", "brian-neural", "emma-neural",
-        "jenny-neural", "joey-neural", "justin-neural", "kendra-neural",
-        "kimberly-neural", "matthew-neural", "olivia-neural", "ruth-neural",
-        "salli-neural", "stephen-neural", "suvi-neural", "camila-neural",
-        "lupe-neural", "pedro-neural", "natasha-neural", "william-neural",
-        "clara-neural", "liam-neural", "libby-neural", "maisie-neural",
-        "ryan-neural", "sonia-neural", "thomas-neural", "aria-multilingual",
-        "andrew-multilingual", "brian-multilingual", "emma-multilingual",
-        "jenny-multilingual", "ryan-multilingual", "adam-multilingual",
-        "liam-multilingual", "aria-turbo", "andrew-turbo", "brian-turbo",
-        "emma-turbo", "jenny-turbo", "ryan-turbo", "adam-turbo", "liam-turbo",
-        "aria-hd", "andrew-hd", "brian-hd", "emma-hd", "jenny-hd", "andrew-hd-2",
-        "aria-hd-2", "adam-hd", "ava-hd", "davis-hd", "brian-hd-2",
-        "christopher-hd", "coral-hd", "emma-hd-2", "eric-hd", "fable-hd",
-        "jenny-hd-2", "michelle-hd", "roger-hd", "sage-hd", "vale-hd", "verse-hd",
+        "aditi",
+        "amy",
+        "astrid",
+        "bianca",
+        "carla",
+        "carmen",
+        "celine",
+        "chant",
+        "conchita",
+        "cristiano",
+        "dora",
+        "enrique",
+        "ewa",
+        "filiz",
+        "geraint",
+        "giorgio",
+        "gwyneth",
+        "hans",
+        "ines",
+        "ivy",
+        "jacek",
+        "jan",
+        "joanna",
+        "joey",
+        "justin",
+        "karl",
+        "kendra",
+        "kimberly",
+        "lea",
+        "liv",
+        "lotte",
+        "lucia",
+        "lupe",
+        "mads",
+        "maja",
+        "marlene",
+        "mathieu",
+        "matthew",
+        "maxim",
+        "mia",
+        "miguel",
+        "mizuki",
+        "naja",
+        "nicole",
+        "penelope",
+        "raveena",
+        "ricardo",
+        "ruben",
+        "russell",
+        "salli",
+        "seoyeon",
+        "takumi",
+        "tatyana",
+        "vicki",
+        "vitoria",
+        "zeina",
+        "zhiyu",
+        "aditi-neural",
+        "amy-neural",
+        "aria-neural",
+        "ayanda-neural",
+        "brian-neural",
+        "emma-neural",
+        "jenny-neural",
+        "joey-neural",
+        "justin-neural",
+        "kendra-neural",
+        "kimberly-neural",
+        "matthew-neural",
+        "olivia-neural",
+        "ruth-neural",
+        "salli-neural",
+        "stephen-neural",
+        "suvi-neural",
+        "camila-neural",
+        "lupe-neural",
+        "pedro-neural",
+        "natasha-neural",
+        "william-neural",
+        "clara-neural",
+        "liam-neural",
+        "libby-neural",
+        "maisie-neural",
+        "ryan-neural",
+        "sonia-neural",
+        "thomas-neural",
+        "aria-multilingual",
+        "andrew-multilingual",
+        "brian-multilingual",
+        "emma-multilingual",
+        "jenny-multilingual",
+        "ryan-multilingual",
+        "adam-multilingual",
+        "liam-multilingual",
+        "aria-turbo",
+        "andrew-turbo",
+        "brian-turbo",
+        "emma-turbo",
+        "jenny-turbo",
+        "ryan-turbo",
+        "adam-turbo",
+        "liam-turbo",
+        "aria-hd",
+        "andrew-hd",
+        "brian-hd",
+        "emma-hd",
+        "jenny-hd",
+        "andrew-hd-2",
+        "aria-hd-2",
+        "adam-hd",
+        "ava-hd",
+        "davis-hd",
+        "brian-hd-2",
+        "christopher-hd",
+        "coral-hd",
+        "emma-hd-2",
+        "eric-hd",
+        "fable-hd",
+        "jenny-hd-2",
+        "michelle-hd",
+        "roger-hd",
+        "sage-hd",
+        "vale-hd",
+        "verse-hd",
         # Legacy voice names for backward compatibility
-        "emma", "ava", "brian", "andrew", "aria", "christopher", "eric", "jenny",
-        "michelle", "roger", "libby", "ryan", "sonia", "thomas", "natasha",
-        "william", "clara", "liam"
+        "emma",
+        "ava",
+        "brian",
+        "andrew",
+        "aria",
+        "christopher",
+        "eric",
+        "jenny",
+        "michelle",
+        "roger",
+        "libby",
+        "ryan",
+        "sonia",
+        "thomas",
+        "natasha",
+        "william",
+        "clara",
+        "liam",
     ]
 
     # Voice mapping for SpeechMa API compatibility (lowercase keys for all voices)
@@ -229,13 +349,13 @@ class SpeechMaTTS(BaseTTSProvider):
         "natasha": "voice-78",
         "william": "voice-79",
         "clara": "voice-80",
-        "liam": "voice-81"
+        "liam": "voice-81",
     }
 
     # Legacy voice mapping for backward compatibility
     all_voices = voice_mapping
 
-    def __init__(self, timeout: int = 20, proxies: dict = None):
+    def __init__(self, timeout: int = 20, proxies: Optional[dict] = None):
         """
         Initialize the SpeechMa TTS client.
 
@@ -256,85 +376,39 @@ class SpeechMaTTS(BaseTTSProvider):
 
     def create_speech(
         self,
-        input: str,
-        voice: str = "emma",
-        model: str = None,
-        response_format: str = "mp3",
-        speed: float = 1.0,
-        instructions: str = None,
-        **kwargs
-    ) -> bytes:
+        input_text: str,
+        model: Optional[str] = "gpt-4o-mini-tts",
+        voice: Optional[str] = "emma",
+        response_format: Optional[str] = "mp3",
+        instructions: Optional[str] = None,
+        verbose: bool = False,
+    ) -> str:
         """
         Create speech from text using OpenAI-compatible interface.
 
         Args:
-            input (str): The text to convert to speech
+            input_text (str): The text to convert to speech
             voice (str): Voice to use for generation
             model (str): TTS model to use
             response_format (str): Audio format (mp3, opus, aac, flac, wav, pcm)
-            speed (float): Speed of speech (0.25 to 4.0)
             instructions (str): Voice instructions (not used by SpeechMa)
-            **kwargs: Additional parameters (pitch, rate for SpeechMa compatibility)
+            verbose (bool): Whether to print debug information
 
         Returns:
-            bytes: Audio data
+            str: Path to the generated audio file
 
         Raises:
             ValueError: If input parameters are invalid
             exceptions.FailedToGenerateResponseError: If generation fails
         """
-        # Validate parameters
-        if not input or not isinstance(input, str):
-            raise ValueError("Input text must be a non-empty string")
-        if len(input) > 10000:
-            raise ValueError("Input text exceeds maximum allowed length of 10,000 characters")
-
-        model = self.validate_model(model or self.default_model)
-        voice = self.validate_voice(voice)
-        response_format = self.validate_format(response_format)
-
-        # Convert speed to SpeechMa rate parameter
-        rate = int((speed - 1.0) * 10)  # Convert 0.25-4.0 to -7.5 to 30, clamp to -10 to 10
-        rate = max(-10, min(10, rate))
-
-        # Extract SpeechMa-specific parameters
-        pitch = kwargs.get('pitch', 0)
-
-        # Map voice to SpeechMa format
-        speechma_voice = self.voice_mapping.get(voice, self.all_voices.get(voice.title(), "voice-116"))
-
-        # Prepare payload
-        payload = {
-            "text": input,
-            "voice": speechma_voice,
-            "pitch": pitch,
-            "rate": rate,
-            "volume": 100
-        }
-
-        try:
-            response = self.session.post(
-                self.api_url,
-                headers=self.headers,
-                json=payload,
-                timeout=self.timeout
-            )
-            response.raise_for_status()
-
-            # Validate audio response
-            content_type = response.headers.get('content-type', '').lower()
-            if ('audio' in content_type or
-                response.content.startswith(b'\xff\xfb') or
-                response.content.startswith(b'ID3') or
-                b'LAME' in response.content[:100]):
-                return response.content
-            else:
-                raise exceptions.FailedToGenerateResponseError(
-                    f"Unexpected response format. Content-Type: {content_type}"
-                )
-
-        except requests.exceptions.RequestException as e:
-            raise exceptions.FailedToGenerateResponseError(f"API request failed: {e}")
+        return self.tts(
+            text=input_text,
+            voice=voice or "emma",
+            model=model or "gpt-4o-mini-tts",
+            response_format=response_format or "mp3",
+            instructions=instructions,
+            verbose=verbose,
+        )
 
     def with_streaming_response(self):
         """
@@ -345,37 +419,21 @@ class SpeechMaTTS(BaseTTSProvider):
         """
         return SpeechMaStreamingResponse(self)
 
-    def tts(
-        self,
-        text: str,
-        model: str = None,
-        voice: str = "emma",
-        response_format: str = "mp3",
-        instructions: str = None,
-        pitch: int = 0,
-        rate: int = 0,
-        verbose: bool = True
-    ) -> str:
+    def tts(self, text: str, voice: Optional[str] = None, verbose: bool = False, **kwargs) -> str:
         """
         Convert text to speech using SpeechMa API with OpenAI-compatible parameters.
 
         Args:
             text (str): The text to convert to speech (max 10,000 characters)
-            model (str): The TTS model to use (gpt-4o-mini-tts, tts-1, tts-1-hd)
-            voice (str): The voice to use for TTS (emma, ava, brian, etc.)
-            response_format (str): Audio format (mp3, opus, aac, flac, wav, pcm)
-            instructions (str): Voice instructions (not used by SpeechMa but kept for compatibility)
-            pitch (int): Voice pitch adjustment (-10 to 10, default: 0)
-            rate (int): Voice rate/speed adjustment (-10 to 10, default: 0)
-            verbose (bool): Whether to print debug information
-
-        Returns:
-            str: Path to the generated audio file
-
-        Raises:
-            ValueError: If input parameters are invalid
-            exceptions.FailedToGenerateResponseError: If there is an error generating or saving the audio
+            **kwargs: Additional parameters (model, voice, response_format, instructions, pitch, rate, verbose)
         """
+        # Extract parameters from kwargs with defaults
+        model = kwargs.get("model", self.default_model)
+        voice = voice or kwargs.get("voice", "emma")
+        response_format = kwargs.get("response_format", "mp3")
+        pitch = kwargs.get("pitch", 0)
+        rate = kwargs.get("rate", 0)
+        verbose = verbose if verbose is not None else kwargs.get("verbose", True)
         # Validate input parameters
         if not text or not isinstance(text, str):
             raise ValueError("Input text must be a non-empty string")
@@ -383,7 +441,7 @@ class SpeechMaTTS(BaseTTSProvider):
             raise ValueError("Input text exceeds maximum allowed length of 10,000 characters")
 
         # Validate model, voice, and format using base class methods
-        model = self.validate_model(model or self.default_model)
+        model = self.validate_model(model)
         voice = self.validate_voice(voice)
         response_format = self.validate_format(response_format)
 
@@ -391,22 +449,26 @@ class SpeechMaTTS(BaseTTSProvider):
         speechma_voice = self.voice_mapping.get(voice, voice)
         if speechma_voice not in self.all_voices.values():
             # Fallback to legacy voice mapping
-            speechma_voice = self.all_voices.get(voice.title(), self.all_voices.get("Emma", "voice-116"))
+            speechma_voice = self.all_voices.get(
+                voice.title(), self.all_voices.get("Emma", "voice-116")
+            )
 
         # Create temporary file with appropriate extension
         file_extension = f".{response_format}" if response_format != "pcm" else ".wav"
-        filename = pathlib.Path(tempfile.mktemp(suffix=file_extension, dir=self.temp_dir))
+        filename = pathlib.Path(
+            tempfile.NamedTemporaryFile(suffix=file_extension, dir=self.temp_dir, delete=False).name
+        )
 
         # Split text into sentences using the utils module for better processing
         sentences = utils.split_sentences(text)
         if verbose:
-            ic.configureOutput(prefix='DEBUG| ')
+            ic.configureOutput(prefix="DEBUG| ")
             ic(f"Processing {len(sentences)} sentences")
-            ic.configureOutput(prefix='DEBUG| ')
+            ic.configureOutput(prefix="DEBUG| ")
             ic(f"Model: {model}")
-            ic.configureOutput(prefix='DEBUG| ')
+            ic.configureOutput(prefix="DEBUG| ")
             ic(f"Voice: {voice} -> {speechma_voice}")
-            ic.configureOutput(prefix='DEBUG| ')
+            ic.configureOutput(prefix="DEBUG| ")
             ic(f"Format: {response_format}")
 
         def generate_audio_for_chunk(part_text: str, part_number: int):
@@ -435,24 +497,23 @@ class SpeechMaTTS(BaseTTSProvider):
                         "rate": rate,
                         "volume": 100,
                         # Add model parameter for future SpeechMa API compatibility
-                        "tts_model": model
+                        "tts_model": model,
                     }
                     response = self.session.post(
-                        url=self.api_url,
-                        headers=self.headers,
-                        json=payload,
-                        timeout=self.timeout
+                        url=self.api_url, headers=self.headers, json=payload, timeout=self.timeout
                     )
                     response.raise_for_status()
 
                     # Check if response is audio data
-                    content_type = response.headers.get('content-type', '').lower()
-                    if ('audio' in content_type or
-                        response.content.startswith(b'\xff\xfb') or
-                        response.content.startswith(b'ID3') or
-                        b'LAME' in response.content[:100]):
+                    content_type = response.headers.get("content-type", "").lower()
+                    if (
+                        "audio" in content_type
+                        or response.content.startswith(b"\xff\xfb")
+                        or response.content.startswith(b"ID3")
+                        or b"LAME" in response.content[:100]
+                    ):
                         if verbose:
-                            ic.configureOutput(prefix='DEBUG| ')
+                            ic.configureOutput(prefix="DEBUG| ")
                             ic(f"Chunk {part_number} processed successfully")
                         return part_number, response.content
                     else:
@@ -467,7 +528,7 @@ class SpeechMaTTS(BaseTTSProvider):
                             f"Failed to generate audio for chunk {part_number} after {max_retries} retries: {e}"
                         )
                     if verbose:
-                        ic.configureOutput(prefix='DEBUG| ')
+                        ic.configureOutput(prefix="DEBUG| ")
                         ic(f"Retrying chunk {part_number} (attempt {retry_count + 1})")
                     time.sleep(1)  # Brief delay before retry
 
@@ -486,7 +547,7 @@ class SpeechMaTTS(BaseTTSProvider):
                         audio_chunks.append((chunk_number, audio_data))
                     except Exception as e:
                         if verbose:
-                            ic.configureOutput(prefix='DEBUG| ')
+                            ic.configureOutput(prefix="DEBUG| ")
                             ic(f"Error processing chunk: {e}")
                         raise
         else:
@@ -496,14 +557,14 @@ class SpeechMaTTS(BaseTTSProvider):
 
         # Sort chunks by their original order and combine
         audio_chunks.sort(key=lambda x: x[0])
-        combined_audio = b''.join([chunk[1] for chunk in audio_chunks])
+        combined_audio = b"".join([chunk[1] for chunk in audio_chunks])
 
         # Save combined audio to file
         try:
-            with open(filename, 'wb') as f:
+            with open(filename, "wb") as f:
                 f.write(combined_audio)
             if verbose:
-                ic.configureOutput(prefix='DEBUG| ')
+                ic.configureOutput(prefix="DEBUG| ")
                 ic(f"Audio saved to: {filename}")
             return filename.as_posix()
         except IOError as e:
@@ -524,13 +585,12 @@ class SpeechMaStreamingResponse:
 
     def create_speech(
         self,
-        input: str,
-        voice: str = "emma",
-        model: str = "gpt-4o-mini-tts",
-        response_format: str = "mp3",
-        speed: float = 1.0,
-        instructions: str = None,
-        **kwargs
+        input_text: str,
+        voice: Optional[str] = "emma",
+        model: Optional[str] = "gpt-4o-mini-tts",
+        response_format: Optional[str] = "mp3",
+        instructions: Optional[str] = None,
+        verbose: bool = False,
     ):
         """
         Create speech with streaming response simulation.
@@ -539,27 +599,26 @@ class SpeechMaStreamingResponse:
         the complete audio data wrapped in a BytesIO object.
 
         Args:
-            input (str): Text to convert to speech
+            input_text (str): Text to convert to speech
             voice (str): Voice to use
             model (str): TTS model
             response_format (str): Audio format
-            speed (float): Speech speed
             instructions (str): Voice instructions
-            **kwargs: Additional parameters
+            verbose (bool): Whether to print debug information
 
         Returns:
             BytesIO: Audio data stream
         """
-        audio_data = self.client.create_speech(
-            input=input,
+        audio_file = self.client.create_speech(
+            input_text=input_text,
             voice=voice,
             model=model,
             response_format=response_format,
-            speed=speed,
             instructions=instructions,
-            **kwargs
+            verbose=verbose,
         )
-        return BytesIO(audio_data)
+        with open(audio_file, "rb") as f:
+            return BytesIO(f.read())
 
 
 # Example usage and testing
@@ -579,13 +638,17 @@ if __name__ == "__main__":
     # Example 2: OpenAI-compatible interface
     print("\n=== Example 2: OpenAI-compatible interface ===")
     try:
-        audio_data = speechma.create_speech(
-            input="This demonstrates the OpenAI-compatible interface.",
+        audio_file_path = speechma.create_speech(
+            input_text="This demonstrates the OpenAI-compatible interface.",
             voice="brian",
             model="tts-1-hd",
             response_format="mp3",
-            speed=1.2
         )
+        print(f"Generated audio file at: {audio_file_path}")
+
+        # Read the file to get bytes for the example
+        with open(audio_file_path, "rb") as f:
+            audio_data = f.read()
         print(f"Generated {len(audio_data)} bytes of audio data")
 
         # Save to file
@@ -600,9 +663,9 @@ if __name__ == "__main__":
     try:
         with speechma.with_streaming_response() as streaming:
             audio_stream = streaming.create_speech(
-                input="This demonstrates streaming response handling.",
+                input_text="This demonstrates streaming response handling.",
                 voice="aria",
-                model="gpt-4o-mini-tts"
+                model="gpt-4o-mini-tts",
             )
             audio_data = audio_stream.read()
             print(f"Streamed {len(audio_data)} bytes of audio data")
@@ -623,7 +686,7 @@ if __name__ == "__main__":
             model="tts-1",
             pitch=2,
             rate=-1,
-            verbose=True
+            verbose=True,
         )
         print(f"Audio with custom parameters saved to: {audio_file}")
     except Exception as e:

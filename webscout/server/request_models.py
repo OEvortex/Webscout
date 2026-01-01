@@ -4,7 +4,10 @@ Pydantic models for API requests and responses.
 
 from typing import Dict, List, Literal, Optional, Union
 
-from webscout.Provider.OPENAI.pydantic_imports import BaseModel, Field
+try:
+    from webscout.Provider.OPENAI.pydantic_imports import BaseModel, Field
+except ImportError:
+    from pydantic import BaseModel, Field
 
 
 # Define Pydantic models for multimodal content parts, aligning with OpenAI's API

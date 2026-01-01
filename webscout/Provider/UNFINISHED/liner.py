@@ -4,10 +4,15 @@ import uuid
 from copy import deepcopy
 from typing import Any, Dict, Generator, List, Optional, Union
 
-import requests
+from curl_cffi.requests import Session
 
 # Import base classes and utility structures
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import (
+    BaseChat,
+    BaseCompletions,
+    OpenAICompatibleProvider,
+    SimpleModelList,
+)
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -21,7 +26,7 @@ from webscout.Provider.OPENAI.utils import (
 try:
     from webscout.litagent import LitAgent
 except ImportError:
-    pass
+    LitAgent = None # type: ignore
 
 
 class Completions(BaseCompletions):
@@ -125,7 +130,7 @@ class Completions(BaseCompletions):
             )
             yield final_chunk
 
-        except requests.RequestException as e:
+        except Exception as e:
             raise IOError(f"Liner request failed: {str(e)}")
 
     def _create_non_stream(
@@ -138,7 +143,7 @@ class Completions(BaseCompletions):
                 headers=self._client.headers,
                 cookies=self._client.cookies,
                 json=payload,
-                stream=True,
+                stream=False,
                 timeout=timeout or self._client.timeout,
                 proxies=proxies
             )
@@ -186,7 +191,7 @@ class Completions(BaseCompletions):
                 usage=usage
             )
 
-        except requests.RequestException as e:
+        except Exception as e:
             raise IOError(f"Liner request failed: {str(e)}")
 
 
@@ -294,7 +299,7 @@ class Liner(OpenAICompatibleProvider):
             "answerFormat": "auto",
         }
 
-        self.session = requests.Session()
+        self.session = Session()
         self.chat = Chat(self)
 
     def list_models(self) -> List[str]:
@@ -302,11 +307,8 @@ class Liner(OpenAICompatibleProvider):
         return self.AVAILABLE_MODELS
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 
 if __name__ == "__main__":
@@ -322,7 +324,8 @@ if __name__ == "__main__":
         stream=False
     )
     print("Non-streaming response:")
-    print(response.choices[0].message.content)
+    if isinstance(response, ChatCompletion) and response.choices and response.choices[0].message and response.choices[0].message.content:
+        print(response.choices[0].message.content)
 
     # Streaming example
     print("\nStreaming response:")
@@ -334,6 +337,6 @@ if __name__ == "__main__":
         stream=True
     )
     for chunk in stream:
-        if chunk.choices[0].delta.content:
+        if isinstance(chunk, ChatCompletionChunk) and chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
             print(chunk.choices[0].delta.content, end="", flush=True)
     print()

@@ -13,7 +13,7 @@ from .engines.duckduckgo.suggestions import DuckDuckGoSuggestions
 from .engines.duckduckgo.text import DuckDuckGoTextSearch
 from .engines.duckduckgo.translate import DuckDuckGoTranslate
 from .engines.duckduckgo.videos import DuckDuckGoVideos
-from .engines.duckduckgo.weather import DuckDuckGoWeather
+from .engines.duckduckgo.weather import DuckDuckGoWeather, WeatherData
 from .results import ImagesResult, NewsResult, TextResult, VideosResult
 
 
@@ -52,6 +52,6 @@ class DuckDuckGoSearch(BaseSearch):
         search = DuckDuckGoTranslate()
         return search.run(keywords, from_lang, to_lang)
 
-    def weather(self, keywords: str) -> Dict[str, Any]:
+    def weather(self, keywords: str) -> WeatherData:
         search = DuckDuckGoWeather()
         return search.run(keywords)

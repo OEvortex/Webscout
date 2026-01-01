@@ -1,6 +1,6 @@
 """YouTube Hashtag functionality."""
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from urllib.parse import quote
 
 from .patterns import _ExtraPatterns as Patterns

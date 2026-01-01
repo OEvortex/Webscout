@@ -1,11 +1,11 @@
 import json
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider
+from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 from webscout.litagent import LitAgent
 
@@ -15,11 +15,12 @@ class TogetherAI(Provider):
     A class to interact with the Together AI Chat API (https://chat.together.ai/).
     Uses the chat interface API endpoint with model UUIDs.
     """
+
     required_auth = True
     AVAILABLE_MODELS = []
 
     @classmethod
-    def get_models(cls, api_key: str = None):
+    def get_models(cls, api_key: Optional[str] = None):
         """Fetch available models from Together API."""
         if not api_key:
             return cls.AVAILABLE_MODELS
@@ -27,15 +28,10 @@ class TogetherAI(Provider):
         try:
             # Use a temporary session for fetching models
             session = Session()
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json"
-            }
+            headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
             response = session.get(
-                "https://api.together.xyz/v1/models",
-                headers=headers,
-                impersonate="chrome110"
+                "https://api.together.xyz/v1/models", headers=headers, impersonate="chrome110"
             )
 
             if response.status_code != 200:
@@ -81,17 +77,17 @@ class TogetherAI(Provider):
         is_conversation: bool = True,
         max_tokens: int = 2049,
         timeout: int = 30,
-        intro: str = None,
-        filepath: str = None,
+        intro: Optional[str] = None,
+        filepath: Optional[str] = None,
         update_file: bool = True,
         proxies: dict = {},
         history_offset: int = 10250,
-        act: str = None,
+        act: Optional[str] = None,
         model: str = "DeepSeek R1 (0528)",
         system_prompt: str = "You are a helpful assistant.",
         temperature: float = 0.6,
         top_p: float = 0.95,
-        browser: str = "chrome"
+        browser: str = "chrome",
     ):
         """Initializes the Together AI chat client."""
         self.update_available_models(api_key)
@@ -138,7 +134,8 @@ class TogetherAI(Provider):
         # Initialize curl_cffi Session
         self.session = Session()
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies
+        if proxies:
+            self.session.proxies.update(proxies)
         self.system_prompt = system_prompt
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
@@ -150,17 +147,18 @@ class TogetherAI(Provider):
             for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
-
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
+        act_prompt = (
+            AwesomePrompts().get_act(
+                cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
+        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
 
     def _generate_consistent_fingerprint(self, browser: Optional[str] = None) -> Dict[str, str]:
@@ -198,10 +196,11 @@ class TogetherAI(Provider):
 
         # Generate sec-ch-ua based on the user agent
         sec_ch_ua = ""
-        for browser_name in FINGERPRINTS["sec_ch_ua"]:
+        sec_ch_ua_dict = cast(Dict[str, str], FINGERPRINTS["sec_ch_ua"])
+        for browser_name in sec_ch_ua_dict:
             if browser_name in user_agent.lower():
                 version = random.randint(*BROWSERS[browser_name])
-                sec_ch_ua = FINGERPRINTS["sec_ch_ua"][browser_name].format(version, version)
+                sec_ch_ua = sec_ch_ua_dict[browser_name].format(version, version)
                 break
 
         # Use the instance's agent for consistent IP rotation
@@ -217,12 +216,14 @@ class TogetherAI(Provider):
             "x-client-ip": ip,
             "forwarded": f"for={ip};proto=https",
             "x-forwarded-proto": "https",
-            "x-request-id": self.agent.random_id(8) if hasattr(self.agent, 'random_id') else ''.join(random.choices('0123456789abcdef', k=8)),
+            "x-request-id": self.agent.random_id(8)
+            if hasattr(self.agent, "random_id")
+            else "".join(random.choices("0123456789abcdef", k=8)),
         }
 
         return fingerprint
 
-    def refresh_identity(self, browser: str = None):
+    def refresh_identity(self, browser: Optional[str] = None):
         """
         Refreshes the browser identity fingerprint.
 
@@ -233,15 +234,17 @@ class TogetherAI(Provider):
         self.fingerprint = self._generate_consistent_fingerprint(browser)
 
         # Update headers with new fingerprint
-        self.headers.update({
-            "Accept": self.fingerprint["accept"],
-            "Accept-Language": self.fingerprint["accept_language"],
-            "User-Agent": self.fingerprint.get("user_agent", ""),
-            "Sec-CH-UA": self.fingerprint.get("sec_ch_ua", ""),
-            "X-Forwarded-For": self.fingerprint.get("x-forwarded-for", ""),
-            "X-Real-IP": self.fingerprint.get("x-real-ip", ""),
-            "X-Client-IP": self.fingerprint.get("x-client-ip", ""),
-        })
+        self.headers.update(
+            {
+                "Accept": self.fingerprint["accept"],
+                "Accept-Language": self.fingerprint["accept_language"],
+                "User-Agent": self.fingerprint.get("user_agent", ""),
+                "Sec-CH-UA": self.fingerprint.get("sec_ch_ua", ""),
+                "X-Forwarded-For": self.fingerprint.get("x-forwarded-for", ""),
+                "X-Real-IP": self.fingerprint.get("x-real-ip", ""),
+                "X-Client-IP": self.fingerprint.get("x-client-ip", ""),
+            }
+        )
 
         self.session.headers.update(self.headers)
         return self.fingerprint
@@ -251,9 +254,10 @@ class TogetherAI(Provider):
         prompt: str,
         stream: bool = False,
         raw: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
-    ) -> Union[Dict[str, Any], Generator]:
+        **kwargs: Any,
+    ) -> Response:
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
@@ -284,7 +288,7 @@ class TogetherAI(Provider):
                     data=json.dumps(payload),
                     stream=True,
                     timeout=self.timeout,
-                    impersonate="chrome110"
+                    impersonate="chrome110",
                 )
                 response.raise_for_status()
 
@@ -295,12 +299,12 @@ class TogetherAI(Provider):
                     skip_markers=["[DONE]"],
                     content_extractor=self._together_ai_extractor,
                     yield_raw_on_error=False,
-                    raw=raw
+                    raw=raw,
                 )
 
                 for content_chunk in processed_stream:
                     if isinstance(content_chunk, bytes):
-                        content_chunk = content_chunk.decode('utf-8', errors='ignore')
+                        content_chunk = content_chunk.decode("utf-8", errors="ignore")
 
                     if raw:
                         yield content_chunk
@@ -310,9 +314,13 @@ class TogetherAI(Provider):
                             yield dict(text=content_chunk)
 
             except CurlError as e:
-                raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {str(e)}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed (CurlError): {str(e)}"
+                ) from e
             except Exception as e:
-                raise exceptions.FailedToGenerateResponseError(f"Request failed ({type(e).__name__}): {str(e)}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed ({type(e).__name__}): {str(e)}"
+                ) from e
             finally:
                 if not raw and streaming_text:
                     self.last_response = {"text": streaming_text}
@@ -324,7 +332,7 @@ class TogetherAI(Provider):
                     self.url,
                     data=json.dumps(payload),
                     timeout=self.timeout,
-                    impersonate="chrome110"
+                    impersonate="chrome110",
                 )
                 response.raise_for_status()
 
@@ -334,8 +342,12 @@ class TogetherAI(Provider):
                     data=response_text,
                     to_json=True,
                     intro_value=None,
-                    content_extractor=lambda chunk: chunk.get("choices", [{}])[0].get("message", {}).get("content") if isinstance(chunk, dict) else None,
-                    yield_raw_on_error=False
+                    content_extractor=lambda chunk: chunk.get("choices", [{}])[0]
+                    .get("message", {})
+                    .get("content")
+                    if isinstance(chunk, dict)
+                    else None,
+                    yield_raw_on_error=False,
                 )
                 content = next(processed_stream, None)
                 content = content if isinstance(content, str) else ""
@@ -345,10 +357,18 @@ class TogetherAI(Provider):
                 return self.last_response if not raw else content
 
             except CurlError as e:
-                raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {e}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed (CurlError): {e}"
+                ) from e
             except Exception as e:
-                err_text = getattr(e, 'response', None) and getattr(e.response, 'text', '')
-                raise exceptions.FailedToGenerateResponseError(f"Request failed ({type(e).__name__}): {e} - {err_text}") from e
+                err_text = ""
+                if hasattr(e, "response"):
+                    response_obj = getattr(e, "response")
+                    if hasattr(response_obj, "text"):
+                        err_text = getattr(response_obj, "text")
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed ({type(e).__name__}): {e} - {err_text}"
+                ) from e
 
         return for_stream() if stream else for_non_stream()
 
@@ -356,45 +376,63 @@ class TogetherAI(Provider):
         self,
         prompt: str,
         stream: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
-        raw: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
-        def for_stream_chat():
-            gen = self.ask(
-                prompt, stream=True, raw=raw,
-                optimizer=optimizer, conversationally=conversationally
-            )
-            for response in gen:
-                if raw:
-                    yield response
-                else:
-                    yield self.get_message(response)
+        raw = kwargs.get("raw", False)
+        if stream:
 
-        def for_non_stream_chat():
+            def for_stream_chat():
+                gen = self.ask(
+                    prompt,
+                    stream=True,
+                    raw=raw,
+                    optimizer=optimizer,
+                    conversationally=conversationally,
+                )
+                if hasattr(gen, "__iter__"):
+                    for response in gen:
+                        if raw:
+                            yield cast(str, response)
+                        else:
+                            yield self.get_message(response)
+
+            return for_stream_chat()
+        else:
             result = self.ask(
-                prompt, stream=False, raw=raw,
-                optimizer=optimizer, conversationally=conversationally
+                prompt,
+                stream=False,
+                raw=raw,
+                optimizer=optimizer,
+                conversationally=conversationally,
             )
             if raw:
-                return result
+                return cast(str, result)
             else:
                 return self.get_message(result)
 
-        return for_stream_chat() if stream else for_non_stream_chat()
+    def get_message(self, response: Response) -> str:
+        if not isinstance(response, dict):
+            return str(response)
+        response_dict = cast(Dict[str, Any], response)
+        return response_dict.get("text", "")
 
-    def get_message(self, response: dict) -> str:
-        assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"]
 
 if __name__ == "__main__":
     print("-" * 100)
     print(f"{'Model':<50} {'Status':<10} {'Response'}")
     print("-" * 100)
 
+    import os
+
+    api_key = os.environ.get("TOGETHER_API_KEY", "")
+    if not api_key:
+        print("Please set TOGETHER_API_KEY environment variable")
+        exit(1)
     for model_name in TogetherAI.AVAILABLE_MODELS:
         try:
-            test_ai = TogetherAI(model=model_name, timeout=60)
+            test_ai = TogetherAI(api_key=api_key, model=model_name, timeout=60)
             response = test_ai.chat("Say 'Hello' in one word", stream=True)
             response_text = ""
             for chunk in response:
@@ -402,7 +440,7 @@ if __name__ == "__main__":
 
             if response_text and len(response_text.strip()) > 0:
                 status = "✓"
-                clean_text = response_text.strip().encode('utf-8', errors='ignore').decode('utf-8')
+                clean_text = response_text.strip().encode("utf-8", errors="ignore").decode("utf-8")
                 display_text = clean_text[:50] + "..." if len(clean_text) > 50 else clean_text
             else:
                 status = "✗"

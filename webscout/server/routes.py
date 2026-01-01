@@ -58,7 +58,8 @@ class Api:
                 # Try to decode the body to dict and add footer if possible
                 try:
                     import json
-                    content_dict = json.loads(error_response.body.decode())
+                    body_bytes = bytes(error_response.body) if hasattr(error_response, 'body') else b""
+                    content_dict = json.loads(body_bytes.decode())
                     if "error" in content_dict:
                         content_dict["error"]["footer"] = github_footer
                         return JSONResponse(status_code=error_response.status_code, content=content_dict)

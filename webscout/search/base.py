@@ -5,13 +5,13 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from functools import cached_property
-from typing import Any, Generic, Literal, TypeVar
+from typing import Any, Generic, Literal, Optional, TypeVar
 
 from litprinter import ic
 
 try:
-    from lxml import html
-    from lxml.etree import HTMLParser as LHTMLParser
+    from lxml import html  # type: ignore
+    from lxml.etree import HTMLParser as LHTMLParser  # type: ignore
     LXML_AVAILABLE = True
 except ImportError:
     LXML_AVAILABLE = False
@@ -28,7 +28,7 @@ class BaseSearchEngine(ABC, Generic[T]):
     """Abstract base class for all search engine backends."""
 
     name: str  # unique key, e.g. "google"
-    category: Literal["text", "images", "videos", "news", "books"]
+    category: Literal["text", "images", "videos", "news", "books", "suggestions", "weather", "maps", "translate"]
     provider: str  # source of the search results (e.g. "google", "bing", etc.)
     disabled: bool = False  # if True, the engine is disabled
     priority: float = 1
@@ -87,7 +87,7 @@ class BaseSearchEngine(ABC, Generic[T]):
             ic.configureOutput(prefix='WARNING| ')
             ic("lxml not available, HTML parsing disabled")
             return None
-        return LHTMLParser(remove_blank_text=True, remove_comments=True, remove_pis=True, collect_ids=False)
+        return LHTMLParser(remove_blank_text=True, remove_comments=True, remove_pis=True, collect_ids=False) if LHTMLParser else None
 
     def extract_tree(self, html_text: str) -> Any:
         """Extract html tree from html text."""

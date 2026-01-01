@@ -8,11 +8,16 @@ Provides OpenAI-compatible API interface for Gradient Network's distributed GPU 
 import json
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 import requests
 
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import (
+    BaseChat,
+    BaseCompletions,
+    OpenAICompatibleProvider,
+    SimpleModelList,
+)
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -32,7 +37,7 @@ RESET = "\033[0m"
 class Completions(BaseCompletions):
     """Handles chat completions for Gradient Network."""
 
-    def __init__(self, client: 'Gradient'):
+    def __init__(self, client: "Gradient"):
         self._client = client
 
     def create(
@@ -48,7 +53,7 @@ class Completions(BaseCompletions):
         proxies: Optional[Dict[str, str]] = None,
         enable_thinking: Optional[bool] = None,
         cluster_mode: Optional[str] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
         """
         Creates a model response for the given chat conversation.
@@ -72,14 +77,18 @@ class Completions(BaseCompletions):
         """
         # Convert model name and get appropriate cluster mode
         converted_model = self._client.convert_model_name(model)
-        actual_cluster_mode = cluster_mode or self._client.MODEL_CLUSTERS.get(converted_model, self._client.cluster_mode)
+        actual_cluster_mode = cluster_mode or self._client.MODEL_CLUSTERS.get(
+            converted_model, self._client.cluster_mode
+        )
 
         # Build the payload - pass messages directly as the API accepts them
         payload = {
             "model": converted_model,
             "clusterMode": actual_cluster_mode,
             "messages": messages,
-            "enableThinking": enable_thinking if enable_thinking is not None else self._client.enable_thinking,
+            "enableThinking": enable_thinking
+            if enable_thinking is not None
+            else self._client.enable_thinking,
         }
 
         request_id = f"chatcmpl-{uuid.uuid4()}"
@@ -88,11 +97,18 @@ class Completions(BaseCompletions):
         if stream:
             return self._create_stream(request_id, created_time, model, payload, timeout, proxies)
         else:
-            return self._create_non_stream(request_id, created_time, model, payload, timeout, proxies)
+            return self._create_non_stream(
+                request_id, created_time, model, payload, timeout, proxies
+            )
 
     def _create_stream(
-        self, request_id: str, created_time: int, model: str, payload: Dict[str, Any],
-        timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        payload: Dict[str, Any],
+        timeout: Optional[int] = None,
+        proxies: Optional[Dict[str, str]] = None,
     ) -> Generator[ChatCompletionChunk, None, None]:
         """Handle streaming response from Gradient API."""
         try:
@@ -102,7 +118,7 @@ class Completions(BaseCompletions):
                 json=payload,
                 stream=True,
                 timeout=timeout or self._client.timeout,
-                proxies=proxies or self._client.proxies or None
+                proxies=proxies or self._client.proxies or None,
             )
             response.raise_for_status()
 
@@ -116,7 +132,7 @@ class Completions(BaseCompletions):
 
                 try:
                     # Decode bytes to string
-                    decoded_line = line.decode('utf-8') if isinstance(line, bytes) else line
+                    decoded_line = line.decode("utf-8") if isinstance(line, bytes) else line
                     decoded_line = decoded_line.strip()
                     if not decoded_line:
                         continue
@@ -137,30 +153,24 @@ class Completions(BaseCompletions):
                         completion_tokens += count_tokens(content)
 
                         delta = ChoiceDelta(
-                            content=content,
-                            role="assistant" if first_chunk else None
+                            content=content, role="assistant" if first_chunk else None
                         )
                         first_chunk = False
 
-                        choice = Choice(
-                            index=0,
-                            delta=delta,
-                            finish_reason=None,
-                            logprobs=None
-                        )
+                        choice = Choice(index=0, delta=delta, finish_reason=None, logprobs=None)
 
                         chunk = ChatCompletionChunk(
                             id=request_id,
                             choices=[choice],
                             created=created_time,
                             model=model,
-                            system_fingerprint=None
+                            system_fingerprint=None,
                         )
                         chunk.usage = {
                             "prompt_tokens": prompt_tokens,
                             "completion_tokens": completion_tokens,
                             "total_tokens": prompt_tokens + completion_tokens,
-                            "estimated_cost": None
+                            "estimated_cost": None,
                         }
                         yield chunk
 
@@ -177,13 +187,13 @@ class Completions(BaseCompletions):
                 choices=[choice],
                 created=created_time,
                 model=model,
-                system_fingerprint=None
+                system_fingerprint=None,
             )
             chunk.usage = {
                 "prompt_tokens": prompt_tokens,
                 "completion_tokens": completion_tokens,
                 "total_tokens": prompt_tokens + completion_tokens,
-                "estimated_cost": None
+                "estimated_cost": None,
             }
             yield chunk
 
@@ -195,8 +205,13 @@ class Completions(BaseCompletions):
             raise IOError(f"Gradient request failed: {e}") from e
 
     def _create_non_stream(
-        self, request_id: str, created_time: int, model: str, payload: Dict[str, Any],
-        timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        payload: Dict[str, Any],
+        timeout: Optional[int] = None,
+        proxies: Optional[Dict[str, str]] = None,
     ) -> ChatCompletion:
         """Handle non-streaming response from Gradient API."""
         try:
@@ -210,7 +225,7 @@ class Completions(BaseCompletions):
                 json=payload,
                 stream=True,
                 timeout=timeout or self._client.timeout,
-                proxies=proxies or self._client.proxies or None
+                proxies=proxies or self._client.proxies or None,
             )
             response.raise_for_status()
 
@@ -220,7 +235,7 @@ class Completions(BaseCompletions):
 
                 try:
                     # Decode bytes to string
-                    decoded_line = line.decode('utf-8') if isinstance(line, bytes) else line
+                    decoded_line = line.decode("utf-8") if isinstance(line, bytes) else line
                     decoded_line = decoded_line.strip()
                     if not decoded_line:
                         continue
@@ -249,19 +264,12 @@ class Completions(BaseCompletions):
             usage = CompletionUsage(
                 prompt_tokens=prompt_tokens,
                 completion_tokens=completion_tokens,
-                total_tokens=total_tokens
+                total_tokens=total_tokens,
             )
 
-            message = ChatCompletionMessage(
-                role="assistant",
-                content=full_content
-            )
+            message = ChatCompletionMessage(role="assistant", content=full_content)
 
-            choice = Choice(
-                index=0,
-                message=message,
-                finish_reason="stop"
-            )
+            choice = Choice(index=0, message=message, finish_reason="stop")
 
             completion = ChatCompletion(
                 id=request_id,
@@ -284,7 +292,7 @@ class Completions(BaseCompletions):
 class Chat(BaseChat):
     """Chat interface for Gradient Network."""
 
-    def __init__(self, client: 'Gradient'):
+    def __init__(self, client: "Gradient"):
         self.completions = Completions(client)
 
 
@@ -397,16 +405,14 @@ class Gradient(OpenAICompatibleProvider):
                 return available_model
 
         # Default to first available model
-        print(f"{BOLD}Warning: Model '{model}' not found, using default model '{self.AVAILABLE_MODELS[0]}'{RESET}")
+        print(
+            f"{BOLD}Warning: Model '{model}' not found, using default model '{self.AVAILABLE_MODELS[0]}'{RESET}"
+        )
         return self.AVAILABLE_MODELS[0]
 
     @property
-    def models(self):
-        """Returns a model list interface."""
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 
 if __name__ == "__main__":
@@ -422,10 +428,15 @@ if __name__ == "__main__":
                 messages=[
                     {"role": "user", "content": "Say 'Hello' in one word"},
                 ],
-                stream=False
+                stream=False,
             )
 
-            if response and response.choices and response.choices[0].message.content:
+            if (
+                isinstance(response, ChatCompletion)
+                and response.choices
+                and response.choices[0].message
+                and response.choices[0].message.content
+            ):
                 status = "✓"
                 display_text = response.choices[0].message.content.strip()
                 display_text = display_text[:50] + "..." if len(display_text) > 50 else display_text

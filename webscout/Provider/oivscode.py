@@ -2,12 +2,12 @@ import random
 import secrets
 import string
 import uuid
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 import requests
 
 from webscout import exceptions
-from webscout.AIbase import Provider
+from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 
 
@@ -81,14 +81,23 @@ class oivscode(Provider):
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
         self.session.headers.update(self.headers)
-        Conversation.intro = (
-            AwesomePrompts().get_act(act, default=None, case_insensitive=True) if act else intro
-        ) or Conversation.intro
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath or "", update_file
         )
         self.conversation.history_offset = history_offset
-        self.session.proxies = proxies
+
+        act_prompt = (
+            AwesomePrompts().get_act(
+                cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
+        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
+
+        if proxies:
+            self.session.proxies.update(proxies)
 
     def _post_with_failover(self, payload, stream, timeout):
         """Try all endpoints until one succeeds, else raise last error."""
@@ -118,6 +127,7 @@ class oivscode(Provider):
         raw: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Any:
         """Chat with AI (DeepInfra-style streaming and non-streaming)"""
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
@@ -211,38 +221,49 @@ class oivscode(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-    ) -> Any:
+        **kwargs: Any,
+    ) -> Union[str, Generator[str, None, None]]:
         """Generate response `str`
         Args:
             prompt (str): Prompt to be send.
             stream (bool, optional): Flag for streaming response. Defaults to False.
             optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
             conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
+            **kwargs: Additional parameters including raw.
         Returns:
             str: Response generated
         """
+        raw = kwargs.get("raw", False)
+        if stream:
 
-        def for_stream():
-            for response in self.ask(
-                prompt, True, optimizer=optimizer, conversationally=conversationally
-            ):
-                yield self.get_message(response)
-
-        def for_non_stream():
-            return self.get_message(
-                self.ask(
-                    prompt,
-                    False,
-                    optimizer=optimizer,
-                    conversationally=conversationally,
+            def for_stream():
+                gen = self.ask(
+                    prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
                 )
+                if hasattr(gen, "__iter__"):
+                    for response in gen:
+                        if raw:
+                            yield cast(str, response)
+                        else:
+                            yield self.get_message(response)
+
+            return for_stream()
+        else:
+            result = self.ask(
+                prompt,
+                False,
+                raw=raw,
+                optimizer=optimizer,
+                conversationally=conversationally,
             )
+            if raw:
+                return cast(str, result)
+            return self.get_message(result)
 
-        return for_stream() if stream else for_non_stream()
-
-    def get_message(self, response: Union[Dict[str, Any], str]) -> str:
+    def get_message(self, response: Response) -> str:
         """Retrieves message content from response, handling both streaming and non-streaming formats."""
-        assert isinstance(response, dict), "Response should be of dict data-type only"
+        if not isinstance(response, dict):
+            return str(response)
         # Streaming chunk: choices[0]["delta"]["content"]
         if "choices" in response and response["choices"]:
             choice = response["choices"][0]

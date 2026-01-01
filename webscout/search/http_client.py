@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from random import choice
-from typing import Any, Literal
+from typing import Any, Literal, Optional, cast
 
 try:
     import trio  # type: ignore
@@ -20,12 +20,31 @@ class HttpClient:
 
     # curl_cffi supported browser impersonations
     _impersonates = (
-        "chrome99", "chrome100", "chrome101", "chrome104", "chrome107", "chrome110",
-        "chrome116", "chrome119", "chrome120", "chrome123", "chrome124", "chrome131", "chrome133a",
-        "chrome99_android", "chrome131_android",
-        "safari15_3", "safari15_5", "safari17_0", "safari17_2_ios", "safari18_0", "safari18_0_ios",
-        "edge99", "edge101",
-        "firefox133", "firefox135",
+        "chrome99",
+        "chrome100",
+        "chrome101",
+        "chrome104",
+        "chrome107",
+        "chrome110",
+        "chrome116",
+        "chrome119",
+        "chrome120",
+        "chrome123",
+        "chrome124",
+        "chrome131",
+        "chrome133a",
+        "chrome99_android",
+        "chrome131_android",
+        "safari15_3",
+        "safari15_5",
+        "safari17_0",
+        "safari17_2_ios",
+        "safari18_0",
+        "safari18_0_ios",
+        "edge99",
+        "edge101",
+        "firefox133",
+        "firefox135",
     )
 
     def __init__(
@@ -53,8 +72,8 @@ class HttpClient:
         # Initialize curl_cffi session
         self.client = curl_cffi.requests.Session(
             headers=headers or {},
-            proxies={'http': self.proxy, 'https': self.proxy} if self.proxy else None,
-            timeout=timeout,
+            proxies={"http": self.proxy, "https": self.proxy} if self.proxy else None,
+            timeout=cast(Any, timeout),
             impersonate=impersonate_browser,
             verify=verify,
         )
@@ -141,7 +160,7 @@ class HttpClient:
 
     def close(self) -> None:
         """Close the HTTP client."""
-        if hasattr(self.client, 'close'):
+        if hasattr(self.client, "close"):
             self.client.close()
 
     def __enter__(self) -> HttpClient:

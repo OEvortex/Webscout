@@ -1,4 +1,4 @@
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 from uuid import uuid4
 
 from curl_cffi import CurlError
@@ -32,6 +32,7 @@ class X0GPT(Provider):
         >>> print(response)
         'The weather today is sunny with a high of 75°F.'
     """
+
     required_auth = False
     AVAILABLE_MODELS = ["UNKNOWN"]
 
@@ -47,7 +48,7 @@ class X0GPT(Provider):
         history_offset: int = 10250,
         act: Optional[str] = None,
         system_prompt: str = "You are a helpful assistant.",
-        model: str = "UNKNOWN"
+        model: str = "UNKNOWN",
     ):
         """
         Initializes the X0GPT API with given parameters.
@@ -87,7 +88,7 @@ class X0GPT(Provider):
             "path": "/api/stream/reply",
             "scheme": "https",
             "accept": "*/*",
-            "accept-encoding": "gzip, deflate, br, zstd", # Keep zstd for now
+            "accept-encoding": "gzip, deflate, br, zstd",  # Keep zstd for now
             "accept-language": "en-US,en;q=0.9,en-IN;q=0.8",
             # "content-length": "114", # Let curl_cffi handle content-length
             "content-type": "application/json",
@@ -98,7 +99,7 @@ class X0GPT(Provider):
             "sec-ch-ua": '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": '"Windows"',
-            "user-agent": self.agent.random()
+            "user-agent": self.agent.random(),
         }
 
         self.__available_optimizers = (
@@ -107,20 +108,27 @@ class X0GPT(Provider):
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
         # Update curl_cffi session headers and proxies
+        self.session = Session()
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies
+        if proxies:
+            self.session.proxies.update(proxies)
 
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
+
+        if act:
+            self.conversation.intro = (
+                AwesomePrompts().get_act(
+                    cast(Union[str, int], act),
+                    default=self.conversation.intro,
+                    case_insensitive=True,
+                )
+                or self.conversation.intro
+            )
+        elif intro:
+            self.conversation.intro = intro
 
     def ask(
         self,
@@ -157,17 +165,15 @@ class X0GPT(Provider):
                     conversation_prompt if conversationally else prompt
                 )
             else:
-                raise Exception(
-                    f"Optimizer is not one of {self.__available_optimizers}"
-                )
+                raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
 
         payload = {
             "messages": [
                 {"role": "system", "content": self.system_prompt},
-                {"role": "user", "content": conversation_prompt}
+                {"role": "user", "content": conversation_prompt},
             ],
             "chatId": uuid4().hex,
-            "namespace": None
+            "namespace": None,
         }
 
         def for_stream():
@@ -179,8 +185,8 @@ class X0GPT(Provider):
                     json=payload,
                     stream=True,
                     timeout=self.timeout,
-                    impersonate="chrome120", # Try a different impersonation profile
-                    http_version=CurlHttpVersion.V1_1 # Force HTTP/1.1
+                    impersonate="chrome120",  # Try a different impersonation profile
+                    http_version=CurlHttpVersion.V1_1,  # Force HTTP/1.1
                 )
                 if not response.ok:
                     raise exceptions.FailedToGenerateResponseError(
@@ -190,27 +196,27 @@ class X0GPT(Provider):
                 streaming_response = ""
                 # Use sanitize_stream with regex-based extraction and filtering
                 processed_stream = sanitize_stream(
-                    data=response.iter_content(chunk_size=None), # Pass byte iterator
-                    intro_value=None, # No simple prefix to remove here
-                    to_json=False,    # Content is not JSON
+                    data=response.iter_content(chunk_size=None),  # Pass byte iterator
+                    intro_value=None,  # No simple prefix to remove here
+                    to_json=False,  # Content is not JSON
                     # Use regex to extract content from x0gpt format '0:"..."'
                     extract_regexes=[r'0:"(.*?)"'],
                     # Skip empty chunks, connection status messages, and control characters
                     skip_regexes=[
-                        r'^\s*$',                    # Empty lines
-                        r'data:\s*\[DONE\]',         # Stream end markers
-                        r'event:\s*',                # SSE event headers
-                        r'^\d+:\s*$',                # Standalone numbers
-                        r'^:\s*$',                   # Colon-only lines
-                        r'^\s*[\x00-\x1f]+\s*$'     # Control characters
+                        r"^\s*$",  # Empty lines
+                        r"data:\s*\[DONE\]",  # Stream end markers
+                        r"event:\s*",  # SSE event headers
+                        r"^\d+:\s*$",  # Standalone numbers
+                        r"^:\s*$",  # Colon-only lines
+                        r"^\s*[\x00-\x1f]+\s*$",  # Control characters
                     ],
-                    raw=raw
+                    raw=raw,
                 )
 
                 for content_chunk in processed_stream:
                     # Always yield as string, even in raw mode
                     if isinstance(content_chunk, bytes):
-                        content_chunk = content_chunk.decode('utf-8', errors='ignore')
+                        content_chunk = content_chunk.decode("utf-8", errors="ignore")
 
                     if raw:
                         yield content_chunk
@@ -219,9 +225,11 @@ class X0GPT(Provider):
                             # Handle unicode escapes and clean up the content
                             try:
                                 # Decode unicode escapes like \u00e9
-                                clean_content = content_chunk.encode().decode('unicode_escape')
+                                clean_content = content_chunk.encode().decode("unicode_escape")
                                 # Handle escaped backslashes and quotes
-                                clean_content = clean_content.replace('\\\\', '\\').replace('\\"', '"')
+                                clean_content = clean_content.replace("\\\\", "\\").replace(
+                                    '\\"', '"'
+                                )
                                 streaming_response += clean_content
                                 yield dict(text=clean_content)
                             except (UnicodeDecodeError, UnicodeEncodeError):
@@ -230,14 +238,14 @@ class X0GPT(Provider):
                                 yield dict(text=content_chunk)
 
                 self.last_response.update(dict(text=streaming_response))
-                self.conversation.update_chat_history(
-                    prompt, self.get_message(self.last_response)
-                )
-            except CurlError as e: # Catch CurlError
+                self.conversation.update_chat_history(prompt, self.get_message(self.last_response))
+            except CurlError as e:  # Catch CurlError
                 raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {e}")
-            except Exception as e: # Catch other potential exceptions
+            except Exception as e:  # Catch other potential exceptions
                 # Include the original exception type in the message for clarity
-                raise exceptions.FailedToGenerateResponseError(f"An unexpected error occurred ({type(e).__name__}): {e}")
+                raise exceptions.FailedToGenerateResponseError(
+                    f"An unexpected error occurred ({type(e).__name__}): {e}"
+                )
 
         def for_non_stream():
             # This function implicitly uses the updated for_stream
@@ -255,7 +263,6 @@ class X0GPT(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        raw: bool = False,  # Added raw parameter
         **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """
@@ -266,7 +273,7 @@ class X0GPT(Provider):
             stream (bool): Whether to stream the response.
             optimizer (str): Optimizer to use for the prompt.
             conversationally (bool): Whether to generate the prompt conversationally.
-            raw (bool): Whether to return raw response chunks.
+            **kwargs: Additional parameters including raw.
 
         Returns:
             str: The API response.
@@ -277,15 +284,16 @@ class X0GPT(Provider):
             >>> print(response)
             'The weather today is sunny with a high of 75°F.'
         """
+        raw = kwargs.get("raw", False)
 
         def for_stream():
             for response in self.ask(
                 prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
             ):
                 if raw:
-                    yield response
+                    yield cast(str, response)
                 else:
-                    yield self.get_message(response)
+                    yield self.get_message(cast(Dict[str, Any], response))
 
         def for_non_stream():
             result = self.ask(
@@ -296,41 +304,29 @@ class X0GPT(Provider):
                 conversationally=conversationally,
             )
             if raw:
-                return result
+                return cast(str, result)
             else:
-                return self.get_message(result)
+                return self.get_message(cast(Dict[str, Any], result))
 
         return for_stream() if stream else for_non_stream()
 
-    def get_message(self, response: dict) -> str:
-        """
-        Extracts the message from the API response.
-
-        Args:
-            response (dict): The API response.
-
-        Returns:
-            str: The message content.
-
-        Examples:
-            >>> ai = X0GPT()
-            >>> response = ai.ask("Tell me a joke!")
-            >>> message = ai.get_message(response)
-            >>> print(message)
-            'Why did the scarecrow win an award? Because he was outstanding in his field!'
-        """
-        assert isinstance(response, dict), "Response should be of dict data-type only"
-        # Ensure text exists before processing
-        text = response.get("text", "")
-        # Text is now cleaned by the regex-based sanitize_stream processing
+    def get_message(self, response: Response) -> str:
+        if not isinstance(response, dict):
+            return str(response)
+        response_dict = cast(Dict[str, Any], response)
+        text = response_dict.get("text", "")
         return text
+
 
 if __name__ == "__main__":
     from rich import print
+
     ai = X0GPT(timeout=5000)
+    # None Stream Test
+    response = ai.chat("write a poem about AI", stream=False, raw=False)
+    print(response)
+    print()
+    print("=====================Stream===============================")
     response = ai.chat("write a poem about AI", stream=True, raw=False)
-    if hasattr(response, "__iter__") and not isinstance(response, (str, bytes)):
-        for chunk in response:
-            print(chunk, end="", flush=True)
-    else:
-        print(response)
+    for chunk in response:
+        print(chunk, end="", flush=True)

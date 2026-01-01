@@ -1,10 +1,13 @@
 """
 Base class for TTS providers with OpenAI-compatible functionality.
 """
+
+import asyncio
+import functools
 import os
 import tempfile
 from pathlib import Path
-from typing import Generator
+from typing import Any, Generator, List, Optional, Union, cast
 
 from litprinter import ic
 
@@ -18,29 +21,38 @@ class BaseTTSProvider(TTSProvider):
     This class implements common methods and follows OpenAI TTS API patterns
     for speech generation, streaming, and audio handling.
     """
+
     required_auth = False
 
     # Supported models (can be overridden by subclasses)
     SUPPORTED_MODELS = [
         "gpt-4o-mini-tts",  # Latest intelligent realtime model
-        "tts-1",            # Lower latency model
-        "tts-1-hd"          # Higher quality model
+        "tts-1",  # Lower latency model
+        "tts-1-hd",  # Higher quality model
     ]
 
     # Supported voices (can be overridden by subclasses)
     SUPPORTED_VOICES = [
-        "alloy", "ash", "ballad", "coral", "echo",
-        "fable", "nova", "onyx", "sage", "shimmer"
+        "alloy",
+        "ash",
+        "ballad",
+        "coral",
+        "echo",
+        "fable",
+        "nova",
+        "onyx",
+        "sage",
+        "shimmer",
     ]
 
     # Supported output formats
     SUPPORTED_FORMATS = [
-        "mp3",    # Default format
-        "opus",   # Internet streaming, low latency
-        "aac",    # Digital audio compression
-        "flac",   # Lossless compression
-        "wav",    # Uncompressed, low latency
-        "pcm"     # Raw samples, 24kHz 16-bit
+        "mp3",  # Default format
+        "opus",  # Internet streaming, low latency
+        "aac",  # Digital audio compression
+        "flac",  # Lossless compression
+        "wav",  # Uncompressed, low latency
+        "pcm",  # Raw samples, 24kHz 16-bit
     ]
 
     def __init__(self):
@@ -68,7 +80,9 @@ class BaseTTSProvider(TTSProvider):
             return model
 
         if model not in self.SUPPORTED_MODELS:
-            raise ValueError(f"Model '{model}' not supported. Available models: {', '.join(self.SUPPORTED_MODELS)}")
+            raise ValueError(
+                f"Model '{model}' not supported. Available models: {', '.join(self.SUPPORTED_MODELS)}"
+            )
         return model
 
     def validate_voice(self, voice: str) -> str:
@@ -85,7 +99,9 @@ class BaseTTSProvider(TTSProvider):
             ValueError: If voice is not supported
         """
         if voice not in self.SUPPORTED_VOICES:
-            raise ValueError(f"Voice '{voice}' not supported. Available voices: {', '.join(self.SUPPORTED_VOICES)}")
+            raise ValueError(
+                f"Voice '{voice}' not supported. Available voices: {', '.join(self.SUPPORTED_VOICES)}"
+            )
         return voice
 
     def validate_format(self, response_format: str) -> str:
@@ -102,10 +118,14 @@ class BaseTTSProvider(TTSProvider):
             ValueError: If format is not supported
         """
         if response_format not in self.SUPPORTED_FORMATS:
-            raise ValueError(f"Format '{response_format}' not supported. Available formats: {', '.join(self.SUPPORTED_FORMATS)}")
+            raise ValueError(
+                f"Format '{response_format}' not supported. Available formats: {', '.join(self.SUPPORTED_FORMATS)}"
+            )
         return response_format
 
-    def save_audio(self, audio_file: str, destination: str = None, verbose: bool = False) -> str:
+    def save_audio(
+        self, audio_file: str, destination: Optional[str] = None, verbose: bool = False
+    ) -> str:
         """
         Save audio to a specific destination.
 
@@ -140,7 +160,7 @@ class BaseTTSProvider(TTSProvider):
         shutil.copy2(source_path, destination)
 
         if verbose:
-            ic.configureOutput(prefix='DEBUG| ')
+            ic.configureOutput(prefix="DEBUG| ")
             ic(f"Audio saved to {destination}")
 
         return destination
@@ -148,11 +168,11 @@ class BaseTTSProvider(TTSProvider):
     def create_speech(
         self,
         input_text: str,
-        model: str = None,
-        voice: str = None,
-        response_format: str = None,
-        instructions: str = None,
-        verbose: bool = False
+        model: Optional[str] = None,
+        voice: Optional[str] = None,
+        response_format: Optional[str] = None,
+        instructions: Optional[str] = None,
+        verbose: bool = False,
     ) -> str:
         """
         Create speech from input text (OpenAI-compatible interface).
@@ -185,24 +205,24 @@ class BaseTTSProvider(TTSProvider):
             voice=voice,
             response_format=response_format,
             instructions=instructions,
-            verbose=verbose
+            verbose=verbose,
         )
 
     def stream_audio(
         self,
-        input_text: str,
-        model: str = None,
-        voice: str = None,
-        response_format: str = None,
-        instructions: str = None,
+        text: str,
+        model: Optional[str] = None,
+        voice: Optional[str] = None,
+        response_format: Optional[str] = None,
+        instructions: Optional[str] = None,
         chunk_size: int = 1024,
-        verbose: bool = False
+        verbose: bool = False,
     ) -> Generator[bytes, None, None]:
         """
         Stream audio in chunks with OpenAI-compatible parameters.
 
         Args:
-            input_text (str): The text to convert to speech
+            text (str): The text to convert to speech
             model (str, optional): The TTS model to use
             voice (str, optional): The voice to use
             response_format (str, optional): Audio format
@@ -215,20 +235,20 @@ class BaseTTSProvider(TTSProvider):
         """
         # Generate the audio file using create_speech
         audio_file = self.create_speech(
-            input_text=input_text,
+            input_text=text,
             model=model,
             voice=voice,
             response_format=response_format,
             instructions=instructions,
-            verbose=verbose
+            verbose=verbose,
         )
 
         # Stream the file in chunks
-        with open(audio_file, 'rb') as f:
+        with open(audio_file, "rb") as f:
             while chunk := f.read(chunk_size):
                 yield chunk
 
-    def tts(self, text: str, **kwargs) -> str:
+    def tts(self, text: str, voice: Optional[str] = None, verbose: bool = False, **kwargs) -> str:
         """
         Abstract method for text-to-speech conversion.
         Must be implemented by subclasses.
@@ -253,29 +273,38 @@ class AsyncBaseTTSProvider:
     This class implements common async methods following OpenAI TTS API patterns
     for speech generation, streaming, and audio handling.
     """
+
     required_auth = False
 
     # Supported models (can be overridden by subclasses)
     SUPPORTED_MODELS = [
         "gpt-4o-mini-tts",  # Latest intelligent realtime model
-        "tts-1",            # Lower latency model
-        "tts-1-hd"          # Higher quality model
+        "tts-1",  # Lower latency model
+        "tts-1-hd",  # Higher quality model
     ]
 
     # Supported voices (can be overridden by subclasses)
     SUPPORTED_VOICES = [
-        "alloy", "ash", "ballad", "coral", "echo",
-        "fable", "nova", "onyx", "sage", "shimmer"
+        "alloy",
+        "ash",
+        "ballad",
+        "coral",
+        "echo",
+        "fable",
+        "nova",
+        "onyx",
+        "sage",
+        "shimmer",
     ]
 
     # Supported output formats
     SUPPORTED_FORMATS = [
-        "mp3",    # Default format
-        "opus",   # Internet streaming, low latency
-        "aac",    # Digital audio compression
-        "flac",   # Lossless compression
-        "wav",    # Uncompressed, low latency
-        "pcm"     # Raw samples, 24kHz 16-bit
+        "mp3",  # Default format
+        "opus",  # Internet streaming, low latency
+        "aac",  # Digital audio compression
+        "flac",  # Lossless compression
+        "wav",  # Uncompressed, low latency
+        "pcm",  # Raw samples, 24kHz 16-bit
     ]
 
     def __init__(self):
@@ -303,7 +332,9 @@ class AsyncBaseTTSProvider:
             return model
 
         if model not in self.SUPPORTED_MODELS:
-            raise ValueError(f"Model '{model}' not supported. Available models: {', '.join(self.SUPPORTED_MODELS)}")
+            raise ValueError(
+                f"Model '{model}' not supported. Available models: {', '.join(self.SUPPORTED_MODELS)}"
+            )
         return model
 
     async def validate_voice(self, voice: str) -> str:
@@ -320,7 +351,9 @@ class AsyncBaseTTSProvider:
             ValueError: If voice is not supported
         """
         if voice not in self.SUPPORTED_VOICES:
-            raise ValueError(f"Voice '{voice}' not supported. Available voices: {', '.join(self.SUPPORTED_VOICES)}")
+            raise ValueError(
+                f"Voice '{voice}' not supported. Available voices: {', '.join(self.SUPPORTED_VOICES)}"
+            )
         return voice
 
     async def validate_format(self, response_format: str) -> str:
@@ -337,10 +370,14 @@ class AsyncBaseTTSProvider:
             ValueError: If format is not supported
         """
         if response_format not in self.SUPPORTED_FORMATS:
-            raise ValueError(f"Format '{response_format}' not supported. Available formats: {', '.join(self.SUPPORTED_FORMATS)}")
+            raise ValueError(
+                f"Format '{response_format}' not supported. Available formats: {', '.join(self.SUPPORTED_FORMATS)}"
+            )
         return response_format
 
-    async def save_audio(self, audio_file: str, destination: str = None, verbose: bool = False) -> str:
+    async def save_audio(
+        self, audio_file: str, destination: Optional[str] = None, verbose: bool = False
+    ) -> str:
         """
         Save audio to a specific destination asynchronously.
 
@@ -373,10 +410,10 @@ class AsyncBaseTTSProvider:
         os.makedirs(os.path.dirname(os.path.abspath(destination)), exist_ok=True)
 
         # Copy the file using asyncio to avoid blocking
-        await asyncio.to_thread(shutil.copy2, source_path, destination)
+        await asyncio.to_thread(functools.partial(shutil.copy2, str(source_path), destination))
 
         if verbose:
-            ic.configureOutput(prefix='DEBUG| ')
+            ic.configureOutput(prefix="DEBUG| ")
             ic(f"Audio saved to {destination}")
 
         return destination
@@ -384,11 +421,11 @@ class AsyncBaseTTSProvider:
     async def create_speech(
         self,
         input_text: str,
-        model: str = None,
-        voice: str = None,
-        response_format: str = None,
-        instructions: str = None,
-        verbose: bool = False
+        model: Optional[str] = None,
+        voice: Optional[str] = None,
+        response_format: Optional[str] = None,
+        instructions: Optional[str] = None,
+        verbose: bool = False,
     ) -> str:
         """
         Create speech from input text asynchronously (OpenAI-compatible interface).
@@ -421,18 +458,18 @@ class AsyncBaseTTSProvider:
             voice=voice,
             response_format=response_format,
             instructions=instructions,
-            verbose=verbose
+            verbose=verbose,
         )
 
     async def stream_audio(
         self,
         input_text: str,
-        model: str = None,
-        voice: str = None,
-        response_format: str = None,
-        instructions: str = None,
+        model: Optional[str] = None,
+        voice: Optional[str] = None,
+        response_format: Optional[str] = None,
+        instructions: Optional[str] = None,
         chunk_size: int = 1024,
-        verbose: bool = False
+        verbose: bool = False,
     ):
         """
         Stream audio in chunks asynchronously with OpenAI-compatible parameters.
@@ -449,11 +486,6 @@ class AsyncBaseTTSProvider:
         Yields:
             AsyncGenerator[bytes, None]: Audio data chunks
         """
-        try:
-            import aiofiles
-        except ImportError:
-            raise ImportError("The 'aiofiles' package is required for async streaming. Install it with 'pip install aiofiles'.")
-
         # Generate the audio file using create_speech
         audio_file = await self.create_speech(
             input_text=input_text,
@@ -461,13 +493,17 @@ class AsyncBaseTTSProvider:
             voice=voice,
             response_format=response_format,
             instructions=instructions,
-            verbose=verbose
+            verbose=verbose,
         )
 
-        # Stream the file in chunks
-        async with aiofiles.open(audio_file, 'rb') as f:
-            while chunk := await f.read(chunk_size):
-                yield chunk
+        # Stream the file in chunks using thread pool
+        def read_file_chunks(file_path, chunk_size):
+            with open(file_path, "rb") as f:
+                while chunk := f.read(chunk_size):
+                    yield chunk
+
+        for chunk in await asyncio.to_thread(read_file_chunks, audio_file, chunk_size):
+            yield chunk
 
     async def tts(self, text: str, **kwargs) -> str:
         """

@@ -7,7 +7,7 @@ import string
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union
+from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union, cast
 
 try:
     import trio  # type: ignore  # noqa: F401
@@ -168,8 +168,8 @@ async def upload_file(
 
     try:
         async with AsyncSession(
-            proxies=proxies_dict,
-            impersonate=impersonate,
+            proxies=cast(Any, proxies_dict),
+            impersonate=cast(Any, impersonate),
             headers=Headers.UPLOAD.value
         ) as client:
             response = await client.post(
@@ -341,9 +341,9 @@ class AsyncChatbot:
         self.session: AsyncSession = AsyncSession(
             headers=headers,
             cookies={"__Secure-1PSID": secure_1psid, "__Secure-1PSIDTS": secure_1psidts},
-            proxies=self.proxies_dict if self.proxies_dict else None,
+            proxies=cast(Any, self.proxies_dict if self.proxies_dict else None),
             timeout=timeout,
-            impersonate=self.impersonate if self.impersonate else None
+            impersonate=cast(Any, self.impersonate if self.impersonate else None)
         )
 
         self.timeout = timeout
@@ -487,13 +487,13 @@ class AsyncChatbot:
             raise TimeoutError(f"Request timed out while fetching SNlM0e: {e}") from e
         except (RequestException, CurlError) as e:
             raise ConnectionError(f"Network error while fetching SNlM0e: {e}") from e
-        except HTTPError as e:
-            if e.response.status_code == 401 or e.response.status_code == 403:
+        except Exception as e:
+            if isinstance(e, HTTPError) and (e.response.status_code == 401 or e.response.status_code == 403):
                 raise PermissionError(f"Authentication failed (status {e.response.status_code}). Check cookies. {e}") from e
             else:
-                raise Exception(f"HTTP error {e.response.status_code} while fetching SNlM0e: {e}") from e
+                raise Exception(f"Error while fetching SNlM0e: {e}") from e
 
-    async def __rotate_cookies(self) -> None:
+    async def __rotate_cookies(self) -> Optional[str]:
         """Rotates the __Secure-1PSIDTS cookie."""
         try:
             response = await self.session.post(
@@ -562,6 +562,7 @@ class AsyncChatbot:
             "at": self.SNlM0e,
         }
 
+        resp = None
         try:
             resp = await self.session.post(
                 Endpoint.GENERATE.value,
@@ -570,6 +571,9 @@ class AsyncChatbot:
                 timeout=self.timeout,
             )
             resp.raise_for_status()
+
+            if resp is None:
+                raise ValueError("Failed to get response from Gemini API")
 
             lines = resp.text.splitlines()
             if len(lines) < 3:
@@ -750,16 +754,17 @@ class AsyncChatbot:
 
         except json.JSONDecodeError as e:
             console.log(f"[red]Error parsing JSON response: {e}[/red]")
-            return self._error_response(f"Error parsing JSON response: {e}. Response: {resp.text[:200]}...")
+            resp_text = resp.text[:200] if resp else "No response"
+            return self._error_response(f"Error parsing JSON response: {e}. Response: {resp_text}...")
         except Timeout as e:
             console.log(f"[red]Request timed out: {e}[/red]")
             return self._error_response(f"Request timed out: {e}")
-        except (RequestException, CurlError) as e:
-            console.log(f"[red]Network error: {e}[/red]")
-            return self._error_response(f"Network error: {e}")
         except HTTPError as e:
             console.log(f"[red]HTTP error {e.response.status_code}: {e}[/red]")
             return self._error_response(f"HTTP error {e.response.status_code}: {e}")
+        except (RequestException, CurlError) as e:
+            console.log(f"[red]Network error: {e}[/red]")
+            return self._error_response(f"Network error: {e}")
         except Exception as e:
             console.log(f"[red]An unexpected error occurred during ask: {e}[/red]", style="bold red")
             return self._error_response(f"An unexpected error occurred: {e}")
@@ -856,11 +861,12 @@ class Image(BaseModel):
         elif isinstance(self.proxy, dict):
             proxies_dict = self.proxy
 
+        dest = None
         try:
             async with AsyncSession(
                 cookies=cookies,
-                proxies=proxies_dict,
-                impersonate=self.impersonate
+                proxies=cast(Any, proxies_dict),
+                impersonate=cast(Any, self.impersonate)
 
             ) as client:
                 if verbose:
@@ -952,7 +958,15 @@ class GeneratedImage(Image):
             raise ValueError("GeneratedImage requires a dictionary of cookies from the client.")
         return v
 
-    async def save(self, **kwargs) -> Optional[str]:
+    async def save(
+        self,
+        path: str = "downloaded_images",
+        filename: Optional[str] = None,
+        cookies: Optional[Dict[str, str]] = None,
+        verbose: bool = False,
+        skip_invalid_filename: bool = True,
+        **kwargs
+    ) -> Optional[str]:
         """
         Save the generated image to disk.
         Parameters:
@@ -964,10 +978,10 @@ class GeneratedImage(Image):
         Returns:
             Absolute path of the saved image if successful, None if skipped.
         """
-        if "filename" not in kwargs:
+        if filename is None:
              ext = ".jpg" if ".jpg" in self.url.lower() else ".png"
              url_part = self.url.split('/')[-1][:10]
-             kwargs["filename"] = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{url_part}{ext}"
+             filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{url_part}{ext}"
 
-        return await super().save(cookies=self.cookies, **kwargs)
+        return await super().save(path, filename, cookies or self.cookies, verbose, skip_invalid_filename)
 

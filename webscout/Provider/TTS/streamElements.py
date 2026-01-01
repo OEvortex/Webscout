@@ -4,6 +4,7 @@ import time
 import urllib.parse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from io import BytesIO
+from typing import Any, Optional, Union, cast
 
 import requests
 from litprinter import ic
@@ -117,7 +118,7 @@ class StreamElements(BaseTTSProvider):
 
     ]
 
-
+    all_voices = SUPPORTED_VOICES
 
     # Request headers
 
@@ -129,7 +130,7 @@ class StreamElements(BaseTTSProvider):
 
 
 
-    def __init__(self, timeout: int = 20, proxies: dict = None):
+    def __init__(self, timeout: int = 20, proxies: Optional[dict] = None):
         """Initializes the StreamElements TTS client."""
         super().__init__()
         self.session = requests.Session()
@@ -138,23 +139,34 @@ class StreamElements(BaseTTSProvider):
             self.session.proxies.update(proxies)
         self.timeout = timeout
 
-    def tts(self, text: str, voice: str = "Mathieu", verbose: bool = True) -> str:
+    def tts(self, text: str, voice: Optional[str] = None, verbose: bool = False, **kwargs) -> str:
         """
         Converts text to speech using the StreamElements API and saves it to a file.
 
         Args:
             text (str): The text to convert to speech
-            voice (str): The voice to use for TTS (default: "Mathieu")
-            verbose (bool): Whether to print progress messages (default: True)
+            voice (str): The voice to use for TTS
+            verbose (bool): Whether to print progress messages
+            **kwargs: Additional parameters
 
         Returns:
             str: Path to the generated audio file
         """
-        assert (
-            voice in self.all_voices
-        ), f"Voice '{voice}' not one of [{', '.join(self.all_voices)}]"
+        voice = voice or kwargs.get('voice', "Emma")
+        verbose = verbose if verbose is not None else kwargs.get('verbose', True)
+        if voice not in self.all_voices:
+             # Try case-insensitive match
+             found_voice = None
+             for v in self.all_voices:
+                 if v.lower() == voice.lower():
+                     found_voice = v
+                     break
+             if found_voice:
+                 voice = found_voice
+             else:
+                 raise ValueError(f"Voice '{voice}' not one of [{', '.join(self.all_voices)}]")
 
-        filename = pathlib.Path(tempfile.mktemp(suffix=".mp3", dir=self.temp_dir))
+        filename = pathlib.Path(tempfile.NamedTemporaryFile(suffix=".mp3", dir=self.temp_dir, delete=False).name)
 
         # Split text into sentences
         sentences = utils.split_sentences(text)
@@ -229,6 +241,27 @@ class StreamElements(BaseTTSProvider):
             raise exceptions.FailedToGenerateResponseError(
                 f"Failed to perform the operation: {e}"
             )
+
+    def create_speech(
+        self,
+        input_text: str,
+        model: Optional[str] = "gpt-4o-mini-tts",
+        voice: Optional[str] = "Emma",
+        response_format: Optional[str] = "mp3",
+        instructions: Optional[str] = None,
+        verbose: bool = False
+    ) -> str:
+        """
+        OpenAI-compatible speech creation interface.
+        """
+        return self.tts(
+            text=input_text,
+            model=model,
+            voice=voice or "Emma",
+            response_format=response_format or "mp3",
+            instructions=instructions,
+            verbose=verbose
+        )
 
 # Example usage
 if __name__ == "__main__":

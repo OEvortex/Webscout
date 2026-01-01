@@ -1,12 +1,12 @@
 import datetime
 import json
-from typing import Generator, Union
+from typing import Any, Generator, Optional, Union, cast
 from uuid import uuid4
 
 import cloudscraper
 
 from webscout import exceptions
-from webscout.AIbase import Provider
+from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers
 
 
@@ -66,12 +66,12 @@ class YouChat(Provider):
         is_conversation: bool = True,
         max_tokens: int = 600,
         timeout: int = 30,
-        intro: str = None,
-        filepath: str = None,
+        intro: Optional[str] = None,
+        filepath: Optional[str] = None,
         update_file: bool = True,
         proxies: dict = {},
         history_offset: int = 10250,
-        act: str = None,
+        act: Optional[str] = None,
         model: str = "gemini_2_flash",
     ):
         """Instantiates YouChat
@@ -124,26 +124,29 @@ class YouChat(Provider):
             for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
+        act_prompt = (
+            AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
+        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
-        self.session.proxies = proxies
+        if proxies:
+            self.session.proxies.update(proxies)
 
     def ask(
         self,
         prompt: str,
         stream: bool = False,
         raw: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> dict:
         """Chat with AI
 
@@ -152,7 +155,8 @@ class YouChat(Provider):
             stream (bool, optional): Flag for streaming response. Defaults to False.
             raw (bool, optional): Stream back raw response as received. Defaults to False.
             optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
+            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to None.
+            **kwargs: Additional keyword arguments.
         Returns:
            dict : {}
         ```json
@@ -262,9 +266,10 @@ class YouChat(Provider):
         self,
         prompt: str,
         stream: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
         raw: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """Generate response `str`
         Args:
@@ -273,6 +278,7 @@ class YouChat(Provider):
             optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
             conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
             raw (bool, optional): Return raw response chunks. Defaults to False.
+            **kwargs: Additional keyword arguments.
         Returns:
             str: Response generated
         """
@@ -300,13 +306,16 @@ class YouChat(Provider):
 
         return for_stream() if stream else for_non_stream()
 
-    def get_message(self, response: dict) -> str:
+    def get_message(self, response: Response) -> str:
         """Retrieves message only from response
 
             str: Message extracted
         """
-        assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"]
+        if isinstance(response, str):
+            return response
+        if isinstance(response, dict):
+            return dict(response)["text"]
+        return str(response)
 
 if __name__ == '__main__':
     print("-" * 80)

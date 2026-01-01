@@ -2,7 +2,7 @@
 Scout Search Result Module
 """
 
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 from ..element import Tag
 from .text_analyzer import ScoutTextAnalyzer

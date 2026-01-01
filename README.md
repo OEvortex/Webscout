@@ -51,7 +51,7 @@
 > Choose the approach that best fits your needs! For OpenAI compatibility, check the [OpenAI Providers README](webscout/Provider/OPENAI/README.md) or see the [OpenAI-Compatible API Server](#-openai-compatible-api-server) section below.
 
 > [!NOTE]
-> Webscout supports over 90 AI providers including: LLAMA, C4ai, Venice, Copilot, HuggingFaceChat, PerplexityLabs, DeepSeek, WiseCat, GROQ, OPENAI, GEMINI, DeepInfra, Meta, YEPCHAT, TypeGPT, ChatGPTClone, ExaAI, Claude, Anthropic, Cloudflare, AI21, Cerebras, and many more. All providers follow similar usage patterns with consistent interfaces.
+> Webscout supports over 90 AI providers including: LLAMA, C4ai, Copilot, HuggingFaceChat, PerplexityLabs, DeepSeek, WiseCat, GROQ, OPENAI, GEMINI, DeepInfra, Meta, YEPCHAT, TypeGPT, ChatGPTClone, ExaAI, Claude, Anthropic, Cloudflare, AI21, Cerebras, and many more. All providers follow similar usage patterns with consistent interfaces.
 
 <div align="center">
   <!-- Social/Support Links -->
@@ -100,7 +100,7 @@
 <p>
 
 - **[GitAPI](docs/gitapi.md):** Powerful GitHub data extraction toolkit without authentication requirements for public data
-- **[SwiftCLI](webscout/swiftcli/Readme.md):** A powerful and elegant CLI framework for beautiful command-line interfaces
+- **[SwiftCLI](docs/swiftcli.md):** A powerful and elegant CLI framework for beautiful command-line interfaces
 - **[LitPrinter](docs/litprinter.md):** Styled console output with rich formatting and colors
 - **[LitAgent](docs/litagent.md):** Modern user agent generator that keeps your requests undetectable
 - **[Scout](docs/scout.md):** Advanced web parsing and crawling library with intelligent HTML/XML parsing
@@ -493,6 +493,8 @@ print(response)
 <p>
 
 Webscout provides tools to convert and quantize Hugging Face models into the GGUF format for offline use.
+
+> **Note (2026.01.01)**: GGUF conversion now uses lazy imports for `huggingface_hub`. The library can be imported without requiring `huggingface_hub`, and it's only loaded when GGUF features are actually used. Install it with `pip install huggingface_hub` if you need GGUF conversion.
 
 ```python
 from webscout.Extra.gguf import ModelConverter

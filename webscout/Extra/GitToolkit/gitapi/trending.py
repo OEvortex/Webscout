@@ -4,10 +4,9 @@ from urllib.request import Request, urlopen
 
 try:
     from webscout.litagent.agent import LitAgent
+    _USER_AGENT_GENERATOR = LitAgent()
 except ImportError:
-    LitAgent = None
-
-_USER_AGENT_GENERATOR = LitAgent() if LitAgent else None
+    _USER_AGENT_GENERATOR = None
 
 
 class Trending:

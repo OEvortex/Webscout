@@ -17,6 +17,8 @@ class TempMailProvider(ABC):
     """
     Abstract base class for synchronous temporary email providers
     """
+    email: Optional[str] = None
+    account_id: Optional[str] = None
 
     @abstractmethod
     def create_account(self) -> bool:
@@ -43,11 +45,17 @@ class TempMailProvider(ABC):
         """Get current account information"""
         raise NotImplementedError("Method needs to be implemented in subclass")
 
+    def get_token(self) -> str:
+        """Get authentication token (optional for some providers)"""
+        return ""
+
 
 class AsyncTempMailProvider(ABC):
     """
     Abstract base class for asynchronous temporary email providers
     """
+    email: Optional[str] = None
+    account_id: Optional[str] = None
 
     @abstractmethod
     async def initialize(self):
@@ -139,12 +147,15 @@ def get_random_email(provider_name: str = "mailtm") -> Tuple[str, TempMailProvid
     """
     provider = get_provider(provider_name)
 
+    if isinstance(provider, AsyncTempMailProvider):
+        raise TypeError("get_random_email only supports synchronous providers")
+
     # For providers that require explicit initialization
-    if hasattr(provider, '_initialized') and not provider._initialized:
+    if getattr(provider, '_initialized', True) is False:
         try:
             # If there's an initialization method that needs to be called
             if hasattr(provider, 'initialize'):
-                provider.initialize()
+                provider.initialize() # type: ignore
         except Exception as e:
             raise RuntimeError(f"Failed to initialize provider: {e}")
 
@@ -153,7 +164,7 @@ def get_random_email(provider_name: str = "mailtm") -> Tuple[str, TempMailProvid
     if not success:
         raise RuntimeError(f"Failed to create account with provider {provider_name}")
 
-    return provider.email, provider
+    return getattr(provider, 'email', ""), provider
 
 
 def get_disposable_email() -> Tuple[str, TempMailProvider]:

@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
@@ -94,25 +94,27 @@ class Sambanova(Provider):
         }
 
         # Update curl_cffi session headers and proxies
+        self.session = Session()
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies
+        if proxies:
+            self.session.proxies.update(proxies)
+        self.system_prompt = system_prompt
 
         self.__available_optimizers = (
             method
             for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
+
+        if act:
+            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
+            ) or self.conversation.intro
+        elif intro:
+            self.conversation.intro = intro
 
         # Configure the API base URL
         self.base_url = "https://api.sambanova.ai/v1/chat/completions"
@@ -247,11 +249,12 @@ class Sambanova(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        tools: Optional[List[Dict[str, Any]]] = None,
-        tool_choice: Optional[Dict[str, Any]] = None,
-        raw: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """Generate response `str`"""
+        raw = kwargs.get("raw", False)
+        tools = kwargs.get("tools")
+        tool_choice = kwargs.get("tool_choice")
 
         def for_stream_chat():
              # ask() yields dicts or strings when streaming
@@ -262,9 +265,9 @@ class Sambanova(Provider):
              )
              for response_dict in gen:
                  if raw:
-                     yield response_dict
+                     yield cast(str, response_dict)
                  else:
-                     yield self.get_message(response_dict)
+                     yield self.get_message(cast(Response, response_dict))
 
         def for_non_stream_chat():
              # ask() returns dict or str when not streaming
@@ -278,7 +281,7 @@ class Sambanova(Provider):
                  tool_choice=tool_choice
              )
              if raw:
-                 return response_data
+                 return cast(str, response_data)
              return self.get_message(response_data)
 
         return for_stream_chat() if stream else for_non_stream_chat()

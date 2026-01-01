@@ -1,10 +1,10 @@
 import json
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Iterable, Optional, Union, cast
 
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider
+from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 
 
@@ -47,12 +47,12 @@ class samurai(Provider):
         is_conversation: bool = True,
         max_tokens: int = 2049,
         timeout: int = 30,
-        intro: str = None,
-        filepath: str = None,
+        intro: Optional[str] = None,
+        filepath: Optional[str] = None,
         update_file: bool = True,
         proxies: dict = {},
         history_offset: int = 10250,
-        act: str = None,
+        act: Optional[str] = None,
         model: str = "openai/gpt-4.1",
         system_prompt: str = "You are a helpful assistant."
     ):
@@ -76,17 +76,17 @@ class samurai(Provider):
             for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
-
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
+        act_prompt = (
+            AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
+        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
 
     @staticmethod
@@ -99,8 +99,9 @@ class samurai(Provider):
         prompt: str,
         stream: bool = False,
         raw: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Union[Dict[str, Any], Generator]:
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -132,8 +133,10 @@ class samurai(Provider):
                 )
                 response.raise_for_status()
 
-                processed_stream = sanitize_stream(
-                    data=response.iter_lines(),
+                # Convert to list - using type: ignore for compatibility with sanitize_stream
+                lines_list = list(response.iter_lines())
+                processed_stream = sanitize_stream(  # type: ignore[no-overload-impl]
+                    data=lines_list,
                     intro_value="data:",
                     to_json=True,
                     skip_markers=["[DONE]"],
@@ -179,13 +182,14 @@ class samurai(Provider):
         self,
         prompt: str,
         stream: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         def for_stream_chat():
             gen = self.ask(prompt, stream=True, raw=False, optimizer=optimizer, conversationally=conversationally)
-            for response_dict in gen:
-                yield self.get_message(response_dict)
+            for response_item in gen:
+                yield self.get_message(response_item)
 
         def for_non_stream_chat():
             response_data = self.ask(prompt, stream=False, raw=False, optimizer=optimizer, conversationally=conversationally)
@@ -193,9 +197,12 @@ class samurai(Provider):
 
         return for_stream_chat() if stream else for_non_stream_chat()
 
-    def get_message(self, response: dict) -> str:
-        assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"]
+    def get_message(self, response: Response) -> str:
+        if isinstance(response, str):
+            return response
+        if isinstance(response, dict):
+            return dict(response)["text"]
+        return str(response)
 
 if __name__ == "__main__":
     # Ensure curl_cffi is installed

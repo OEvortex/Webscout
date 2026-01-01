@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from time import sleep
-from typing import List
+from typing import List, Optional
 from urllib.parse import urlencode
 
 from webscout.scout import Scout

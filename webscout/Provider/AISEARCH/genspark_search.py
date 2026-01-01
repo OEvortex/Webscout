@@ -1,5 +1,6 @@
 import sys
-from typing import Any, Dict, Iterator, List, Optional, TypedDict, Union, cast
+import urllib.parse
+from typing import Any, Dict, Generator, Iterator, List, Optional, TypedDict, Union, cast
 from uuid import uuid4
 
 import cloudscraper
@@ -100,7 +101,8 @@ class Genspark(AISearch):
             "session_id": uuid4().hex,
         }
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies or {}
+        if proxies:
+            self.session.proxies.update(proxies)
         self.last_response = None
         self._reset_search_data()
 
@@ -122,12 +124,8 @@ class Genspark(AISearch):
         prompt: str,
         stream: bool = False,
         raw: bool = False,
-    ) -> Union[
-        SearchResponse, #type: ignore
-        Dict[str, Any],
-        List[dict],
-        Iterator[Union[dict, SearchResponse]], #type: ignore
-    ]:
+        **kwargs: Any,
+    ) -> Union[SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None], List[Any], Dict[str, Any], str]:
         """
         Strongly typed search method for Genspark API.
 
@@ -135,11 +133,12 @@ class Genspark(AISearch):
             prompt: The search query or prompt.
             stream: If True, yields results as they arrive.
             raw: If True, yields/returns raw event dicts. If False, ONLY returns the actual AI text response.
+            **kwargs: Additional parameters.
         """
         self._reset_search_data()
-        url = f"{self.chat_endpoint}?query={requests.utils.quote(prompt)}"
+        url = f"{self.chat_endpoint}?query={urllib.parse.quote(prompt)}"
 
-        def _process_stream() -> Iterator[Union[dict, SearchResponse]]: #type: ignore
+        def _process_stream() -> Generator[Union[Dict[str, str], SearchResponse], None, None]:
             CloudflareException = cloudscraper.exceptions.CloudflareException
             RequestException = requests.exceptions.RequestException
             try:
@@ -155,7 +154,10 @@ class Genspark(AISearch):
                         raise exceptions.APIConnectionError(
                             f"Failed to generate SearchResponse - ({resp.status_code}, {resp.reason}) - {resp.text}"
                         )
-                def _extract_genspark_content(data: dict) -> Optional[str]:
+                def _extract_genspark_content(data: Union[str, Dict[str, Any]]) -> Optional[str]:
+                    if isinstance(data, str):
+                        return None
+
                     event_type = data.get("type")
                     field_name = data.get("field_name")
                     result_id = data.get("result_id")
@@ -176,7 +178,7 @@ class Genspark(AISearch):
                         if field_name == "search_query":
                             self.search_query_details["query_string"] = field_value
                         elif field_name == "thinking":
-                            self.status_updates.append({"type": "thinking", "message": field_value})
+                            self.status_updates.append({"type": "thinking", "message": str(field_value)})
                         elif field_name == "search_status_top_bar_data":
                             self.status_updates.append({"type": "status_top_bar", "data": field_value})
                             if isinstance(field_value, dict) and field_value.get("status") == "finished":

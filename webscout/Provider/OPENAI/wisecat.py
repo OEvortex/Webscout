@@ -1,12 +1,17 @@
 import re
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi.requests import Session
 
 # Import base classes and utility structures
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import (
+    BaseChat,
+    BaseCompletions,
+    OpenAICompatibleProvider,
+    SimpleModelList,
+)
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -18,15 +23,13 @@ from webscout.Provider.OPENAI.utils import (
 )
 
 # Attempt to import LitAgent, fallback if not available
-try:
-    from webscout.litagent import LitAgent
-except ImportError:
-    print("Warning: LitAgent not found. Some functionality may be limited.")
+from ...litagent import LitAgent
 
 # --- WiseCat Client ---
 
+
 class Completions(BaseCompletions):
-    def __init__(self, client: 'WiseCat'):
+    def __init__(self, client: "WiseCat"):
         self._client = client
 
     def create(
@@ -38,7 +41,7 @@ class Completions(BaseCompletions):
         stream: bool = False,
         temperature: Optional[float] = None,
         top_p: Optional[float] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
         """
         Creates a model response for the given chat conversation.
@@ -48,7 +51,7 @@ class Completions(BaseCompletions):
         payload = {
             "id": "ephemeral",
             "messages": messages,
-            "selectedChatModel": self._client.convert_model_name(model)
+            "selectedChatModel": self._client.convert_model_name(model),
         }
 
         # Add optional parameters if provided
@@ -82,7 +85,7 @@ class Completions(BaseCompletions):
                 json=payload,
                 stream=True,
                 timeout=self._client.timeout,
-                impersonate="chrome120"
+                impersonate="chrome120",
             )
 
             # Handle non-200 responses
@@ -102,7 +105,7 @@ class Completions(BaseCompletions):
 
             for line in response.iter_lines():
                 if line:
-                    decoded_line = line.decode('utf-8').strip()
+                    decoded_line = line.decode("utf-8").strip()
 
                     # WiseCat uses a different format, so we need to extract the content
                     match = re.search(r'0:"(.*?)"', decoded_line)
@@ -117,19 +120,10 @@ class Completions(BaseCompletions):
                         total_tokens = prompt_tokens + completion_tokens
 
                         # Create the delta object
-                        delta = ChoiceDelta(
-                            content=content,
-                            role="assistant",
-                            tool_calls=None
-                        )
+                        delta = ChoiceDelta(content=content, role="assistant", tool_calls=None)
 
                         # Create the choice object
-                        choice = Choice(
-                            index=0,
-                            delta=delta,
-                            finish_reason=None,
-                            logprobs=None
-                        )
+                        choice = Choice(index=0, delta=delta, finish_reason=None, logprobs=None)
 
                         # Create the chunk object
                         chunk = ChatCompletionChunk(
@@ -137,7 +131,7 @@ class Completions(BaseCompletions):
                             choices=[choice],
                             created=created_time,
                             model=model,
-                            system_fingerprint=None
+                            system_fingerprint=None,
                         )
 
                         # Convert chunk to dict using Pydantic's API
@@ -151,7 +145,7 @@ class Completions(BaseCompletions):
                             "prompt_tokens": prompt_tokens,
                             "completion_tokens": completion_tokens,
                             "total_tokens": total_tokens,
-                            "estimated_cost": None
+                            "estimated_cost": None,
                         }
 
                         chunk_dict["usage"] = usage_dict
@@ -160,25 +154,16 @@ class Completions(BaseCompletions):
                         yield chunk
 
             # Final chunk with finish_reason="stop"
-            delta = ChoiceDelta(
-                content=None,
-                role=None,
-                tool_calls=None
-            )
+            delta = ChoiceDelta(content=None, role=None, tool_calls=None)
 
-            choice = Choice(
-                index=0,
-                delta=delta,
-                finish_reason="stop",
-                logprobs=None
-            )
+            choice = Choice(index=0, delta=delta, finish_reason="stop", logprobs=None)
 
             chunk = ChatCompletionChunk(
                 id=request_id,
                 choices=[choice],
                 created=created_time,
                 model=model,
-                system_fingerprint=None
+                system_fingerprint=None,
             )
 
             if hasattr(chunk, "model_dump"):
@@ -189,7 +174,7 @@ class Completions(BaseCompletions):
                 "prompt_tokens": prompt_tokens,
                 "completion_tokens": completion_tokens,
                 "total_tokens": total_tokens,
-                "estimated_cost": None
+                "estimated_cost": None,
             }
 
             yield chunk
@@ -209,7 +194,7 @@ class Completions(BaseCompletions):
                 json=payload,
                 stream=True,
                 timeout=self._client.timeout,
-                impersonate="chrome120"
+                impersonate="chrome120",
             )
 
             # Handle non-200 responses
@@ -222,7 +207,7 @@ class Completions(BaseCompletions):
             full_text = ""
             for line in response.iter_lines():
                 if line:
-                    decoded_line = line.decode('utf-8').strip()
+                    decoded_line = line.decode("utf-8").strip()
                     match = re.search(r'0:"(.*?)"', decoded_line)
                     if match:
                         content = match.group(1)
@@ -240,23 +225,16 @@ class Completions(BaseCompletions):
             total_tokens = prompt_tokens + completion_tokens
 
             # Create the message object
-            message = ChatCompletionMessage(
-                role="assistant",
-                content=full_text
-            )
+            message = ChatCompletionMessage(role="assistant", content=full_text)
 
             # Create the choice object
-            choice = Choice(
-                index=0,
-                message=message,
-                finish_reason="stop"
-            )
+            choice = Choice(index=0, message=message, finish_reason="stop")
 
             # Create the usage object
             usage = CompletionUsage(
                 prompt_tokens=prompt_tokens,
                 completion_tokens=completion_tokens,
-                total_tokens=total_tokens
+                total_tokens=total_tokens,
             )
 
             # Create the completion object
@@ -274,9 +252,11 @@ class Completions(BaseCompletions):
             print(f"Error during WiseCat non-stream request: {e}")
             raise IOError(f"WiseCat request failed: {e}") from e
 
+
 class Chat(BaseChat):
-    def __init__(self, client: 'WiseCat'):
+    def __init__(self, client: "WiseCat"):
         self.completions = Completions(client)
+
 
 class WiseCat(OpenAICompatibleProvider):
     """
@@ -289,6 +269,7 @@ class WiseCat(OpenAICompatibleProvider):
             messages=[{"role": "user", "content": "Hello!"}]
         )
     """
+
     required_auth = False
     _base_models = ["chat-model-small", "chat-model-large", "chat-model-reasoning"]
     # Create AVAILABLE_MODELS as a list with the format "WiseCat/model"
@@ -296,11 +277,7 @@ class WiseCat(OpenAICompatibleProvider):
     # Create a mapping dictionary for internal use
     _model_mapping = {model: f"WiseCat/{model}" for model in _base_models}
 
-    def __init__(
-        self,
-        timeout: Optional[int] = None,
-        browser: str = "chrome"
-    ):
+    def __init__(self, timeout: Optional[int] = None, browser: str = "chrome"):
         """
         Initialize the WiseCat client.
 
@@ -336,12 +313,12 @@ class WiseCat(OpenAICompatibleProvider):
         """
         try:
             # Handle unicode escaping and quote unescaping
-            text = text.encode().decode('unicode_escape')
-            text = text.replace('\\\\', '\\').replace('\\"', '"')
+            text = text.encode().decode("unicode_escape")
+            text = text.replace("\\\\", "\\").replace('\\"', '"')
 
             # Remove timing information
-            text = re.sub(r'\(\d+\.?\d*s\)', '', text)
-            text = re.sub(r'\(\d+\.?\d*ms\)', '', text)
+            text = re.sub(r"\(\d+\.?\d*s\)", "", text)
+            text = re.sub(r"\(\d+\.?\d*ms\)", "", text)
 
             return text
         except Exception as e:
@@ -363,11 +340,9 @@ class WiseCat(OpenAICompatibleProvider):
         return "chat-model-large"
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return WiseCat.AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
+
 
 if __name__ == "__main__":
     # Test the provider
@@ -376,7 +351,9 @@ if __name__ == "__main__":
         model="chat-model-small",
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": "Hello! How are you today?"}
-        ]
+            {"role": "user", "content": "Hello! How are you today?"},
+        ],
     )
-    print(response.choices[0].message.content)
+    if isinstance(response, ChatCompletion):
+        if response.choices[0].message and response.choices[0].message.content:
+            print(response.choices[0].message.content)

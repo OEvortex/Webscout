@@ -1,6 +1,6 @@
 import json
 import uuid
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
@@ -35,6 +35,7 @@ class HeckAI(Provider):
         previous_answer (str): Last answer received from the API.
         conversation (Conversation): Conversation history manager.
     """
+
     required_auth = False
     AVAILABLE_MODELS = [
         "google/gemini-2.5-flash-preview",
@@ -45,9 +46,7 @@ class HeckAI(Provider):
         "x-ai/grok-3-mini-beta",
         "meta-llama/llama-4-scout",
         "openai/gpt-5-mini",
-        "openai/gpt-5-nano"
-
-
+        "openai/gpt-5-nano",
     ]
 
     def __init__(
@@ -62,7 +61,7 @@ class HeckAI(Provider):
         history_offset: int = 10250,
         act: Optional[str] = None,
         model: str = "google/gemini-2.5-flash-preview",
-        language: str = "English"
+        language: str = "English",
     ):
         """
         Initializes the HeckAI API client.
@@ -92,17 +91,18 @@ class HeckAI(Provider):
 
         # Use LitAgent (keep if needed for other headers or logic)
         self.headers = {
-            'Content-Type': 'application/json',
-            'Origin': 'https://heck.ai', # Keep Origin
-            'Referer': 'https://heck.ai/', # Keep Referer
-            'User-Agent': LitAgent().random(), # Use random user agent
+            "Content-Type": "application/json",
+            "Origin": "https://heck.ai",  # Keep Origin
+            "Referer": "https://heck.ai/",  # Keep Referer
+            "User-Agent": LitAgent().random(),  # Use random user agent
         }
 
         # Initialize curl_cffi Session
         self.session = Session()
         # Update curl_cffi session headers and proxies
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies # Assign proxies directly
+        if proxies:
+            self.session.proxies.update(proxies)  # Assign proxies directly
 
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
@@ -117,18 +117,22 @@ class HeckAI(Provider):
             for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
-
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
+
+        if act:
+            self.conversation.intro = (
+                AwesomePrompts().get_act(
+                    cast(Union[str, int], act),
+                    default=self.conversation.intro,
+                    case_insensitive=True,
+                )
+                or self.conversation.intro
+            )
+        elif intro:
+            self.conversation.intro = intro
 
     def ask(
         self,
@@ -160,7 +164,9 @@ class HeckAI(Provider):
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
-                conversation_prompt = getattr(Optimizers, optimizer)(conversation_prompt if conversationally else prompt)
+                conversation_prompt = getattr(Optimizers, optimizer)(
+                    conversation_prompt if conversationally else prompt
+                )
             else:
                 raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
 
@@ -173,21 +179,21 @@ class HeckAI(Provider):
             "previousQuestion": self.previous_question,
             "previousAnswer": self.previous_answer,
             "imgUrls": [],
-            "superSmartMode": False  # Added based on API request data
+            "superSmartMode": False,  # Added based on API request data
         }
 
         # Store this message as previous for next request
         self.previous_question = conversation_prompt
 
         def for_stream():
-            streaming_text = "" # Initialize outside try block
+            streaming_text = ""  # Initialize outside try block
             try:
                 response = self.session.post(
                     self.url,
                     data=json.dumps(payload),
                     stream=True,
                     timeout=self.timeout,
-                    impersonate="chrome110"
+                    impersonate="chrome110",
                 )
                 response.raise_for_status()
 
@@ -197,15 +203,20 @@ class HeckAI(Provider):
                     to_json=False,
                     start_marker="data: [ANSWER_START]",
                     end_marker="data: [ANSWER_DONE]",
-                    skip_markers=["data: [RELATE_Q_START]", "data: [RELATE_Q_DONE]", "data: [REASON_START]", "data: [REASON_DONE]"],
+                    skip_markers=[
+                        "data: [RELATE_Q_START]",
+                        "data: [RELATE_Q_DONE]",
+                        "data: [REASON_START]",
+                        "data: [REASON_DONE]",
+                    ],
                     yield_raw_on_error=True,
                     strip_chars="",
-                    raw=raw
+                    raw=raw,
                 )
 
                 for content_chunk in processed_stream:
                     if content_chunk and isinstance(content_chunk, str):
-                        content_chunk = content_chunk.replace('\\\\', '\\').replace('\\"', '"')
+                        content_chunk = content_chunk.replace("\\\\", "\\").replace('\\"', '"')
                     if raw:
                         if content_chunk and isinstance(content_chunk, str):
                             streaming_text += content_chunk
@@ -226,10 +237,18 @@ class HeckAI(Provider):
                     except Exception as e:
                         print(f"Warning: Failed to update conversation history: {str(e)}")
             except CurlError as e:
-                raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {str(e)}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed (CurlError): {str(e)}"
+                ) from e
             except Exception as e:
-                err_text = getattr(e, 'response', None) and getattr(e.response, 'text', '')
-                raise exceptions.FailedToGenerateResponseError(f"Request failed ({type(e).__name__}): {str(e)} - {err_text}") from e
+                err_text = ""
+                if hasattr(e, "response"):
+                    response_obj = getattr(e, "response")
+                    if hasattr(response_obj, "text"):
+                        err_text = getattr(response_obj, "text")
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed ({type(e).__name__}): {str(e)} - {err_text}"
+                ) from e
 
         def for_non_stream():
             full_text = ""
@@ -237,15 +256,17 @@ class HeckAI(Provider):
                 for chunk_data in for_stream():
                     if raw:
                         if isinstance(chunk_data, str):
-                            chunk_data = chunk_data.replace('\\\\', '\\').replace('\\"', '"')
+                            chunk_data = chunk_data.replace("\\\\", "\\").replace('\\"', '"')
                             full_text += chunk_data
                     else:
                         if isinstance(chunk_data, dict) and "text" in chunk_data:
-                            text = chunk_data["text"].replace('\\\\', '\\').replace('\\"', '"')
+                            text = chunk_data["text"].replace("\\\\", "\\").replace('\\"', '"')
                             full_text += text
             except Exception as e:
                 if not full_text:
-                    raise exceptions.FailedToGenerateResponseError(f"Failed to get non-stream response: {str(e)}") from e
+                    raise exceptions.FailedToGenerateResponseError(
+                        f"Failed to get non-stream response: {str(e)}"
+                    ) from e
             self.last_response = {"text": full_text}
             return full_text if raw else self.last_response
 
@@ -264,16 +285,25 @@ class HeckAI(Provider):
         """
         if isinstance(text, dict) and "text" in text:
             try:
-                text["text"] = text["text"].encode("latin1").decode("utf-8")
-                return text.replace('\\\\', '\\').replace('\\"', '"') # Handle escaped backslashes
+                val = str(text["text"]).encode("latin1").decode("utf-8")
+                text["text"] = val.replace("\\\\", "\\").replace(
+                    '\\"', '"'
+                )  # Handle escaped backslashes
+                return text
             except (UnicodeError, AttributeError):
-                return text.replace('\\\\', '\\').replace('\\"', '"') # Handle escaped backslashes
+                val = str(text["text"])
+                text["text"] = val.replace("\\\\", "\\").replace(
+                    '\\"', '"'
+                )  # Handle escaped backslashes
+                return text
         elif isinstance(text, str):
             try:
-                return text.encode("latin1").decode("utf-8")
+                return (
+                    text.encode("latin1").decode("utf-8").replace("\\\\", "\\").replace('\\"', '"')
+                )
             except (UnicodeError, AttributeError):
-                return text.replace('\\\\', '\\').replace('\\"', '"') # Handle escaped backslashes
-        return text.replace('\\\\', '\\').replace('\\"', '"') # Handle escaped backslashes
+                return text.replace("\\\\", "\\").replace('\\"', '"')  # Handle escaped backslashes
+        return text
 
     def chat(
         self,
@@ -281,7 +311,7 @@ class HeckAI(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        raw: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """
         Sends a prompt to the HeckAI API and returns only the message text.
@@ -291,31 +321,36 @@ class HeckAI(Provider):
             stream (bool): If True, yields streaming response text.
             optimizer (str, optional): Name of the optimizer to apply to the prompt.
             conversationally (bool): If True, optimizer is applied to the full conversation prompt.
+            **kwargs: Additional parameters including raw.
 
         Returns:
             Union[str, Generator[str, None, None]]: The response text, or a generator yielding text chunks.
         """
+        raw = kwargs.get("raw", False)
+
         def for_stream_chat():
             # ask() yields dicts or strings when streaming
             gen = self.ask(
-                prompt, stream=True, raw=raw,
-                optimizer=optimizer, conversationally=conversationally
+                prompt, stream=True, raw=raw, optimizer=optimizer, conversationally=conversationally
             )
             for response in gen:
                 if raw:
-                    yield response
+                    yield cast(str, response)
                 else:
-                    yield self.get_message(response)
+                    yield self.get_message(cast(Response, response))
 
         def for_non_stream_chat():
             # ask() returns dict or str when not streaming
             response_data = self.ask(
-                prompt, stream=False, raw=raw,
-                optimizer=optimizer, conversationally=conversationally
+                prompt,
+                stream=False,
+                raw=raw,
+                optimizer=optimizer,
+                conversationally=conversationally,
             )
             if raw:
                 return response_data if isinstance(response_data, str) else str(response_data)
-            return self.get_message(response_data) # get_message expects dict
+            return self.get_message(response_data)  # get_message expects dict
 
         return for_stream_chat() if stream else for_non_stream_chat()
 
@@ -342,14 +377,16 @@ class HeckAI(Provider):
         if not isinstance(text, str):
             text = str(text)
 
-        return text.replace('\\\\', '\\').replace('\\"', '"')
+        return text.replace("\\\\", "\\").replace('\\"', '"')
+
 
 if __name__ == "__main__":
     from rich import print
+
     ai = HeckAI(model="openai/gpt-5-nano")
     response = ai.chat("tell me about humans", stream=True, raw=False)
     if hasattr(response, "__iter__") and not isinstance(response, (str, bytes)):
         for chunk in response:
-            print(chunk, end='', flush=True)
+            print(chunk, end="", flush=True)
     else:
         print(response)

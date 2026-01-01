@@ -51,8 +51,7 @@ These providers have both standard and OpenAI-compatible implementations, giving
 | 24 | **Toolbaz** | `webscout/Provider/toolbaz.py` | `webscout/Provider/OPENAI/toolbaz.py` |
 | 25 | **TwoAI** | `webscout/Provider/TwoAI.py" | `webscout/Provider/OPENAI/TwoAI.py` |
 | 26 | **Typefully** | `webscout/Provider/typefully.py` | `webscout/Provider/OPENAI/typefully.py` |
-| 27 | **Venice** | `webscout/Provider/Venice.py` | `webscout/Provider/OPENAI/venice.py` |
-| 28 | **WiseCat** | `webscout/Provider/WiseCat.py` | `webscout/Provider/OPENAI/wisecat.py` |
+| 27 | **WiseCat** | `webscout/Provider/WiseCat.py` | `webscout/Provider/OPENAI/wisecat.py` |
 | 29 | **X0GPT** | `webscout/Provider/x0gpt.py` | `webscout/Provider/OPENAI/x0gpt.py` |
 | 30 | **Yep** | `webscout/Provider/yep.py` | `webscout/Provider/OPENAI/yep.py` |
 | 31 | **Gradient** | `webscout/Provider/Gradient.py` | `webscout/Provider/OPENAI/gradient.py` |
@@ -61,8 +60,9 @@ These providers have both standard and OpenAI-compatible implementations, giving
 | 34 | **TypliAI** | `webscout/Provider/TypliAI.py` | `webscout/Provider/OPENAI/typliai.py` |
 | 35 | **LLMChat** | `webscout/Provider/llmchat.py` | `webscout/Provider/OPENAI/llmchat.py` |
 | 36 | **HadadXYZ** | `webscout/Provider/HadadXYZ.py` | `webscout/Provider/OPENAI/hadadxyz.py` |
+| 37 | **OpenRouter** | `webscout/Provider/OpenRouter.py` | `webscout/Provider/OPENAI/openrouter.py` |
 
-**Total: 36 providers with dual implementations**
+**Total: 37 providers with dual implementations**
 
 ---
 
@@ -90,10 +90,9 @@ These providers are only available in the standard implementation format.
 | 16 | **QwenLM** | `webscout/Provider/QwenLM.py` |
 | 17 | **SearchChat** | `webscout/Provider/searchchat.py` |
 | 18 | **TurboSeek** | `webscout/Provider/turboseek.py` |
-| 19 | **VercelAI** | `webscout/Provider/VercelAI.py` |
-| 20 | **WrDoChat** | `webscout/Provider/WrDoChat.py` |
+| 19 | **WrDoChat** | `webscout/Provider/WrDoChat.py` |
 
-**Total: 20 providers with only normal implementation**
+**Total: 19 providers with only normal implementation**
 
 ---
 
@@ -121,19 +120,19 @@ These providers are only available in the OpenAI-compatible format and have no s
 ┌─────────────────────────────────────────┬───────┐
 │ Category                                │ Count │
 ├─────────────────────────────────────────┼───────┤
-│ Both Normal & OpenAI-Compatible         │  36   │
+│ Both Normal & OpenAI-Compatible         │  37   │
 │ Only Normal Version                     │  20   │
 │ Only OpenAI-Compatible Version          │   5   │
 ├─────────────────────────────────────────┼───────┤
-│ TOTAL UNIQUE PROVIDERS                  │  61   │
+│ TOTAL UNIQUE PROVIDERS                  │  62   │
 └─────────────────────────────────────────┴───────┘
 ```
 
 ### Implementation Coverage
 
-- **Total Normal Implementations**: 56 (36 hybrid + 20 normal-only)
-- **Total OpenAI Implementations**: 41 (36 hybrid + 5 OpenAI-only)
-- **Providers with Multiple Options**: 36 (59% of all providers)
+- **Total Normal Implementations**: 57 (37 hybrid + 20 normal-only)
+- **Total OpenAI Implementations**: 42 (37 hybrid + 5 OpenAI-only)
+- **Providers with Multiple Options**: 37 (59% of all providers)
 
 ---
 
@@ -163,7 +162,6 @@ Located in `webscout/Provider/TTI/`:
 - PixelMuse
 - Pollinations
 - Together
-- Venice
 
 ### Text-to-Speech Providers
 Located in `webscout/Provider/TTS/`:
