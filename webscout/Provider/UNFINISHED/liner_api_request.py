@@ -3,7 +3,7 @@ import random
 from typing import Any, Dict, Generator, List, Optional, Union
 from uuid import uuid4
 
-import requests
+from curl_cffi.requests import Session
 
 from webscout import LitAgent, exceptions
 from webscout.AIbase import AISearch, SearchResponse
@@ -59,7 +59,7 @@ class Liner(AISearch):
             deep_search (bool, optional): Enable deep research mode. Defaults to True.
             reasoning_mode (bool, optional): Enable reasoning mode. Defaults to False.
         """
-        self.session = requests.Session()
+        self.session = Session()
         self.chat_endpoint = "https://getliner.com/lisa/v1/answer"
         self.stream_chunk_size = 64
         self.timeout = timeout
@@ -211,7 +211,7 @@ class Liner(AISearch):
                             except json.JSONDecodeError:
                                 continue
 
-            except requests.exceptions.RequestException as e:
+            except Exception as e:
                 raise exceptions.APIConnectionError(f"Request failed: {e}")
 
         def for_non_stream():

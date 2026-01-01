@@ -4,7 +4,7 @@ import uuid
 from copy import deepcopy
 from typing import Any, Dict, Generator, List, Optional, Union
 
-import requests
+from curl_cffi.requests import Session
 
 # Import base classes and utility structures
 from webscout.Provider.OPENAI.base import (
@@ -130,7 +130,7 @@ class Completions(BaseCompletions):
             )
             yield final_chunk
 
-        except requests.RequestException as e:
+        except Exception as e:
             raise IOError(f"Liner request failed: {str(e)}")
 
     def _create_non_stream(
@@ -191,7 +191,7 @@ class Completions(BaseCompletions):
                 usage=usage
             )
 
-        except requests.RequestException as e:
+        except Exception as e:
             raise IOError(f"Liner request failed: {str(e)}")
 
 
@@ -299,7 +299,7 @@ class Liner(OpenAICompatibleProvider):
             "answerFormat": "auto",
         }
 
-        self.session = requests.Session()
+        self.session = Session()
         self.chat = Chat(self)
 
     def list_models(self) -> List[str]:

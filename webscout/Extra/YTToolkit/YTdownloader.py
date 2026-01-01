@@ -9,7 +9,7 @@ from threading import Thread
 from time import sleep
 from typing import Any, Optional, Tuple, Union
 
-import requests
+from curl_cffi.requests import Session
 from colorama import Fore
 from tqdm import tqdm
 
@@ -23,7 +23,7 @@ if not os.path.exists(user_cache_dir):
     os.makedirs(user_cache_dir)
 
 
-session = requests.session()
+session = Session()
 
 headers = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -804,7 +804,7 @@ class Handler:
                     current_downloaded_size / 1000000, 2
                 )  # convert to mb
 
-            resp = requests.get(third_dict["dlink"], stream=True, headers=mod_headers)
+            resp = session.get(third_dict["dlink"], stream=True, headers=mod_headers)
 
             default_content_length = 0
             size_in_bytes = int(resp.headers.get("content-length", default_content_length))

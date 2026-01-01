@@ -4,7 +4,7 @@ import uuid
 import warnings
 from typing import Any, Dict, Generator, Optional, Union, cast
 
-import requests
+from curl_cffi.requests import Session
 import urllib3
 
 from webscout import exceptions
@@ -71,8 +71,8 @@ class XenAI(Provider):
         self.model = model
         self.system_prompt = system_prompt
 
-        # Initialize requests Session
-        self.session = requests.Session()
+        # Initialize curl_cffi Session
+        self.session = Session()
 
         # Set up headers based on the provided request
         self.headers = {
@@ -123,7 +123,7 @@ class XenAI(Provider):
 
     def _auto_fetch_token(self):
         """Automatically fetch a token from the signup endpoint using requests."""
-        session = requests.Session()
+        session = Session()
         session.verify = False  # Always disable SSL verification for this session
         def random_string(length=8):
             return ''.join(random.choices(string.ascii_lowercase, k=length))
@@ -234,7 +234,7 @@ class XenAI(Provider):
                 self.last_response = {"text": streaming_text}
                 self.conversation.update_chat_history(prompt, self.get_message(self.last_response))
 
-            except requests.RequestException as e:
+            except Exception as e:
                 raise exceptions.FailedToGenerateResponseError(f"Request failed (requests): {e}") from e
             except Exception as e:
                 err_text = ""
@@ -255,7 +255,7 @@ class XenAI(Provider):
                         full_text += chunk_data["text"]
                     elif isinstance(chunk_data, str):
                         full_text += chunk_data
-            except requests.RequestException as e:
+            except Exception as e:
                 raise exceptions.FailedToGenerateResponseError(f"Failed to aggregate non-stream response (requests): {str(e)}") from e
             except Exception as e:
                 raise exceptions.FailedToGenerateResponseError(f"Failed to aggregate non-stream response: {str(e)}") from e

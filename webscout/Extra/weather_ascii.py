@@ -7,7 +7,7 @@ in ASCII art format using the wttr.in service.
 
 from typing import Any, Dict, Optional
 
-import requests
+from curl_cffi.requests import Session
 
 
 class WeatherAscii:
@@ -48,7 +48,8 @@ class WeatherAsciiClient:
         headers = {'User-Agent': 'curl'}
 
         try:
-            response = requests.get(url, headers=headers, params=params, timeout=10)
+            session = Session()
+            response = session.get(url, headers=headers, params=params, timeout=10)
             response.raise_for_status()
 
             if response.status_code == 200:
@@ -58,7 +59,7 @@ class WeatherAsciiClient:
             else:
                 error_msg = f"Error: Unable to fetch weather data. Status code: {response.status_code}"
                 return WeatherAscii(error_msg)
-        except requests.exceptions.RequestException as e:
+        except Exception as e:
             return WeatherAscii(f"Error: {str(e)}")
 
 

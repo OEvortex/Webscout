@@ -5,6 +5,7 @@ from typing import Any, AsyncIterator, Dict, Generator, Literal, Optional, Union
 
 import aiohttp
 import lxml.html
+from curl_cffi.requests import AsyncSession
 from markdownify import markdownify as md
 
 from webscout import exceptions
@@ -91,7 +92,12 @@ class IAsk(AISearch):
         self.api_endpoint = "https://iask.ai/"
         self.last_response = {}
 
-    def create_url(self, query: str, mode: ModeType = "question", detail_level: Optional[DetailLevelType] = None) -> str:
+    def create_url(
+        self,
+        query: str,
+        mode: ModeType = "question",
+        detail_level: Optional[DetailLevelType] = None,
+    ) -> str:
         """Create a properly formatted URL with mode and detail level parameters.
 
         Args:
@@ -109,10 +115,7 @@ class IAsk(AISearch):
             https://iask.ai/?mode=academic&q=Climate+change&options%5Bdetail_level%5D=detailed
         """
         # Create a dictionary of parameters with flattened structure
-        params = {
-            "mode": mode,
-            "q": query
-        }
+        params = {"mode": mode, "q": query}
 
         # Add detail_level if provided using the flattened format
         if detail_level:
@@ -133,17 +136,19 @@ class IAsk(AISearch):
         Returns:
             str: Formatted text.
         """
-        scout = Scout(html_content, features='html.parser')
+        scout = Scout(html_content, features="html.parser")
         output_lines = []
 
-        for child in scout.find_all(['h1', 'h2', 'h3', 'p', 'ol', 'ul', 'div']):
+        for child in scout.find_all(["h1", "h2", "h3", "p", "ol", "ul", "div"]):
             if child.name in ["h1", "h2", "h3"]:
                 output_lines.append(f"\n**{child.get_text().strip()}**\n")
             elif child.name == "p":
                 text = child.get_text().strip()
-                text = re.sub(r"^According to Ask AI & Question AI www\.iAsk\.ai:\s*", "", text).strip()
+                text = re.sub(
+                    r"^According to Ask AI & Question AI www\.iAsk\.ai:\s*", "", text
+                ).strip()
                 # Remove footnote markers
-                text = re.sub(r'\[\d+\]\(#fn:\d+ \'see footnote\'\)', '', text)
+                text = re.sub(r"\[\d+\]\(#fn:\d+ \'see footnote\'\)", "", text)
                 output_lines.append(text + "\n")
             elif child.name in ["ol", "ul"]:
                 for li in child.find_all("li"):
@@ -213,7 +218,9 @@ class IAsk(AISearch):
             Climate change refers to...
         """
         search_mode = cast(ModeType, mode or self.default_mode)
-        search_detail_level = cast(Optional[DetailLevelType], detail_level or self.default_detail_level)
+        search_detail_level = cast(
+            Optional[DetailLevelType], detail_level or self.default_detail_level
+        )
 
         # For non-streaming, run the async search and return the complete response
         if not stream:
@@ -224,7 +231,12 @@ class IAsk(AISearch):
                 result = loop.run_until_complete(
                     self._async_search(prompt, False, raw, search_mode, search_detail_level)
                 )
-                return cast(Union[SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None]], result)
+                return cast(
+                    Union[
+                        SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None]
+                    ],
+                    result,
+                )
             finally:
                 loop.close()
         buffer = ""
@@ -237,7 +249,9 @@ class IAsk(AISearch):
 
             try:
                 # Get the async generator
-                async_gen_coro = self._async_search(prompt, True, raw, search_mode, search_detail_level)
+                async_gen_coro = self._async_search(
+                    prompt, True, raw, search_mode, search_detail_level
+                )
                 async_gen = loop.run_until_complete(async_gen_coro)
 
                 # Process chunks one by one
@@ -250,8 +264,8 @@ class IAsk(AISearch):
                             chunk = loop.run_until_complete(chunk_coro)
 
                             # Update buffer and yield the chunk
-                            if isinstance(chunk, dict) and 'text' in chunk:
-                                buffer += chunk['text']
+                            if isinstance(chunk, dict) and "text" in chunk:
+                                buffer += chunk["text"]
                             elif isinstance(chunk, SearchResponse):
                                 buffer += chunk.text
                             else:
@@ -272,7 +286,10 @@ class IAsk(AISearch):
                 self.last_response = {"text": buffer}
                 loop.close()
 
-        return cast(Union[SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None]], sync_generator())
+        return cast(
+            Union[SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None]],
+            sync_generator(),
+        )
 
     async def _async_search(
         self,
@@ -285,77 +302,84 @@ class IAsk(AISearch):
         """Internal async implementation of the search method."""
 
         async def stream_generator() -> AsyncIterator[str]:
-            timeout = aiohttp.ClientTimeout(total=self.timeout)
-            async with aiohttp.ClientSession() as session:
+            timeout = self.timeout
+            async with AsyncSession() as session:
                 # Prepare parameters
                 params = {"mode": mode, "q": prompt}
                 if detail_level:
                     params["options[detail_level]"] = detail_level
 
                 try:
-                    async with session.get(
+                    response = await session.get(
                         self.api_endpoint,
                         params=params,
-                        proxy=self.proxies.get('http') if self.proxies else None,
-                        timeout=timeout
-                    ) as response:
-                        if response.status != 200:
-                            raise exceptions.APIConnectionError(
-                                f"Failed to generate response - ({response.status}, {response.reason}) - {await response.text()}"
+                        proxies=None,
+                        timeout=timeout,
+                    )
+                    if response.status_code != 200:
+                        raise exceptions.APIConnectionError(
+                            f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
+                        )
+
+                    etree = lxml.html.fromstring(response.text)
+                    phx_node = etree.xpath('//*[starts-with(@id, "phx-")]').pop()
+                    csrf_token = etree.xpath('//*[@name="csrf-token"]').pop().get("content")
+
+                    async with aiohttp.ClientSession() as ws_session:
+                        async with ws_session.ws_connect(
+                            f"{self.api_endpoint}live/websocket",
+                            params={
+                                "_csrf_token": csrf_token,
+                                "vsn": "2.0.0",
+                            },
+                            proxy=self.proxies.get("http") if self.proxies else None,
+                        ) as wsResponse:
+                            await wsResponse.send_json(
+                                [
+                                    None,
+                                    None,
+                                    f"lv:{phx_node.get('id')}",
+                                    "phx_join",
+                                    {
+                                        "params": {"_csrf_token": csrf_token},
+                                        "url": str(response.url),
+                                        "session": phx_node.get("data-phx-session"),
+                                    },
+                                ]
                             )
-
-                        etree = lxml.html.fromstring(await response.text())
-                        phx_node = etree.xpath('//*[starts-with(@id, "phx-")]').pop()
-                        csrf_token = (
-                            etree.xpath('//*[@name="csrf-token"]').pop().get("content")
-                        )
-
-                    async with session.ws_connect(
-                        f"{self.api_endpoint}live/websocket",
-                        params={
-                            "_csrf_token": csrf_token,
-                            "vsn": "2.0.0",
-                        },
-                        proxy=self.proxies.get('http') if self.proxies else None,
-                        timeout=cast(aiohttp.ClientWSTimeout, timeout)
-                    ) as wsResponse:
-                        await wsResponse.send_json(
-                            [
-                                None,
-                                None,
-                                f"lv:{phx_node.get('id')}",
-                                "phx_join",
-                                {
-                                    "params": {"_csrf_token": csrf_token},
-                                    "url": str(response.url),
-                                    "session": phx_node.get("data-phx-session"),
-                                },
-                            ]
-                        )
                         while True:
-                            json_data = await wsResponse.receive_json()
-                            if not json_data:
+                            msg = await wsResponse.receive()
+                            if msg.type == aiohttp.WSMsgType.TEXT:
+                                json_data = msg.json()
+                            elif msg.type == aiohttp.WSMsgType.ERROR:
+                                raise exceptions.APIConnectionError(
+                                    f"WebSocket error: {wsResponse.exception()}"
+                                )
+                            elif msg.type == aiohttp.WSMsgType.CLOSED:
                                 break
-                            diff: dict = json_data[4]
-                            try:
-                                chunk: str = diff["e"][0][1]["data"]
-                                # Check if the chunk contains HTML content
-                                if re.search(r"<[^>]+>", chunk):
-                                    formatted_chunk = self.format_html(chunk)
-                                    yield formatted_chunk
-                                else:
-                                    yield chunk.replace("<br/>", "\n")
-                            except Exception:
-                                cache = cache_find(diff)
-                                if cache:
-                                    if diff.get("response", None):
-                                        # Format the cache content if it contains HTML
-                                        if re.search(r"<[^>]+>", cache):
-                                            formatted_cache = self.format_html(cache)
-                                            yield formatted_cache
-                                        else:
-                                            yield cache
-                                    break
+                            else:
+                                # Handle other message types (PING, PONG, etc.)
+                                continue
+                                diff: dict = json_data[4]
+                                try:
+                                    chunk: str = diff["e"][0][1]["data"]
+                                    # Check if the chunk contains HTML content
+                                    if re.search(r"<[^>]+>", chunk):
+                                        formatted_chunk = self.format_html(chunk)
+                                        yield formatted_chunk
+                                    else:
+                                        yield chunk.replace("<br/>", "\n")
+                                except Exception:
+                                    cache = cache_find(diff)
+                                    if cache:
+                                        if diff.get("response", None):
+                                            # Format the cache content if it contains HTML
+                                            if re.search(r"<[^>]+>", cache):
+                                                formatted_cache = self.format_html(cache)
+                                                yield formatted_cache
+                                            else:
+                                                yield cache
+                                        break
                 except Exception as e:
                     raise exceptions.APIConnectionError(f"Error connecting to IAsk API: {str(e)}")
 
@@ -383,7 +407,6 @@ class IAsk(AISearch):
 
 
 if __name__ == "__main__":
-
     ai = IAsk()
     response = ai.search("What is Python?", stream=True)
     if hasattr(response, "__iter__") and not isinstance(response, (str, SearchResponse)):

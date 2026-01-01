@@ -1,7 +1,6 @@
 import uuid
 from typing import Any, Dict, Generator, Optional, Union, cast
 
-import cloudscraper
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
@@ -107,7 +106,7 @@ class LLMChatCo(Provider):
             self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
         # Update curl_cffi session headers and proxies
-        self.session = cloudscraper.create_scraper()
+        self.session = Session(impersonate="chrome110")
         self.session.headers.update(self.headers)
         if proxies:
             self.session.proxies.update(proxies)

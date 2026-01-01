@@ -7,7 +7,7 @@ import uuid
 from typing import Any, Dict, Generator, List, Optional, Union
 
 import cloudscraper
-import requests
+from curl_cffi.requests import Session
 from rich import print
 
 from webscout.litagent.agent import LitAgent
@@ -203,7 +203,7 @@ class Completions(BaseCompletions):
                         except json.JSONDecodeError:
                             print(f"Warning: Could not decode JSON line: {json_str}")
                             continue
-        except requests.exceptions.RequestException as e:
+        except Exception as e:
             print(f"Error during ChutesAI stream request: {e}")
             raise IOError(f"ChutesAI request failed: {e}") from e
         except Exception as e:
@@ -250,7 +250,7 @@ class Completions(BaseCompletions):
                 usage=usage,
             )
             return completion
-        except requests.exceptions.RequestException as e:
+        except Exception as e:
             print(f"Error during ChutesAI non-stream request: {e}")
             raise IOError(f"ChutesAI request failed: {e}") from e
         except Exception as e:

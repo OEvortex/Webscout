@@ -185,8 +185,8 @@ class TempMailIO(TempMailProvider):
         Args:
             auto_create: Automatically create an email upon initialization
         """
-        import requests
-        self.session = requests.Session()
+        from curl_cffi.requests import Session
+        self.session = Session()
         self.session.headers.update({
             'Host': 'api.internal.temp-mail.io',
             'User-Agent': 'okhttp/4.5.0',
