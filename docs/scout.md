@@ -378,8 +378,7 @@ Scout is deeply integrated into Webscout's search engines, providing powerful HT
 
 ### Why Scout in Webscout?
 
-- **Zero Dependencies**: No need to install BeautifulSoup4 or lxml separately
-- **Full BS4 Compatibility**: Drop-in replacement for BeautifulSoup with the same API
+- **Zero Dependencies**: No need to install lxml separately for basic HTML parsing
 - **Enhanced Features**: Advanced CSS selectors, text analysis, web crawling, and more
 - **Better Performance**: Optimized parsing and traversal
 

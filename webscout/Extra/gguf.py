@@ -7,13 +7,29 @@ import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional, Set, TypedDict
 
-from huggingface_hub import HfApi
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
 from webscout.swiftcli import CLI, option
 from webscout.zeroart import figlet_format
+
+# Lazy import for huggingface_hub
+HfApi = None
+
+def _ensure_huggingface_hub():
+    """Ensure huggingface_hub is imported when needed."""
+    global HfApi
+    if HfApi is None:
+        try:
+            from huggingface_hub import HfApi as _HfApi
+            HfApi = _HfApi
+        except ImportError:
+            raise ImportError(
+                "huggingface_hub is required for GGUF conversion. "
+                "Install it with: pip install huggingface_hub"
+            )
+    return HfApi
 
 console = Console()
 
@@ -778,7 +794,7 @@ class ModelConverter:
 
     def upload_split_files(self, split_files: List[str], outdir: str, repo_id: str) -> None:
         """Uploads split model files to Hugging Face."""
-        api = HfApi(token=self.token)
+        api = _ensure_huggingface_hub()(token=self.token)
 
         for file in split_files:
             file_path = os.path.join(outdir, file)
@@ -866,7 +882,7 @@ This repository is licensed under the same terms as the original model.
 
     def create_repository(self, repo_id: str) -> None:
         """Create a new repository on Hugging Face Hub if it doesn't exist."""
-        api = HfApi(token=self.token)
+        api = _ensure_huggingface_hub()(token=self.token)
         try:
             # Check if repository already exists
             try:
@@ -892,7 +908,7 @@ This repository is licensed under the same terms as the original model.
 
     def upload_readme(self, readme_content: str, repo_id: str) -> None:
         """Upload README.md to Hugging Face Hub."""
-        api = HfApi(token=self.token)
+        api = _ensure_huggingface_hub()(token=self.token)
         console.print("[bold green]Uploading README.md with model documentation")
         try:
             api.upload_file(
@@ -970,7 +986,7 @@ This repository is licensed under the same terms as the original model.
         local_dir = Path(tmpdir)/self.model_name
         if self.remote:
             console.print("[bold green]Using remote mode - downloading only config and tokenizer...")
-            api = HfApi(token=self.token)
+            api = _ensure_huggingface_hub()(token=self.token)
             api.snapshot_download(
                 repo_id=self.model_id,
                 local_dir=local_dir,
@@ -978,7 +994,7 @@ This repository is licensed under the same terms as the original model.
             )
         else:
             console.print("[bold green]Downloading model...")
-            api = HfApi(token=self.token)
+            api = _ensure_huggingface_hub()(token=self.token)
             api.snapshot_download(
                 repo_id=self.model_id,
                 local_dir=local_dir,

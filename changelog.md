@@ -11,16 +11,21 @@ All notable changes to this project will be documented in this file.
 - **remove**: Removed `webscout/Provider/VercelAI.py` provider file and updated related imports and documentation
 
 ### 🔧 Improved
-- **refactor**: Made `lxml` dependency optional and added `beautifulsoup4` as fallback parser
-  - Moved `lxml` and `beautifulsoup4` to new optional `parser` dependency group in pyproject.toml
-  - Updated `webscout/search/base.py` to support both lxml and beautifulsoup4 for HTML parsing
-  - Updated `webscout/search/engines/duckduckgo/base.py` to use beautifulsoup4 as fallback
-  - Updated `webscout/Provider/AISEARCH/iask_search.py` to use beautifulsoup4 as fallback
-  - Added basic XPath to CSS selector conversion for beautifulsoup4 compatibility
+- **refactor**: Made `lxml` dependency optional in pyproject.toml
+  - Moved `lxml` to optional `parser` dependency group in pyproject.toml
+  - Updated `webscout/search/base.py` to support lxml for HTML parsing
+  - Updated `webscout/search/engines/duckduckgo/base.py` to use lxml for HTML parsing
+  - Updated `webscout/Provider/AISEARCH/iask_search.py` to use lxml for HTML parsing
   - This fixes Python 3.14 compatibility issues where lxml fails to compile from source on Windows
   - Users can install parser support with: `uv pip install webscout[parser]`
 
 ### 🐛 Fixed
+- **fix**: Fixed ModuleNotFoundError for huggingface_hub in webscout versions > 2025.12.19 by implementing lazy imports in gguf.py
+  - Replaced unconditional `from huggingface_hub import HfApi` with lazy import pattern
+  - Added `_ensure_huggingface_hub()` function that imports HfApi only when GGUF features are used
+  - Updated all HfApi usage in ModelConverter class to use lazy imports
+  - This fixes import issues for users who only need chat/LLM provider features without GGUF conversion
+  - Provides clear error message when GGUF features are used without huggingface_hub installed
 
 ### ✨ Added
 - **feat**: Added new models to HadadXYZ providers: `"anthropic/claude-opus-4-5-20251101"`, `"anthropic/claude-sonnet-4-5-20250929"`, `"anthropic/claude-haiku-4-5-20251001/legacy"`, and `"google/gemini-3-pro-preview"` to both `webscout/Provider/HadadXYZ.py` and `webscout/Provider/OPENAI/hadadxyz.py`.

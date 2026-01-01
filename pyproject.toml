@@ -94,7 +94,6 @@ api = [
 ]
 parser = [
     "lxml>=5.2.2",  # Optional: faster HTML/XML parsing with lxml
-    "beautifulsoup4",  # Fallback HTML/XML parser when lxml is unavailable
 ]
 
 [tool.setuptools]

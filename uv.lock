@@ -2019,7 +2019,6 @@ dev = [
     { name = "ruff" },
 ]
 parser = [
-    { name = "beautifulsoup4" },
     { name = "lxml" },
 ]
 
@@ -2027,7 +2026,6 @@ parser = [
 requires-dist = [
     { name = "aiofiles" },
     { name = "aiohttp" },
-    { name = "beautifulsoup4", marker = "extra == 'parser'" },
     { name = "cloudscraper" },
     { name = "colorama" },
     { name = "curl-cffi" },

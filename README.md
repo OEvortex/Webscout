@@ -494,6 +494,8 @@ print(response)
 
 Webscout provides tools to convert and quantize Hugging Face models into the GGUF format for offline use.
 
+> **Note (2026.01.01)**: GGUF conversion now uses lazy imports for `huggingface_hub`. The library can be imported without requiring `huggingface_hub`, and it's only loaded when GGUF features are actually used. Install it with `pip install huggingface_hub` if you need GGUF conversion.
+
 ```python
 from webscout.Extra.gguf import ModelConverter
 
