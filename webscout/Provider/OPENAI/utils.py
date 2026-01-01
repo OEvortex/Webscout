@@ -1,7 +1,7 @@
 import time
 import uuid
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union, cast
 
 from webscout.Provider.OPENAI.pydantic_imports import BaseModel, Field, StrictInt, StrictStr
 

@@ -5,6 +5,7 @@ import pathlib
 import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Any, Optional, Union, cast
 
 import requests
 from litprinter import ic
@@ -19,9 +20,11 @@ except ImportError:
     # Handle direct execution
     import os
     import sys
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
     from webscout.Provider.TTS import utils
     from webscout.Provider.TTS.base import BaseTTSProvider
+
 
 class DeepgramTTS(BaseTTSProvider):
     """
@@ -33,6 +36,7 @@ class DeepgramTTS(BaseTTSProvider):
     - Multiple output formats
     - Concurrent generation for long texts
     """
+
     required_auth = False
 
     # Request headers
@@ -42,18 +46,37 @@ class DeepgramTTS(BaseTTSProvider):
         "Content-Type": "application/json",
         "Origin": "https://deepgram.com",
         "Referer": "https://deepgram.com/ai-voice-generator",
-        "User-Agent": LitAgent().random()
+        "User-Agent": LitAgent().random(),
     }
 
     # Supported Aura-2 voices
     SUPPORTED_MODELS = ["aura-2"]
 
     SUPPORTED_VOICES = [
-        "thalia", "odysseus", "harmonia", "theia", "electra",
-        "arcas", "amalthea", "helena", "hyperion", "apollo", "luna",
+        "thalia",
+        "odysseus",
+        "harmonia",
+        "theia",
+        "electra",
+        "arcas",
+        "amalthea",
+        "helena",
+        "hyperion",
+        "apollo",
+        "luna",
         # Legacy Aura-1 voices (if still supported by the endpoint)
-        "asteria", "luna", "stella", "athena", "hera",
-        "zeus", "orpheus", "arcas", "perseus", "angus", "orion", "helios"
+        "asteria",
+        "luna",
+        "stella",
+        "athena",
+        "hera",
+        "zeus",
+        "orpheus",
+        "arcas",
+        "perseus",
+        "angus",
+        "orion",
+        "helios",
     ]
 
     # Voice mapping for Deepgram API compatibility
@@ -80,10 +103,10 @@ class DeepgramTTS(BaseTTSProvider):
         "perseus": "aura-perseus-en",
         "angus": "aura-angus-en",
         "orion": "aura-orion-en",
-        "helios": "aura-helios-en"
+        "helios": "aura-helios-en",
     }
 
-    def __init__(self, timeout: int = 30, proxies: dict = None):
+    def __init__(self, timeout: int = 30, proxies: Optional[dict] = None):
         """
         Initialize the Deepgram TTS client.
 
@@ -100,27 +123,24 @@ class DeepgramTTS(BaseTTSProvider):
         self.timeout = timeout
         self.default_voice = "thalia"
 
-    def tts(
-        self,
-        text: str,
-        model: str = "aura-2", # Dummy model param for compatibility
-        voice: str = "thalia",
-        response_format: str = "mp3",
-        instructions: str = None,
-        verbose: bool = True
-    ) -> str:
+    def tts(self, text: str, voice: Optional[str] = None, verbose: bool = False, **kwargs) -> str:
         """
         Convert text to speech using Deepgram Aura-2 API.
 
         Args:
             text (str): The text to convert to speech
             voice (str): The voice to use (thalia, odysseus, etc.)
-            response_format (str): Audio format (mp3, wav, aac, flac, opus, pcm)
             verbose (bool): Whether to print debug information
+            **kwargs: Additional parameters
 
         Returns:
             str: Path to the generated audio file
         """
+        # Extract parameters from kwargs with defaults
+        voice = voice or kwargs.get("voice", "thalia")
+        response_format = kwargs.get("response_format", "mp3")
+        verbose = verbose if verbose is not None else kwargs.get("verbose", True)
+
         if not text:
             raise ValueError("Input text must be a non-empty string")
 
@@ -129,14 +149,14 @@ class DeepgramTTS(BaseTTSProvider):
 
         # Create temporary file
         file_extension = f".{response_format}"
-        filename = pathlib.Path(tempfile.mktemp(suffix=file_extension, dir=self.temp_dir))
-
-        # Split text into sentences for long inputs
+        filename = pathlib.Path(
+            tempfile.NamedTemporaryFile(suffix=file_extension, dir=self.temp_dir, delete=False).name
+        )
         sentences = utils.split_sentences(text)
         if verbose:
-            ic.configureOutput(prefix='DEBUG| ')
+            ic.configureOutput(prefix="DEBUG| ")
             ic(f"DeepgramTTS: Processing {len(sentences)} chunks")
-            ic.configureOutput(prefix='DEBUG| ')
+            ic.configureOutput(prefix="DEBUG| ")
             ic(f"Voice: {voice} -> {voice_id}")
 
         def generate_audio_for_chunk(part_text: str, part_number: int):
@@ -147,28 +167,28 @@ class DeepgramTTS(BaseTTSProvider):
                         "text": part_text,
                         "model": voice_id,
                         "demoType": "voice-generator",
-                        "params": "tag=landingpage-aivoicegenerator"
+                        "params": "tag=landingpage-aivoicegenerator",
                     }
-                    response = self.session.post(
-                        self.api_url,
-                        json=payload,
-                        timeout=self.timeout
-                    )
+                    response = self.session.post(self.api_url, json=payload, timeout=self.timeout)
                     response.raise_for_status()
 
                     if response.content:
                         if verbose:
-                            ic.configureOutput(prefix='DEBUG| ')
+                            ic.configureOutput(prefix="DEBUG| ")
                             ic(f"Chunk {part_number} processed successfully")
                         return part_number, response.content
 
                 except requests.RequestException as e:
                     if verbose:
-                        ic.configureOutput(prefix='WARNING| ')
-                        ic(f"Error processing chunk {part_number}: {e}. Retrying {attempt+1}/{max_retries}")
+                        ic.configureOutput(prefix="WARNING| ")
+                        ic(
+                            f"Error processing chunk {part_number}: {e}. Retrying {attempt + 1}/{max_retries}"
+                        )
                     time.sleep(1)
 
-            raise exceptions.FailedToGenerateResponseError(f"Failed to generate audio for chunk {part_number}")
+            raise exceptions.FailedToGenerateResponseError(
+                f"Failed to generate audio for chunk {part_number}"
+            )
 
         try:
             with ThreadPoolExecutor(max_workers=3) as executor:
@@ -182,12 +202,12 @@ class DeepgramTTS(BaseTTSProvider):
                     part_num, data = future.result()
                     audio_chunks[part_num] = data
 
-                with open(filename, 'wb') as f:
+                with open(filename, "wb") as f:
                     for i in sorted(audio_chunks.keys()):
                         f.write(audio_chunks[i])
 
                 if verbose:
-                    ic.configureOutput(prefix='INFO| ')
+                    ic.configureOutput(prefix="INFO| ")
                     ic(f"Audio saved to {filename}")
 
                 return str(filename)
@@ -195,39 +215,72 @@ class DeepgramTTS(BaseTTSProvider):
         except Exception as e:
             raise exceptions.FailedToGenerateResponseError(f"Deepgram TTS failed: {e}")
 
-    def create_speech(self, input: str, **kwargs) -> str:
-        """OpenAI-compatible speech creation interface."""
-        return self.tts(text=input, **kwargs)
+    def create_speech(
+        self,
+        input_text: str,
+        model: Optional[str] = None,
+        voice: Optional[str] = None,
+        response_format: Optional[str] = None,
+        instructions: Optional[str] = None,
+        verbose: bool = False,
+    ) -> str:
+        return self.tts(
+            text=input_text,
+            model=model or "aura-2",
+            voice=voice or "thalia",
+            response_format=response_format or "mp3",
+            instructions=instructions,
+            verbose=verbose,
+        )
 
     def with_streaming_response(self):
         return StreamingResponseContextManager(self)
 
+
 class StreamingResponseContextManager:
     def __init__(self, tts_provider: DeepgramTTS):
         self.tts_provider = tts_provider
+
     def create(self, **kwargs):
         audio_file = self.tts_provider.create_speech(**kwargs)
         return StreamingResponse(audio_file)
-    def __enter__(self): return self
-    def __exit__(self, exc_type, exc_val, exc_tb): pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
 
 class StreamingResponse:
     def __init__(self, audio_file: str):
         self.audio_file = audio_file
-    def __enter__(self): return self
-    def __exit__(self, exc_type, exc_val, exc_tb): pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
     def stream_to_file(self, file_path: str):
         import shutil
+
         shutil.copy2(self.audio_file, file_path)
+
     def iter_bytes(self, chunk_size: int = 1024):
-        with open(self.audio_file, 'rb') as f:
+        with open(self.audio_file, "rb") as f:
             while chunk := f.read(chunk_size):
                 yield chunk
+
 
 if __name__ == "__main__":
     dg = DeepgramTTS()
     try:
-        path = dg.tts("Deepgram Aura-2 test successful. Generating high quality speech.", voice="thalia", verbose=True)
+        path = dg.tts(
+            "Deepgram Aura-2 test successful. Generating high quality speech.",
+            voice="thalia",
+            verbose=True,
+        )
         print(f"Saved to: {path}")
     except Exception as e:
         print(f"Error: {e}")

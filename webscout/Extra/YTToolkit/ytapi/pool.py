@@ -1,5 +1,5 @@
 import concurrent.futures
-from typing import Any, Callable, List
+from typing import Any, Callable, List, Optional
 
 
 def collect(func: Callable, args: List[Any]) -> List[Any]:

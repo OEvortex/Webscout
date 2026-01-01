@@ -12,6 +12,7 @@ from webscout.Provider.OPENAI.base import (
     FunctionDefinition,
     FunctionParameters,
     OpenAICompatibleProvider,
+    SimpleModelList,
     Tool,
     ToolDefinition,
 )
@@ -39,6 +40,7 @@ from webscout.Provider.OPENAI.meta import Meta
 from webscout.Provider.OPENAI.netwrck import Netwrck
 from webscout.Provider.OPENAI.nvidia import Nvidia
 from webscout.Provider.OPENAI.oivscode import oivscode
+from webscout.Provider.OPENAI.openrouter import OpenRouter
 from webscout.Provider.OPENAI.PI import PiAI
 from webscout.Provider.OPENAI.sambanova import Sambanova
 from webscout.Provider.OPENAI.sonus import SonusAI
@@ -66,7 +68,6 @@ from webscout.Provider.OPENAI.utils import (
     get_last_user_message,
     get_system_prompt,
 )
-from webscout.Provider.OPENAI.venice import Venice
 from webscout.Provider.OPENAI.wisecat import WiseCat
 from webscout.Provider.OPENAI.writecream import Writecream
 from webscout.Provider.OPENAI.x0gpt import X0GPT
@@ -76,6 +77,7 @@ from webscout.Provider.OPENAI.zenmux import Zenmux
 __all__ = [
     # Base classes and utilities
     "OpenAICompatibleProvider",
+    "SimpleModelList",
     "BaseChat",
     "BaseCompletions",
     "Tool",
@@ -120,6 +122,7 @@ __all__ = [
     "FreeAssist",
     "Ayle",
     "HuggingFace",
+    "oivscode",
     "Groq",
     "HeckAI",
     "IBM",
@@ -127,12 +130,12 @@ __all__ = [
     "LLMChatCo",
     "Netwrck",
     "Nvidia",
+    "OpenRouter",
     "oivscode",
     "SonusAI",
     "TextPollinations",
     "Toolbaz",
     "TypefullyAI",
-    "Venice",
     "WiseCat",
     "Writecream",
     "X0GPT",

@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
@@ -19,8 +19,10 @@ class SearchChatAI(Provider):
     """
     A class to interact with the SearchChatAI API.
     """
+
     required_auth = False
     AVAILABLE_MODELS = ["gpt-4o-mini-2024-07-18"]
+
     def __init__(
         self,
         is_conversation: bool = True,
@@ -56,7 +58,8 @@ class SearchChatAI(Provider):
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
-            "Sec-CH-UA": self.fingerprint["sec_ch_ua"] or '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
+            "Sec-CH-UA": self.fingerprint["sec_ch_ua"]
+            or '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
             "Sec-CH-UA-Mobile": "?0",
             "Sec-CH-UA-Platform": f'"{self.fingerprint["platform"]}"',
             "User-Agent": self.fingerprint["user_agent"],
@@ -66,27 +69,29 @@ class SearchChatAI(Provider):
         self.session = Session()
         # Update curl_cffi session headers and proxies
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies # Assign proxies directly
+        if proxies:
+            self.session.proxies.update(proxies)  # Assign proxies directly
 
         self.__available_optimizers = (
             method
             for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
-
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
+        act_prompt = (
+            AwesomePrompts().get_act(
+                cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
+        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
 
-    def refresh_identity(self, browser: str = None):
+    def refresh_identity(self, browser: Optional[str] = None):
         """
         Refreshes the browser identity fingerprint.
 
@@ -97,13 +102,15 @@ class SearchChatAI(Provider):
         self.fingerprint = self.agent.generate_fingerprint(browser)
 
         # Update headers with new fingerprint
-        self.headers.update({
-            "Accept": self.fingerprint["accept"],
-            "Accept-Language": self.fingerprint["accept_language"],
-            "Sec-CH-UA": self.fingerprint["sec_ch_ua"] or self.headers["Sec-CH-UA"],
-            "Sec-CH-UA-Platform": f'"{self.fingerprint["platform"]}"',
-            "User-Agent": self.fingerprint["user_agent"],
-        })
+        self.headers.update(
+            {
+                "Accept": self.fingerprint["accept"],
+                "Accept-Language": self.fingerprint["accept_language"],
+                "Sec-CH-UA": self.fingerprint["sec_ch_ua"] or self.headers["Sec-CH-UA"],
+                "Sec-CH-UA-Platform": f'"{self.fingerprint["platform"]}"',
+                "User-Agent": self.fingerprint["user_agent"],
+            }
+        )
 
         # Update session headers (already done in the original code, should work with curl_cffi session)
         for header, value in self.headers.items():
@@ -146,13 +153,8 @@ class SearchChatAI(Provider):
             "messages": [
                 {
                     "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": conversation_prompt
-                        }
-                    ],
-                    "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+                    "content": [{"type": "text", "text": conversation_prompt}],
+                    "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
                 }
             ]
         }
@@ -166,7 +168,9 @@ class SearchChatAI(Provider):
                     json=payload,
                     stream=True,
                     timeout=self.timeout,
-                    impersonate=self.fingerprint.get("browser_type", "chrome110") # Use fingerprint browser type
+                    impersonate=self.fingerprint.get(
+                        "browser_type", "chrome110"
+                    ),  # Use fingerprint browser type
                 )
                 if response.status_code != 200:
                     # Add identity refresh logic on 403/429
@@ -177,10 +181,12 @@ class SearchChatAI(Provider):
                             json=payload,
                             stream=True,
                             timeout=self.timeout,
-                            impersonate=self.fingerprint.get("browser_type", "chrome110") # Use updated fingerprint
+                            impersonate=self.fingerprint.get(
+                                "browser_type", "chrome110"
+                            ),  # Use updated fingerprint
                         )
                         if not response.ok:
-                             raise exceptions.FailedToGenerateResponseError(
+                            raise exceptions.FailedToGenerateResponseError(
                                 f"Request failed after identity refresh - ({response.status_code}, {response.reason}) - {response.text}"
                             )
                     else:
@@ -191,13 +197,17 @@ class SearchChatAI(Provider):
                 streaming_text = ""
                 # Use sanitize_stream
                 processed_stream = sanitize_stream(
-                    data=response.iter_content(chunk_size=None), # Pass byte iterator
+                    data=response.iter_content(chunk_size=None),  # Pass byte iterator
                     intro_value="data:",
-                    to_json=True,     # Stream sends JSON
+                    to_json=True,  # Stream sends JSON
                     skip_markers=["[DONE]"],
-                    content_extractor=lambda chunk: chunk.get('choices', [{}])[0].get('delta', {}).get('content') if isinstance(chunk, dict) else None,
-                    yield_raw_on_error=False, # Skip non-JSON or lines where extractor fails
-                    raw=raw
+                    content_extractor=lambda chunk: chunk.get("choices", [{}])[0]
+                    .get("delta", {})
+                    .get("content")
+                    if isinstance(chunk, dict)
+                    else None,
+                    yield_raw_on_error=False,  # Skip non-JSON or lines where extractor fails
+                    raw=raw,
                 )
 
                 for content_chunk in processed_stream:
@@ -211,10 +221,14 @@ class SearchChatAI(Provider):
                 # Update history and last response after stream finishes
                 self.last_response = {"text": streaming_text}
                 self.conversation.update_chat_history(prompt, streaming_text)
-            except CurlError as e: # Catch CurlError
-                raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {str(e)}") from e
-            except Exception as e: # Catch other potential exceptions
-                 raise exceptions.FailedToGenerateResponseError(f"An unexpected error occurred ({type(e).__name__}): {e}") from e
+            except CurlError as e:  # Catch CurlError
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed (CurlError): {str(e)}"
+                ) from e
+            except Exception as e:  # Catch other potential exceptions
+                raise exceptions.FailedToGenerateResponseError(
+                    f"An unexpected error occurred ({type(e).__name__}): {e}"
+                ) from e
 
         def for_non_stream():
             # Aggregate the stream using the updated for_stream logic
@@ -231,7 +245,6 @@ class SearchChatAI(Provider):
             # last_response and history are updated within for_stream
             # Return the final aggregated response dict or raw string
             return full_text if raw else self.last_response
-
 
         return for_stream() if stream else for_non_stream()
 
@@ -256,6 +269,7 @@ class SearchChatAI(Provider):
         Returns:
             Either a string response or a generator for streaming
         """
+
         def for_stream_chat():
             for response in self.ask(
                 prompt, stream=True, raw=raw, optimizer=optimizer, conversationally=conversationally
@@ -264,21 +278,33 @@ class SearchChatAI(Provider):
                     yield response
                 else:
                     yield self.get_message(response)
+
         def for_non_stream_chat():
             response_data = self.ask(
-                prompt, stream=False, raw=raw, optimizer=optimizer, conversationally=conversationally
+                prompt,
+                stream=False,
+                raw=raw,
+                optimizer=optimizer,
+                conversationally=conversationally,
             )
             if raw:
-                return response_data if isinstance(response_data, str) else self.get_message(response_data)
+                return (
+                    response_data
+                    if isinstance(response_data, str)
+                    else self.get_message(response_data)
+                )
             else:
                 return self.get_message(response_data)
+
         return for_stream_chat() if stream else for_non_stream_chat()
 
     def get_message(self, response: Response) -> str:
         """Extract the message from the response."""
         if not isinstance(response, dict):
             return str(response)
-        return response.get("text", "")
+        response_dict = cast(Dict[str, Any], response)
+        return response_dict.get("text", "")
+
 
 if __name__ == "__main__":
     ai = SearchChatAI()

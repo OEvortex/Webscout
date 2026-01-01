@@ -2,12 +2,45 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2025.12.23] - 2025-12-23
+## [2026.01.01] - 2026-01-01
+
+### 🚮 Removed
+- **remove**: Completely removed `google-generativeai` package dependency from pyproject.toml - package was not actually used in the codebase (geminiapi.py uses curl_cffi directly), removing it fixes Python 3.14 compatibility issues with pydantic-core
+- **remove**: Completely removed `openai` package dependency from pyproject.toml - project now uses `curl_cffi` exclusively for HTTP requests, reducing dependencies and improving consistency
+- **remove**: Completely removed `orjson` dependency from codebase (including imports, `HAS_ORJSON` flag, and pyproject.toml entry) for better compatibility and simpler dependencies
+- **remove**: Removed `webscout/Provider/VercelAI.py` provider file and updated related imports and documentation
+- **remove**: Completely removed `nodriver` package dependency from pyproject.toml - nodriver was not actively used in the codebase, only listed as a dependency
+- **remove**: Replaced aiofiles usage with Python's built-in asyncio.to_thread for async file operations in TTS streaming, removing aiofiles dependency from pyproject.toml
+- **remove**: Replaced cloudscraper usage with curl_cffi Session in LLMChat and LLMChatCo providers, removing cloudscraper dependency from pyproject.toml
+
+### 🔧 Improved
+- **refactor**: Made `lxml` dependency optional in pyproject.toml
+  - Moved `lxml` to optional `parser` dependency group in pyproject.toml
+  - Updated `webscout/search/base.py` to support lxml for HTML parsing
+  - Updated `webscout/search/engines/duckduckgo/base.py` to use lxml for HTML parsing
+- **refactor**: Migrated from `requests` to `curl_cffi` for HTTP requests in multiple files to improve browser fingerprinting and anti-detection capabilities
+- **refactor**: Migrated `webscout/Provider/AISEARCH/iask_search.py` from `aiohttp` to `curl_cffi` for HTTP requests, while retaining `aiohttp` for WebSocket connections to improve browser fingerprinting and anti-detection capabilities
+
+### 🐛 Fixed
+- **fix**: Fixed ModuleNotFoundError for huggingface_hub in webscout versions > 2025.12.19 by implementing lazy imports in gguf.py
+  - Replaced unconditional `from huggingface_hub import HfApi` with lazy import pattern
+  - Added `_ensure_huggingface_hub()` function that imports HfApi only when GGUF features are used
+  - Updated all HfApi usage in ModelConverter class to use lazy imports
+  - This fixes import issues for users who only need chat/LLM provider features without GGUF conversion
+  - Provides clear error message when GGUF features are used without huggingface_hub installed
 
 ### ✨ Added
 - **feat**: Added new models to HadadXYZ providers: `"anthropic/claude-opus-4-5-20251101"`, `"anthropic/claude-sonnet-4-5-20250929"`, `"anthropic/claude-haiku-4-5-20251001/legacy"`, and `"google/gemini-3-pro-preview"` to both `webscout/Provider/HadadXYZ.py` and `webscout/Provider/OPENAI/hadadxyz.py`.
 
 - **feat**: webscout/Provider/QwenLM.py - Added new models to this provider
+
+- **feat**: Added `gpt-5.2` model to Toolbaz providers in both `webscout/Provider/toolbaz.py` and `webscout/Provider/OPENAI/toolbaz.py`
+
+- **refactor**: Migrated `webscout/Provider/OPENAI/toolbaz.py` from `cloudscraper` to `curl_cffi` for consistent HTTP client implementation across providers
+
+- **refactor**: Migrated `webscout/Provider/OPENAI/sonus.py` from `requests` to `curl_cffi` for improved browser emulation and consistency; updated form data handling from multipart `files` to standard `data` parameter
+
+- **feat**: Added new OpenRouter provider in both `webscout/Provider/OpenRouter.py` and `webscout/Provider/OPENAI/openrouter.py` with dynamic model fetching and LitAgent browser fingerprinting
 
 ## [2025.12.21] - 2025-12-21
 
@@ -59,7 +92,6 @@ All notable changes to this project will be documented in this file.
 - **feat**: Updated documentation with new features and usage examples
 - **feat**: Enhanced error handling with detailed validation error messages
 - **feat**: Improved type safety with better runtime validation
-- **feat**: webscout/Provider/TTI/venice.py - Major update to Venice AI TTI provider with new headers and payload structure from recent reverse engineering. Added support for `z-image-turbo` and `stable-diffusion-3.5-large`.
 - **feat**: webscout/Provider/TTI/together.py - Refactored TogetherImage provider to require a user-provided API key, removing the brittle auto-authentication logic. This aligns it with the TogetherAI chat providers.
 
 ### 🔧 Maintenance
@@ -520,8 +552,6 @@ All notable changes to this project will be documented in this file.
 - **feat**: updated `sanitize_stream` to support both `extract_regexes` and `content_extractor` at same time
 - **chore**: updated `release-with-changelog.yml` to normalize version strings by stripping leading 'v' or 'V'
 - **chore**: updated `sanitize_stream` docstring to clarify usage of `extract_regexes` and `content_extractor`
-- **chore**: removed deprected models from venice provider
-- **chore**: updated venice provider model list in AVAILABLE_MODELS
 - **chore**: updated models list in textpollionations provider
 - **chore**: replaced `anthropic:claude-3-5-haiku-20241022` with `anthropic:claude-haiku-4-5-20251001` in typefully provider 
 

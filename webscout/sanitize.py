@@ -95,7 +95,7 @@ def _compile_regexes(
 
 def _process_chunk(
     chunk: str,
-    intro_value: str,
+    intro_value: Optional[str],
     to_json: bool,
     skip_markers: List[str],
     strip_chars: Optional[str],
@@ -270,11 +270,35 @@ def _decode_byte_stream(
 
 
 async def _decode_byte_stream_async(
-    byte_iterator: Iterable[bytes],
+    byte_iterator: AsyncIterable[bytes],
     encoding: EncodingType = "utf-8",
     errors: str = "replace",
     buffer_size: int = 8192,
 ) -> AsyncGenerator[str, None]:
+    """
+    Asynchronously decodes a byte stream with flexible encoding support.
+
+    This function is the asynchronous counterpart to `_decode_byte_stream`. It takes
+    an asynchronous iterator of bytes and decodes it into a stream of strings using
+    the specified character encoding. It handles encoding errors gracefully and can
+    be tuned for performance with the `buffer_size` parameter.
+
+    Args:
+        byte_iterator (AsyncIterable[bytes]): An asynchronous iterator that yields chunks of bytes.
+        encoding (EncodingType): The character encoding to use for decoding.
+            Defaults to 'utf-8'.  Supports a wide range of encodings, including:
+            'utf-8', 'utf-16', 'utf-32', 'ascii', 'latin1', 'cp1252', 'iso-8859-1',
+            'iso-8859-2', 'windows-1250', 'windows-1251', 'windows-1252', 'gbk', 'big5',
+            'shift_jis', 'euc-jp', 'euc-kr'.
+        errors (str): Specifies how encoding errors should be handled.
+            Options are 'strict' (raises an error), 'ignore' (skips the error), and
+            'replace' (replaces the erroneous byte with a replacement character).
+            Defaults to 'replace'.
+        buffer_size (int): The size of the internal buffer used for decoding.
+
+    Yields:
+        str: Decoded text chunks from the byte stream.
+    """
     """
     Asynchronously decodes a byte stream with flexible encoding support.
 
@@ -328,7 +352,7 @@ async def _decode_byte_stream_async(
 
 def _sanitize_stream_sync(
     data: Any,
-    intro_value: str = "data:",
+    intro_value: Optional[str] = "data:",
     to_json: bool = True,
     skip_markers: Optional[List[str]] = None,
     strip_chars: Optional[str] = None,
@@ -610,7 +634,7 @@ def _sanitize_stream_sync(
 
 async def _sanitize_stream_async(
     data: Any,
-    intro_value: str = "data:",
+    intro_value: Optional[str] = "data:",
     to_json: bool = True,
     skip_markers: Optional[List[str]] = None,
     strip_chars: Optional[str] = None,
@@ -755,12 +779,13 @@ async def _sanitize_stream_async(
     if first_item is None:
         return
 
-    async def _chain(first, it):
+    async def _chain(first: Any, it: AsyncIterable[Any]) -> AsyncGenerator[Any, None]:
+        """Chain the first item with the rest of the async iterator."""
         yield first
         async for x in it:
             yield x
 
-    stream = _chain(first_item, iterator)
+    stream: AsyncGenerator[Any, None] = _chain(first_item, iterator)
 
     if isinstance(first_item, bytes):
         line_iterator = _decode_byte_stream_async(
@@ -934,7 +959,7 @@ def sanitize_stream(
         bool,
         None,
     ],
-    intro_value: str = "data:",
+    intro_value: Optional[str] = "data:",
     to_json: bool = True,
     skip_markers: Optional[List[str]] = None,
     strip_chars: Optional[str] = None,
@@ -961,7 +986,7 @@ def sanitize_stream(
         AsyncIterable[str],
         AsyncIterable[bytes],
     ],
-    intro_value: str = "data:",
+    intro_value: Optional[str] = "data:",
     to_json: bool = True,
     skip_markers: Optional[List[str]] = None,
     strip_chars: Optional[str] = None,
@@ -984,7 +1009,7 @@ def sanitize_stream(
 
 def sanitize_stream(
     data: Any,
-    intro_value: str = "data:",
+    intro_value: Optional[str] = "data:",
     to_json: bool = True,
     skip_markers: Optional[List[str]] = None,
     strip_chars: Optional[str] = None,
@@ -1062,7 +1087,8 @@ def sanitize_stream(
     """
     if raw:
 
-        def _raw_passthrough_sync(source_iter):
+        def _raw_passthrough_sync(source_iter: Iterable[Any]) -> Generator[Any, None, None]:
+            """Pass through sync iterable, decoding bytes to strings."""
             for chunk in source_iter:
                 if isinstance(chunk, (bytes, bytearray)):
                     yield chunk.decode(encoding, encoding_errors)
@@ -1070,7 +1096,8 @@ def sanitize_stream(
                     yield chunk
                 # Skip None chunks entirely
 
-        async def _raw_passthrough_async(source_aiter):
+        async def _raw_passthrough_async(source_aiter: AsyncIterable[Any]) -> AsyncGenerator[Any, None]:
+            """Pass through async iterable, decoding bytes to strings."""
             async for chunk in source_aiter:
                 if isinstance(chunk, (bytes, bytearray)):
                     # Decode bytes preserving all whitespace and newlines
@@ -1086,17 +1113,17 @@ def sanitize_stream(
         # Single string or bytes
         if isinstance(data, (bytes, bytearray)):
 
-            def _yield_single():
+            def _yield_single_bytes() -> Generator[str, None, None]:
                 yield data.decode(encoding, encoding_errors)
 
-            return _yield_single()
+            return _yield_single_bytes()
         else:
 
-            def _yield_single():
+            def _yield_single_any() -> Generator[Any, None, None]:
                 if data is not None:
                     yield data
 
-            return _yield_single()
+            return _yield_single_any()
     # --- END RAW MODE ---
 
     text_attr = getattr(data, "text", None)
@@ -1105,7 +1132,7 @@ def sanitize_stream(
     # Handle None
     if data is None:
 
-        def _empty_gen():
+        def _empty_gen() -> Generator[None, None, None]:
             if False:
                 yield None
 
@@ -1165,7 +1192,7 @@ def sanitize_stream(
     if isinstance(data, (dict, list, int, float, bool)):
         if object_mode == "as_is":
 
-            def _as_is_gen():
+            def _as_is_gen() -> Generator[Any, None, None]:
                 yield data
 
             return _as_is_gen()
@@ -1367,7 +1394,7 @@ def sanitize_stream(
 def _sanitize_stream_decorator(
     _func=None,
     *,
-    intro_value: str = "data:",
+    intro_value: Optional[str] = "data:",
     to_json: bool = True,
     skip_markers: Optional[List[str]] = None,
     strip_chars: Optional[str] = None,
@@ -1391,11 +1418,11 @@ def _sanitize_stream_decorator(
     All arguments are the same as sanitize_stream(), including output_formatter.
     """
 
-    def decorator(func):
+    def decorator(func) -> Callable:
         if asyncio.iscoroutinefunction(func):
 
             @functools.wraps(func)
-            async def async_wrapper(*args, **kwargs):
+            async def async_wrapper(*args, **kwargs) -> AsyncGenerator[Any, None]:
                 result = await func(*args, **kwargs)
                 return sanitize_stream(
                     result,
@@ -1423,7 +1450,7 @@ def _sanitize_stream_decorator(
         else:
 
             @functools.wraps(func)
-            def sync_wrapper(*args, **kwargs):
+            def sync_wrapper(*args, **kwargs) -> Generator[Any, None, None]:
                 result = func(*args, **kwargs)
                 return sanitize_stream(
                     result,
@@ -1463,12 +1490,19 @@ sanitize_stream_decorator = _sanitize_stream_decorator
 lit_streamer = _sanitize_stream_decorator
 
 # Allow @sanitize_stream and @lit_streamer as decorators
-sanitize_stream.__decorator__ = _sanitize_stream_decorator
-LITSTREAM.__decorator__ = _sanitize_stream_decorator
-lit_streamer.__decorator__ = _sanitize_stream_decorator
-
-
-def __getattr__(name):
+try:
+    sanitize_stream.__decorator__ = _sanitize_stream_decorator  # type: ignore[attr-defined]
+except AttributeError:
+    pass
+try:
+    LITSTREAM.__decorator__ = _sanitize_stream_decorator  # type: ignore[attr-defined]
+except AttributeError:
+    pass
+try:
+    lit_streamer.__decorator__ = _sanitize_stream_decorator  # type: ignore[attr-defined]
+except AttributeError:
+    pass
+def __getattr__(name) -> Any:
     if name == "sanitize_stream":
         return sanitize_stream
     if name == "LITSTREAM":

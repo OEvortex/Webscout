@@ -2,13 +2,15 @@ import json
 import re
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
-
-# Import LitAgent
-from webscout.litagent import LitAgent
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 # Import base classes and utility structures
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import (
+    BaseChat,
+    BaseCompletions,
+    OpenAICompatibleProvider,
+    SimpleModelList,
+)
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -19,9 +21,12 @@ from webscout.Provider.OPENAI.utils import (
     count_tokens,
 )
 
+# Import LitAgent
+from ...litagent import LitAgent
+
 
 class Completions(BaseCompletions):
-    def __init__(self, client: 'K2Think'):
+    def __init__(self, client: "K2Think"):
         self._client = client
 
     def create(
@@ -34,7 +39,7 @@ class Completions(BaseCompletions):
         temperature: Optional[float] = None,
         top_p: Optional[float] = None,
         timeout: Optional[int] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
         """
         Creates a model response for the given chat conversation.
@@ -45,7 +50,7 @@ class Completions(BaseCompletions):
             "stream": stream,
             "model": model,
             "messages": messages,
-            "params": {}
+            "params": {},
         }
 
         # Add optional parameters if provided
@@ -70,7 +75,12 @@ class Completions(BaseCompletions):
             return self._create_non_stream(request_id, created_time, model, payload, timeout)
 
     def _create_stream(
-        self, request_id: str, created_time: int, model: str, payload: Dict[str, Any], timeout: Optional[int] = None
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        payload: Dict[str, Any],
+        timeout: Optional[int] = None,
     ) -> Generator[ChatCompletionChunk, None, None]:
         try:
             response = self._client.session.post(
@@ -78,7 +88,7 @@ class Completions(BaseCompletions):
                 headers=self._client.headers,
                 json=payload,
                 stream=True,
-                timeout=timeout or self._client.timeout
+                timeout=timeout or self._client.timeout,
             )
 
             # Handle non-200 responses
@@ -88,18 +98,20 @@ class Completions(BaseCompletions):
                 )
 
             # Use count_tokens for prompt tokens
-            prompt_tokens = count_tokens([msg.get("content", "") for msg in payload.get("messages", [])])
+            prompt_tokens = count_tokens(
+                [msg.get("content", "") for msg in payload.get("messages", [])]
+            )
             completion_tokens = 0
             total_tokens = 0
             seen_content = set()  # Track seen content to avoid duplicates
 
             for line in response.iter_lines():
                 if line:
-                    decoded_line = line.decode('utf-8').strip()
+                    decoded_line = line.decode("utf-8").strip()
 
                     # Extract content using regex patterns (similar to x0gpt)
                     extract_regexes = [
-                        r'<answer>([\s\S]*?)<\/answer>',
+                        r"<answer>([\s\S]*?)<\/answer>",
                     ]
 
                     content = ""
@@ -124,19 +136,10 @@ class Completions(BaseCompletions):
                         total_tokens = prompt_tokens + completion_tokens
 
                         # Create the delta object
-                        delta = ChoiceDelta(
-                            content=content,
-                            role="assistant",
-                            tool_calls=None
-                        )
+                        delta = ChoiceDelta(content=content, role="assistant", tool_calls=None)
 
                         # Create the choice object
-                        choice = Choice(
-                            index=0,
-                            delta=delta,
-                            finish_reason=None,
-                            logprobs=None
-                        )
+                        choice = Choice(index=0, delta=delta, finish_reason=None, logprobs=None)
 
                         # Create the chunk object
                         chunk = ChatCompletionChunk(
@@ -144,7 +147,7 @@ class Completions(BaseCompletions):
                             choices=[choice],
                             created=created_time,
                             model=model,
-                            system_fingerprint=None
+                            system_fingerprint=None,
                         )
 
                         # Set usage directly on the chunk object
@@ -152,32 +155,23 @@ class Completions(BaseCompletions):
                             "prompt_tokens": prompt_tokens,
                             "completion_tokens": completion_tokens,
                             "total_tokens": total_tokens,
-                            "estimated_cost": None
+                            "estimated_cost": None,
                         }
 
                         # Return the chunk object with usage information
                         yield chunk
 
             # Final chunk with finish_reason="stop"
-            delta = ChoiceDelta(
-                content=None,
-                role=None,
-                tool_calls=None
-            )
+            delta = ChoiceDelta(content=None, role=None, tool_calls=None)
 
-            choice = Choice(
-                index=0,
-                delta=delta,
-                finish_reason="stop",
-                logprobs=None
-            )
+            choice = Choice(index=0, delta=delta, finish_reason="stop", logprobs=None)
 
             chunk = ChatCompletionChunk(
                 id=request_id,
                 choices=[choice],
                 created=created_time,
                 model=model,
-                system_fingerprint=None
+                system_fingerprint=None,
             )
 
             # Set usage directly on the chunk object
@@ -185,7 +179,7 @@ class Completions(BaseCompletions):
                 "prompt_tokens": prompt_tokens,
                 "completion_tokens": completion_tokens,
                 "total_tokens": total_tokens,
-                "estimated_cost": None
+                "estimated_cost": None,
             }
 
             yield chunk
@@ -195,7 +189,12 @@ class Completions(BaseCompletions):
             raise IOError(f"K2Think request failed: {e}") from e
 
     def _create_non_stream(
-        self, request_id: str, created_time: int, model: str, payload: Dict[str, Any], timeout: Optional[int] = None
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        payload: Dict[str, Any],
+        timeout: Optional[int] = None,
     ) -> ChatCompletion:
         try:
             response = self._client.session.post(
@@ -203,7 +202,7 @@ class Completions(BaseCompletions):
                 headers=self._client.headers,
                 json=payload,
                 stream=True,
-                timeout=timeout or self._client.timeout
+                timeout=timeout or self._client.timeout,
             )
 
             # Handle non-200 responses
@@ -220,7 +219,7 @@ class Completions(BaseCompletions):
                 if line:
                     # Extract content using regex patterns
                     extract_regexes = [
-                        r'<answer>([\s\S]*?)<\/answer>',
+                        r"<answer>([\s\S]*?)<\/answer>",
                     ]
 
                     for regex in extract_regexes:
@@ -237,28 +236,23 @@ class Completions(BaseCompletions):
             full_text = self._client.format_text(full_text)
 
             # Use count_tokens for accurate token counts
-            prompt_tokens = count_tokens([msg.get("content", "") for msg in payload.get("messages", [])])
+            prompt_tokens = count_tokens(
+                [msg.get("content", "") for msg in payload.get("messages", [])]
+            )
             completion_tokens = count_tokens(full_text)
             total_tokens = prompt_tokens + completion_tokens
 
             # Create the message object
-            message = ChatCompletionMessage(
-                role="assistant",
-                content=full_text
-            )
+            message = ChatCompletionMessage(role="assistant", content=full_text)
 
             # Create the choice object
-            choice = Choice(
-                index=0,
-                message=message,
-                finish_reason="stop"
-            )
+            choice = Choice(index=0, message=message, finish_reason="stop")
 
             # Create the usage object
             usage = CompletionUsage(
                 prompt_tokens=prompt_tokens,
                 completion_tokens=completion_tokens,
-                total_tokens=total_tokens
+                total_tokens=total_tokens,
             )
 
             # Create the completion object
@@ -276,12 +270,15 @@ class Completions(BaseCompletions):
             print(f"Error during K2Think non-stream request: {e}")
             raise IOError(f"K2Think request failed: {e}") from e
 
+
 class Chat(BaseChat):
-    def __init__(self, client: 'K2Think'):
+    def __init__(self, client: "K2Think"):
         self.completions = Completions(client)
+
 
 class Models:
     """Models class to mimic OpenAI models.list()"""
+
     def __init__(self):
         self.available_models = [
             "MBZUAI-IFM/K2-Think",
@@ -290,14 +287,10 @@ class Models:
     def list(self):
         """Return list of available models"""
         return [
-            {
-                "id": model,
-                "object": "model",
-                "created": 0,
-                "owned_by": "k2think"
-            }
+            {"id": model, "object": "model", "created": 0, "owned_by": "k2think"}
             for model in self.available_models
         ]
+
 
 class K2Think(OpenAICompatibleProvider):
     """
@@ -313,11 +306,8 @@ class K2Think(OpenAICompatibleProvider):
 
     AVAILABLE_MODELS = ["MBZUAI-IFM/K2-Think"]
     required_auth = False  # No API key required for K2Think
-    def __init__(
-        self,
-        browser: str = "chrome",
-        proxies: Optional[dict] = None
-    ):
+
+    def __init__(self, browser: str = "chrome", proxies: Optional[dict] = None):
         """
         Initialize the K2Think client.
 
@@ -346,7 +336,7 @@ class K2Think(OpenAICompatibleProvider):
             "Sec-Ch-Ua": '"Chromium";v="140", "Not=A?Brand";v="24", "Microsoft Edge";v="140"',
             "Sec-Ch-Ua-Mobile": "?0",
             "Sec-Ch-Ua-Platform": f'"{self.fingerprint["platform"]}"',
-            "Priority": "u=1, i"
+            "Priority": "u=1, i",
         }
 
         self.session.headers.update(self.headers)
@@ -355,11 +345,8 @@ class K2Think(OpenAICompatibleProvider):
         self.chat = Chat(self)
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return K2Think.AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
     def format_text(self, text: str) -> str:
         """
@@ -374,12 +361,12 @@ class K2Think(OpenAICompatibleProvider):
         # Use a more comprehensive approach to handle all escape sequences
         try:
             # First handle double backslashes to avoid issues
-            text = text.replace('\\\\', '\\')
+            text = text.replace("\\\\", "\\")
 
             # Handle common escape sequences
-            text = text.replace('\\n', '\n')
-            text = text.replace('\\r', '\r')
-            text = text.replace('\\t', '\t')
+            text = text.replace("\\n", "\n")
+            text = text.replace("\\r", "\r")
+            text = text.replace("\\t", "\t")
             text = text.replace('\\"', '"')
             text = text.replace("\\'", "'")
 
@@ -412,23 +399,25 @@ class K2Think(OpenAICompatibleProvider):
         # K2Think doesn't actually use model names, but we'll keep this for compatibility
         return model
 
+
 # Convenience function for backward compatibility
 def K2ThinkClient(**kwargs):
     """Create a new K2Think client instance"""
     return K2Think(**kwargs)
 
+
 if __name__ == "__main__":
     from rich import print
+
     client = K2Think()
     response = client.chat.completions.create(
-        model="MBZUAI-IFM/K2-Think",
-        messages=[{"role": "user", "content": "Hello!"}],
-        stream=True
+        model="MBZUAI-IFM/K2-Think", messages=[{"role": "user", "content": "Hello!"}], stream=True
     )
 
     if hasattr(response, "__iter__") and not isinstance(response, (str, bytes, ChatCompletion)):
         for chunk in response:
-            if chunk.choices[0].delta.content:
-                print(chunk.choices[0].delta.content, end='', flush=True)
+            delta = chunk.choices[0].delta if chunk.choices else None
+            if delta and delta.content:
+                print(delta.content, end="", flush=True)
     else:
         print(response)

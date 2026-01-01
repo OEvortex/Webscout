@@ -1,6 +1,6 @@
 import json
 import uuid
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Response as CurlResponse  # Import Response
@@ -29,15 +29,17 @@ MODEL_CONFIGS: Dict[str, Dict[str, Any]] = {
             "qwen-3-235b-a22b-instruct-2507",
             "llama3.1-8b",
             "llama-4-scout-17b-16e-instruct",
-            "qwen-3-32b"
+            "qwen-3-32b",
         ],
     },
 }
+
 
 class Ayle(Provider):
     """
     A class to interact with multiple AI APIs through the Ayle Chat interface.
     """
+
     required_auth = False
     AVAILABLE_MODELS = [
         "gemini-2.5-flash",
@@ -48,7 +50,7 @@ class Ayle(Provider):
         "qwen-3-235b-a22b-instruct-2507",
         "llama3.1-8b",
         "llama-4-scout-17b-16e-instruct",
-        "qwen-3-32b"
+        "qwen-3-32b",
     ]
 
     def __init__(
@@ -67,13 +69,13 @@ class Ayle(Provider):
         temperature: float = 0.5,
         presence_penalty: int = 0,
         frequency_penalty: int = 0,
-        top_p: float = 1
+        top_p: float = 1,
     ):
         """Initializes the Ayle client."""
         if model not in self.AVAILABLE_MODELS:
             raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
 
-        self.session = Session() # Use curl_cffi Session
+        self.session = Session()  # Use curl_cffi Session
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
         self.timeout = timeout
@@ -98,26 +100,32 @@ class Ayle(Provider):
         }
 
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies # Assign proxies directly
+        if proxies:
+            self.session.proxies.update(cast(Any, proxies))  # Assign proxies directly
         self.session.cookies.update({"session": uuid.uuid4().hex})
 
         self.__available_optimizers = (
-            method for method in dir(Optimizers)
+            method
+            for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
-        )
-
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
         )
 
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
+
+        if act:
+            self.conversation.intro = (
+                AwesomePrompts().get_act(
+                    cast(Union[str, int], act),
+                    default=self.conversation.intro,
+                    case_insensitive=True,
+                )
+                or self.conversation.intro
+            )
+        elif intro:
+            self.conversation.intro = intro
 
         self.provider = self._get_provider_from_model(self.model)
         self.model_name = self.model
@@ -153,28 +161,31 @@ class Ayle(Provider):
             return chunk.get("choices", [{}])[0].get("delta", {}).get("content")
         return None
 
-    def _make_request(self, payload: Dict[str, Any]) -> CurlResponse: # Change type hint to Response
+    def _make_request(
+        self, payload: Dict[str, Any]
+    ) -> CurlResponse:  # Change type hint to Response
         """Make the API request with proper error handling."""
         try:
             response = self.session.post(
                 self._get_endpoint(),
                 headers=self.headers,
                 json=payload,
-                timeout=self.timeout, # type: ignore
-                stream=True, # Enable streaming for the request
-                impersonate="chrome120" # Add impersonate
+                timeout=self.timeout,  # type: ignore
+                stream=True,  # Enable streaming for the request
+                impersonate="chrome120",  # Add impersonate
             )
             response.raise_for_status()
             return response
-        except (CurlError, exceptions.FailedToGenerateResponseError, Exception) as e: # Catch CurlError and others
+        except (
+            CurlError,
+            exceptions.FailedToGenerateResponseError,
+            Exception,
+        ) as e:  # Catch CurlError and others
             raise exceptions.FailedToGenerateResponseError(f"API request failed: {e}") from e
 
     def _build_payload(self, conversation_prompt: str) -> Dict[str, Any]:
         """Build the appropriate payload based on the provider."""
-        return {
-            "messages": [{"role": "user", "content": conversation_prompt}],
-            "model": self.model
-        }
+        return {"messages": [{"role": "user", "content": conversation_prompt}], "model": self.model}
 
     def ask(
         self,
@@ -204,7 +215,7 @@ class Ayle(Provider):
             to_json=False,
             content_extractor=self._ayle_extractor,
             yield_raw_on_error=False,
-            raw=raw
+            raw=raw,
         )
 
         if stream:
@@ -216,7 +227,7 @@ class Ayle(Provider):
         streaming_text = ""
         for content_chunk in processed_stream:
             if content_chunk and isinstance(content_chunk, str):
-                content_chunk = content_chunk.replace('\\\\', '\\').replace('\\"', '"')
+                content_chunk = content_chunk.replace("\\\\", "\\").replace('\\"', '"')
             if raw:
                 if content_chunk and isinstance(content_chunk, str):
                     streaming_text += content_chunk
@@ -228,11 +239,13 @@ class Ayle(Provider):
         self.last_response = {"text": streaming_text}
         self.conversation.update_chat_history(prompt, streaming_text)
 
-    def _ask_non_stream(self, prompt: str, processed_stream: Generator, raw: bool) -> Union[Dict[str, Any], str]:
+    def _ask_non_stream(
+        self, prompt: str, processed_stream: Generator, raw: bool
+    ) -> Union[Dict[str, Any], str]:
         full_response = ""
         for content_chunk in processed_stream:
             if content_chunk and isinstance(content_chunk, str):
-                content_chunk = content_chunk.replace('\\\\', '\\').replace('\\"', '"')
+                content_chunk = content_chunk.replace("\\\\", "\\").replace('\\"', '"')
             if raw:
                 if content_chunk and isinstance(content_chunk, str):
                     full_response += content_chunk
@@ -249,9 +262,11 @@ class Ayle(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        raw: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
-        def for_stream():
+        raw = kwargs.get("raw", False)
+
+        def for_stream() -> Generator[str, None, None]:
             for response in self.ask(
                 prompt, stream=True, raw=raw, optimizer=optimizer, conversationally=conversationally
             ):
@@ -259,28 +274,36 @@ class Ayle(Provider):
                     yield response
                 else:
                     yield self.get_message(response)
-        def for_non_stream():
+
+        def for_non_stream() -> str:
             result = self.ask(
-                prompt, stream=False, raw=raw, optimizer=optimizer, conversationally=conversationally
+                prompt,
+                stream=False,
+                raw=raw,
+                optimizer=optimizer,
+                conversationally=conversationally,
             )
             if raw:
                 return result if isinstance(result, str) else str(result)
             return self.get_message(result)
+
         return for_stream() if stream else for_non_stream()
 
     def get_message(self, response: Response) -> str:
-        if not isinstance(response, dict):
-            text = str(response)
+        if isinstance(response, dict):
+            text = cast(Dict[str, Any], response).get("text", "")
         else:
-            text = response.get("text", "")
-        return text.replace('\\\\', '\\').replace('\\"', '"')
+            text = str(response)
+        return text.replace("\\\\", "\\").replace('\\"', '"')
+
 
 if __name__ == "__main__":
     from rich import print
+
     ai = Ayle(model="gemini-2.5-flash")
     response = ai.chat("tell me a joke", stream=True, raw=False)
     if hasattr(response, "__iter__") and not isinstance(response, (str, bytes)):
         for chunk in response:
-            print(chunk, end='', flush=True)
+            print(chunk, end="", flush=True)
     else:
         print(response)

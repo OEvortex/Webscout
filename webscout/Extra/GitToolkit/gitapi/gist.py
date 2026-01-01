@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from .utils import request
 
@@ -19,7 +19,7 @@ class Gist:
             Gist data including files, description, owner, etc.
         """
         url = f"{self.BASE_URL}/{gist_id}"
-        return request(url)
+        return cast(Dict[str, Any], request(url))
 
     def list_public(
         self,
@@ -41,7 +41,7 @@ class Gist:
         url = f"{self.BASE_URL}/public?page={page}&per_page={per_page}"
         if since:
             url += f"&since={since}"
-        return request(url)
+        return cast(List[Dict[str, Any]], request(url))
 
     def list_for_user(
         self,
@@ -65,7 +65,7 @@ class Gist:
         url = f"https://api.github.com/users/{username}/gists?page={page}&per_page={per_page}"
         if since:
             url += f"&since={since}"
-        return request(url)
+        return cast(List[Dict[str, Any]], request(url))
 
     def get_commits(
         self,
@@ -85,7 +85,7 @@ class Gist:
             List of commits with version, user, change_status, committed_at
         """
         url = f"{self.BASE_URL}/{gist_id}/commits?page={page}&per_page={per_page}"
-        return request(url)
+        return cast(List[Dict[str, Any]], request(url))
 
     def get_forks(
         self,
@@ -105,7 +105,7 @@ class Gist:
             List of gist forks
         """
         url = f"{self.BASE_URL}/{gist_id}/forks?page={page}&per_page={per_page}"
-        return request(url)
+        return cast(List[Dict[str, Any]], request(url))
 
     def get_revision(self, gist_id: str, sha: str) -> Dict[str, Any]:
         """
@@ -119,7 +119,7 @@ class Gist:
             Gist data at that specific revision
         """
         url = f"{self.BASE_URL}/{gist_id}/{sha}"
-        return request(url)
+        return cast(Dict[str, Any], request(url))
 
     def get_comments(
         self,
@@ -139,4 +139,4 @@ class Gist:
             List of comments
         """
         url = f"{self.BASE_URL}/{gist_id}/comments?page={page}&per_page={per_page}"
-        return request(url)
+        return cast(List[Dict[str, Any]], request(url))

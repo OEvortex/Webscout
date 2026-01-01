@@ -37,6 +37,7 @@ from webscout.Provider.meta import Meta
 from webscout.Provider.Netwrck import Netwrck
 from webscout.Provider.Nvidia import Nvidia
 from webscout.Provider.oivscode import oivscode
+from webscout.Provider.OpenRouter import OpenRouter
 from webscout.Provider.PI import PiAI
 from webscout.Provider.QwenLM import QwenLM
 from webscout.Provider.Sambanova import Sambanova
@@ -49,17 +50,16 @@ from webscout.Provider.turboseek import TurboSeek
 from webscout.Provider.TwoAI import TwoAI
 from webscout.Provider.typefully import TypefullyAI
 from webscout.Provider.TypliAI import TypliAI
-from webscout.Provider.Venice import Venice
-from webscout.Provider.VercelAI import VercelAI
 from webscout.Provider.WiseCat import WiseCat
 from webscout.Provider.WrDoChat import WrDoChat
 from webscout.Provider.x0gpt import X0GPT
 
-from .Openai import OPENAI
+from .Openai import OpenAI
 
 # List of all exported names
 __all__ = [
-    "OPENAI",
+    "OpenAI",
+    "TypliAI",
     "AI4Chat",
     "AkashGPT",
     "Algion",
@@ -71,7 +71,7 @@ __all__ = [
     "Cleeai",
     "Cohere",
     "DeepAI",
-    "Deepinfra",
+    "DeepInfra",
     "Elmo",
     "EssentialAI",
     "ExaAI",
@@ -96,6 +96,7 @@ __all__ = [
     "Meta",
     "Netwrck",
     "Nvidia",
+    "OpenRouter",
     "oivscode",
     "PiAI",
     "QwenLM",
@@ -108,9 +109,6 @@ __all__ = [
     "TurboSeek",
     "TwoAI",
     "TypefullyAI",
-    "TypliAI",
-    "Venice",
-    "VercelAI",
     "WiseCat",
     "WrDoChat",
     "X0GPT",

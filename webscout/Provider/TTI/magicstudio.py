@@ -1,42 +1,115 @@
+import base64
 import os
 import tempfile
 import time
 import uuid
 from io import BytesIO
-from typing import Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import requests
 
+from webscout.AIbase import SimpleModelList
 from webscout.litagent import LitAgent
 from webscout.Provider.TTI.base import BaseImages, TTICompatibleProvider
 from webscout.Provider.TTI.utils import ImageData, ImageResponse
 
+# Optional Pillow import for image format conversion
+Image: Any = None
+PILLOW_AVAILABLE = False
 try:
     from PIL import Image
+
+    PILLOW_AVAILABLE = True
 except ImportError:
-    Image = None
+    pass
+
+if TYPE_CHECKING:
+    from PIL import Image as PILImage
+
+
+def _convert_image_format(img_bytes: bytes, image_format: str) -> bytes:
+    """
+    Convert image bytes to the specified format using Pillow.
+
+    Args:
+        img_bytes: Raw image bytes
+        image_format: Target format ("png", "jpg", or "jpeg")
+
+    Returns:
+        Converted image bytes
+
+    Raises:
+        ImportError: If Pillow is not installed
+    """
+    if not PILLOW_AVAILABLE or Image is None:
+        raise ImportError(
+            "Pillow (PIL) is required for image format conversion. "
+            "Install it with: pip install pillow"
+        )
+
+    with BytesIO(img_bytes) as input_io:
+        with Image.open(input_io) as im:
+            out_io = BytesIO()
+            if image_format.lower() in ("jpeg", "jpg"):
+                im = im.convert("RGB")
+                im.save(out_io, format="JPEG")
+            else:
+                im.save(out_io, format="PNG")
+            return out_io.getvalue()
 
 
 class Images(BaseImages):
-    def __init__(self, client):
+    def __init__(self, client: "MagicStudioAI"):
         self._client = client
 
     def create(
         self,
+        *,
         model: str = "magicstudio",
-        prompt: str = None,
+        prompt: str,
         n: int = 1,
-        size: str = None,
+        size: str = "1024x1024",
         response_format: str = "url",
         user: Optional[str] = None,
-        style: str = None,
-        aspect_ratio: str = None,
-        timeout: int = 60,
+        style: str = "none",
+        aspect_ratio: str = "1:1",
+        timeout: Optional[int] = None,
         image_format: str = "jpg",
+        seed: Optional[int] = None,
+        convert_format: bool = False,
         **kwargs,
     ) -> ImageResponse:
+        """
+        Generate images using MagicStudio's AI art generator.
+
+        Args:
+            model: Model to use (default: "magicstudio")
+            prompt: The image generation prompt (required)
+            n: Number of images to generate
+            size: Image size (not used by this provider)
+            response_format: "url" or "b64_json"
+            user: Optional user identifier
+            style: Optional style parameter
+            aspect_ratio: Optional aspect ratio
+            timeout: Request timeout in seconds (default: 60)
+            image_format: Output format "png" or "jpg" (used for upload and conversion)
+            seed: Optional random seed for reproducibility
+            convert_format: If True, convert image to specified format (requires Pillow)
+            **kwargs: Additional parameters
+
+        Returns:
+            ImageResponse with generated image data
+
+        Raises:
+            ValueError: If prompt is not provided or response_format is invalid
+            ImportError: If convert_format is True but Pillow is not installed
+        """
         if not prompt:
             raise ValueError("Prompt is required!")
+
+        # Use default timeout if not provided
+        effective_timeout = timeout if timeout is not None else 60
+
         agent = LitAgent()
         images = []
         urls = []
@@ -64,59 +137,48 @@ class Images(BaseImages):
             resp = session.post(
                 api_url,
                 data=form_data,
-                timeout=timeout,
+                timeout=effective_timeout,
             )
             resp.raise_for_status()
             img_bytes = resp.content
-            # Convert to png or jpeg in memory if needed
-            if Image is not None:
-                with BytesIO(img_bytes) as input_io:
-                    with Image.open(input_io) as im:
-                        out_io = BytesIO()
-                        if (
-                            image_format.lower() == "jpeg"
-                            or image_format.lower() == "jpg"
-                        ):
-                            im = im.convert("RGB")
-                            im.save(out_io, format="JPEG")
-                        else:
-                            im.save(out_io, format="PNG")
-                        img_bytes = out_io.getvalue()
+
+            # Convert image format if requested (requires Pillow)
+            if convert_format:
+                img_bytes = _convert_image_format(img_bytes, image_format)
+
             images.append(img_bytes)
             if response_format == "url":
 
-                def upload_file_with_retry(img_bytes, image_format, max_retries=3):
+                def upload_file_with_retry(
+                    img_bytes: bytes, image_format: str, max_retries: int = 3
+                ) -> Optional[str]:
                     ext = "jpg" if image_format.lower() in ("jpeg", "jpg") else "png"
                     for attempt in range(max_retries):
                         tmp_path = None
                         try:
-                            with tempfile.NamedTemporaryFile(
-                                suffix=f".{ext}", delete=False
-                            ) as tmp:
+                            with tempfile.NamedTemporaryFile(suffix=f".{ext}", delete=False) as tmp:
                                 tmp.write(img_bytes)
                                 tmp.flush()
                                 tmp_path = tmp.name
                             with open(tmp_path, "rb") as f:
-                                files = {
-                                    "fileToUpload": (f"image.{ext}", f, f"image/{ext}")
-                                }
+                                files = {"fileToUpload": (f"image.{ext}", f, f"image/{ext}")}
                                 data = {"reqtype": "fileupload", "json": "true"}
-                                headers = {"User-Agent": agent.random()}
+                                upload_headers = {"User-Agent": agent.random()}
                                 if attempt > 0:
-                                    headers["Connection"] = "close"
-                                resp = requests.post(
+                                    upload_headers["Connection"] = "close"
+                                upload_resp = requests.post(
                                     "https://catbox.moe/user/api.php",
                                     files=files,
                                     data=data,
-                                    headers=headers,
-                                    timeout=timeout,
+                                    headers=upload_headers,
+                                    timeout=effective_timeout,
                                 )
-                                if resp.status_code == 200 and resp.text.strip():
-                                    text = resp.text.strip()
+                                if upload_resp.status_code == 200 and upload_resp.text.strip():
+                                    text = upload_resp.text.strip()
                                     if text.startswith("http"):
                                         return text
                                     try:
-                                        result = resp.json()
+                                        result = upload_resp.json()
                                         if "url" in result:
                                             return result["url"]
                                     except Exception:
@@ -133,14 +195,10 @@ class Images(BaseImages):
                                     pass
                     return None
 
-                def upload_file_alternative(img_bytes, image_format):
+                def upload_file_alternative(img_bytes: bytes, image_format: str) -> Optional[str]:
                     try:
-                        ext = (
-                            "jpg" if image_format.lower() in ("jpeg", "jpg") else "png"
-                        )
-                        with tempfile.NamedTemporaryFile(
-                            suffix=f".{ext}", delete=False
-                        ) as tmp:
+                        ext = "jpg" if image_format.lower() in ("jpeg", "jpg") else "png"
+                        with tempfile.NamedTemporaryFile(suffix=f".{ext}", delete=False) as tmp:
                             tmp.write(img_bytes)
                             tmp.flush()
                             tmp_path = tmp.name
@@ -149,7 +207,9 @@ class Images(BaseImages):
                                 return None
                             with open(tmp_path, "rb") as img_file:
                                 files = {"file": img_file}
-                                alt_resp = requests.post("https://0x0.st", files=files)
+                                alt_resp = requests.post(
+                                    "https://0x0.st", files=files, timeout=effective_timeout
+                                )
                                 alt_resp.raise_for_status()
                                 image_url = alt_resp.text.strip()
                                 if not image_url.startswith("http"):
@@ -179,8 +239,6 @@ class Images(BaseImages):
             for url in urls:
                 result_data.append(ImageData(url=url))
         elif response_format == "b64_json":
-            import base64
-
             for img in images:
                 b64 = base64.b64encode(img).decode("utf-8")
                 result_data.append(ImageData(b64_json=b64))
@@ -216,12 +274,8 @@ class MagicStudioAI(TTICompatibleProvider):
         self.images = Images(self)
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 
 if __name__ == "__main__":
@@ -229,6 +283,7 @@ if __name__ == "__main__":
 
     client = MagicStudioAI()
     response = client.images.create(
+        model="magicstudio",
         prompt="A cool cyberpunk city at night",
         response_format="url",
         n=2,

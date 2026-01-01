@@ -10,15 +10,17 @@ from typing import Dict, Optional, Union
 
 try:
     from curl_cffi.requests import Session
+
     CURL_AVAILABLE = True
 except ImportError:
     CURL_AVAILABLE = False
-    import requests
 
+import requests
 from rich.console import Console
 from rich.table import Table
 
 console = Console()
+
 
 class AwesomePrompts:
     """Prompts manager with caching and optimization."""
@@ -29,9 +31,9 @@ class AwesomePrompts:
         local_path: Optional[str] = None,
         auto_update: bool = True,
         timeout: int = 10,
-        impersonate: str = "chrome110",
+        impersonate: Optional[str] = "chrome110",
         cache_size: int = 128,
-        max_workers: int = 4
+        max_workers: int = 4,
     ):
         """Initialize optimized Awesome Prompts.
 
@@ -45,7 +47,9 @@ class AwesomePrompts:
             max_workers: Max threads for concurrent operations
         """
         self.repo_url = repo_url
-        self.local_path = Path(local_path) if local_path else Path.home() / ".webscout" / "awesome-prompts.json"
+        self.local_path = (
+            Path(local_path) if local_path else Path.home() / ".webscout" / "awesome-prompts.json"
+        )
         self.timeout = timeout
         self._last_update: Optional[datetime] = None
         self._cache_lock = threading.RLock()
@@ -53,11 +57,14 @@ class AwesomePrompts:
         self._max_workers = max_workers
 
         self._max_workers = max_workers
+        self.timeout = timeout
         if CURL_AVAILABLE:
-            self.session = Session(timeout=timeout, impersonate=impersonate)
+            try:
+                self.session = Session(timeout=timeout, impersonate=impersonate)  # type: ignore
+            except Exception:
+                self.session = requests.Session()
         else:
             self.session = requests.Session()
-            self.session.timeout = timeout
         self.local_path.parent.mkdir(parents=True, exist_ok=True)
         self._cache: Dict[Union[str, int], str] = {}
         self._load_cache()
@@ -70,10 +77,11 @@ class AwesomePrompts:
         try:
             if self.local_path.exists():
                 with self._file_lock:
-                    with open(self.local_path, 'r', encoding='utf-8') as f:
+                    with open(self.local_path, "r", encoding="utf-8") as f:
                         data = json.load(f)
                         with self._cache_lock:
                             self._cache = data
+                        self._rebuild_numeric_indices()
         except (json.JSONDecodeError, IOError) as e:
             console.print(f"[red]Warning: Failed to load cache: {e}[/red]")
             self._cache = {}
@@ -81,10 +89,11 @@ class AwesomePrompts:
     def _save_cache(self) -> None:
         """Save cache to local file with atomic write."""
         try:
-            temp_path = self.local_path.with_suffix('.tmp')
+            temp_path = self.local_path.with_suffix(".tmp")
             with self._file_lock:
-                with open(temp_path, 'w', encoding='utf-8') as f:
-                    json.dump(self._cache, f, indent=2, ensure_ascii=False, sort_keys=True)
+                with open(temp_path, "w", encoding="utf-8") as f:
+                    cache_to_save = {k: v for k, v in self._cache.items() if isinstance(k, str)}
+                    json.dump(cache_to_save, f, indent=2, ensure_ascii=False, sort_keys=True)
                 temp_path.replace(self.local_path)
         except IOError as e:
             console.print(f"[red]Error saving cache: {e}[/red]")
@@ -95,10 +104,21 @@ class AwesomePrompts:
             if self._cache:
                 return self._cache.copy()
 
-        # Fallback to file if cache is empty
         self._load_cache()
+        self._rebuild_numeric_indices()
         with self._cache_lock:
             return self._cache.copy()
+
+    def _rebuild_numeric_indices(self) -> None:
+        """Rebuild numeric indices from string keys."""
+        with self._cache_lock:
+            numeric_keys = [k for k in self._cache.keys() if isinstance(k, int)]
+            for key in numeric_keys:
+                del self._cache[key]
+
+            string_keys = [k for k in self._cache.keys() if isinstance(k, str)]
+            for i, key in enumerate(string_keys):
+                self._cache[i] = self._cache[key]
 
     def _save_prompts(self, prompts: Dict[Union[str, int], str]) -> None:
         """Save prompts and update cache."""
@@ -109,57 +129,61 @@ class AwesomePrompts:
     def update_prompts_from_online(self, force: bool = False) -> bool:
         """Update prompts from repository with optimized merging."""
         try:
-            # Check update frequency limit (1 hour)
-            if not force and self._last_update and \
-               (datetime.now() - self._last_update) < timedelta(hours=1):
+            if (
+                not force
+                and self._last_update
+                and (datetime.now() - self._last_update) < timedelta(hours=1)
+            ):
                 console.print("[yellow]Prompts are already up to date![/yellow]")
                 return True
 
             console.print("[cyan]Updating prompts...[/cyan]")
 
-            # Fetch new prompts with timeout
-            response = self.session.get(self.repo_url, timeout=self.timeout)
+            if CURL_AVAILABLE and hasattr(self.session, "impersonate"):
+                response = self.session.get(self.repo_url)
+            else:
+                response = self.session.get(self.repo_url, timeout=self.timeout)
             response.raise_for_status()
 
             new_prompts = response.json()
             if not isinstance(new_prompts, dict):
                 raise ValueError("Invalid response format")
 
-            # Efficient merge with existing prompts
             existing_prompts = self._load_prompts()
 
-            # Build optimized structure
             merged_prompts = {}
             string_keys = []
 
-            # Add existing string keys
             for key, value in existing_prompts.items():
                 if isinstance(key, str):
                     merged_prompts[key] = value
                     string_keys.append(key)
 
-            # Merge new prompts (prioritize new over existing)
             for key, value in new_prompts.items():
                 if isinstance(key, str):
                     merged_prompts[key] = value
                     if key not in string_keys:
                         string_keys.append(key)
 
-            # Add numeric indices for fast access
             for i, key in enumerate(string_keys):
                 merged_prompts[i] = merged_prompts[key]
 
             self._save_prompts(merged_prompts)
             self._last_update = datetime.now()
 
-            console.print(f"[green]Updated {len([k for k in merged_prompts if isinstance(k, str)])} prompts successfully![/green]")
+            console.print(
+                f"[green]Updated {len([k for k in merged_prompts if isinstance(k, str)])} prompts successfully![/green]"
+            )
             return True
 
-        except Exception as e:
+        except requests.exceptions.RequestException as e:
             error_msg = str(e)
-            if hasattr(e, 'response') and e.response is not None:
+            if hasattr(e, "response") and e.response is not None:
                 error_msg = f"HTTP {e.response.status_code}: {error_msg}"
             console.print(f"[red]Update failed: {error_msg}[/red]")
+            return False
+        except Exception as e:
+            console.print(f"[red]Update failed: {str(e)}[/red]")
             return False
 
     def get_act(
@@ -167,7 +191,7 @@ class AwesomePrompts:
         key: Union[str, int],
         default: Optional[str] = None,
         case_insensitive: bool = True,
-        use_cache: bool = True
+        use_cache: bool = True,
     ) -> Optional[str]:
         """Get prompt with LRU caching for performance.
 
@@ -182,20 +206,15 @@ class AwesomePrompts:
         return self._get_uncached(key, default, case_insensitive)
 
     def _get_uncached(
-        self,
-        key: Union[str, int],
-        default: Optional[str] = None,
-        case_insensitive: bool = True
+        self, key: Union[str, int], default: Optional[str] = None, case_insensitive: bool = True
     ) -> Optional[str]:
         """Core get logic without caching."""
         with self._cache_lock:
             prompts = self._cache if self._cache else self._load_prompts()
 
-            # Fast direct lookup
             if key in prompts:
                 return prompts[key]
 
-            # Case-insensitive search for string keys
             if isinstance(key, str) and case_insensitive:
                 key_lower = key.lower()
                 for k, v in prompts.items():
@@ -224,16 +243,16 @@ class AwesomePrompts:
         with self._cache_lock:
             prompts = self._load_prompts()
 
-            # Check for existing prompt with same content
             if validate:
                 for existing_name, existing_prompt in prompts.items():
                     if isinstance(existing_name, str) and existing_prompt == prompt:
-                        console.print(f"[yellow]Prompt with same content exists: '{existing_name}'[/yellow]")
+                        console.print(
+                            f"[yellow]Prompt with same content exists: '{existing_name}'[/yellow]"
+                        )
                         return False
 
             prompts[name] = prompt
 
-            # Update numeric indices
             string_keys = [k for k in prompts.keys() if isinstance(k, str)]
             for i, key in enumerate(string_keys):
                 prompts[i] = prompts[key]
@@ -244,10 +263,7 @@ class AwesomePrompts:
         return True
 
     def delete_prompt(
-        self,
-        name: Union[str, int],
-        case_insensitive: bool = True,
-        raise_not_found: bool = False
+        self, name: Union[str, int], case_insensitive: bool = True, raise_not_found: bool = False
     ) -> bool:
         """Delete a prompt with proper cleanup.
 
@@ -259,18 +275,14 @@ class AwesomePrompts:
         with self._cache_lock:
             prompts = self._load_prompts()
 
-            # Handle direct key match
             if name in prompts:
                 del prompts[name]
 
-                # Rebuild numeric indices after deletion
                 string_keys = [k for k in prompts.keys() if isinstance(k, str)]
-                # Remove old numeric indices
                 numeric_keys = [k for k in prompts.keys() if isinstance(k, int)]
                 for key in numeric_keys:
                     del prompts[key]
 
-                # Add fresh numeric indices
                 for i, key in enumerate(string_keys):
                     prompts[i] = prompts[key]
 
@@ -278,12 +290,13 @@ class AwesomePrompts:
                 console.print(f"[green]Deleted prompt: '{name}'[/green]")
                 return True
 
-            # Handle case-insensitive match
             if isinstance(name, str) and case_insensitive:
                 name_lower = name.lower()
                 for k in list(prompts.keys()):
                     if isinstance(k, str) and k.lower() == name_lower:
-                        return self.delete_prompt(k, case_insensitive=False, raise_not_found=raise_not_found)
+                        return self.delete_prompt(
+                            k, case_insensitive=False, raise_not_found=raise_not_found
+                        )
 
             if raise_not_found:
                 raise KeyError(f"Prompt '{name}' not found!")
@@ -313,7 +326,6 @@ class AwesomePrompts:
         """
         prompts = self.all_acts
 
-        # Build filtered list efficiently
         filtered_items = []
         search_lower = search.lower() if search else None
 
@@ -322,8 +334,7 @@ class AwesomePrompts:
                 continue
 
             if search_lower:
-                if (search_lower not in key.lower() and
-                    search_lower not in value.lower()):
+                if search_lower not in key.lower() and search_lower not in value.lower():
                     continue
 
             preview = value[:80] + "..." if len(value) > 80 else value
@@ -339,7 +350,7 @@ class AwesomePrompts:
         table = Table(
             title=f"Awesome Prompts ({len(filtered_items)} shown)",
             show_header=True,
-            header_style="bold magenta"
+            header_style="bold magenta",
         )
         table.add_column("Name", style="green", max_width=30)
         table.add_column("Preview", style="yellow", max_width=50)
@@ -356,6 +367,10 @@ class AwesomePrompts:
         if not string_keys:
             return None
         import random
+
         return prompts[random.choice(string_keys)]
 
-    # End of class AwesomePrompts
+
+if __name__ == "__main__":
+    prompt_manager = AwesomePrompts()
+    print(prompt_manager.get_random_act())

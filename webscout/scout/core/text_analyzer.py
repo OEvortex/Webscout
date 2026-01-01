@@ -3,7 +3,7 @@ Scout Text Analyzer Module
 """
 import re
 from collections import Counter
-from typing import Dict, List, Set
+from typing import Dict, List, Optional, Set
 
 
 class ScoutTextAnalyzer:

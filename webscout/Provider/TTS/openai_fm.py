@@ -3,6 +3,7 @@
 ##################################################################################
 import pathlib
 import tempfile
+from typing import Any, Generator, List, Optional, Union, cast
 
 import requests
 from litprinter import ic
@@ -73,7 +74,7 @@ class OpenAIFMTTS(BaseTTSProvider):
         "shimmer": "shimmer"
     }
 
-    def __init__(self, timeout: int = 20, proxies: dict = None):
+    def __init__(self, timeout: int = 20, proxies: Optional[dict] = None):
         """
         Initialize the OpenAI.fm TTS client.
 
@@ -92,11 +93,9 @@ class OpenAIFMTTS(BaseTTSProvider):
     def tts(
         self,
         text: str,
-        model: str = "gpt-4o-mini-tts",
-        voice: str = "coral",
-        response_format: str = "mp3",
-        instructions: str = None,
-        verbose: bool = True
+        voice: Optional[str] = None,
+        verbose: bool = False,
+        **kwargs
     ) -> str:
         """
         Convert text to speech using OpenAI.fm API with OpenAI-compatible parameters.
@@ -116,6 +115,11 @@ class OpenAIFMTTS(BaseTTSProvider):
             ValueError: If input parameters are invalid
             exceptions.FailedToGenerateResponseError: If there is an error generating or saving the audio
         """
+        # Extract optional parameters from kwargs
+        model = kwargs.get("model", "gpt-4o-mini-tts")
+        response_format = kwargs.get("response_format", "mp3")
+        instructions = kwargs.get("instructions", None)
+
         # Validate input parameters
         if not text or not isinstance(text, str):
             raise ValueError("Input text must be a non-empty string")
@@ -124,7 +128,7 @@ class OpenAIFMTTS(BaseTTSProvider):
 
         # Validate model, voice, and format using base class methods
         model = self.validate_model(model)
-        voice = self.validate_voice(voice)
+        voice = self.validate_voice(voice or "coral")
         response_format = self.validate_format(response_format)
 
         # Map voice to API format
@@ -196,18 +200,19 @@ class OpenAIFMTTS(BaseTTSProvider):
 
     def create_speech(
         self,
-        input: str,
-        model: str = "gpt-4o-mini-tts",
-        voice: str = "coral",
-        response_format: str = "mp3",
-        instructions: str = None,
-        verbose: bool = False
+        input_text: str,
+        model: Optional[str] = "gpt-4o-mini-tts",
+        voice: Optional[str] = "alloy",
+        response_format: Optional[str] = "mp3",
+        instructions: Optional[str] = None,
+        verbose: bool = False,
+        **kwargs: Any
     ) -> str:
         """
         OpenAI-compatible speech creation interface.
 
         Args:
-            input (str): The text to convert to speech
+            input_text (str): The text to convert to speech
             model (str): The TTS model to use
             voice (str): The voice to use
             response_format (str): Audio format
@@ -218,11 +223,10 @@ class OpenAIFMTTS(BaseTTSProvider):
             str: Path to the generated audio file
         """
         return self.tts(
-            text=input,
-            model=model,
-            voice=voice,
-            response_format=response_format,
-            instructions=instructions,
+            text=input_text,
+            voice=voice or "alloy",
+            model=model or "gpt-4o-mini-tts",
+            response_format=response_format or "mp3",
             verbose=verbose
         )
 
@@ -247,17 +251,17 @@ class StreamingResponseContextManager:
 
     def create(
         self,
-        input: str,
-        model: str = "gpt-4o-mini-tts",
-        voice: str = "coral",
-        response_format: str = "mp3",
-        instructions: str = None
+        input_text: str,
+        model: Optional[str] = "gpt-4o-mini-tts",
+        voice: Optional[str] = "coral",
+        response_format: Optional[str] = "mp3",
+        instructions: Optional[str] = None
     ):
         """
         Create speech with streaming capability.
 
         Args:
-            input (str): The text to convert to speech
+            input_text (str): The text to convert to speech
             model (str): The TTS model to use
             voice (str): The voice to use
             response_format (str): Audio format
@@ -267,7 +271,7 @@ class StreamingResponseContextManager:
             StreamingResponse: Streaming response object
         """
         self.audio_file = self.tts_provider.create_speech(
-            input=input,
+            input_text=input_text,
             model=model,
             voice=voice,
             response_format=response_format,
@@ -333,7 +337,7 @@ if __name__ == "__main__":
         ic.configureOutput(prefix='DEBUG| ')
         ic("Testing basic speech generation...")
         audio_file = tts_provider.create_speech(
-            input="Today is a wonderful day to build something people love!",
+            input_text="Today is a wonderful day to build something people love!",
             model="gpt-4o-mini-tts",
             voice="coral",
             instructions="Speak in a cheerful and positive tone."
@@ -344,7 +348,7 @@ if __name__ == "__main__":
         ic.configureOutput(prefix='DEBUG| ')
         ic("Testing streaming response...")
         with tts_provider.with_streaming_response().create(
-            input="This is a streaming test.",
+            input_text="This is a streaming test.",
             voice="alloy",
             response_format="wav"
         ) as response:

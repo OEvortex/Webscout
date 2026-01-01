@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Generator, Optional, Union, cast
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
@@ -10,159 +10,49 @@ from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_s
 from webscout.litagent import LitAgent
 
 
-class DeepInfra(Provider):
+class OpenRouter(Provider):
     """
-    A class to interact with the DeepInfra API with LitAgent user-agent.
+    A class to interact with the OpenRouter API with LitAgent user-agent.
+    Follows the DeepInfra standalone provider pattern.
     """
 
-    required_auth = False
-    # Default models list (will be updated dynamically)
-    AVAILABLE_MODELS = [
-        "moonshotai/Kimi-K2-Instruct",
-        "moonshotai/Kimi-K2-Thinking",
-        "MiniMaxAI/MiniMax-M2",
-        "Qwen/Qwen3-Next-80B-A3B-Instruct",
-        "Qwen/Qwen3-Next-80B-A3B-Thinking",
-        "moonshotai/Kimi-K2-Instruct-0905",
-        "Qwen/Qwen3-Coder-30B-A3B-Instruct",
-        "deepseek-ai/DeepSeek-R1-0528-Turbo",
-        "Qwen/Qwen3-235B-A22B-Thinking-2507",
-        "deepseek-ai/DeepSeek-V3.1-Terminus",
-        "deepseek-ai/DeepSeek-V3.2-Exp",
-        "Qwen/Qwen3-Coder-480B-A35B-Instruct",
-        "Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo",
-        "Qwen/Qwen3-235B-A22B-Instruct-2507",
-        "Qwen/Qwen3-235B-A22B",
-        "Qwen/Qwen3-30B-A3B",
-        "Qwen/Qwen3-32B",
-        "Qwen/Qwen3-14B",
-        "deepseek-ai/DeepSeek-V3-0324-Turbo",
-        "deepseek-ai/DeepSeek-Prover-V2-671B",
-        "meta-llama/Llama-4-Maverick-17B-128E-Instruct-Turbo",
-        "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
-        "meta-llama/Llama-4-Scout-17B-16E-Instruct",
-        "deepseek-ai/DeepSeek-R1-0528",
-        "deepseek-ai/DeepSeek-V3-0324",
-        "mistralai/Mistral-Small-3.1-24B-Instruct-2503",
-        "microsoft/phi-4-reasoning-plus",
-        "Qwen/QwQ-32B",
-        "google/gemma-3-27b-it",
-        "google/gemma-3-12b-it",
-        "google/gemma-3-4b-it",
-        "microsoft/Phi-4-multimodal-instruct",
-        "deepseek-ai/DeepSeek-R1-Distill-Llama-70B",
-        "deepseek-ai/DeepSeek-V3",
-        "deepseek-ai/DeepSeek-V3.1",
-        "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-        "meta-llama/Llama-3.3-70B-Instruct",
-        "microsoft/phi-4",
-        "Gryphe/MythoMax-L2-13b",
-        "NousResearch/Hermes-3-Llama-3.1-405B",
-        "NousResearch/Hermes-3-Llama-3.1-70B",
-        "NovaSky-AI/Sky-T1-32B-Preview",
-        "Qwen/Qwen2.5-72B-Instruct",
-        "Qwen/Qwen2.5-7B-Instruct",
-        "Qwen/Qwen2.5-Coder-32B-Instruct",
-        "Sao10K/L3-8B-Lunaris-v1-Turbo",
-        "Sao10K/L3.1-70B-Euryale-v2.2",
-        "Sao10K/L3.3-70B-Euryale-v2.3",
-        "deepseek-ai/DeepSeek-R1",
-        "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
-        "deepseek-ai/DeepSeek-R1-Turbo",
-        "google/gemini-2.0-flash-001",
-        "meta-llama/Llama-3.2-11B-Vision-Instruct",
-        "meta-llama/Llama-3.2-1B-Instruct",
-        "meta-llama/Llama-3.2-3B-Instruct",
-        "meta-llama/Llama-3.2-90B-Vision-Instruct",
-        "meta-llama/Meta-Llama-3-70B-Instruct",
-        "meta-llama/Meta-Llama-3-8B-Instruct",
-        "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
-        "meta-llama/Meta-Llama-3.1-8B-Instruct",
-        "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
-        "microsoft/WizardLM-2-8x22B",
-        "mistralai/Devstral-Small-2505",
-        "mistralai/Devstral-Small-2507",
-        "mistralai/Mistral-7B-Instruct-v0.3",
-        "mistralai/Mistral-Nemo-Instruct-2407",
-        "mistralai/Mistral-Small-24B-Instruct-2501",
-        "mistralai/Mistral-Small-3.2-24B-Instruct-2506",
-        "mistralai/Mixtral-8x7B-Instruct-v0.1",
-        "nvidia/Llama-3.1-Nemotron-70B-Instruct",
-        "nvidia/Nemotron-3-Nano-30B-A3B",
-        "zai-org/GLM-4.5-Air",
-        "zai-org/GLM-4.5",
-        "zai-org/GLM-4.5V",
-        "zai-org/GLM-4.6",
-        "openai/gpt-oss-120b",
-        "openai/gpt-oss-20b",
-        "allenai/olmOCR-7B-0725-FP8",
-    ]
+    required_auth = True
+    AVAILABLE_MODELS = []
 
     @classmethod
-    def get_models(cls, api_key: Optional[str] = None):
-        """Fetch available models from DeepInfra API.
-
-        Args:
-            api_key (str, optional): DeepInfra API key. If not provided, returns default models.
-
-        Returns:
-            list: List of available model IDs
-        """
-        if not api_key:
-            return cls.AVAILABLE_MODELS
-
+    def get_models(cls, api_key: Optional[str] = None) -> list[str]:
+        """Fetch available models from OpenRouter."""
+        url = "https://openrouter.ai/api/v1/models"
         try:
-            # Use a temporary curl_cffi session for this class method
             temp_session = Session()
-            headers = {
-                "Content-Type": "application/json",
-            }
-            if api_key:
-                headers["Authorization"] = f"Bearer {api_key}"
+            headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+            headers["Content-Type"] = "application/json"
 
-            response = temp_session.get(
-                "https://api.deepinfra.com/v1/models",
-                headers=headers,
-                impersonate="chrome110",  # Use impersonate for fetching
-            )
-
-            if response.status_code != 200:
-                return cls.AVAILABLE_MODELS
-
-            data = response.json()
-            if "data" in data and isinstance(data["data"], list):
-                return [model["id"] for model in data["data"]]
+            response = temp_session.get(url, headers=headers, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, dict) and "data" in data:
+                    return [model["id"] for model in data["data"] if "id" in model]
+                return [model["id"] for model in data if "id" in model]
             return cls.AVAILABLE_MODELS
-
-        except (CurlError, Exception):
-            # Fallback to default models list if fetching fails
+        except Exception:
             return cls.AVAILABLE_MODELS
 
     @classmethod
-    def update_available_models(cls, api_key=None):
-        """Update the available models list from DeepInfra API"""
+    def update_available_models(cls, api_key: Optional[str] = None):
+        """Update the available models list from OpenRouter API dynamically."""
         try:
             models = cls.get_models(api_key)
             if models and len(models) > 0:
                 cls.AVAILABLE_MODELS = models
         except Exception:
-            # Fallback to default models list if fetching fails
             pass
-
-    @staticmethod
-    def _deepinfra_extractor(chunk: Union[str, Dict[str, Any]]) -> Optional[str]:
-        """Extracts content from DeepInfra stream JSON objects."""
-        if isinstance(chunk, dict):
-            choices = chunk.get("choices")
-            if choices:
-                return choices[0].get("delta", {}).get("content")
-        return None
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
+        api_key: str,
         is_conversation: bool = True,
-        max_tokens: int = 2049,
+        max_tokens: int = 2048,
         timeout: int = 30,
         intro: Optional[str] = None,
         filepath: Optional[str] = None,
@@ -170,18 +60,21 @@ class DeepInfra(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: Optional[str] = None,
-        model: str = "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+        model: str = "openai/gpt-4o-mini",
         system_prompt: str = "You are a helpful assistant.",
+        temperature: float = 0.7,
+        top_p: float = 0.9,
         browser: str = "chrome",
     ):
-        """Initializes the DeepInfra API client."""
-        # Update available models from API
+        """Initializes the OpenRouter API client."""
+        # Dynamic model fetching
         self.update_available_models(api_key)
 
         if model not in self.AVAILABLE_MODELS:
-            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+            # We allow it but warn if it's not in the detected list
+            pass
 
-        self.url = "https://api.deepinfra.com/v1/openai/chat/completions"
+        self.url = "https://openrouter.ai/api/v1/chat/completions"
 
         self.agent = LitAgent()
         self.fingerprint = self.agent.generate_fingerprint(browser)
@@ -191,13 +84,12 @@ class DeepInfra(Provider):
             "Accept-Language": self.fingerprint["accept_language"],
             "Content-Type": "application/json",
             "Cache-Control": "no-cache",
-            "Origin": "https://deepinfra.com",
+            "Origin": "https://openrouter.ai",
             "Pragma": "no-cache",
-            "Referer": "https://deepinfra.com/",
+            "Referer": "https://openrouter.ai/",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-site",
-            "X-Deepinfra-Source": "web-embed",
             "User-Agent": self.fingerprint.get("user_agent", ""),
             "Sec-CH-UA": self.fingerprint.get("sec_ch_ua", ""),
             "Sec-CH-UA-Mobile": "?0",
@@ -222,6 +114,8 @@ class DeepInfra(Provider):
         self.timeout = timeout
         self.last_response = {}
         self.model = model
+        self.temperature = temperature
+        self.top_p = top_p
 
         self.__available_optimizers = (
             method
@@ -234,8 +128,14 @@ class DeepInfra(Provider):
         self.conversation.history_offset = history_offset
 
         if act:
-            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
-            ) or self.conversation.intro
+            self.conversation.intro = (
+                AwesomePrompts().get_act(
+                    cast(Union[str, int], act),
+                    default=self.conversation.intro,
+                    case_insensitive=True,
+                )
+                or self.conversation.intro
+            )
         elif intro:
             self.conversation.intro = intro
 
@@ -270,7 +170,7 @@ class DeepInfra(Provider):
         **kwargs: Any,
     ) -> Response:
         """
-        Sends a prompt to the DeepInfra API and returns the response.
+        Sends a prompt to the OpenRouter API and returns the response.
 
         Args:
             prompt: The prompt to send to the API
@@ -288,17 +188,17 @@ class DeepInfra(Provider):
                 Generator yielding raw string chunks (streaming)
 
         Examples:
-            >>> ai = DeepInfra()
+            >>> or_client = OpenRouter(api_key="sk-or-v1-...")
             >>> # Get processed response
-            >>> response = ai.ask("Hello")
+            >>> response = or_client.ask("What is the capital of France?")
             >>> print(response["text"])
 
             >>> # Get raw response
-            >>> raw_response = ai.ask("Hello", raw=True)
+            >>> raw_response = or_client.ask("Hello", raw=True)
             >>> print(raw_response)
 
             >>> # Stream raw chunks
-            >>> for chunk in ai.ask("Hello", stream=True, raw=True):
+            >>> for chunk in or_client.ask("Hello", stream=True, raw=True):
             ...     print(chunk, end='', flush=True)
         """
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
@@ -317,6 +217,9 @@ class DeepInfra(Provider):
                 {"role": "user", "content": conversation_prompt},
             ],
             "stream": stream,
+            "max_tokens": self.max_tokens_to_sample,
+            "temperature": self.temperature,
+            "top_p": self.top_p,
         }
 
         def for_stream():
@@ -330,13 +233,17 @@ class DeepInfra(Provider):
                     impersonate="chrome110",
                 )
                 response.raise_for_status()
-
                 processed_stream = sanitize_stream(
                     data=response.iter_content(chunk_size=None),
                     intro_value="data:",
                     to_json=True,
                     skip_markers=["[DONE]"],
-                    content_extractor=self._deepinfra_extractor,
+                    content_extractor=lambda x: x.get("choices", [{}])[0]
+                    .get("delta", {})
+                    .get("content")
+                    or x.get("choices", [{}])[0].get("delta", {}).get("reasoning_content")
+                    if isinstance(x, dict)
+                    else None,
                     yield_raw_on_error=False,
                     raw=raw,
                 )
@@ -407,10 +314,10 @@ class DeepInfra(Provider):
                 ) from e
             except Exception as e:
                 err_text = ""
-                if hasattr(e, 'response'):
-                    response_obj = getattr(e, 'response')
-                    if hasattr(response_obj, 'text'):
-                        err_text = getattr(response_obj, 'text')
+                if hasattr(e, "response"):
+                    response_obj = getattr(e, "response")
+                    if hasattr(response_obj, "text"):
+                        err_text = getattr(response_obj, "text")
                 raise exceptions.FailedToGenerateResponseError(
                     f"Request failed ({type(e).__name__}): {e} - {err_text}"
                 ) from e
@@ -425,11 +332,19 @@ class DeepInfra(Provider):
         conversationally: bool = False,
         **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
+        """
+        Generates a chat response from the OpenRouter API.
+        """
         raw = kwargs.get("raw", False)
         if stream:
+
             def for_stream_chat():
                 gen = self.ask(
-                    prompt, stream=True, raw=raw, optimizer=optimizer, conversationally=conversationally
+                    prompt,
+                    stream=True,
+                    raw=raw,
+                    optimizer=optimizer,
+                    conversationally=conversationally,
                 )
                 if hasattr(gen, "__iter__"):
                     for response in gen:
@@ -437,6 +352,7 @@ class DeepInfra(Provider):
                             yield cast(str, response)
                         else:
                             yield self.get_message(response)
+
             return for_stream_chat()
         else:
             result = self.ask(
@@ -452,16 +368,19 @@ class DeepInfra(Provider):
                 return self.get_message(result)
 
     def get_message(self, response: Response) -> str:
+        """Retrieves message from response dict."""
         if not isinstance(response, dict):
             return str(response)
-        return response["text"]
+        return cast(Dict[str, Any], response).get("text", "")
 
 
 if __name__ == "__main__":
-    ai = DeepInfra()
-    response = ai.chat("Hello", raw=False, stream=True)
+    or_client = OpenRouter(api_key="")
+    models = or_client.AVAILABLE_MODELS
+    print(models)
+    response = or_client.chat("Hi!", stream=True)
     if hasattr(response, "__iter__") and not isinstance(response, (str, bytes)):
         for chunk in response:
-            print(chunk, end="")
+            print(chunk, end="", flush=True)
     else:
         print(response)

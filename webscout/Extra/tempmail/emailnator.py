@@ -5,7 +5,7 @@ Synchronous provider for Emailnator.com
 
 from json import loads
 from time import sleep
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from requests import Session
 
@@ -20,12 +20,13 @@ class EmailnatorProvider(TempMailProvider):
         self.client.get("https://www.emailnator.com/", timeout=6)
         self.cookies = self.client.cookies.get_dict()
         self.user_agent = LitAgent()
+        xsrf_token = self.client.cookies.get("XSRF-TOKEN")
         self.client.headers = {
             "authority": "www.emailnator.com",
             "origin": "https://www.emailnator.com",
             "referer": "https://www.emailnator.com/",
             "user-agent": self.user_agent.random(),
-            "x-xsrf-token": self.client.cookies.get("XSRF-TOKEN")[:-3] + "=",
+            "x-xsrf-token": (xsrf_token[:-3] + "=") if xsrf_token else "",
         }
         self.email = None
         self._messages = []

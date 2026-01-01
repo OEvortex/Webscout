@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
@@ -15,6 +15,7 @@ class HuggingFace(Provider):
     A class to interact with the Hugging Face Router API with LitAgent user-agent.
     Follows the DeepInfra standalone provider pattern.
     """
+
     required_auth = True
     AVAILABLE_MODELS = []
 
@@ -32,8 +33,8 @@ class HuggingFace(Provider):
             if response.status_code == 200:
                 data = response.json()
                 if isinstance(data, dict) and "data" in data:
-                    return [model['id'] for model in data['data'] if 'id' in model]
-                return [model['id'] for model in data if 'id' in model]
+                    return [model["id"] for model in data["data"] if "id" in model]
+                return [model["id"] for model in data if "id" in model]
             return cls.AVAILABLE_MODELS
         except Exception:
             return cls.AVAILABLE_MODELS
@@ -64,7 +65,7 @@ class HuggingFace(Provider):
         system_prompt: str = "You are a helpful assistant.",
         temperature: float = 0.7,
         top_p: float = 0.9,
-        browser: str = "chrome"
+        browser: str = "chrome",
     ):
         """Initializes the Hugging Face API client."""
         # Dynamic model fetching
@@ -106,7 +107,8 @@ class HuggingFace(Provider):
 
         self.session = Session()
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies
+        if proxies:
+            self.session.proxies.update(proxies)
         self.system_prompt = system_prompt
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
@@ -121,20 +123,24 @@ class HuggingFace(Provider):
             for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
-
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
 
-    def refresh_identity(self, browser: str = None):
+        if act:
+            self.conversation.intro = (
+                AwesomePrompts().get_act(
+                    cast(Union[str, int], act),
+                    default=self.conversation.intro,
+                    case_insensitive=True,
+                )
+                or self.conversation.intro
+            )
+        elif intro:
+            self.conversation.intro = intro
+
+    def refresh_identity(self, browser: Optional[str] = None):
         """
         Refreshes the browser identity fingerprint.
 
@@ -144,10 +150,12 @@ class HuggingFace(Provider):
         browser = browser or self.fingerprint.get("browser_type", "chrome")
         self.fingerprint = self.agent.generate_fingerprint(browser)
 
-        self.headers.update({
-            "Accept": self.fingerprint["accept"],
-            "Accept-Language": self.fingerprint["accept_language"],
-        })
+        self.headers.update(
+            {
+                "Accept": self.fingerprint["accept"],
+                "Accept-Language": self.fingerprint["accept_language"],
+            }
+        )
 
         self.session.headers.update(self.headers)
 
@@ -212,7 +220,7 @@ class HuggingFace(Provider):
             "stream": stream,
             "max_tokens": self.max_tokens_to_sample,
             "temperature": self.temperature,
-            "top_p": self.top_p
+            "top_p": self.top_p,
         }
 
         def for_stream():
@@ -223,7 +231,7 @@ class HuggingFace(Provider):
                     data=json.dumps(payload),
                     stream=True,
                     timeout=self.timeout,
-                    impersonate="chrome110"
+                    impersonate="chrome110",
                 )
                 response.raise_for_status()
                 processed_stream = sanitize_stream(
@@ -231,14 +239,19 @@ class HuggingFace(Provider):
                     intro_value="data:",
                     to_json=True,
                     skip_markers=["[DONE]"],
-                    content_extractor=lambda x: x.get("choices", [{}])[0].get("delta", {}).get("content") or x.get("choices", [{}])[0].get("delta", {}).get("reasoning_content") if isinstance(x, dict) else None,
+                    content_extractor=lambda x: x.get("choices", [{}])[0]
+                    .get("delta", {})
+                    .get("content")
+                    or x.get("choices", [{}])[0].get("delta", {}).get("reasoning_content")
+                    if isinstance(x, dict)
+                    else None,
                     yield_raw_on_error=False,
-                    raw=raw
+                    raw=raw,
                 )
 
                 for content_chunk in processed_stream:
                     if isinstance(content_chunk, bytes):
-                        content_chunk = content_chunk.decode('utf-8', errors='ignore')
+                        content_chunk = content_chunk.decode("utf-8", errors="ignore")
 
                     if raw:
                         yield content_chunk
@@ -248,14 +261,17 @@ class HuggingFace(Provider):
                             yield dict(text=content_chunk)
 
             except CurlError as e:
-                raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {str(e)}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed (CurlError): {str(e)}"
+                ) from e
             except Exception as e:
-                raise exceptions.FailedToGenerateResponseError(f"Request failed ({type(e).__name__}): {str(e)}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed ({type(e).__name__}): {str(e)}"
+                ) from e
             finally:
                 if not raw and streaming_text:
                     self.last_response = {"text": streaming_text}
                     self.conversation.update_chat_history(prompt, streaming_text)
-
 
         def for_non_stream():
             try:
@@ -263,7 +279,7 @@ class HuggingFace(Provider):
                     self.url,
                     data=json.dumps(payload),
                     timeout=self.timeout,
-                    impersonate="chrome110"
+                    impersonate="chrome110",
                 )
                 response.raise_for_status()
 
@@ -275,9 +291,13 @@ class HuggingFace(Provider):
                     data=response.text,
                     to_json=True,
                     intro_value=None,
-                    content_extractor=lambda chunk: chunk.get("choices", [{}])[0].get("message", {}).get("content") if isinstance(chunk, dict) else None,
+                    content_extractor=lambda chunk: chunk.get("choices", [{}])[0]
+                    .get("message", {})
+                    .get("content")
+                    if isinstance(chunk, dict)
+                    else None,
                     yield_raw_on_error=False,
-                    raw=raw
+                    raw=raw,
                 )
                 # Extract the single result
                 content = next(processed_stream, None)
@@ -290,11 +310,18 @@ class HuggingFace(Provider):
                 return self.last_response if not raw else content
 
             except CurlError as e:
-                raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {e}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed (CurlError): {e}"
+                ) from e
             except Exception as e:
-                err_text = getattr(e, 'response', None) and getattr(e.response, 'text', '')
-                raise exceptions.FailedToGenerateResponseError(f"Request failed ({type(e).__name__}): {e} - {err_text}") from e
-
+                err_text = ""
+                if hasattr(e, "response"):
+                    response_obj = getattr(e, "response")
+                    if hasattr(response_obj, "text"):
+                        err_text = getattr(response_obj, "text")
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed ({type(e).__name__}): {e} - {err_text}"
+                ) from e
 
         return for_stream() if stream else for_non_stream()
 
@@ -303,40 +330,50 @@ class HuggingFace(Provider):
         prompt: str,
         stream: bool = False,
         optimizer: Optional[str] = None,
-        raw: bool = False,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """
         Generates a chat response from the Hugging Face Router API.
         """
-        def for_stream_chat():
-            gen = self.ask(
-                prompt, stream=True, raw=raw,
-                optimizer=optimizer, conversationally=conversationally
-            )
-            for response_dict in gen:
-                if raw:
-                    yield response_dict
-                else:
-                    yield self.get_message(response_dict)
+        raw = kwargs.get("raw", False)
+        if stream:
 
-        def for_non_stream_chat():
-            response_data = self.ask(
-                prompt, stream=False, raw=raw,
-                optimizer=optimizer, conversationally=conversationally
+            def for_stream_chat():
+                gen = self.ask(
+                    prompt,
+                    stream=True,
+                    raw=raw,
+                    optimizer=optimizer,
+                    conversationally=conversationally,
+                )
+                if hasattr(gen, "__iter__"):
+                    for response in gen:
+                        if raw:
+                            yield cast(str, response)
+                        else:
+                            yield self.get_message(response)
+
+            return for_stream_chat()
+        else:
+            result = self.ask(
+                prompt,
+                stream=False,
+                raw=raw,
+                optimizer=optimizer,
+                conversationally=conversationally,
             )
             if raw:
-                return response_data
+                return cast(str, result)
             else:
-                return self.get_message(response_data)
-
-        return for_stream_chat() if stream else for_non_stream_chat()
+                return self.get_message(result)
 
     def get_message(self, response: Response) -> str:
         """Retrieves message from response dict."""
         if not isinstance(response, dict):
             return str(response)
-        return response.get("text", "")
+        return cast(Dict[str, Any], response).get("text", "")
+
 
 if __name__ == "__main__":
     hf = HuggingFace(api_key="")

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError  # Import CurlError
 
@@ -74,16 +74,16 @@ class Netwrck(Provider):
         # Update curl_cffi session headers and proxies
         self.session.headers.update(self.headers)
         self.proxies = proxies or {}
-        self.session.proxies = self.proxies # Assign proxies directly
-
-        Conversation.intro = (
-            AwesomePrompts().get_act(act, raise_not_found=True, default=None, case_insensitive=True)
-            if act
-            else intro or Conversation.intro
-        )
+        if self.proxies:
+            self.session.proxies.update(self.proxies)
 
         self.conversation = Conversation(is_conversation, max_tokens, filepath, update_file)
         self.conversation.history_offset = history_offset
+
+        if act:
+            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True) or self.conversation.intro
+        elif intro:
+            self.conversation.intro = intro
         self.__available_optimizers = (
             method for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
@@ -160,7 +160,11 @@ class Netwrck(Provider):
             except CurlError as e:
                 raise exceptions.APIConnectionError(f"Network error (CurlError): {str(e)}") from e
             except Exception as e:
-                err_text = getattr(e, 'response', None) and getattr(e.response, 'text', '')
+                err_text = ""
+                if hasattr(e, 'response'):
+                    response_obj = getattr(e, 'response')
+                    if hasattr(response_obj, 'text'):
+                        err_text = getattr(response_obj, 'text')
                 raise exceptions.APIConnectionError(f"Unexpected error ({type(e).__name__}): {str(e)} - {err_text}") from e
 
         def for_non_stream():
@@ -179,7 +183,11 @@ class Netwrck(Provider):
             except CurlError as e:
                 raise exceptions.FailedToGenerateResponseError(f"Network error (CurlError): {str(e)}") from e
             except Exception as e:
-                err_text = getattr(e, 'response', None) and getattr(e.response, 'text', '')
+                err_text = ""
+                if hasattr(e, 'response'):
+                    response_obj = getattr(e, 'response')
+                    if hasattr(response_obj, 'text'):
+                        err_text = getattr(response_obj, 'text')
                 raise exceptions.FailedToGenerateResponseError(f"Unexpected error ({type(e).__name__}): {str(e)} - {err_text}") from e
 
         return for_stream() if stream else for_non_stream()
@@ -190,30 +198,38 @@ class Netwrck(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """Generates a response from the Netwrck API."""
+        raw = kwargs.get("raw", False)
         def for_stream_chat():
             # ask() yields dicts or strings when streaming
             gen = self.ask(
                 prompt,
                 stream=True,
-                raw=False, # Ensure ask yields dicts for get_message
+                raw=raw, # Ensure ask yields dicts for get_message if not raw
                 optimizer=optimizer,
                 conversationally=conversationally
             )
             for response_dict in gen:
-                yield self.get_message(response_dict) # get_message expects dict
+                if raw:
+                    yield cast(str, response_dict)
+                else:
+                    yield self.get_message(cast(Dict[str, Any], response_dict)) # get_message expects dict
 
         def for_non_stream_chat():
             # ask() returns dict or str when not streaming
             response_data = self.ask(
                 prompt,
                 stream=False,
-                raw=False, # Ensure ask returns dict for get_message
+                raw=raw, # Ensure ask returns dict for get_message if not raw
                 optimizer=optimizer,
                 conversationally=conversationally,
             )
-            return self.get_message(response_data) # get_message expects dict
+            if raw:
+                return cast(str, response_data)
+            else:
+                return self.get_message(cast(Dict[str, Any], response_data)) # get_message expects dict
 
         return for_stream_chat() if stream else for_non_stream_chat()
 

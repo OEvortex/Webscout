@@ -1,4 +1,4 @@
-from typing import Any, Dict, Generator, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
@@ -24,12 +24,12 @@ class Marcus(Provider):
         is_conversation: bool = True,
         max_tokens: int = 2048, # Note: max_tokens is not used by this API
         timeout: int = 30,
-        intro: str = None,
-        filepath: str = None,
+        intro: Optional[str] = None,
+        filepath: Optional[str] = None,
         update_file: bool = True,
         proxies: dict = {},
         history_offset: int = 10250,
-        act: str = None
+        act: Optional[str] = None
     ):
         """Initializes the Marcus API."""
         # Initialize curl_cffi Session
@@ -49,7 +49,8 @@ class Marcus(Provider):
 
         # Update curl_cffi session headers and proxies
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies # Assign proxies directly
+        if proxies:
+            self.session.proxies.update(proxies) # Assign proxies directly
 
         self.__available_optimizers = (
             method
@@ -57,17 +58,17 @@ class Marcus(Provider):
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
 
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
-
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
+        act_prompt = (
+            AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
+        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
 
     def ask(
@@ -75,8 +76,9 @@ class Marcus(Provider):
         prompt: str,
         stream: bool = False,
         raw: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Union[Dict[str, Any], Generator[Any, None, None]]:
         """Sends a prompt to the AskMarcus API and returns the response."""
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
@@ -128,7 +130,11 @@ class Marcus(Provider):
             except CurlError as e: # Catch CurlError
                 raise exceptions.ProviderConnectionError(f"Error connecting to Marcus (CurlError): {str(e)}") from e
             except Exception as e: # Catch other potential exceptions (like HTTPError)
-                err_text = getattr(e, 'response', None) and getattr(e.response, 'text', '')
+                err_text = ""
+                if hasattr(e, 'response'):
+                    response_obj = getattr(e, 'response')
+                    if hasattr(response_obj, 'text'):
+                        err_text = getattr(response_obj, 'text')
                 raise exceptions.ProviderConnectionError(f"Error connecting to Marcus ({type(e).__name__}): {str(e)} - {err_text}") from e
 
         def for_non_stream():
@@ -163,7 +169,11 @@ class Marcus(Provider):
             except CurlError as e: # Catch CurlError
                  raise exceptions.ProviderConnectionError(f"Error connecting to Marcus (CurlError): {str(e)}") from e
             except Exception as e: # Catch other potential exceptions (like HTTPError)
-                err_text = getattr(e, 'response', None) and getattr(e.response, 'text', '')
+                err_text = ""
+                if hasattr(e, 'response'):
+                    response_obj = getattr(e, 'response')
+                    if hasattr(response_obj, 'text'):
+                        err_text = getattr(response_obj, 'text')
                 raise exceptions.ProviderConnectionError(f"Error connecting to Marcus ({type(e).__name__}): {str(e)} - {err_text}") from e
 
 
@@ -173,8 +183,9 @@ class Marcus(Provider):
         self,
         prompt: str,
         stream: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """Generates a response from the AskMarcus API."""
         response_data = self.ask(
@@ -188,10 +199,15 @@ class Marcus(Provider):
         else:
             return self.get_message(response_data)
 
-    def get_message(self, response: Dict[str, Any]) -> str:
+    def get_message(self, response: Union[Dict[str, Any], Generator[Any, None, None], str]) -> str:
         """Extracts the message from the API response."""
-        assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response.get("text", "")
+        if isinstance(response, str):
+            return response
+        elif isinstance(response, dict):
+            return cast(Dict[str, Any], response).get("text", "")
+        else:
+            # Generator, not expected in this provider
+            raise ValueError("get_message does not support Generator response")
 
 if __name__ == "__main__":
     # Ensure curl_cffi is installed

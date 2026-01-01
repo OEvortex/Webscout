@@ -2,12 +2,17 @@ import json
 import re
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 import requests
 
 # Import base classes and utility structures
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import (
+    BaseChat,
+    BaseCompletions,
+    OpenAICompatibleProvider,
+    SimpleModelList,
+)
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -19,10 +24,7 @@ from webscout.Provider.OPENAI.utils import (
 )
 
 # Attempt to import LitAgent, fallback if not available
-try:
-    from webscout.litagent import LitAgent
-except ImportError:
-    pass
+from ...litagent import LitAgent
 
 # --- ExaAI Client ---
 
@@ -31,8 +33,9 @@ BOLD = "\033[1m"
 RED = "\033[91m"
 RESET = "\033[0m"
 
+
 class Completions(BaseCompletions):
-    def __init__(self, client: 'ExaAI'):
+    def __init__(self, client: "ExaAI"):
         self._client = client
 
     def create(
@@ -46,7 +49,7 @@ class Completions(BaseCompletions):
         top_p: Optional[float] = None,
         timeout: Optional[int] = None,
         proxies: Optional[Dict[str, str]] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
         """
         Creates a model response for the given chat conversation.
@@ -64,7 +67,9 @@ class Completions(BaseCompletions):
 
         if has_system_message:
             # Print warning in bold red
-            print(f"{BOLD}{RED}Warning: ExaAI does not support system messages, they will be ignored.{RESET}")
+            print(
+                f"{BOLD}{RED}Warning: ExaAI does not support system messages, they will be ignored.{RESET}"
+            )
 
         # If no messages left after filtering, raise an error
         if not filtered_messages:
@@ -74,10 +79,7 @@ class Completions(BaseCompletions):
         conversation_id = uuid.uuid4().hex[:16]
 
         # Prepare the payload for ExaAI API
-        payload = {
-            "id": conversation_id,
-            "messages": filtered_messages
-        }
+        payload = {"id": conversation_id, "messages": filtered_messages}
 
         # Add optional parameters if provided
         if max_tokens is not None and max_tokens > 0:
@@ -100,10 +102,18 @@ class Completions(BaseCompletions):
         if stream:
             return self._create_stream(request_id, created_time, model, payload, timeout, proxies)
         else:
-            return self._create_non_stream(request_id, created_time, model, payload, timeout, proxies)
+            return self._create_non_stream(
+                request_id, created_time, model, payload, timeout, proxies
+            )
 
     def _create_stream(
-        self, request_id: str, created_time: int, model: str, payload: Dict[str, Any], timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        payload: Dict[str, Any],
+        timeout: Optional[int] = None,
+        proxies: Optional[Dict[str, str]] = None,
     ) -> Generator[ChatCompletionChunk, None, None]:
         try:
             response = self._client.session.post(
@@ -112,7 +122,7 @@ class Completions(BaseCompletions):
                 json=payload,
                 stream=True,
                 timeout=timeout or self._client.timeout,
-                proxies=proxies or getattr(self._client, "proxies", None)
+                proxies=proxies or getattr(self._client, "proxies", None),
             )
 
             # Handle non-200 responses
@@ -135,7 +145,7 @@ class Completions(BaseCompletions):
 
             for line in response.iter_lines(decode_unicode=True):
                 if line:
-                    if line.startswith('0:'):
+                    if line.startswith("0:"):
                         match = re.search(r'0:"(.*?)"', line)
                         if match:
                             content = match.group(1)
@@ -148,19 +158,10 @@ class Completions(BaseCompletions):
                             total_tokens = prompt_tokens + completion_tokens
 
                             # Create the delta object
-                            delta = ChoiceDelta(
-                                content=content,
-                                role="assistant",
-                                tool_calls=None
-                            )
+                            delta = ChoiceDelta(content=content, role="assistant", tool_calls=None)
 
                             # Create the choice object
-                            choice = Choice(
-                                index=0,
-                                delta=delta,
-                                finish_reason=None,
-                                logprobs=None
-                            )
+                            choice = Choice(index=0, delta=delta, finish_reason=None, logprobs=None)
 
                             # Create the chunk object
                             chunk = ChatCompletionChunk(
@@ -168,7 +169,7 @@ class Completions(BaseCompletions):
                                 choices=[choice],
                                 created=created_time,
                                 model=model,
-                                system_fingerprint=None
+                                system_fingerprint=None,
                             )
 
                             # Convert chunk to dict using Pydantic's API
@@ -182,32 +183,25 @@ class Completions(BaseCompletions):
                                 "prompt_tokens": prompt_tokens,
                                 "completion_tokens": completion_tokens,
                                 "total_tokens": total_tokens,
-                                "estimated_cost": None
+                                "estimated_cost": None,
                             }
 
                             chunk_dict["usage"] = usage_dict
 
                             # Return the chunk object for internal processing
                             yield chunk
-                    elif line.startswith('e:') or line.startswith('d:'):
+                    elif line.startswith("e:") or line.startswith("d:"):
                         data = json.loads(line[2:])
-                        if 'finishReason' in data:
-                            finish_reason = data['finishReason']
-                        if 'usage' in data:
-                            usage = data['usage']
+                        if "finishReason" in data:
+                            finish_reason = data["finishReason"]
+                        if "usage" in data:
+                            usage = data["usage"]
 
             # Final chunk with finish_reason="stop"
-            delta = ChoiceDelta(
-                content=None,
-                role=None,
-                tool_calls=None
-            )
+            delta = ChoiceDelta(content=None, role=None, tool_calls=None)
 
             choice = Choice(
-                index=0,
-                delta=delta,
-                finish_reason=finish_reason or "stop",
-                logprobs=None
+                index=0, delta=delta, finish_reason=finish_reason or "stop", logprobs=None
             )
 
             chunk = ChatCompletionChunk(
@@ -215,7 +209,7 @@ class Completions(BaseCompletions):
                 choices=[choice],
                 created=created_time,
                 model=model,
-                system_fingerprint=None
+                system_fingerprint=None,
             )
 
             if hasattr(chunk, "model_dump"):
@@ -229,7 +223,7 @@ class Completions(BaseCompletions):
                     "prompt_tokens": prompt_tokens,
                     "completion_tokens": completion_tokens,
                     "total_tokens": total_tokens,
-                    "estimated_cost": None
+                    "estimated_cost": None,
                 }
 
             yield chunk
@@ -239,7 +233,13 @@ class Completions(BaseCompletions):
             raise IOError(f"ExaAI request failed: {e}") from e
 
     def _create_non_stream(
-        self, request_id: str, created_time: int, model: str, payload: Dict[str, Any], timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        payload: Dict[str, Any],
+        timeout: Optional[int] = None,
+        proxies: Optional[Dict[str, str]] = None,
     ) -> ChatCompletion:
         try:
             # For non-streaming, we still use streaming internally to collect the full response
@@ -249,7 +249,7 @@ class Completions(BaseCompletions):
                 json=payload,
                 stream=True,
                 timeout=timeout or self._client.timeout,
-                proxies=proxies or getattr(self._client, "proxies", None)
+                proxies=proxies or getattr(self._client, "proxies", None),
             )
 
             # Handle non-200 responses
@@ -264,26 +264,26 @@ class Completions(BaseCompletions):
             finish_reason = None
             for line in response.iter_lines(decode_unicode=True):
                 if line:
-                    if line.startswith('0:'):
+                    if line.startswith("0:"):
                         match = re.search(r'0:"(.*?)"', line)
                         if match:
                             content = match.group(1)
                             full_text += content
-                    elif line.startswith('e:') or line.startswith('d:'):
+                    elif line.startswith("e:") or line.startswith("d:"):
                         data = json.loads(line[2:])
-                        if 'finishReason' in data:
-                            finish_reason = data['finishReason']
-                        if 'usage' in data:
-                            usage = data['usage']
+                        if "finishReason" in data:
+                            finish_reason = data["finishReason"]
+                        if "usage" in data:
+                            usage = data["usage"]
 
             # Format the text (replace escaped newlines)
             full_text = self._client.format_text(full_text)
 
             # Use actual usage if available, else estimate
             if usage:
-                prompt_tokens = usage.get('promptTokens', 0)
-                completion_tokens = usage.get('completionTokens', 0)
-                total_tokens = usage.get('totalTokens', 0)
+                prompt_tokens = usage.get("promptTokens", 0)
+                completion_tokens = usage.get("completionTokens", 0)
+                total_tokens = usage.get("totalTokens", 0)
             else:
                 # Estimate token counts
                 prompt_tokens = 0
@@ -294,23 +294,16 @@ class Completions(BaseCompletions):
                 total_tokens = prompt_tokens + completion_tokens
 
             # Create the message object
-            message = ChatCompletionMessage(
-                role="assistant",
-                content=full_text
-            )
+            message = ChatCompletionMessage(role="assistant", content=full_text)
 
             # Create the choice object
-            choice = Choice(
-                index=0,
-                message=message,
-                finish_reason=finish_reason or "stop"
-            )
+            choice = Choice(index=0, message=message, finish_reason=finish_reason or "stop")
 
             # Create the usage object
             usage_obj = CompletionUsage(
                 prompt_tokens=prompt_tokens,
                 completion_tokens=completion_tokens,
-                total_tokens=total_tokens
+                total_tokens=total_tokens,
             )
 
             # Create the completion object
@@ -328,9 +321,11 @@ class Completions(BaseCompletions):
             print(f"Error during ExaAI non-stream request: {e}")
             raise IOError(f"ExaAI request failed: {e}") from e
 
+
 class Chat(BaseChat):
-    def __init__(self, client: 'ExaAI'):
+    def __init__(self, client: "ExaAI"):
         self.completions = Completions(client)
+
 
 class ExaAI(OpenAICompatibleProvider):
     """
@@ -346,13 +341,11 @@ class ExaAI(OpenAICompatibleProvider):
     Note:
         ExaAI does not support system messages. Any system messages will be ignored.
     """
+
     required_auth = False
     AVAILABLE_MODELS = ["O3-Mini"]
 
-    def __init__(
-        self,
-        browser: str = "chrome"
-    ):
+    def __init__(self, browser: str = "chrome"):
         """
         Initialize the ExaAI client.
 
@@ -382,6 +375,8 @@ class ExaAI(OpenAICompatibleProvider):
             "sec-fetch-site": "same-origin",
             "sec-gpc": "1",
             "user-agent": LitAgent().random()
+            if LitAgent
+            else "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         }
 
         self.session.headers.update(self.headers)
@@ -402,12 +397,12 @@ class ExaAI(OpenAICompatibleProvider):
         # Use a more comprehensive approach to handle all escape sequences
         try:
             # First handle double backslashes to avoid issues
-            text = text.replace('\\\\', '\\')
+            text = text.replace("\\\\", "\\")
 
             # Handle common escape sequences
-            text = text.replace('\\n', '\n')
-            text = text.replace('\\r', '\r')
-            text = text.replace('\\t', '\t')
+            text = text.replace("\\n", "\n")
+            text = text.replace("\\r", "\r")
+            text = text.replace("\\t", "\t")
             text = text.replace('\\"', '"')
             text = text.replace("\\'", "'")
 
@@ -442,19 +437,16 @@ class ExaAI(OpenAICompatibleProvider):
         return "O3-Mini"
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
+
 
 if __name__ == "__main__":
     # Example usage
     client = ExaAI()
     response = client.chat.completions.create(
-        model="O3-Mini",
-        messages=[
-            {"role": "user", "content": "Hello, how are you?"}
-        ]
+        model="O3-Mini", messages=[{"role": "user", "content": "Hello, how are you?"}]
     )
-    print(response.choices[0].message.content)
+    if isinstance(response, ChatCompletion):
+        if response.choices[0].message and response.choices[0].message.content:
+            print(response.choices[0].message.content)

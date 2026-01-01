@@ -48,9 +48,7 @@ print(f"TTS providers: {len(voices)}")
 print(f"Elevenlabs voices (first 5): {list(voices['ElevenLabsTTS'].items())[:5]}")
 
 # Discover TTI metadata
-venus = model.tti.provider("Venice")
-print(f"Venice models: {venus['models']}")
-print(f"Supported params: {venus['parameters']}")
+print(f"TTI providers: {list(model.tti.list().keys())}")
 ```
 
 ## 📊 Returned Structures
@@ -83,14 +81,14 @@ print(f"Supported params: {venus['parameters']}")
 ### `tti.providers()`
 ```python
 {
-  "Venice": {
-      "name": "Venice",
-      "class": "VeniceProvider",
-      "module": "venice",
-      "models": ["flux", "flux-pro"],
+  "PollinationsAI": {
+      "name": "PollinationsAI",
+      "class": "PollinationsAI",
+      "module": "pollinations",
+      "models": ["flux", "flux-pro", ...],
       "parameters": ["prompt", "model", ...],
-      "model_count": 2,
-      "metadata": {"description": "Venice text-to-image provider"}
+      "model_count": 5,
+      "metadata": {"description": "Pollinations text-to-image provider"}
   },
   ...
 }

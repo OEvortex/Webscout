@@ -2,13 +2,13 @@ import random
 import string
 import uuid
 import warnings
-from typing import Any, Dict, Generator, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
-import requests
+from curl_cffi.requests import Session
 import urllib3
 
 from webscout import exceptions
-from webscout.AIbase import Provider
+from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 from webscout.litagent import LitAgent
 
@@ -53,12 +53,12 @@ class XenAI(Provider):
         is_conversation: bool = True,
         max_tokens: int = 2048,
         timeout: int = 60,
-        intro: str = None,
-        filepath: str = None,
+        intro: Optional[str] = None,
+        filepath: Optional[str] = None,
         update_file: bool = True,
         proxies: dict = {},
         history_offset: int = 10250,
-        act: str = None,
+        act: Optional[str] = None,
         model: str = "gemini-2.5-pro-preview-05-06",
         system_prompt: str = "You are a helpful assistant.",
     ):
@@ -71,8 +71,8 @@ class XenAI(Provider):
         self.model = model
         self.system_prompt = system_prompt
 
-        # Initialize requests Session
-        self.session = requests.Session()
+        # Initialize curl_cffi Session
+        self.session = Session()
 
         # Set up headers based on the provided request
         self.headers = {
@@ -100,16 +100,17 @@ class XenAI(Provider):
             if callable(getattr(Optimizers, method))
             and not method.startswith("__")
         )
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
+        act_prompt = (
+            AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
+        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
 
         # Token handling: always auto-fetch token, no cookies logic
@@ -122,7 +123,7 @@ class XenAI(Provider):
 
     def _auto_fetch_token(self):
         """Automatically fetch a token from the signup endpoint using requests."""
-        session = requests.Session()
+        session = Session()
         session.verify = False  # Always disable SSL verification for this session
         def random_string(length=8):
             return ''.join(random.choices(string.ascii_lowercase, k=length))
@@ -166,7 +167,7 @@ class XenAI(Provider):
         prompt: str,
         stream: bool = False,
         raw: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
         **kwargs
     ) -> Union[Dict[str, Any], Generator]:
@@ -233,10 +234,14 @@ class XenAI(Provider):
                 self.last_response = {"text": streaming_text}
                 self.conversation.update_chat_history(prompt, self.get_message(self.last_response))
 
-            except requests.RequestException as e:
+            except Exception as e:
                 raise exceptions.FailedToGenerateResponseError(f"Request failed (requests): {e}") from e
             except Exception as e:
-                err_text = getattr(e, 'response', None) and getattr(e.response, 'text', '')
+                err_text = ""
+                if hasattr(e, 'response'):
+                    response_obj = getattr(e, 'response')
+                    if hasattr(response_obj, 'text'):
+                        err_text = getattr(response_obj, 'text')
                 raise exceptions.FailedToGenerateResponseError(f"An unexpected error occurred ({type(e).__name__}): {e} - {err_text}") from e
 
         def for_non_stream():
@@ -250,7 +255,7 @@ class XenAI(Provider):
                         full_text += chunk_data["text"]
                     elif isinstance(chunk_data, str):
                         full_text += chunk_data
-            except requests.RequestException as e:
+            except Exception as e:
                 raise exceptions.FailedToGenerateResponseError(f"Failed to aggregate non-stream response (requests): {str(e)}") from e
             except Exception as e:
                 raise exceptions.FailedToGenerateResponseError(f"Failed to aggregate non-stream response: {str(e)}") from e
@@ -263,7 +268,7 @@ class XenAI(Provider):
         self,
         prompt: str,
         stream: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
         **kwargs
     ) -> Union[str, Generator[str, None, None]]:
@@ -274,8 +279,8 @@ class XenAI(Provider):
                 prompt, stream=True, raw=False,
                 optimizer=optimizer, conversationally=conversationally, **kwargs
             )
-            for response_dict in gen:
-                yield self.get_message(response_dict)
+            for response_item in gen:
+                yield self.get_message(response_item)
 
         def for_non_stream_chat() -> str:
             response_data = self.ask(
@@ -286,10 +291,13 @@ class XenAI(Provider):
 
         return for_stream_chat() if stream else for_non_stream_chat()
 
-    def get_message(self, response: Dict[str, Any]) -> str:
+    def get_message(self, response: Response) -> str:
         """Extracts the message from the API response."""
-        assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response.get("text", "")
+        if isinstance(response, str):
+            return response
+        if isinstance(response, dict):
+            return dict(response).get("text", "")
+        return str(response)
 
 # Example usage (no cookies file needed)
 if __name__ == "__main__":

@@ -6,7 +6,7 @@ speech-to-text transcription service.
 """
 
 from pathlib import Path
-from typing import Any, BinaryIO, Generator, List, Optional, Union
+from typing import Any, BinaryIO, Generator, List, Optional, Union, cast
 
 import requests
 
@@ -37,7 +37,7 @@ class ElevenLabsTranscriptions(BaseSTTTranscriptions):
         stream: bool = False,
         timeout: Optional[int] = None,
         proxies: Optional[dict] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Union[TranscriptionResponse, Generator[str, None, None]]:
         """Create a transcription using ElevenLabs API."""
         # Always use file as file-like object
@@ -59,7 +59,7 @@ class ElevenLabsTranscriptions(BaseSTTTranscriptions):
                     timestamp_granularities=timestamp_granularities,
                     timeout=timeout,
                     proxies=proxies,
-                    **kwargs
+                    **kwargs,
                 )
             else:
                 result = self._create_non_stream(
@@ -72,7 +72,7 @@ class ElevenLabsTranscriptions(BaseSTTTranscriptions):
                     timestamp_granularities=timestamp_granularities,
                     timeout=timeout,
                     proxies=proxies,
-                    **kwargs
+                    **kwargs,
                 )
                 return result
         finally:
@@ -90,47 +90,47 @@ class ElevenLabsTranscriptions(BaseSTTTranscriptions):
         timestamp_granularities: Optional[List[str]] = None,
         timeout: Optional[int] = None,
         proxies: Optional[dict] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> TranscriptionResponse:
         """Create non-streaming transcription."""
         try:
             headers = {
-                'Accept': 'application/json, text/plain, */*',
-                'Accept-Language': 'en-US,en;q=0.9',
-                'User-Agent': LitAgent().random()
+                "Accept": "application/json, text/plain, */*",
+                "Accept-Language": "en-US,en;q=0.9",
+                "User-Agent": LitAgent().random(),
             }
             api_url = self._client.api_url
-            if getattr(self._client, 'allow_unauthenticated', False):
-                if '?' in api_url:
-                    api_url += '&allow_unauthenticated=1'
+            if getattr(self._client, "allow_unauthenticated", False):
+                if "?" in api_url:
+                    api_url += "&allow_unauthenticated=1"
                 else:
-                    api_url += '?allow_unauthenticated=1'
+                    api_url += "?allow_unauthenticated=1"
             files = {
-                'file': audio_file,
-                'model_id': (None, self._client.model_id),
-                'tag_audio_events': (None, 'true' if self._client.tag_audio_events else 'false'),
-                'diarize': (None, 'true' if self._client.diarize else 'false')
+                "file": audio_file,
+                "model_id": (None, self._client.model_id),
+                "tag_audio_events": (None, "true" if self._client.tag_audio_events else "false"),
+                "diarize": (None, "true" if self._client.diarize else "false"),
             }
             if language:
-                files['language'] = (None, language)
+                files["language"] = (None, language)
             response = requests.post(
                 api_url,
                 files=files,
                 headers=headers,
                 timeout=timeout or self._client.timeout,
-                proxies=proxies or getattr(self._client, "proxies", None)
+                proxies=proxies or getattr(self._client, "proxies", None),
             )
             if response.status_code != 200:
                 raise exceptions.FailedToGenerateResponseError(
                     f"ElevenLabs API returned error: {response.status_code} - {response.text}"
                 )
             result = response.json()
-            simple_result = {
-                "text": result.get("text", "")
-            }
+            simple_result = {"text": result.get("text", "")}
             return TranscriptionResponse(simple_result, response_format)
         except Exception as e:
-            raise exceptions.FailedToGenerateResponseError(f"ElevenLabs transcription failed: {str(e)}")
+            raise exceptions.FailedToGenerateResponseError(
+                f"ElevenLabs transcription failed: {str(e)}"
+            )
 
     def _create_stream(
         self,
@@ -143,35 +143,35 @@ class ElevenLabsTranscriptions(BaseSTTTranscriptions):
         timestamp_granularities: Optional[List[str]] = None,
         timeout: Optional[int] = None,
         proxies: Optional[dict] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Generator[str, None, None]:
         """Create streaming transcription using requests.post(..., stream=True)."""
         headers = {
-            'Accept': 'application/json, text/plain, */*',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'User-Agent': LitAgent().random()
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "en-US,en;q=0.9",
+            "User-Agent": LitAgent().random(),
         }
         api_url = self._client.api_url
-        if getattr(self._client, 'allow_unauthenticated', False):
-            if '?' in api_url:
-                api_url += '&allow_unauthenticated=1'
+        if getattr(self._client, "allow_unauthenticated", False):
+            if "?" in api_url:
+                api_url += "&allow_unauthenticated=1"
             else:
-                api_url += '?allow_unauthenticated=1'
+                api_url += "?allow_unauthenticated=1"
         files = {
-            'file': audio_file,
-            'model_id': (None, self._client.model_id),
-            'tag_audio_events': (None, 'true' if self._client.tag_audio_events else 'false'),
-            'diarize': (None, 'true' if self._client.diarize else 'false')
+            "file": audio_file,
+            "model_id": (None, self._client.model_id),
+            "tag_audio_events": (None, "true" if self._client.tag_audio_events else "false"),
+            "diarize": (None, "true" if self._client.diarize else "false"),
         }
         if language:
-            files['language'] = (None, language)
+            files["language"] = (None, language)
         response = requests.post(
             api_url,
             files=files,
             headers=headers,
             timeout=timeout or self._client.timeout,
             proxies=proxies or getattr(self._client, "proxies", None),
-            stream=True
+            stream=True,
         )
         if response.status_code != 200:
             raise exceptions.FailedToGenerateResponseError(
@@ -181,7 +181,6 @@ class ElevenLabsTranscriptions(BaseSTTTranscriptions):
         for line in response.iter_lines(decode_unicode=True):
             if line:
                 yield line
-
 
 
 class ElevenLabsAudio(BaseSTTAudio):
@@ -217,7 +216,7 @@ class ElevenLabsSTT(STTCompatibleProvider):
         tag_audio_events: bool = True,
         diarize: bool = True,
         timeout: int = 60,
-        proxies: Optional[dict] = None
+        proxies: Optional[dict] = None,
     ):
         """Initialize ElevenLabs STT provider."""
         self.model_id = model_id
@@ -238,8 +237,11 @@ class ElevenLabsSTT(STTCompatibleProvider):
     def models(self):
         """Get models interface."""
         return self._models
+
+
 if __name__ == "__main__":
     from rich import print
+
     client = ElevenLabsSTT()
 
     # Example audio file path - replace with your own
@@ -248,18 +250,15 @@ if __name__ == "__main__":
     print("=== Non-streaming example ===")
     with open(audio_file_path, "rb") as audio_file:
         transcription = client.audio.transcriptions.create(
-            model="scribe_v1",
-            file=audio_file,
-            stream=False
+            model="scribe_v1", file=audio_file, stream=False
         )
-        print(transcription.text)
+        if hasattr(transcription, 'text'):
+            print(transcription.text)
 
     print("\n=== Streaming example ===")
     with open(audio_file_path, "rb") as audio_file:
-        stream = client.audio.transcriptions.create(
-            model="scribe_v1",
-            file=audio_file,
-            stream=True
+        stream_gen = client.audio.transcriptions.create(
+            model="scribe_v1", file=audio_file, stream=True
         )
-        for chunk in stream:
+        for chunk in cast(Generator[str, None, None], stream_gen):
             print(chunk.strip())

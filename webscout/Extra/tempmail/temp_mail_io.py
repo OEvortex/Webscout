@@ -85,6 +85,9 @@ class TempMailIOAsync(AsyncTempMailProvider):
         if not self._session:
             await self.initialize()
 
+        if not self._session:
+            return []
+
         try:
             async with self._session.get("/api/v3/domains") as response:
                 response_json = await response.json()
@@ -102,6 +105,9 @@ class TempMailIOAsync(AsyncTempMailProvider):
         if not self._session:
             await self.initialize()
 
+        if not self._session:
+            return "", ""
+
         try:
             async with self._session.post(
                 "/api/v3/email/new",
@@ -110,12 +116,15 @@ class TempMailIOAsync(AsyncTempMailProvider):
                 response_json = await response.json()
                 self.email = response_json['email']
                 self.token = response_json['token']
-                return self.email, self.token
+                return str(self.email), str(self.token)
         except Exception:
             return "", ""
 
     async def delete_email(self) -> bool:
         """Delete a temporary email"""
+        if not self._session:
+            await self.initialize()
+
         if not self._session or not self.email or not self.token:
             return False
 
@@ -134,6 +143,9 @@ class TempMailIOAsync(AsyncTempMailProvider):
 
     async def get_messages(self) -> List[Dict]:
         """Get messages for a temporary email"""
+        if not self._session:
+            await self.initialize()
+
         if not self._session or not self.email:
             return []
 
@@ -173,8 +185,8 @@ class TempMailIO(TempMailProvider):
         Args:
             auto_create: Automatically create an email upon initialization
         """
-        import requests
-        self.session = requests.Session()
+        from curl_cffi.requests import Session
+        self.session = Session()
         self.session.headers.update({
             'Host': 'api.internal.temp-mail.io',
             'User-Agent': 'okhttp/4.5.0',

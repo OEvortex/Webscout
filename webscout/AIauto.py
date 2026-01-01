@@ -140,26 +140,26 @@ class AUTO(Provider):
             print_provider_info (bool): Whether to print the name of the successful provider. Defaults to False.
             **kwargs: Additional keyword arguments for providers.
         """
-        self.provider: Provider = None
-        self.provider_name: str = None
+        self.provider: Optional[Provider] = None
+        self.provider_name: Optional[str] = None
         self.model: str = model
-        self.api_key: str = api_key
+        self.api_key: Optional[str] = api_key
         self.is_conversation: bool = is_conversation
         self.max_tokens: int = max_tokens
         self.timeout: int = timeout
-        self.intro: str = intro
-        self.filepath: str = filepath
+        self.intro: Optional[str] = intro
+        self.filepath: Optional[str] = filepath
         self.update_file: bool = update_file
         self.proxies: dict = proxies
         self.history_offset: int = history_offset
-        self.act: str = act
+        self.act: Optional[str] = act
         self.exclude: list[str] = [e.upper() for e in exclude] if exclude else []
         self.print_provider_info: bool = print_provider_info
         self.kwargs: dict = kwargs
 
 
     @property
-    def last_response(self) -> dict[str, Any]:
+    def last_response(self) -> Dict[str, Any]:
         """
         Retrieves the last response dictionary from the successfully used provider.
 
@@ -167,6 +167,11 @@ class AUTO(Provider):
             dict[str, Any]: The last response dictionary, or an empty dictionary if no provider has been used yet.
         """
         return self.provider.last_response if self.provider else {}
+
+    @last_response.setter
+    def last_response(self, value: Dict[str, Any]):
+        if self.provider:
+            self.provider.last_response = value
 
     @property
     def conversation(self) -> object:
@@ -378,9 +383,10 @@ class AUTO(Provider):
                 if not any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.values()):
                     init_kwargs = {k: v for k, v in init_kwargs.items() if k in sig}
 
-                self.provider = provider_class(**init_kwargs)
+                provider_instance = provider_class(**init_kwargs)
+                self.provider = provider_instance
                 self.provider_name = provider_name
-                response = self.provider.ask(**ask_kwargs)
+                response = provider_instance.ask(**ask_kwargs)
 
                 if stream and inspect.isgenerator(response):
                     try:

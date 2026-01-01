@@ -1,13 +1,14 @@
 import json
 import time
-from typing import Any, Dict
+from typing import Any
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 try:
     from webscout.litagent.agent import LitAgent
+    _USER_AGENT_GENERATOR = LitAgent()
 except ImportError:
-    LitAgent = None
+    _USER_AGENT_GENERATOR = None
 
 class GitError(Exception):
     """Base exception for GitHub API errors"""
@@ -25,9 +26,8 @@ class RequestError(GitError):
     """Raised for general request errors"""
     pass
 
-_USER_AGENT_GENERATOR = LitAgent() if LitAgent else None
 
-def request(url: str, retry_attempts: int = 3) -> Dict[str, Any]:
+def request(url: str, retry_attempts: int = 3) -> Any:
     """
     Send a request to GitHub API with retry mechanism
 
@@ -77,3 +77,6 @@ def request(url: str, retry_attempts: int = 3) -> Dict[str, Any]:
         except Exception as e:
             if attempt == retry_attempts - 1:
                 raise RequestError(f"Request failed: {str(e)}")
+            time.sleep(1)
+
+    raise RequestError(f"Request to {url} failed after {retry_attempts} attempts")

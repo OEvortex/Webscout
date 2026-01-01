@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any, List, Optional, Union, cast
 
 from .utils import ImageResponse
 
@@ -17,10 +17,11 @@ class BaseImages(ABC):
         user: Optional[str] = None,
         style: str = "none",
         aspect_ratio: str = "1:1",
-        timeout: int = None,
+        timeout: Optional[int] = None,
         image_format: str = "png",
         seed: Optional[int] = None,
-        **kwargs
+        convert_format: bool = False,
+        **kwargs,
     ) -> ImageResponse:
         """
         Abstract method to create images from a prompt.
@@ -43,6 +44,7 @@ class BaseImages(ABC):
             ImageResponse: The generated images.
         """
         raise NotImplementedError
+
 
 # class ProxyAutoMeta(ABCMeta):
 #     """Metaclass providing seamless proxy injection for providers."""
@@ -109,6 +111,7 @@ class BaseImages(ABC):
 
 #         return instance
 
+
 class TTICompatibleProvider(ABC):
     """
     Abstract Base Class for TTI providers mimicking the OpenAI Python client structure.
@@ -124,9 +127,11 @@ class TTICompatibleProvider(ABC):
     - self.get_proxied_curl_session() - returns a curl_cffi.Session with proxies
     - self.get_proxied_curl_async_session() - returns a curl_cffi.AsyncSession with proxies
     """
+
     images: BaseImages
     required_auth: bool = False  # Default: no auth required
     working: bool = True  # Default: provider is working
+    AVAILABLE_MODELS: List[str] = []  # List of available models
 
     @abstractmethod
     def __init__(self, **kwargs: Any):
@@ -134,9 +139,9 @@ class TTICompatibleProvider(ABC):
 
     @property
     @abstractmethod
-    def models(self):
+    def models(self) -> Any:
         """
         Property that returns an object with a .list() method returning available models.
         Subclasses must implement this property.
         """
-        pass
+        raise NotImplementedError

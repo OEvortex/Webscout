@@ -1,7 +1,7 @@
 import json
 import os
 import uuid
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
@@ -19,11 +19,13 @@ class LearnFast(Provider):
     """
     A class to interact with the LearnFast.ai API.
     """
+
     required_auth = False
+
     def __init__(
         self,
         is_conversation: bool = True,
-        max_tokens: int = 600, # Note: max_tokens is not used by this API
+        max_tokens: int = 600,  # Note: max_tokens is not used by this API
         timeout: int = 30,
         intro: Optional[str] = None,
         filepath: Optional[str] = None,
@@ -31,7 +33,7 @@ class LearnFast(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: Optional[str] = None,
-        system_prompt: str = "You are a helpful AI assistant.", # Note: system_prompt is not used by this API
+        system_prompt: str = "You are a helpful AI assistant.",  # Note: system_prompt is not used by this API
     ):
         """
         Initializes the LearnFast.ai API with given parameters.
@@ -40,7 +42,7 @@ class LearnFast(Provider):
         self.session = Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.api_endpoint = 'https://autosite.erweima.ai/api/v1/chat'
+        self.api_endpoint = "https://autosite.erweima.ai/api/v1/chat"
         self.stream_chunk_size = 64
         self.timeout = timeout
         self.last_response = {}
@@ -53,7 +55,7 @@ class LearnFast(Provider):
             "content-type": "application/json",
             "dnt": "1",
             "origin": "https://learnfast.ai",
-            "priority": "u=1, i", # Keep priority header if needed
+            "priority": "u=1, i",  # Keep priority header if needed
             "referer": "https://learnfast.ai/",
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
@@ -68,25 +70,30 @@ class LearnFast(Provider):
         )
         # Update curl_cffi session headers and proxies
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies # Assign proxies directly
+        if proxies:
+            from typing import cast
 
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
+            self.session.proxies.update(cast(Any, proxies))
+
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
+        act_prompt = (
+            AwesomePrompts().get_act(
+                cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
+        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
 
     @staticmethod
     def _learnfast_extractor(chunk: Union[str, Dict[str, Any]]) -> Optional[str]:
         """Extracts message content from LearnFast stream JSON objects."""
-        if isinstance(chunk, dict) and chunk.get('code') == 200 and chunk.get('data'):
-            return chunk['data'].get('message')
+        if isinstance(chunk, dict) and chunk.get("code") == 200 and chunk.get("data"):
+            return chunk["data"].get("message")
         return None
 
     def generate_unique_id(self) -> str:
@@ -111,23 +118,20 @@ class LearnFast(Provider):
                     "https://0x0.st",
                     files=files,
                     # Add impersonate if using the main session
-                    impersonate="chrome110"
+                    impersonate="chrome110",
                 )
                 response.raise_for_status()
                 image_url = response.text.strip()
                 if not image_url.startswith("http"):
                     raise ValueError("Received an invalid URL from 0x0.st.")
                 return image_url
-            except CurlError as e: # Catch CurlError
+            except CurlError as e:  # Catch CurlError
                 raise Exception(f"Failed to upload image to 0x0.st (CurlError): {e}") from e
-            except Exception as e: # Catch other potential errors
-                 raise Exception(f"Failed to upload image to 0x0.st: {e}") from e
+            except Exception as e:  # Catch other potential errors
+                raise Exception(f"Failed to upload image to 0x0.st: {e}") from e
 
     def create_payload(
-        self,
-        session_id: str,
-        conversation_prompt: str,
-        image_url: Optional[str] = None
+        self, session_id: str, conversation_prompt: str, image_url: Optional[str] = None
     ) -> dict:
         """
         Creates the JSON payload for the request.
@@ -136,15 +140,11 @@ class LearnFast(Provider):
             "prompt": conversation_prompt,
             "firstQuestionFlag": True,
             "sessionId": session_id,
-            "attachments": []
+            "attachments": [],
         }
         if image_url:
             payload["attachments"] = [
-                {
-                    "fileType": "image/jpeg",
-                    "file": {},
-                    "fileContent": image_url
-                }
+                {"fileType": "image/jpeg", "file": {}, "fileContent": image_url}
             ]
         return payload
 
@@ -179,9 +179,7 @@ class LearnFast(Provider):
                     conversation_prompt if conversationally else prompt
                 )
             else:
-                raise Exception(
-                    f"Optimizer is not one of {self.__available_optimizers}"
-                )
+                raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
 
         # Generate unique ID and session ID
         unique_id = self.generate_unique_id()
@@ -210,11 +208,11 @@ class LearnFast(Provider):
             try:
                 response = self.session.post(
                     self.api_endpoint,
-                    headers=current_headers, # Use headers with uniqueid
+                    headers=current_headers,  # Use headers with uniqueid
                     data=data,
                     stream=True,
                     timeout=self.timeout,
-                    impersonate="chrome110"
+                    impersonate="chrome110",
                 )
                 response.raise_for_status()
 
@@ -229,10 +227,10 @@ class LearnFast(Provider):
                     # Only yield message_type == "text"
                     data_field = chunk.get("data", {})
                     if (
-                        chunk.get("code") == 200 and
-                        data_field.get("code") == 200 and
-                        data_field.get("message_type") == "text" and
-                        data_field.get("message")
+                        chunk.get("code") == 200
+                        and data_field.get("code") == 200
+                        and data_field.get("message_type") == "text"
+                        and data_field.get("message")
                     ):
                         message = data_field["message"]
                         full_response += message
@@ -243,10 +241,19 @@ class LearnFast(Provider):
                 self.last_response = {"text": full_response}
                 self.conversation.update_chat_history(prompt, full_response)
             except CurlError as e:
-                raise exceptions.FailedToGenerateResponseError(f"An error occurred (CurlError): {e}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"An error occurred (CurlError): {e}"
+                ) from e
             except Exception as e:
-                err_text = getattr(e, 'response', None) and getattr(e.response, 'text', '')
-                raise exceptions.FailedToGenerateResponseError(f"An error occurred ({type(e).__name__}): {e} - {err_text}") from e
+                err_text = ""
+                if hasattr(e, "response"):
+                    response_obj = getattr(e, "response")
+                    if hasattr(response_obj, "text"):
+                        err_text = getattr(response_obj, "text")
+                raise exceptions.FailedToGenerateResponseError(
+                    f"An error occurred ({type(e).__name__}): {e} - {err_text}"
+                ) from e
+
         def for_non_stream():
             full_response_text = ""
             try:
@@ -257,8 +264,11 @@ class LearnFast(Provider):
                         full_response_text += chunk_data["text"]
             except Exception as e:
                 if not full_response_text:
-                    raise exceptions.FailedToGenerateResponseError(f"Failed to get non-stream response: {str(e)}") from e
+                    raise exceptions.FailedToGenerateResponseError(
+                        f"Failed to get non-stream response: {str(e)}"
+                    ) from e
             return full_response_text if raw else self.last_response
+
         return for_stream() if stream else for_non_stream()
 
     def chat(
@@ -274,45 +284,50 @@ class LearnFast(Provider):
         """Generate response `str` or stream, with raw support"""
         try:
             response_gen = self.ask(
-                prompt, stream=stream, raw=raw,
-                optimizer=optimizer, conversationally=conversationally,
-                image_path=image_path
+                prompt,
+                stream=stream,
+                raw=raw,
+                optimizer=optimizer,
+                conversationally=conversationally,
+                image_path=image_path,
             )
             if stream:
+
                 def stream_wrapper():
                     for chunk in response_gen:
                         if raw:
                             yield chunk
                         else:
                             yield self.get_message(chunk)
+
                 return stream_wrapper()
             else:
                 if raw:
-                    return response_gen if isinstance(response_gen, str) else self.get_message(response_gen)
+                    return (
+                        response_gen
+                        if isinstance(response_gen, str)
+                        else self.get_message(response_gen)
+                    )
                 else:
                     return self.get_message(response_gen)
         except Exception as e:
             return f"Error: {str(e)}"
 
-    def get_message(self, response: dict) -> str:
-        """Retrieves message only from response
+    def get_message(self, response: Response) -> str:
+        if not isinstance(response, dict):
+            return str(response)
+        response_dict = cast(Dict[str, Any], response)
+        return response_dict.get("text", "")
 
-        Args:
-            response (dict): Response generated by `self.ask`
-
-        Returns:
-            str: Message extracted
-        """
-        assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"]
 
 if __name__ == "__main__":
     # Ensure curl_cffi is installed
     from rich import print
+
     ai = LearnFast()
     response = ai.chat("Hello, how are you?", stream=True, raw=False)
     if hasattr(response, "__iter__") and not isinstance(response, (str, bytes)):
         for chunk in response:
-            print(chunk, end='', flush=True)
+            print(chunk, end="", flush=True)
     else:
         print(response)

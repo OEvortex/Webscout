@@ -7,13 +7,29 @@ import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional, Set, TypedDict
 
-from huggingface_hub import HfApi
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
 from webscout.swiftcli import CLI, option
 from webscout.zeroart import figlet_format
+
+# Lazy import for huggingface_hub
+HfApi = None
+
+def _ensure_huggingface_hub():
+    """Ensure huggingface_hub is imported when needed."""
+    global HfApi
+    if HfApi is None:
+        try:
+            from huggingface_hub import HfApi as _HfApi
+            HfApi = _HfApi
+        except ImportError:
+            raise ImportError(
+                "huggingface_hub is required for GGUF conversion. "
+                "Install it with: pip install huggingface_hub"
+            )
+    return HfApi
 
 console = Console()
 
@@ -118,7 +134,7 @@ class ModelConverter:
         self.workspace = Path(os.getcwd())
         self.use_imatrix = use_imatrix
         self.train_data_file = train_data_file
-        self.split_model = split_model
+        self.use_split = split_model
         self.split_max_tensors = split_max_tensors
         self.split_max_size = split_max_size
         # New llama.cpp options
@@ -163,7 +179,7 @@ class ModelConverter:
                 f"Valid types are: {', '.join(self.VALID_OUTTYPES)}"
             )
 
-        if self.split_model and self.split_max_size:
+        if self.use_split and self.split_max_size:
             try:
                 # Support K, M, G units (like llama.cpp's split_str_to_n_bytes)
                 if self.split_max_size[-1].upper() in ['K', 'M', 'G']:
@@ -778,7 +794,7 @@ class ModelConverter:
 
     def upload_split_files(self, split_files: List[str], outdir: str, repo_id: str) -> None:
         """Uploads split model files to Hugging Face."""
-        api = HfApi(token=self.token)
+        api = _ensure_huggingface_hub()(token=self.token)
 
         for file in split_files:
             file_path = os.path.join(outdir, file)
@@ -853,8 +869,8 @@ python -m webscout.Extra.gguf convert \\
     -q "{','.join(self.quantization_methods)}" \\
     {f'-i' if self.use_imatrix else ''} \\
     {f'--train-data "{self.train_data_file}"' if self.train_data_file else ''} \\
-    {f'-s' if self.split_model else ''} \\
-    {f'--split-max-tensors {self.split_max_tensors}' if self.split_model else ''} \\
+    {f'-s' if self.use_split else ''} \\
+    {f'--split-max-tensors {self.split_max_tensors}' if self.use_split else ''} \\
     {f'--split-max-size {self.split_max_size}' if self.split_max_size else ''}
 ```
 
@@ -866,7 +882,7 @@ This repository is licensed under the same terms as the original model.
 
     def create_repository(self, repo_id: str) -> None:
         """Create a new repository on Hugging Face Hub if it doesn't exist."""
-        api = HfApi(token=self.token)
+        api = _ensure_huggingface_hub()(token=self.token)
         try:
             # Check if repository already exists
             try:
@@ -892,7 +908,7 @@ This repository is licensed under the same terms as the original model.
 
     def upload_readme(self, readme_content: str, repo_id: str) -> None:
         """Upload README.md to Hugging Face Hub."""
-        api = HfApi(token=self.token)
+        api = _ensure_huggingface_hub()(token=self.token)
         console.print("[bold green]Uploading README.md with model documentation")
         try:
             api.upload_file(
@@ -970,20 +986,18 @@ This repository is licensed under the same terms as the original model.
         local_dir = Path(tmpdir)/self.model_name
         if self.remote:
             console.print("[bold green]Using remote mode - downloading only config and tokenizer...")
-            api = HfApi(token=self.token)
+            api = _ensure_huggingface_hub()(token=self.token)
             api.snapshot_download(
                 repo_id=self.model_id,
                 local_dir=local_dir,
-                local_dir_use_symlinks=False,
                 allow_patterns=["LICENSE", "*.json", "*.md", "*.txt", "tokenizer.model"]
             )
         else:
             console.print("[bold green]Downloading model...")
-            api = HfApi(token=self.token)
+            api = _ensure_huggingface_hub()(token=self.token)
             api.snapshot_download(
                 repo_id=self.model_id,
                 local_dir=local_dir,
-                local_dir_use_symlinks=False
             )
 
         # Convert to GGUF with specified outtype
@@ -1027,7 +1041,7 @@ This repository is licensed under the same terms as the original model.
             convert_cmd.extend(["--remote"])
         if self.model_name:
             convert_cmd.extend(["--model-name", self.model_name])
-        if self.split_model:
+        if self.use_split:
             if self.split_max_tensors > 0:
                 convert_cmd.extend(["--split-max-tensors", str(self.split_max_tensors)])
             if self.split_max_size:
@@ -1089,6 +1103,7 @@ This repository is licensed under the same terms as the original model.
         console.print("[bold green]Quantizing model...")
         quantized_files: List[str] = []
         quantize_binary = self.get_binary_path("llama-quantize")
+        quantized_path = ""
 
         if not os.path.isfile(quantize_binary):
             raise ConversionError(f"llama-quantize binary not found at: {quantize_binary}")
@@ -1142,8 +1157,8 @@ This repository is licensed under the same terms as the original model.
             self.upload_readme(readme_content, repo_id)
 
             # Step 3: Upload model GGUF files
-            console.print("[bold blue]Step 3: Uploading model files")
-            if self.split_model:
+            console.print("[bold blue]Step 3: Upload model files")
+            if self.use_split:
                 split_files = self.split_model(quantized_path, outdir)
                 self.upload_split_files(split_files, outdir, repo_id)
             else:

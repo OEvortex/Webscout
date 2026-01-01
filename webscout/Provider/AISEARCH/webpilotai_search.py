@@ -1,5 +1,5 @@
 import re
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 import requests
 
@@ -74,7 +74,8 @@ class webpilotai(AISearch):
         prompt: str,
         stream: bool = False,
         raw: bool = False,
-    ) -> Union[SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None], List[Any]]:
+        **kwargs: Any,
+    ) -> Union[SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None], List[Any], Dict[str, Any], str]:
         """Search using the webpilotai API and get AI-generated SearchResponses.
 
         This method sends a search query to webpilotai and returns the AI-generated SearchResponse.
@@ -194,5 +195,8 @@ if __name__ == "__main__":
 
     ai = webpilotai()
     r = ai.search("What is Python?", stream=True, raw=False)
-    for chunk in r:
-        print(chunk, end="", flush=True)
+    if hasattr(r, "__iter__") and not isinstance(r, (str, SearchResponse)):
+        for chunk in r:
+            print(chunk, end="", flush=True)
+    else:
+        print(r)

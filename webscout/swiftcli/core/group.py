@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 
 console = Console()
 
+
 class Group:
     """
     Command group that can contain subcommands.
@@ -43,9 +44,9 @@ class Group:
         self,
         name: str,
         help: Optional[str] = None,
-        parent: Optional['CLI'] = None,
+        parent: Optional["CLI"] = None,
         chain: bool = False,
-        invoke_without_command: bool = False
+        invoke_without_command: bool = False,
     ):
         """
         Initialize command group.
@@ -62,14 +63,14 @@ class Group:
         self.parent = parent
         self.chain = chain
         self.invoke_without_command = invoke_without_command
-        self.commands: Dict[str, Dict[str, Any]] = {}
+        self.commands: Dict[str, Any] = {}
 
     def command(
         self,
         name: Optional[str] = None,
         help: Optional[str] = None,
         aliases: Optional[List[str]] = None,
-        hidden: bool = False
+        hidden: bool = False,
     ):
         """
         Decorator to register a command in this group.
@@ -86,29 +87,26 @@ class Group:
                 '''Show status'''
                 print("Status: OK")
         """
+
         def decorator(f):
             cmd_name = name or f.__name__
             self.commands[cmd_name] = {
-                'name': cmd_name,
-                'func': f,
-                'help': help or f.__doc__,
-                'aliases': aliases or [],
-                'hidden': hidden
+                "name": cmd_name,
+                "func": f,
+                "help": help or f.__doc__,
+                "aliases": aliases or [],
+                "hidden": hidden,
             }
 
             # Register aliases
-            for alias in (aliases or []):
+            for alias in aliases or []:
                 self.commands[alias] = self.commands[cmd_name]
 
             return f
+
         return decorator
 
-    def group(
-        self,
-        name: Optional[str] = None,
-        help: Optional[str] = None,
-        **kwargs
-    ):
+    def group(self, name: Optional[str] = None, help: Optional[str] = None, **kwargs):
         """
         Create a subgroup within this group.
 
@@ -123,15 +121,14 @@ class Group:
                 '''Configuration commands'''
                 pass
         """
+
         def decorator(f):
             subgroup = Group(
-                name=name or f.__name__,
-                help=help or f.__doc__,
-                parent=self.parent,
-                **kwargs
+                name=name or f.__name__, help=help or f.__doc__, parent=self.parent, **kwargs
             )
             self.commands[subgroup.name] = subgroup
             return subgroup
+
         return decorator
 
     def run(self, args: List[str]) -> int:
@@ -146,7 +143,7 @@ class Group:
         """
         try:
             # Show help if no arguments or help requested
-            if not args or args[0] in ['-h', '--help']:
+            if not args or args[0] in ["-h", "--help"]:
                 self._print_help()
                 return 0
 
@@ -165,17 +162,18 @@ class Group:
             if isinstance(command, Group):
                 return command.run(command_args)
 
-            # Create command context
+            # Create command context - parent is a CLI instance, never None at this point
+            # Context expects CLI type, and self.parent should be set when group is created by CLI
+            cli = self.parent  # type: ignore[arg-type]
             ctx = Context(
-                self.parent,
+                cli,
                 command=f"{self.name} {command_name}",
-                debug=getattr(self.parent, 'debug', False)
+                debug=getattr(self.parent, "debug", False) if self.parent else False,
             )
 
             # Run command through plugin system
             if self.parent and not self.parent.plugin_manager.before_command(
-                f"{self.name} {command_name}",
-                command_args
+                f"{self.name} {command_name}", command_args
             ):
                 return 1
 
@@ -183,11 +181,11 @@ class Group:
                 import asyncio
                 import inspect
 
-                func = command['func']
+                func = command["func"]
                 params = self._parse_args(command, command_args)
 
                 # Inject context if function was decorated with pass_context
-                if getattr(func, '_pass_context', False):
+                if getattr(func, "_pass_context", False):
                     call_args = (ctx,)
                 else:
                     call_args = ()
@@ -199,35 +197,30 @@ class Group:
                     result = func(*call_args, **params)
 
                 # If function returned a coroutine-like object
-                if not inspect.iscoroutine(result) and hasattr(result, '__await__'):
+                if not inspect.iscoroutine(result) and hasattr(result, "__await__"):
                     result = asyncio.run(result)
 
                 if self.parent:
                     self.parent.plugin_manager.after_command(
-                        f"{self.name} {command_name}",
-                        command_args,
-                        result
+                        f"{self.name} {command_name}", command_args, result
                     )
 
                 # Handle command chaining
                 if self.chain and result is not None:
-                    return result
+                    return result if isinstance(result, int) else 0
 
                 return 0
 
             except Exception as e:
                 if self.parent:
-                    self.parent.plugin_manager.on_error(
-                        f"{self.name} {command_name}",
-                        e
-                    )
-                if getattr(self.parent, 'debug', False):
+                    self.parent.plugin_manager.on_error(f"{self.name} {command_name}", e)
+                if getattr(self.parent, "debug", False):
                     raise
                 format_error(str(e))
                 return 1
 
         except Exception as e:
-            if getattr(self.parent, 'debug', False):
+            if getattr(self.parent, "debug", False):
                 raise
             format_error(str(e))
             return 1
@@ -240,6 +233,7 @@ class Group:
 
         # Fallback to basic argument parsing
         from ..utils.parsing import parse_args
+
         return parse_args(args)
 
     def _print_help(self) -> None:
@@ -259,12 +253,12 @@ class Group:
                 if cmd.help:
                     console.print(f"    {cmd.help}")
             elif isinstance(cmd, dict):
-                primary = cmd.get('name', name)
+                primary = cmd.get("name", name)
                 if primary in printed:
                     continue
                 printed.add(primary)
-                if not cmd.get('hidden', False):
-                    aliases = cmd.get('aliases', [])
+                if not cmd.get("hidden", False):
+                    aliases = cmd.get("aliases", [])
                     alias_text = f" (aliases: {', '.join(aliases)})" if aliases else ""
                     console.print(f"  {primary:20} {cmd['help'] or ''}{alias_text}")
 

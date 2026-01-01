@@ -1,38 +1,12 @@
 import json
 import random
-from typing import Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union
 from uuid import uuid4
 
-import requests
+from curl_cffi.requests import Session
 
 from webscout import LitAgent, exceptions
-from webscout.AIbase import AISearch
-
-
-class Response:
-    """A wrapper class for Liner API responses.
-
-    This class automatically converts response objects to their text representation
-    when printed or converted to string.
-
-    Attributes:
-        text (str): The text content of the response
-
-    Example:
-        >>> response = Response("Hello, world!")
-        >>> print(response)
-        Hello, world!
-        >>> str(response)
-        'Hello, world!'
-    """
-    def __init__(self, text: str):
-        self.text = text
-
-    def __str__(self):
-        return self.text
-
-    def __repr__(self):
-        return self.text
+from webscout.AIbase import AISearch, SearchResponse
 
 
 class Liner(AISearch):
@@ -85,7 +59,7 @@ class Liner(AISearch):
             deep_search (bool, optional): Enable deep research mode. Defaults to True.
             reasoning_mode (bool, optional): Enable reasoning mode. Defaults to False.
         """
-        self.session = requests.Session()
+        self.session = Session()
         self.chat_endpoint = "https://getliner.com/lisa/v1/answer"
         self.stream_chunk_size = 64
         self.timeout = timeout
@@ -126,7 +100,8 @@ class Liner(AISearch):
         # Set headers and cookies in session
         self.session.headers.update(self.headers)
         self.session.cookies.update(self.cookies)
-        self.session.proxies = proxies or {}
+        if proxies:
+            self.session.proxies.update(proxies) or {}
 
     def _load_cookies(self) -> Optional[Dict[str, str]]:
         """Load cookies from a JSON file.
@@ -153,7 +128,8 @@ class Liner(AISearch):
         prompt: str,
         stream: bool = False,
         raw: bool = False,
-    ) -> Union[Response, Generator[Union[Dict[str, str], Response], None, None]]:
+        **kwargs: Any,
+    ) -> Union[SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None], List[Any], Dict[str, Any], str]:
         """Search using the Liner API and get AI-generated responses.
 
         Args:
@@ -161,11 +137,12 @@ class Liner(AISearch):
             stream (bool, optional): If True, yields response chunks as they arrive.
                                    If False, returns complete response. Defaults to False.
             raw (bool, optional): If True, returns raw response dictionaries with 'text' key.
-                                If False, returns Response objects that convert to text automatically.
+                                If False, returns SearchResponse objects that convert to text automatically.
                                 Defaults to False.
+            **kwargs: Additional keyword arguments.
 
         Returns:
-            Union[Response, Generator[Union[Dict[str, str], Response], None, None]]:
+            Union[SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None], List[Any], Dict[str, Any], str]:
                 - If stream=False: Returns complete response
                 - If stream=True: Yields response chunks as they arrive
 
@@ -221,7 +198,7 @@ class Liner(AISearch):
                                     if raw:
                                         yield {"text": data['reasoning']}
                                     else:
-                                        yield Response(data['reasoning'])
+                                        yield SearchResponse(data['reasoning'])
 
                                 # Handle answer updates
                                 if 'answer' in data:
@@ -229,24 +206,27 @@ class Liner(AISearch):
                                     if raw:
                                         yield {"text": data['answer']}
                                     else:
-                                        yield Response(data['answer'])
+                                        yield SearchResponse(data['answer'])
 
                             except json.JSONDecodeError:
                                 continue
 
-            except requests.exceptions.RequestException as e:
+            except Exception as e:
                 raise exceptions.APIConnectionError(f"Request failed: {e}")
 
         def for_non_stream():
             full_response = ""
             for chunk in for_stream():
                 if raw:
-                    yield chunk
+                    full_response = chunk
+                    break
                 else:
                     full_response += str(chunk)
 
-            if not raw:
-                self.last_response = Response(full_response)
+            if raw:
+                return full_response
+            else:
+                self.last_response = SearchResponse(full_response)
                 return self.last_response
 
         return for_stream() if stream else for_non_stream()
@@ -254,8 +234,12 @@ class Liner(AISearch):
 
 if __name__ == "__main__":
     from rich import print
+    from typing import Generator
 
     ai = Liner(cookies_path="cookies.json")
     response = ai.search(input(">>> "), stream=True, raw=False)
-    for chunk in response:
-        print(chunk, end="", flush=True)
+    if isinstance(response, Generator):
+        for chunk in response:
+            print(chunk, end="", flush=True)
+    else:
+        print(response)

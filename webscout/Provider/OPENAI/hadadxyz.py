@@ -1,11 +1,16 @@
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi.requests import Session
 
 # Import base classes and utility structures
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import (
+    BaseChat,
+    BaseCompletions,
+    OpenAICompatibleProvider,
+    SimpleModelList,
+)
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -17,15 +22,14 @@ from webscout.Provider.OPENAI.utils import (
     format_prompt,
 )
 
-try:
-    from webscout.litagent import LitAgent
-except ImportError:
-    pass
+from ...litagent import LitAgent
+
 
 class _DeltaExtractor:
     """Stateful extractor that merges `reasoning-delta` and `text-delta` into a single text stream.
     Used for OpenAI compatibility to provide a unified content stream.
     """
+
     def __init__(self, include_think_tags: bool = True) -> None:
         self._in_reasoning = False
         self.include_think_tags = include_think_tags
@@ -42,7 +46,7 @@ class _DeltaExtractor:
                     self._in_reasoning = True
                     return f"\n<think>\n{delta}"
                 return delta
-            return delta # If not including tags, just return the reasoning delta
+            return delta  # If not including tags, just return the reasoning delta
 
         if t == "text-delta":
             delta = obj.get("delta") or ""
@@ -54,8 +58,9 @@ class _DeltaExtractor:
 
         return None
 
+
 class Completions(BaseCompletions):
-    def __init__(self, client: 'HadadXYZ'):
+    def __init__(self, client: "HadadXYZ"):
         self._client = client
 
     def create(
@@ -70,9 +75,8 @@ class Completions(BaseCompletions):
         timeout: Optional[int] = None,
         proxies: Optional[Dict[str, str]] = None,
         include_think_tags: bool = True,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
-
         # Format the prompt using the utility
         prompt = format_prompt(messages, include_system=True)
 
@@ -98,14 +102,23 @@ class Completions(BaseCompletions):
         created_time = int(time.time())
 
         if stream:
-            return self._create_stream(request_id, created_time, model, payload, timeout, proxies, include_think_tags)
+            return self._create_stream(
+                request_id, created_time, model, payload, timeout, proxies, include_think_tags
+            )
         else:
-            return self._create_non_stream(request_id, created_time, model, payload, timeout, proxies, include_think_tags)
+            return self._create_non_stream(
+                request_id, created_time, model, payload, timeout, proxies, include_think_tags
+            )
 
     def _create_stream(
-        self, request_id: str, created_time: int, model: str, payload: Dict[str, Any],
-        timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None,
-        include_think_tags: bool = True
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        payload: Dict[str, Any],
+        timeout: Optional[int] = None,
+        proxies: Optional[Dict[str, str]] = None,
+        include_think_tags: bool = True,
     ) -> Generator[ChatCompletionChunk, None, None]:
         extractor = _DeltaExtractor(include_think_tags=include_think_tags)
 
@@ -117,7 +130,7 @@ class Completions(BaseCompletions):
                 stream=True,
                 timeout=timeout or self._client.timeout,
                 proxies=proxies,
-                impersonate="chrome120"
+                impersonate="chrome120",
             )
             response.raise_for_status()
 
@@ -125,28 +138,22 @@ class Completions(BaseCompletions):
             completion_tokens = 0
 
             from webscout.AIutel import sanitize_stream
+
             processed_stream = sanitize_stream(
                 data=response.iter_lines(),
                 intro_value="data:",
                 to_json=True,
                 content_extractor=extractor,
                 yield_raw_on_error=False,
-                raw=False
+                raw=False,
             )
 
             for content_chunk in processed_stream:
                 if content_chunk and isinstance(content_chunk, str):
                     completion_tokens += count_tokens(content_chunk)
 
-                    delta = ChoiceDelta(
-                        content=content_chunk,
-                        role="assistant"
-                    )
-                    choice = Choice(
-                        index=0,
-                        delta=delta,
-                        finish_reason=None
-                    )
+                    delta = ChoiceDelta(content=content_chunk, role="assistant")
+                    choice = Choice(index=0, delta=delta, finish_reason=None)
                     chunk = ChatCompletionChunk(
                         id=request_id,
                         choices=[choice],
@@ -156,7 +163,7 @@ class Completions(BaseCompletions):
                     chunk.usage = {
                         "prompt_tokens": prompt_tokens,
                         "completion_tokens": completion_tokens,
-                        "total_tokens": prompt_tokens + completion_tokens
+                        "total_tokens": prompt_tokens + completion_tokens,
                     }
                     yield chunk
 
@@ -169,60 +176,59 @@ class Completions(BaseCompletions):
                 usage={
                     "prompt_tokens": prompt_tokens,
                     "completion_tokens": completion_tokens,
-                    "total_tokens": prompt_tokens + completion_tokens
-                }
+                    "total_tokens": prompt_tokens + completion_tokens,
+                },
             )
 
         except Exception as e:
             raise IOError(f"HadadXYZ stream request failed: {e}") from e
 
     def _create_non_stream(
-        self, request_id: str, created_time: int, model: str, payload: Dict[str, Any],
-        timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None,
-        include_think_tags: bool = True
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        payload: Dict[str, Any],
+        timeout: Optional[int] = None,
+        proxies: Optional[Dict[str, str]] = None,
+        include_think_tags: bool = True,
     ) -> ChatCompletion:
         full_content = ""
         prompt_tokens = count_tokens(payload["messages"][0]["parts"][0]["text"])
 
         try:
-            for chunk in self._create_stream(request_id, created_time, model, payload, timeout, proxies, include_think_tags):
+            for chunk in self._create_stream(
+                request_id, created_time, model, payload, timeout, proxies, include_think_tags
+            ):
                 if chunk.choices and chunk.choices[0].delta.content:
                     full_content += chunk.choices[0].delta.content
 
             completion_tokens = count_tokens(full_content)
 
-            message = ChatCompletionMessage(
-                role="assistant",
-                content=full_content
-            )
-            choice = Choice(
-                index=0,
-                message=message,
-                finish_reason="stop"
-            )
+            message = ChatCompletionMessage(role="assistant", content=full_content)
+            choice = Choice(index=0, message=message, finish_reason="stop")
             usage = CompletionUsage(
                 prompt_tokens=prompt_tokens,
                 completion_tokens=completion_tokens,
-                total_tokens=prompt_tokens + completion_tokens
+                total_tokens=prompt_tokens + completion_tokens,
             )
             return ChatCompletion(
-                id=request_id,
-                choices=[choice],
-                created=created_time,
-                model=model,
-                usage=usage
+                id=request_id, choices=[choice], created=created_time, model=model, usage=usage
             )
         except Exception as e:
             raise IOError(f"HadadXYZ non-stream request failed: {e}") from e
 
+
 class Chat(BaseChat):
-    def __init__(self, client: 'HadadXYZ'):
+    def __init__(self, client: "HadadXYZ"):
         self.completions = Completions(client)
+
 
 class HadadXYZ(OpenAICompatibleProvider):
     """
     OpenAI-compatible client for HadadXYZ API.
     """
+
     required_auth = False
     AVAILABLE_MODELS = [
         "deepseek-ai/deepseek-r1-0528",
@@ -270,19 +276,17 @@ class HadadXYZ(OpenAICompatibleProvider):
         self.chat = Chat(self)
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
+
 
 if __name__ == "__main__":
     client = HadadXYZ()
     response = client.chat.completions.create(
         model="deepseek-ai/deepseek-r1-0528",
-        messages=[{"role": "user", "content": "Say 'Hello' in one word"}],
-        stream=True
+        messages=[{"role": "user", "content": "How many r in strawberry"}],
+        stream=True,
     )
-    for chunk in response:
-        if chunk.choices[0].delta.content:
+    for chunk in cast(Generator[ChatCompletionChunk, None, None], response):
+        if chunk.choices[0].delta and chunk.choices[0].delta.content:
             print(chunk.choices[0].delta.content, end="", flush=True)

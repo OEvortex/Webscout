@@ -5,7 +5,7 @@ from typing import Any, Dict, Generator, List, Optional, Union
 from typing_extensions import TypeAlias
 
 # Type aliases for better readability
-Response: TypeAlias = Union[Dict[str, Any], Generator[Any, None, None]]
+Response: TypeAlias = Union[Dict[str, Any], Generator[Any, None, None], str]
 
 class SearchResponse:
     """A wrapper class for search API responses.
@@ -35,10 +35,33 @@ class SearchResponse:
 class AIProviderError(Exception):
     pass
 
+class ModelList(ABC):
+    @abstractmethod
+    def list(self) -> List[str]:
+        """Return a list of available models"""
+        raise NotImplementedError
+
+class SimpleModelList(ModelList):
+    def __init__(self, models: List[str]):
+        self._models = models
+    def list(self) -> List[str]:
+        return self._models
+
 class Provider(ABC):
+    required_auth: bool = False
+    conversation: Any
+
     def __init__(self, *args, **kwargs):
-        self.last_response: Dict[str, Any] = {}
-        self.conversation: Optional[Any] = None
+        self._last_response: Dict[str, Any] = {}
+        self.conversation = None
+
+    @property
+    def last_response(self) -> Dict[str, Any]:
+        return self._last_response
+
+    @last_response.setter
+    def last_response(self, value: Dict[str, Any]):
+        self._last_response = value
 
     @abstractmethod
     def ask(
@@ -48,6 +71,7 @@ class Provider(ABC):
         raw: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Response:
         raise NotImplementedError("Method needs to be implemented in subclass")
 
@@ -69,7 +93,7 @@ class Provider(ABC):
 class TTSProvider(ABC):
 
     @abstractmethod
-    def tts(self, text: str, voice: Optional[str] = None, verbose: bool = False) -> str:
+    def tts(self, text: str, voice: Optional[str] = None, verbose: bool = False, **kwargs) -> str:
         """Convert text to speech and save to a temporary file.
 
         Args:
@@ -119,12 +143,24 @@ class TTSProvider(ABC):
 
         return destination
 
-    def stream_audio(self, text: str, voice: Optional[str] = None, chunk_size: int = 1024, verbose: bool = False) -> Generator[bytes, None, None]:
+    def stream_audio(
+        self,
+        text: str,
+        model: Optional[str] = None,
+        voice: Optional[str] = None,
+        response_format: Optional[str] = None,
+        instructions: Optional[str] = None,
+        chunk_size: int = 1024,
+        verbose: bool = False
+    ) -> Generator[bytes, None, None]:
         """Stream audio in chunks.
 
         Args:
             text (str): The text to convert to speech
+            model (str, optional): The model to use.
             voice (str, optional): The voice to use. Defaults to provider's default voice.
+            response_format (str, optional): The audio format.
+            instructions (str, optional): Voice instructions.
             chunk_size (int, optional): Size of audio chunks to yield. Defaults to 1024.
             verbose (bool, optional): Whether to print debug information. Defaults to False.
 

@@ -2,7 +2,7 @@ import functools
 import time
 
 # --- Utility Decorators ---
-from typing import Callable
+from typing import Callable, Optional
 
 from .conversation import Conversation  # noqa: E402,F401
 from .optimizers import Optimizers  # noqa: E402,F401

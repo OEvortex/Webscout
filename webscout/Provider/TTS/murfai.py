@@ -3,6 +3,7 @@ import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from io import BytesIO
+from typing import Generator, Optional
 from urllib.parse import urlencode
 
 import requests
@@ -26,6 +27,7 @@ class MurfAITTS(BaseTTSProvider):
     - Multiple output formats (mp3, wav, aac, flac, opus, pcm)
     - Streaming support
     """
+
     required_auth = False
 
     # Override supported models for MurfAI (set to None as requested)
@@ -33,19 +35,25 @@ class MurfAITTS(BaseTTSProvider):
 
     # Override supported voices with real MurfAI voice names
     SUPPORTED_VOICES = [
-        "Hazel", "Marcus", "Samantha", "Natalie", "Michelle", "Ken", "Clint", "Amit", "Priya"
+        "Hazel",
+        "Marcus",
+        "Samantha",
+        "Natalie",
+        "Michelle",
+        "Ken",
+        "Clint",
+        "Amit",
+        "Priya",
     ]
 
     # Override supported formats
     SUPPORTED_FORMATS = [
-        "mp3",    # Default format for MurfAI
-        "wav"     # Alternative format
+        "mp3",  # Default format for MurfAI
+        "wav",  # Alternative format
     ]
 
     # Request headers
-    headers: dict[str, str] = {
-        "User-Agent": LitAgent().random()
-    }
+    headers: dict[str, str] = {"User-Agent": LitAgent().random()}
 
     # Voice mapping from real names to MurfAI voice IDs
     voice_mapping: dict[str, str] = {
@@ -57,10 +65,10 @@ class MurfAITTS(BaseTTSProvider):
         "Ken": "en-US-ken",
         "Clint": "en-US-clint",
         "Amit": "en-IN-amit",
-        "Priya": "en-IN-priya"
+        "Priya": "en-IN-priya",
     }
 
-    def __init__(self, timeout: int = 20, proxies: dict = None):
+    def __init__(self, timeout: int = 20, proxies: Optional[dict] = None):
         """Initializes the MurfAITTS TTS client."""
         super().__init__()
         self.session = requests.Session()
@@ -69,7 +77,7 @@ class MurfAITTS(BaseTTSProvider):
             self.session.proxies.update(proxies)
         self.timeout = timeout
 
-    def tts(self, text: str, voice: str = "Hazel", verbose: bool = False, **kwargs) -> str:
+    def tts(self, text: str, voice: Optional[str] = None, verbose: bool = False, **kwargs) -> str:
         """
         Converts text to speech using the MurfAITTS API and saves it to a file.
 
@@ -99,12 +107,14 @@ class MurfAITTS(BaseTTSProvider):
         voice_id = self.voice_mapping.get(voice, "en-UK-hazel")  # Default to Hazel
 
         # Get response format from kwargs or use default
-        response_format = kwargs.get('response_format', 'mp3')
+        response_format = kwargs.get("response_format", "mp3")
         response_format = self.validate_format(response_format)
 
         # Create temporary file with appropriate extension
         file_extension = f".{response_format}" if response_format != "pcm" else ".wav"
-        filename = pathlib.Path(tempfile.mktemp(suffix=file_extension, dir=self.temp_dir))
+        temp_file = tempfile.NamedTemporaryFile(suffix=file_extension, dir=self.temp_dir, delete=False)
+        temp_file.close()
+        filename = pathlib.Path(temp_file.name)
 
         # Split text into sentences
         sentences = utils.split_sentences(text)
@@ -113,34 +123,40 @@ class MurfAITTS(BaseTTSProvider):
         def generate_audio_for_chunk(part_text: str, part_number: int):
             while True:
                 try:
-                    params: dict[str, str] = {
-                    "name": voice_id,
-                    "text": part_text
-                    }
+                    params: dict[str, str] = {"name": voice_id, "text": part_text}
                     encode_param: str = urlencode(params)
-                    response = self.session.get(f"https://murf.ai/Prod/anonymous-tts/audio?{encode_param}", headers=self.headers, timeout=self.timeout)
+                    response = self.session.get(
+                        f"https://murf.ai/Prod/anonymous-tts/audio?{encode_param}",
+                        headers=self.headers,
+                        timeout=self.timeout,
+                    )
                     response.raise_for_status()
 
                     # Check if the request was successful
                     if response.ok and response.status_code == 200:
                         if verbose:
-                            ic.configureOutput(prefix='DEBUG| ')
+                            ic.configureOutput(prefix="DEBUG| ")
                             ic(f"Chunk {part_number} processed successfully")
                         return part_number, response.content
                     else:
                         if verbose:
-                            ic.configureOutput(prefix='DEBUG| ')
+                            ic.configureOutput(prefix="DEBUG| ")
                             ic(f"No data received for chunk {part_number}. Retrying...")
                 except requests.RequestException as e:
                     if verbose:
-                        ic.configureOutput(prefix='DEBUG| ')
+                        ic.configureOutput(prefix="DEBUG| ")
                         ic(f"Error for chunk {part_number}: {e}. Retrying...")
                     time.sleep(1)
+
         try:
             # Using ThreadPoolExecutor to handle requests concurrently
             with ThreadPoolExecutor() as executor:
-                futures = {executor.submit(generate_audio_for_chunk, sentence.strip(), chunk_num): chunk_num
-                        for chunk_num, sentence in enumerate(sentences, start=1)}
+                futures = {
+                    executor.submit(
+                        generate_audio_for_chunk, sentence.strip(), chunk_num
+                    ): chunk_num
+                    for chunk_num, sentence in enumerate(sentences, start=1)
+                }
 
                 # Dictionary to store results with order preserved
                 audio_chunks = {}
@@ -149,10 +165,12 @@ class MurfAITTS(BaseTTSProvider):
                     chunk_num = futures[future]
                     try:
                         part_number, audio_data = future.result()
-                        audio_chunks[part_number] = audio_data  # Store the audio data in correct sequence
+                        audio_chunks[part_number] = (
+                            audio_data  # Store the audio data in correct sequence
+                        )
                     except Exception as e:
                         if verbose:
-                            ic.configureOutput(prefix='DEBUG| ')
+                            ic.configureOutput(prefix="DEBUG| ")
                             ic(f"Failed to generate audio for chunk {chunk_num}: {e}")
 
             # Combine audio chunks in the correct sequence
@@ -160,39 +178,37 @@ class MurfAITTS(BaseTTSProvider):
             for part_number in sorted(audio_chunks.keys()):
                 combined_audio.write(audio_chunks[part_number])
                 if verbose:
-                    ic.configureOutput(prefix='DEBUG| ')
+                    ic.configureOutput(prefix="DEBUG| ")
                     ic(f"Added chunk {part_number} to the combined file.")
 
             # Save the combined audio data to a single file
-            with open(filename, 'wb') as f:
+            with open(filename, "wb") as f:
                 f.write(combined_audio.getvalue())
             if verbose:
-                ic.configureOutput(prefix='DEBUG| ')
+                ic.configureOutput(prefix="DEBUG| ")
                 ic(f"Final Audio Saved as {filename}")
             return filename.as_posix()
 
         except requests.exceptions.RequestException as e:
             if verbose:
-                ic.configureOutput(prefix='DEBUG| ')
+                ic.configureOutput(prefix="DEBUG| ")
                 ic(f"Failed to perform the operation: {e}")
-            raise exceptions.FailedToGenerateResponseError(
-                f"Failed to perform the operation: {e}"
-            )
+            raise exceptions.FailedToGenerateResponseError(f"Failed to perform the operation: {e}")
 
     def create_speech(
         self,
-        input: str,
-        model: str = "gpt-4o-mini-tts",
-        voice: str = "Hazel",
-        response_format: str = "mp3",
-        instructions: str = None,
-        verbose: bool = False
+        input_text: str,
+        model: Optional[str] = "gpt-4o-mini-tts",
+        voice: Optional[str] = "Hazel",
+        response_format: Optional[str] = "mp3",
+        instructions: Optional[str] = None,
+        verbose: bool = False,
     ) -> str:
         """
         OpenAI-compatible speech creation interface.
 
         Args:
-            input (str): The text to convert to speech
+            input_text (str): The text to convert to speech
             model (str): The TTS model to use
             voice (str): The voice to use
             response_format (str): Audio format
@@ -203,27 +219,27 @@ class MurfAITTS(BaseTTSProvider):
             str: Path to the generated audio file
         """
         return self.tts(
-            text=input,
-            voice=voice,
-            response_format=response_format,
-            verbose=verbose
+            text=input_text,
+            voice=voice or "Hazel",
+            response_format=response_format or "mp3",
+            verbose=verbose,
         )
 
     def stream_audio(
         self,
-        input: str,
-        model: str = "gpt-4o-mini-tts",
-        voice: str = "Hazel",
-        response_format: str = "mp3",
-        instructions: str = None,
+        text: str,
+        model: Optional[str] = None,
+        voice: Optional[str] = None,
+        response_format: Optional[str] = None,
+        instructions: Optional[str] = None,
         chunk_size: int = 1024,
-        verbose: bool = False
-    ):
+        verbose: bool = False,
+    ) -> Generator[bytes, None, None]:
         """
         Stream audio response in chunks.
 
         Args:
-            input (str): The text to convert to speech
+            text (str): The text to convert to speech
             model (str): The TTS model to use
             voice (str): The voice to use
             response_format (str): Audio format
@@ -236,36 +252,37 @@ class MurfAITTS(BaseTTSProvider):
         """
         # Generate the audio file using create_speech
         audio_file = self.create_speech(
-            input=input,
+            input_text=text,
             model=model,
             voice=voice,
             response_format=response_format,
             instructions=instructions,
-            verbose=verbose
+            verbose=verbose,
         )
 
         # Stream the file in chunks
-        with open(audio_file, 'rb') as f:
+        with open(audio_file, "rb") as f:
             while chunk := f.read(chunk_size):
                 yield chunk
+
 
 # Example usage
 if __name__ == "__main__":
     murfai = MurfAITTS()
     text = "This is a test of the MurfAITTS text-to-speech API. It supports multiple sentences and advanced logging."
 
-    ic.configureOutput(prefix='DEBUG| ')
+    ic.configureOutput(prefix="DEBUG| ")
     ic("Generating audio...")
     try:
         audio_file = murfai.create_speech(
-            input=text,
+            input_text=text,
             model="gpt-4o-mini-tts",
             voice="Hazel",
             response_format="mp3",
-            verbose=True
+            verbose=True,
         )
-        ic.configureOutput(prefix='INFO| ')
+        ic.configureOutput(prefix="INFO| ")
         ic(f"Audio saved to: {audio_file}")
     except Exception as e:
-        ic.configureOutput(prefix='ERROR| ')
+        ic.configureOutput(prefix="ERROR| ")
         ic(f"Error: {e}")

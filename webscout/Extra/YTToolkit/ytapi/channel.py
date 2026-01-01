@@ -1,6 +1,6 @@
 import json
 import re
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from urllib.parse import unquote
 
 from .https import channel_about, channel_playlists, streams_data, upcoming_videos, uploads_data
@@ -56,13 +56,14 @@ class Channel:
 
     def __populate(self):
         self.__meta = self.__prepare_metadata()
-        for k, v in self.__meta.items():
-            setattr(self, k, v)
+        if self.__meta:
+            for k, v in self.__meta.items():
+                setattr(self, k, v)
 
     def __repr__(self):
         return f'<Channel `{self._target_url}`>'
 
-    def __prepare_metadata(self) -> Optional[Dict[str, any]]:
+    def __prepare_metadata(self) -> Dict[str, Any]:
         """
         Returns channel metadata in a dict format
 
@@ -145,7 +146,7 @@ class Channel:
             }
 
     @property
-    def metadata(self) -> Optional[Dict[str, any]]:
+    def metadata(self) -> Optional[Dict[str, Any]]:
         """
         Returns channel metadata in a dict format
 

@@ -5,7 +5,7 @@ This module wraps the YTTranscriber for a simplified interface.
 import re
 from typing import Any, Dict, List, Optional
 
-import requests
+from curl_cffi.requests import Session
 
 # Use the existing robust YTTranscriber
 from webscout.Extra.YTToolkit.transcriber import TranscriptListFetcher, YTTranscriber
@@ -57,7 +57,7 @@ class Captions:
         video_id = Captions._extract_video_id(video_id)
 
         try:
-            session = requests.Session()
+            session = Session()
             session.headers.update({
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             })

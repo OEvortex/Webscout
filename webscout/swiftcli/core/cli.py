@@ -1,7 +1,7 @@
 """Main CLI application class."""
 
 import sys
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from rich.console import Console
 
@@ -12,6 +12,7 @@ from .context import Context
 from .group import Group  # Fix: Import Group for type checking and usage
 
 console = Console()
+
 
 class CLI:
     """
@@ -44,7 +45,7 @@ class CLI:
         name: str,
         help: Optional[str] = None,
         version: Optional[str] = None,
-        debug: bool = False
+        debug: bool = False,
     ):
         """
         Initialize CLI application.
@@ -61,7 +62,7 @@ class CLI:
         self.debug = debug
 
         self.commands: Dict[str, Dict[str, Any]] = {}
-        self.groups: Dict[str, 'Group'] = {}  # type: ignore
+        self.groups: Dict[str, "Group"] = {}  # type: ignore
         self.command_aliases: Dict[str, str] = {}
         self.command_chain: bool = False
         self.plugin_manager = PluginManager()
@@ -74,7 +75,7 @@ class CLI:
         name: Optional[str] = None,
         help: Optional[str] = None,
         aliases: Optional[List[str]] = None,
-        hidden: bool = False
+        hidden: bool = False,
     ):
         """
         Decorator to register a command.
@@ -91,29 +92,26 @@ class CLI:
                 '''Say hello'''
                 print(f"Hello {name}!")
         """
+
         def decorator(f):
             cmd_name = name or f.__name__
             self.commands[cmd_name] = {
-                'name': cmd_name,
-                'func': f,
-                'help': help or f.__doc__,
-                'aliases': aliases or [],
-                'hidden': hidden
+                "name": cmd_name,
+                "func": f,
+                "help": help or f.__doc__,
+                "aliases": aliases or [],
+                "hidden": hidden,
             }
 
             # Register aliases
-            for alias in (aliases or []):
+            for alias in aliases or []:
                 self.commands[alias] = self.commands[cmd_name]
 
             return f
+
         return decorator
 
-    def group(
-        self,
-        name: Optional[str] = None,
-        help: Optional[str] = None,
-        **kwargs
-    ):
+    def group(self, name: Optional[str] = None, help: Optional[str] = None, **kwargs):
         """
         Create a command group.
 
@@ -137,14 +135,10 @@ class CLI:
 
         def decorator(f):
             group_name = name or f.__name__
-            group = Group(
-                name=group_name,
-                help=help or f.__doc__,
-                parent=self,
-                **kwargs
-            )
+            group = Group(name=group_name, help=help or f.__doc__, parent=self, **kwargs)
             self.groups[group_name] = group
             return group
+
         return decorator
 
     def alias(self, command_name: str, alias_name: str) -> None:
@@ -189,12 +183,12 @@ class CLI:
             args = args or sys.argv[1:]
 
             # Show help if no arguments
-            if not args or args[0] in ['-h', '--help']:
+            if not args or args[0] in ["-h", "--help"]:
                 self._print_help()
                 return 0
 
             # Show version if requested
-            if args[0] in ['-v', '--version'] and self.version:
+            if args[0] in ["-v", "--version"] and self.version:
                 console.print(self.version)
                 return 0
 
@@ -227,11 +221,11 @@ class CLI:
                 import inspect
 
                 command = self.commands[command_name]
-                func = command['func']
+                func = command["func"]
                 params = self._parse_args(command, command_args)
 
                 # Inject context if function was decorated with pass_context
-                if getattr(func, '_pass_context', False):
+                if getattr(func, "_pass_context", False):
                     # Call with ctx as first positional arg
                     call_args = (ctx,)
                 else:
@@ -244,7 +238,7 @@ class CLI:
                     result = func(*call_args, **params)
 
                 # If function returned a coroutine (in case wrapper returned coroutine)
-                if not inspect.iscoroutine(result) and hasattr(result, '__await__'):
+                if not inspect.iscoroutine(result) and hasattr(result, "__await__"):
                     # awaitable returned
                     result = asyncio.run(result)
 
@@ -266,7 +260,7 @@ class CLI:
             format_error(str(e))
             return 1
 
-    def generate_completion_script(self, shell: str = 'bash') -> str:
+    def generate_completion_script(self, shell: str = "bash") -> str:
         """
         Generate shell completion script.
 
@@ -280,11 +274,11 @@ class CLI:
             script = app.generate_completion_script('bash')
             print(script)
         """
-        if shell == 'bash':
+        if shell == "bash":
             return self._generate_bash_completion()
-        elif shell == 'zsh':
+        elif shell == "zsh":
             return self._generate_zsh_completion()
-        elif shell == 'fish':
+        elif shell == "fish":
             return self._generate_fish_completion()
         else:
             raise UsageError(f"Unsupported shell: {shell}")
@@ -293,10 +287,10 @@ class CLI:
         """Generate bash completion script."""
         commands = []
         for cmd_name, cmd in self.commands.items():
-            if not cmd.get('hidden', False):
+            if not cmd.get("hidden", False):
                 commands.append(cmd_name)
-                if 'aliases' in cmd:
-                    commands.extend(cmd['aliases'])
+                if "aliases" in cmd:
+                    commands.extend(cmd["aliases"])
 
         for group_name in self.groups:
             commands.append(group_name)
@@ -309,7 +303,7 @@ _{self.name}_completion() {{
     _init_completion || return
 
     # Generate completion options
-    COMPREPLY=($(compgen -W "{' '.join(commands)}" -- "$cur"))
+    COMPREPLY=($(compgen -W "{" ".join(commands)}" -- "$cur"))
 }}
 
 complete -F _{self.name}_completion {self.name}
@@ -320,10 +314,10 @@ complete -F _{self.name}_completion {self.name}
         """Generate zsh completion script."""
         commands = []
         for cmd_name, cmd in self.commands.items():
-            if not cmd.get('hidden', False):
+            if not cmd.get("hidden", False):
                 commands.append(cmd_name)
-                if 'aliases' in cmd:
-                    commands.extend(cmd['aliases'])
+                if "aliases" in cmd:
+                    commands.extend(cmd["aliases"])
 
         for group_name in self.groups:
             commands.append(group_name)
@@ -331,7 +325,7 @@ complete -F _{self.name}_completion {self.name}
         script = f"""#compdef {self.name}
 
 local -a commands
-commands=({ ' '.join(commands) })
+commands=({" ".join(commands)})
 
 _arguments \
     '1: :->cmds' \
@@ -352,17 +346,17 @@ esac
         """Generate fish completion script."""
         commands = []
         for cmd_name, cmd in self.commands.items():
-            if not cmd.get('hidden', False):
+            if not cmd.get("hidden", False):
                 commands.append(cmd_name)
-                if 'aliases' in cmd:
-                    commands.extend(cmd['aliases'])
+                if "aliases" in cmd:
+                    commands.extend(cmd["aliases"])
 
         for group_name in self.groups:
             commands.append(group_name)
 
         script = f"""# Fish completion for {self.name}
 
-complete -c {self.name} -n "__fish_use_subcommand" -a "{' '.join(commands)}"
+complete -c {self.name} -n "__fish_use_subcommand" -a "{" ".join(commands)}"
 """
         return script
 
@@ -378,7 +372,7 @@ complete -c {self.name} -n "__fish_use_subcommand" -a "{' '.join(commands)}"
         )
 
         params = {}
-        func = command['func']
+        func = command["func"]
 
         # Collect mutually exclusive groups
         exclusive_groups = []
@@ -387,11 +381,11 @@ complete -c {self.name} -n "__fish_use_subcommand" -a "{' '.join(commands)}"
         parsed_args = parse_args(args)
 
         # Handle options
-        if hasattr(func, '_options'):
+        if hasattr(func, "_options"):
             for opt in func._options:
                 # Use the longest parameter name (usually the --long-form) for the parameter name
-                param_names = [p.lstrip('-').replace('-', '_') for p in opt['param_decls']]
-                name = max(param_names, key=len)  # Use the longest name
+                param_names = [p.lstrip("-").replace("-", "_") for p in opt["param_decls"]]
+                name = cast(str, max(param_names, key=len))  # Use the longest name
 
                 # Check all possible parameter names in parsed args
                 value = None
@@ -404,24 +398,28 @@ complete -c {self.name} -n "__fish_use_subcommand" -a "{' '.join(commands)}"
 
                 if found:
                     # Handle 'count' option (e.g., -v, -vv)
-                    if opt.get('count', False):
+                    if opt.get("count", False):
                         if isinstance(value, list):
                             params[name] = len(value)
                         elif isinstance(value, bool):
                             params[name] = 1 if value else 0
-                        else:
+                        elif value is not None:
                             try:
                                 params[name] = int(value)
                             except Exception:
                                 params[name] = 1
+                        else:
+                            params[name] = 1
                     # Handle 'multiple' option which collects multiple values
-                    elif opt.get('multiple', False):
+                    elif opt.get("multiple", False):
                         items = value if isinstance(value, list) else [value]
-                        if 'type' in opt:
-                            items = [convert_type(v, opt['type'], name) for v in items]
-                        if 'choices' in opt and opt['choices']:
+                        if "type" in opt:
+                            items = [convert_type(str(v), opt["type"], name) for v in items if v is not None]
+                        if "choices" in opt and opt["choices"]:
                             for v in items:
-                                validate_choice(v, opt['choices'], name, opt.get('case_sensitive', True))
+                                validate_choice(
+                                    str(v), opt["choices"], name, opt.get("case_sensitive", True)
+                                )
                         params[name] = items
                     else:
                         # Normal option/flag handling
@@ -431,88 +429,89 @@ complete -c {self.name} -n "__fish_use_subcommand" -a "{' '.join(commands)}"
                         else:
                             value_to_convert = value
 
-                        if opt.get('is_flag', False):
+                        if opt.get("is_flag", False):
                             # Flags are boolean; if a string value is provided, attempt to convert
                             if isinstance(value_to_convert, str):
                                 # If 'type' is provided and is bool, convert accordingly
-                                if 'type' in opt and opt['type'] is bool:
+                                if "type" in opt and opt["type"] is bool:
                                     value_to_convert = convert_type(value_to_convert, bool, name)
                                 else:
                                     value_to_convert = True
                             elif isinstance(value_to_convert, bool):
-                                # Use the boolean value
+                                # Use boolean value
                                 value_to_convert = value_to_convert
-                            else:
+                            elif value_to_convert is not None:
                                 # Non-boolean provided, try convert to bool
-                                value_to_convert = convert_type(value_to_convert, bool, name)
+                                value_to_convert = convert_type(str(value_to_convert), bool, name)
+                            else:
+                                value_to_convert = False
 
-                        if 'type' in opt and not opt.get('is_flag', False):
-                            value_to_convert = convert_type(value_to_convert, opt['type'], name)
-                        if 'choices' in opt and opt['choices']:
-                            validate_choice(
-                                value_to_convert,
-                                opt['choices'],
-                                name,
-                                opt.get('case_sensitive', True)
-                            )
+                        if "type" in opt and not opt.get("is_flag", False):
+                            value_to_convert = convert_type(str(value_to_convert), opt["type"], name) if value_to_convert is not None else None
+                        if "choices" in opt and opt["choices"]:
+                            if value_to_convert is not None:
+                                validate_choice(
+                                    str(value_to_convert),
+                                    opt["choices"],
+                                    name,
+                                    opt.get("case_sensitive", True),
+                                )
 
                         # Apply validation rules
-                        if opt.get('validation'):
+                        if opt.get("validation") and value_to_convert is not None:
                             value_to_convert = validate_argument(
-                                str(value_to_convert),
-                                opt['validation'],
-                                name
+                                str(value_to_convert), opt["validation"], name
                             )
 
                         params[name] = value_to_convert
                     # Apply callback if provided
-                    if opt.get('callback') and callable(opt.get('callback')):
-                        params[name] = opt.get('callback')(params[name])
+                    if opt.get("callback") and callable(opt.get("callback")):
+                        params[name] = opt.get("callback")(params[name])
 
                     # Collect mutually exclusive groups
-                    if opt.get('mutually_exclusive'):
-                        exclusive_groups.append(opt['mutually_exclusive'])
-                elif opt.get('required', False):
+                    if opt.get("mutually_exclusive"):
+                        exclusive_groups.append(opt["mutually_exclusive"])
+                elif opt.get("required", False):
                     raise UsageError(f"Missing required option: {name}")
-                elif 'default' in opt:
-                    params[name] = opt['default']
+                elif "default" in opt:
+                    params[name] = opt["default"]
 
         # Handle arguments
-        if hasattr(func, '_arguments'):
+        if hasattr(func, "_arguments"):
             for i, arg in enumerate(func._arguments):
-                name = arg['name']
-                if f'arg{i}' in parsed_args:
-                    value = parsed_args[f'arg{i}']
-                    if 'type' in arg:
-                        value = convert_type(value, arg['type'], name)
+                name = arg["name"]
+                if f"arg{i}" in parsed_args:
+                    value = parsed_args[f"arg{i}"]
+                    if "type" in arg:
+                        value = convert_type(value, arg["type"], name)
 
                     # Apply validation rules
-                    if arg.get('validation'):
-                        value = validate_argument(value, arg['validation'], name)
+                    if arg.get("validation"):
+                        value = validate_argument(value, arg["validation"], name)
 
                     params[name] = value
 
                     # Collect mutually exclusive groups
-                    if arg.get('mutually_exclusive'):
-                        exclusive_groups.append(arg['mutually_exclusive'])
-                elif arg.get('required', True):
+                    if arg.get("mutually_exclusive"):
+                        exclusive_groups.append(arg["mutually_exclusive"])
+                elif arg.get("required", True):
                     raise UsageError(f"Missing required argument: {name}")
-                elif 'default' in arg:
-                    params[name] = arg['default']
+                elif "default" in arg:
+                    params[name] = arg["default"]
 
         # Check mutually exclusive options
         if exclusive_groups:
             check_mutually_exclusive(params, exclusive_groups)
 
         # Handle environment variables
-        if hasattr(func, '_envvars'):
+        if hasattr(func, "_envvars"):
             for env in func._envvars:
-                name = env['name'].lower()
+                name = env["name"].lower()
                 value = get_env_var(
-                    env['name'],
-                    env.get('type', str),
-                    env.get('required', False),
-                    env.get('default')
+                    env["name"],
+                    env.get("type", str),
+                    env.get("required", False),
+                    env.get("default"),
                 )
                 if value is not None:
                     params[name] = value
@@ -529,12 +528,12 @@ complete -c {self.name} -n "__fish_use_subcommand" -a "{' '.join(commands)}"
         console.print("\n[bold]Commands:[/]")
         printed = set()
         for name, cmd in self.commands.items():
-            primary = cmd.get('name', name)
+            primary = cmd.get("name", name)
             if primary in printed:
                 continue
             printed.add(primary)
-            if not cmd.get('hidden', False):
-                aliases = cmd.get('aliases', [])
+            if not cmd.get("hidden", False):
+                aliases = cmd.get("aliases", [])
                 alias_text = f" (aliases: {', '.join(aliases)})" if aliases else ""
                 console.print(f"  {primary:20} {cmd['help'] or ''}{alias_text}")
 
@@ -545,8 +544,8 @@ complete -c {self.name} -n "__fish_use_subcommand" -a "{' '.join(commands)}"
             for cmd_name, cmd in group.commands.items():
                 # cmd can be Group or dict
                 if isinstance(cmd, dict):
-                    primary = cmd.get('name', cmd_name)
-                elif hasattr(cmd, 'name'):
+                    primary = cmd.get("name", cmd_name)
+                elif hasattr(cmd, "name"):
                     primary = cmd.name
                 else:
                     primary = cmd_name
@@ -554,15 +553,15 @@ complete -c {self.name} -n "__fish_use_subcommand" -a "{' '.join(commands)}"
                     continue
                 printed_group.add(primary)
                 # Get help and hidden
-                help_text = ''
+                help_text = ""
                 hidden = False
                 aliases = []
                 if isinstance(cmd, dict):
-                    hidden = cmd.get('hidden', False)
-                    help_text = cmd.get('help', '')
-                    aliases = cmd.get('aliases', [])
+                    hidden = cmd.get("hidden", False)
+                    help_text = cmd.get("help", "")
+                    aliases = cmd.get("aliases", [])
                 elif isinstance(cmd, Group):
-                    help_text = cmd.help or ''
+                    help_text = cmd.help or ""
                 if not hidden:
                     alias_text = f" (aliases: {', '.join(aliases)})" if aliases else ""
                     console.print(f"  {primary:20} {help_text}{alias_text}")

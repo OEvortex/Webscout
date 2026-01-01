@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Generator, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 import requests
 
@@ -25,6 +25,7 @@ class ChatHub(Provider):
         "gemma-2": 'google/gemma-2',
         "sonar-online": 'perplexity/sonar-online',
     }
+    default_model = "sonar-online"
 
 
     def __init__(
@@ -32,12 +33,12 @@ class ChatHub(Provider):
         is_conversation: bool = True,
         max_tokens: int = 2049,
         timeout: int = 30,
-        intro: str = None,
-        filepath: str = None,
+        intro: Optional[str] = None,
+        filepath: Optional[str] = None,
         update_file: bool = True,
         proxies: dict = {},
         history_offset: int = 10250,
-        act: str = None,
+        act: Optional[str] = None,
         model: str = "sonar-online",
     ):
         """Initializes the ChatHub API client."""
@@ -64,17 +65,17 @@ class ChatHub(Provider):
             for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
-
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
+        act_prompt = (
+            AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
+        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
 
         #Resolve the model
@@ -99,8 +100,9 @@ class ChatHub(Provider):
         prompt: str,
         stream: bool = False,
         raw: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
+        **kwargs: Any,
     ) -> Union[Dict[str, Any], Generator]:
 
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
@@ -168,41 +170,42 @@ class ChatHub(Provider):
         self,
         prompt: str,
         stream: bool = False,
-        optimizer: str = None,
+        optimizer: Optional[str] = None,
         conversationally: bool = False,
-        raw: bool = False,
-    ) -> Union[str, Generator]:
+        **kwargs: Any,
+    ) -> Union[str, Generator[str, None, None]]:
         """Generate response `str`"""
 
         def for_stream():
             for response in self.ask(
-                prompt, stream=True, raw=raw, optimizer=optimizer, conversationally=conversationally
+                prompt, stream=True, raw=False, optimizer=optimizer, conversationally=conversationally
             ):
-                if raw:
-                    yield response
-                else:
-                    yield self.get_message(response)
+                yield self.get_message(response)
 
         def for_non_stream():
             result = self.ask(
                 prompt,
                 stream=False,
-                raw=raw,
+                raw=False,
                 optimizer=optimizer,
                 conversationally=conversationally,
             )
-            if raw:
-                return result
             return self.get_message(result)
 
         return for_stream() if stream else for_non_stream()
 
 
 
-    def get_message(self, response: dict) -> str:
+    def get_message(self, response: Union[Dict[str, Any], Generator[Any, None, None], str]) -> str:
         """Retrieves message only from response"""
-        assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response.get("text", "")
+        if isinstance(response, dict):
+            resp_dict = cast(Dict[str, Any], response)
+            return resp_dict.get("text", "")
+        elif isinstance(response, str):
+            return response
+        else:
+            # Generator case - shouldn't happen here
+            return ""
 
 
 if __name__ == "__main__":

@@ -1,10 +1,15 @@
 import json
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 # Import base classes and utilities from OPENAI provider stack
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import (
+    BaseChat,
+    BaseCompletions,
+    OpenAICompatibleProvider,
+    SimpleModelList,
+)
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -62,11 +67,11 @@ class Completions(BaseCompletions):
         self, request_id: str, created_time: int, model: str, payload: Dict[str, Any],
         timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
     ) -> Generator[ChatCompletionChunk, None, None]:
-        original_proxies = self._client.session.proxies.copy()
+        original_proxies = dict(self._client.session.proxies)
         if proxies is not None:
-            self._client.session.proxies = proxies
+            self._client.session.proxies.update(cast(Any, proxies))
         else:
-            self._client.session.proxies = {}
+            self._client.session.proxies.clear()
         try:
             response = self._client.session.post(
                 self._client.base_url,
@@ -133,17 +138,18 @@ class Completions(BaseCompletions):
         except Exception as e:
             raise IOError(f"TwoAI request failed: {e}") from e
         finally:
-            self._client.session.proxies = original_proxies
+            self._client.session.proxies.clear()
+            self._client.session.proxies.update(cast(Any, original_proxies))
 
     def _create_non_stream(
         self, request_id: str, created_time: int, model: str, payload: Dict[str, Any],
         timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
     ) -> ChatCompletion:
-        original_proxies = self._client.session.proxies.copy()
+        original_proxies = dict(self._client.session.proxies)
         if proxies is not None:
-            self._client.session.proxies = proxies
+            self._client.session.proxies.update(cast(Any, proxies))
         else:
-            self._client.session.proxies = {}
+            self._client.session.proxies.clear()
         try:
             response = self._client.session.post(
                 self._client.base_url,
@@ -190,7 +196,8 @@ class Completions(BaseCompletions):
         except Exception as e:
             raise IOError(f"TwoAI request failed: {e}") from e
         finally:
-            self._client.session.proxies = original_proxies
+            self._client.session.proxies.clear()
+            self._client.session.proxies.update(cast(Any, original_proxies))
 
 
 class Chat(BaseChat):
@@ -233,11 +240,8 @@ class TwoAI(OpenAICompatibleProvider):
         self.chat = Chat(self)
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
 
 if __name__ == "__main__":
     from rich import print

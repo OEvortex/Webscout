@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from random import SystemRandom
-from typing import Any
+from typing import Any, Optional
 
 from ..base import BaseSearchEngine
 from ..results import TextResult
@@ -55,6 +55,8 @@ class Yandex(BaseSearchEngine[TextResult]):
             List of TextResult objects.
         """
         keywords = args[0] if args else kwargs.get("keywords")
+        if keywords is None:
+            keywords = ""
         region = args[1] if len(args) > 1 else kwargs.get("region", "us-en")
         safesearch = args[2] if len(args) > 2 else kwargs.get("safesearch", "moderate")
         max_results = args[3] if len(args) > 3 else kwargs.get("max_results")

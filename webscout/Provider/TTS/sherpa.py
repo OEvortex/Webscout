@@ -6,7 +6,7 @@ import pathlib
 import random
 import string
 import tempfile
-from typing import Optional
+from typing import Any, Generator, Optional, Union, cast
 
 import httpx
 from litprinter import ic
@@ -123,41 +123,34 @@ class SherpaTTS(BaseTTSProvider):
     def _generate_session_hash(self) -> str:
         return "".join(random.choices(string.ascii_lowercase + string.digits, k=11))
 
-    def tts(
-        self,
-        text: str,
-        language: str = "English",
-        model_choice: str = "csukuangfj/kokoro-en-v0_19|11 speakers",
-        speaker_id: str = "0",
-        speed: float = 1.0,
-        response_format: str = "wav",
-        verbose: bool = True
-    ) -> str:
+    def tts(self, text: str, voice: Optional[str] = None, verbose: bool = False, **kwargs) -> str:
         """
         Convert text to speech using Sherpa-ONNX API.
 
         Args:
             text: Input text
-            language: Selected language from LANGUAGES
-            model_choice: Model name from SUPPORTED_MODELS
-            speaker_id: Speaker ID for multi-speaker models
-            speed: Speech speed (0.1 to 10.0)
-            response_format: Audio format (wav recommended)
-            verbose: Enable debug prints
+            **kwargs: Additional parameters (language, model_choice, speaker_id, speed, response_format, verbose)
         """
+        # Extract parameters from kwargs with defaults
+        language = kwargs.get('language', "English")
+        model_choice = kwargs.get('model_choice', "csukuangfj/kokoro-en-v0_19|11 speakers")
+        speaker_id = kwargs.get('speaker_id', "0")
+        speed = kwargs.get('speed', 1.0)
+        response_format = kwargs.get('response_format', "wav")
+        verbose = kwargs.get('verbose', True)
         if not text:
             raise ValueError("Input text must be a non-empty string")
 
         model_choice = self.validate_model(model_choice)
 
         session_hash = self._generate_session_hash()
-        filename = pathlib.Path(tempfile.mktemp(suffix=f".{response_format}", dir=self.temp_dir))
+        filename = pathlib.Path(tempfile.NamedTemporaryFile(suffix=f".{response_format}", dir=self.temp_dir, delete=False).name)
 
         if verbose:
             ic.configureOutput(prefix='DEBUG| ')
             ic(f"SherpaTTS: Generating speech for '{text[:20]}...' using {language}/{model_choice}")
 
-        client_kwargs = {"headers": self.headers, "timeout": self.timeout}
+        client_kwargs: dict[str, Any] = {"headers": self.headers, "timeout": self.timeout}
         if self.proxy:
             client_kwargs["proxy"] = self.proxy
 
@@ -226,9 +219,36 @@ class SherpaTTS(BaseTTSProvider):
                 ic(f"Error in SherpaTTS: {e}")
             raise exceptions.FailedToGenerateResponseError(f"Failed to generate audio: {e}")
 
-    def create_speech(self, input: str, **kwargs) -> str:
-        """OpenAI-compatible speech creation interface."""
-        return self.tts(text=input, **kwargs)
+    def create_speech(
+        self,
+        input_text: str,
+        model: Optional[str] = "csukuangfj/kokoro-en-v0_19|11 speakers",
+        voice: Optional[str] = None,
+        response_format: Optional[str] = "mp3",
+        instructions: Optional[str] = None,
+        verbose: bool = False
+    ) -> str:
+        """
+        OpenAI-compatible speech creation interface.
+
+        Args:
+            input_text (str): The text to convert to speech
+            model (str): The TTS model to use
+            voice (str): The voice to use (not used by SherpaAI directly)
+            response_format (str): Audio format
+            instructions (str): Voice instructions
+            verbose (bool): Whether to print debug information
+
+        Returns:
+            str: Path to the generated audio file
+        """
+        model_choice = model or "csukuangfj/kokoro-en-v0_19|11 speakers"
+        return self.tts(
+            text=input_text,
+            model_choice=model_choice,
+            response_format=response_format or "mp3",
+            verbose=verbose
+        )
 
     def with_streaming_response(self):
         return StreamingResponseContextManager(self)

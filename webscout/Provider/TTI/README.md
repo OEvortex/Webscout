@@ -16,7 +16,6 @@ These providers allow you to easily generate AI‑created art from text prompts 
 
 | Provider         | Available Models (examples)               | Status    |
 | ---------------- | ----------------------------------------- | --------- |
-| `VeniceAI`       | `z-image-turbo`, `stable-diffusion-3.5`   | Working   |
 | `PollinationsAI` | `flux`, `flux-pro`, `turbo`, `gptimage`   | Working   |
 | `MagicStudioAI`  | `magicstudio`                             | Working   |
 | `ClaudeOnlineTTI`| `claude-imagine`                          | Working   |
@@ -45,17 +44,6 @@ response = client.images.create(
 print(response)
 ```
 
-### Accessing Models
-
-Each provider exposes the models it supports:
-
-```python
-from webscout.Provider.TTI import VeniceAI
-
-ai = VeniceAI()
-print(ai.models.list())  # List model identifiers
-```
-
 ### Base64 Output
 
 If you prefer the raw image data:
@@ -71,7 +59,6 @@ response = client.images.create(
 
 ## 🔧 Provider Specifics
 
-- **VeniceAI** – Supports various Stable Diffusion and Flux models via Venice.ai.
 - **PollinationsAI** – Allows setting a custom seed for reproducible results.
 - **MagicStudioAI** – Generates images through MagicStudio's public endpoint.
 - **ClaudeOnlineTTI** – Uses Pollinations.ai backend to provide image generation capabilities.

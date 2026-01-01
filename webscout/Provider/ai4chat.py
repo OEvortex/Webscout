@@ -27,7 +27,8 @@ class AI4Chat(Provider):
         country: str = "Asia",
         user_id: str = "usersmjb2oaz7y"
     ) -> None:
-        self.session = Session(timeout=timeout, proxies=proxies)
+        from typing import cast
+        self.session = Session(timeout=timeout, proxies=cast(Any, proxies))
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
         self.api_endpoint = "https://yw85opafq6.execute-api.us-east-1.amazonaws.com/default/boss_mode_15aug"
@@ -54,17 +55,17 @@ class AI4Chat(Provider):
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
         self.session.headers.update(self.headers)
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
+
+        if act:
+            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
+            ) or self.conversation.intro
+        elif intro:
+            self.conversation.intro = intro
+
         self.system_prompt = system_prompt
 
     def ask(
@@ -159,13 +160,14 @@ class AI4Chat(Provider):
                 )
             )
 
-    def get_message(self, response: Union[dict, str]) -> str:
+    def get_message(self, response: Response) -> str:
         """
         Retrieves message only from response
         """
         if isinstance(response, str):
             return response.replace('\\n', '\n').replace('\\n\\n', '\n\n')
-        assert isinstance(response, dict), "Response should be either dict or str"
+        if not isinstance(response, dict):
+            return str(response)
         return response["text"].replace('\\n', '\n').replace('\\n\\n', '\n\n')
 
 if __name__ == "__main__":

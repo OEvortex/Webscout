@@ -5,6 +5,7 @@ import os
 import pathlib
 import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Any, Optional, Union, cast
 
 import requests
 from litprinter import ic
@@ -77,7 +78,7 @@ class ElevenlabsTTS(BaseTTSProvider):
         "will": "bIHbv24MWmeRgasZH58o"
     }
 
-    def __init__(self, api_key: str = None, timeout: int = 30, proxies: dict = None):
+    def __init__(self, api_key: Optional[str] = None, timeout: int = 30, proxies: Optional[dict] = None):
         """
         Initialize the ElevenLabs TTS client.
 
@@ -101,21 +102,28 @@ class ElevenlabsTTS(BaseTTSProvider):
     def tts(
         self,
         text: str,
-        model: str = "eleven_multilingual_v2",
-        voice: str = "brian",
-        response_format: str = "mp3",
-        verbose: bool = True
+        voice: str | None = None,
+        verbose: bool = False,
+        **kwargs
     ) -> str:
         """
         Convert text to speech using ElevenLabs API.
         """
+        model = kwargs.get("model", "eleven_multilingual_v2")
+        response_format = kwargs.get("response_format", "mp3")
+        if voice is None:
+            voice = "brian"
+        if verbose is False:
+            verbose = kwargs.get("verbose", True)
         if not text:
             raise ValueError("Input text must be a non-empty string")
 
         voice_id = self.voice_mapping.get(voice.lower(), voice)
 
         file_extension = f".{response_format}"
-        filename = pathlib.Path(tempfile.mktemp(suffix=file_extension, dir=self.temp_dir))
+        temp_file = tempfile.NamedTemporaryFile(suffix=file_extension, dir=self.temp_dir, delete=False)
+        temp_file.close()
+        filename = pathlib.Path(temp_file.name)
 
         sentences = utils.split_sentences(text)
         if verbose:
@@ -162,5 +170,20 @@ class ElevenlabsTTS(BaseTTSProvider):
         except Exception as e:
             raise exceptions.FailedToGenerateResponseError(f"ElevenLabs TTS failed: {e}")
 
-    def create_speech(self, input: str, **kwargs) -> str:
-        return self.tts(text=input, **kwargs)
+    def create_speech(
+        self,
+        input_text: str,
+        model: Optional[str] = None,
+        voice: Optional[str] = None,
+        response_format: Optional[str] = None,
+        instructions: Optional[str] = None,
+        verbose: bool = False,
+        **kwargs: Any
+    ) -> str:
+        return self.tts(
+            text=input_text,
+            model=model or "eleven_multilingual_v2",
+            voice=voice or "brian",
+            response_format=response_format or "mp3",
+            verbose=verbose
+        )

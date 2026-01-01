@@ -8,6 +8,9 @@ from .base import YahooSearchEngine
 class YahooAnswers(YahooSearchEngine):
     """Yahoo instant answers."""
 
+    def build_payload(self, *args, **kwargs) -> dict:
+        return {}
+
     def run(self, *args, **kwargs) -> list[dict[str, str]]:
         """Get instant answers from Yahoo.
 

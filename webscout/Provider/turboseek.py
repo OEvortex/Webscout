@@ -1,6 +1,5 @@
-
 import re
-from typing import Any, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
@@ -20,6 +19,7 @@ class TurboSeek(Provider):
     """
     This class provides methods for interacting with the TurboSeek API.
     """
+
     required_auth = False
     AVAILABLE_MODELS = ["Llama 3.1 70B"]
 
@@ -34,7 +34,7 @@ class TurboSeek(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: Optional[str] = None,
-        model: str = "Llama 3.1 70B" # Note: model parameter is not used by the API endpoint
+        model: str = "Llama 3.1 70B",  # Note: model parameter is not used by the API endpoint
     ):
         """Instantiates TurboSeek
 
@@ -83,18 +83,24 @@ class TurboSeek(Provider):
         )
         # Update curl_cffi session headers and proxies
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies # Assign proxies directly
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
+        if proxies:
+            self.session.proxies.update(proxies)  # Assign proxies directly
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
+
+        if act:
+            self.conversation.intro = (
+                AwesomePrompts().get_act(
+                    cast(Union[str, int], act),
+                    default=self.conversation.intro,
+                    case_insensitive=True,
+                )
+                or self.conversation.intro
+            )
+        elif intro:
+            self.conversation.intro = intro
 
     @staticmethod
     def _html_to_markdown(text: str) -> str:
@@ -104,30 +110,33 @@ class TurboSeek(Provider):
 
         # Unescape HTML entities first
         import html
+
         text = html.unescape(text)
 
         # Headers
-        text = re.sub(r'<h[1-6][^>]*>(.*?)</h[1-6]>', r'\n# \1\n', text)
+        text = re.sub(r"<h[1-6][^>]*>(.*?)</h[1-6]>", r"\n# \1\n", text)
 
         # Lists
-        text = re.sub(r'<li[^>]*>(.*?)</li>', r'\n* \1', text)
-        text = re.sub(r'<(ul|ol)[^>]*>', r'\n', text)
-        text = re.sub(r'</(ul|ol)>', r'\n', text)
+        text = re.sub(r"<li[^>]*>(.*?)</li>", r"\n* \1", text)
+        text = re.sub(r"<(ul|ol)[^>]*>", r"\n", text)
+        text = re.sub(r"</(ul|ol)>", r"\n", text)
 
         # Paragraphs and Breaks
-        text = re.sub(r'</p>', r'\n\n', text)
-        text = re.sub(r'<p[^>]*>', r'\n', text)
-        text = re.sub(r'<br\s*/?>', r'\n', text)
+        text = re.sub(r"</p>", r"\n\n", text)
+        text = re.sub(r"<p[^>]*>", r"\n", text)
+        text = re.sub(r"<br\s*/?>", r"\n", text)
 
         # Bold and Italic
-        text = re.sub(r'<(strong|b)[^>]*>(.*?)</\1>', r'**\2**', text)
-        text = re.sub(r'<(em|i)[^>]*>(.*?)</\1>', r'*\2*', text)
+        text = re.sub(r"<(strong|b)[^>]*>(.*?)</\1>", r"**\2**", text)
+        text = re.sub(r"<(em|i)[^>]*>(.*?)</\1>", r"*\2*", text)
 
         # Remove structural tags
-        text = re.sub(r'</?(section|div|span|article|header|footer)[^>]*>', '', text, flags=re.IGNORECASE)
+        text = re.sub(
+            r"</?(section|div|span|article|header|footer)[^>]*>", "", text, flags=re.IGNORECASE
+        )
 
         # Final cleanup of remaining tags
-        text = re.sub(r'<[^>]*>', '', text)
+        text = re.sub(r"<[^>]*>", "", text)
 
         return text
 
@@ -148,8 +157,7 @@ class TurboSeek(Provider):
         conversationally: bool = False,
         **kwargs: Any,
     ) -> Response:
-        """Chat with AI
-        """
+        """Chat with AI"""
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
@@ -157,14 +165,9 @@ class TurboSeek(Provider):
                     conversation_prompt if conversationally else prompt
                 )
             else:
-                raise Exception(
-                    f"Optimizer is not one of {self.__available_optimizers}"
-                )
+                raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
 
-        payload = {
-            "question": conversation_prompt,
-            "sources": []
-        }
+        payload = {"question": conversation_prompt, "sources": []}
 
         def for_stream():
             try:
@@ -173,7 +176,7 @@ class TurboSeek(Provider):
                     json=payload,
                     stream=True,
                     timeout=self.timeout,
-                    impersonate="chrome120"
+                    impersonate="chrome120",
                 )
                 if not response.ok:
                     raise exceptions.FailedToGenerateResponseError(
@@ -186,10 +189,10 @@ class TurboSeek(Provider):
                     data=response.iter_content(chunk_size=None),
                     intro_value=None,
                     to_json=False,
-                    strip_chars='', # Disable default lstrip to preserve spacing
+                    strip_chars="",  # Disable default lstrip to preserve spacing
                     content_extractor=self._turboseek_extractor,
                     yield_raw_on_error=True,
-                    raw=raw
+                    raw=raw,
                 )
 
                 for content_chunk in processed_stream:
@@ -203,20 +206,20 @@ class TurboSeek(Provider):
                             # In streaming mode, stripping HTML incrementally is hard.
                             # We'll just yield the chunk but clean it slightly.
                             # For full Markdown conversion, use non-streaming or aggregate it.
-                            clean_chunk = re.sub(r'<[^>]*>', '', content_chunk)
+                            clean_chunk = re.sub(r"<[^>]*>", "", content_chunk)
                             if clean_chunk:
                                 streaming_text += clean_chunk
                                 self.last_response.update(dict(text=streaming_text))
                                 yield dict(text=clean_chunk)
 
                 if not raw and streaming_text:
-                    self.conversation.update_chat_history(
-                        prompt, streaming_text
-                    )
+                    self.conversation.update_chat_history(prompt, streaming_text)
             except CurlError as e:
                 raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {e}")
             except Exception as e:
-                raise exceptions.FailedToGenerateResponseError(f"An unexpected error occurred ({type(e).__name__}): {e}")
+                raise exceptions.FailedToGenerateResponseError(
+                    f"An unexpected error occurred ({type(e).__name__}): {e}"
+                )
 
         def for_non_stream():
             full_html = ""
@@ -225,14 +228,13 @@ class TurboSeek(Provider):
                 # We use ask(..., raw=True) internally or just the local for_stream
                 # Actually, let's just make a sub-call
                 response = self.session.post(
-                    self.chat_endpoint,
-                    json=payload,
-                    timeout=self.timeout,
-                    impersonate="chrome120"
+                    self.chat_endpoint, json=payload, timeout=self.timeout, impersonate="chrome120"
                 )
                 full_html = response.text
             except Exception as e:
-                raise exceptions.FailedToGenerateResponseError(f"Failed to get non-stream response: {e}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Failed to get non-stream response: {e}"
+                ) from e
 
             # Convert full HTML to Markdown
             final_text = self._html_to_markdown(full_html).strip()
@@ -247,7 +249,6 @@ class TurboSeek(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        raw: bool = False,  # Added raw parameter
         **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """Generate response `str`
@@ -256,18 +257,21 @@ class TurboSeek(Provider):
             stream (bool, optional): Flag for streaming response. Defaults to False.
             optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
             conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
+            **kwargs: Additional parameters including raw.
         Returns:
             str: Response generated
         """
+        raw = kwargs.get("raw", False)
 
         def for_stream():
             for response in self.ask(
                 prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
             ):
                 if raw:
-                    yield response
+                    yield cast(str, response)
                 else:
-                    yield self.get_message(response)
+                    yield self.get_message(cast(Response, response))
+
         def for_non_stream():
             result = self.ask(
                 prompt,
@@ -277,9 +281,10 @@ class TurboSeek(Provider):
                 conversationally=conversationally,
             )
             if raw:
-                return result
+                return cast(str, result)
             else:
                 return self.get_message(result)
+
         return for_stream() if stream else for_non_stream()
 
     def get_message(self, response: Response) -> str:
@@ -293,11 +298,13 @@ class TurboSeek(Provider):
         """
         if not isinstance(response, dict):
             return str(response)
-        # Unicode escapes are handled by json.loads within sanitize_stream
-        return response.get("text", "")
+        response_dict = cast(Dict[str, Any], response)
+        return response_dict.get("text", "")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     import sys
+
     ai = TurboSeek(timeout=60)
 
     # helper for safe printing on windows
@@ -305,7 +312,7 @@ if __name__ == '__main__':
         try:
             sys.stdout.write(text + end)
         except UnicodeEncodeError:
-            sys.stdout.write(text.encode('ascii', 'ignore').decode('ascii') + end)
+            sys.stdout.write(text.encode("ascii", "ignore").decode("ascii") + end)
         sys.stdout.flush()
 
     safe_print("\n=== Testing Non-Streaming ===")

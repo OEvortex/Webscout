@@ -1,11 +1,15 @@
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 import requests
 
-from webscout.litagent import LitAgent
-from webscout.Provider.OPENAI.base import BaseChat, BaseCompletions, OpenAICompatibleProvider
+from webscout.Provider.OPENAI.base import (
+    BaseChat,
+    BaseCompletions,
+    OpenAICompatibleProvider,
+    SimpleModelList,
+)
 from webscout.Provider.OPENAI.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -17,13 +21,16 @@ from webscout.Provider.OPENAI.utils import (
     format_prompt,
 )
 
+from ...litagent import LitAgent
+
 # ANSI escape codes for formatting
 BOLD = "\033[1m"
 RED = "\033[91m"
 RESET = "\033[0m"
 
+
 class Completions(BaseCompletions):
-    def __init__(self, client: 'HeckAI'):
+    def __init__(self, client: "HeckAI"):
         self._client = client
 
     def create(
@@ -37,7 +44,7 @@ class Completions(BaseCompletions):
         top_p: Optional[float] = None,  # Not used by HeckAI but kept for compatibility
         timeout: Optional[int] = None,
         proxies: Optional[Dict[str, str]] = None,
-        **kwargs: Any  # Not used by HeckAI but kept for compatibility
+        **kwargs: Any,  # Not used by HeckAI but kept for compatibility
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
         """
         Creates a model response for the given chat conversation.
@@ -58,7 +65,7 @@ class Completions(BaseCompletions):
             "previousQuestion": None,
             "previousAnswer": None,
             "imgUrls": [],
-            "superSmartMode": False
+            "superSmartMode": False,
         }
 
         request_id = f"chatcmpl-{uuid.uuid4()}"
@@ -67,10 +74,18 @@ class Completions(BaseCompletions):
         if stream:
             return self._create_stream(request_id, created_time, model, payload, timeout, proxies)
         else:
-            return self._create_non_stream(request_id, created_time, model, payload, timeout, proxies)
+            return self._create_non_stream(
+                request_id, created_time, model, payload, timeout, proxies
+            )
 
     def _create_stream(
-        self, request_id: str, created_time: int, model: str, payload: Dict[str, Any], timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        payload: Dict[str, Any],
+        timeout: Optional[int] = None,
+        proxies: Optional[Dict[str, str]] = None,
     ) -> Generator[ChatCompletionChunk, None, None]:
         try:
             response = self._client.session.post(
@@ -79,7 +94,7 @@ class Completions(BaseCompletions):
                 json=payload,
                 stream=True,
                 timeout=timeout or self._client.timeout,
-                proxies=proxies or getattr(self._client, "proxies", None)
+                proxies=proxies or getattr(self._client, "proxies", None),
             )
             response.raise_for_status()
 
@@ -104,7 +119,7 @@ class Completions(BaseCompletions):
                 if in_answer:
                     # Fix encoding issues (e.g., emoji) for each chunk
                     try:
-                        data_fixed = data.encode('latin1').decode('utf-8')
+                        data_fixed = data.encode("latin1").decode("utf-8")
                     except (UnicodeEncodeError, UnicodeDecodeError):
                         data_fixed = data
                     streaming_text.append(data_fixed)
@@ -132,7 +147,13 @@ class Completions(BaseCompletions):
             raise IOError(f"HeckAI request failed: {e}") from e
 
     def _create_non_stream(
-        self, request_id: str, created_time: int, model: str, payload: Dict[str, Any], timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        payload: Dict[str, Any],
+        timeout: Optional[int] = None,
+        proxies: Optional[Dict[str, str]] = None,
     ) -> ChatCompletion:
         try:
             answer_lines = []
@@ -143,7 +164,7 @@ class Completions(BaseCompletions):
                 json=payload,
                 stream=True,
                 timeout=timeout or self._client.timeout,
-                proxies=proxies or getattr(self._client, "proxies", None)
+                proxies=proxies or getattr(self._client, "proxies", None),
             )
             response.raise_for_status()
             for line in response.iter_lines(decode_unicode=True):
@@ -166,7 +187,7 @@ class Completions(BaseCompletions):
             full_text = " ".join(x.strip() for x in answer_lines if x.strip())
             # Fix encoding issues (e.g., emoji)
             try:
-                full_text = full_text.encode('latin1').decode('utf-8')
+                full_text = full_text.encode("latin1").decode("utf-8")
             except (UnicodeEncodeError, UnicodeDecodeError):
                 pass
             prompt_tokens = count_tokens(payload.get("question", ""))
@@ -175,16 +196,10 @@ class Completions(BaseCompletions):
             usage = CompletionUsage(
                 prompt_tokens=prompt_tokens,
                 completion_tokens=completion_tokens,
-                total_tokens=total_tokens
+                total_tokens=total_tokens,
             )
-            message = ChatCompletionMessage(
-                role="assistant",
-                content=full_text)
-            choice = Choice(
-                index=0,
-                message=message,
-                finish_reason="stop"
-            )
+            message = ChatCompletionMessage(role="assistant", content=full_text)
+            choice = Choice(index=0, message=message, finish_reason="stop")
             completion = ChatCompletion(
                 id=request_id,
                 choices=[choice],
@@ -197,9 +212,11 @@ class Completions(BaseCompletions):
             print(f"{RED}Error during HeckAI non-stream request: {e}{RESET}")
             raise IOError(f"HeckAI request failed: {e}") from e
 
+
 class Chat(BaseChat):
-    def __init__(self, client: 'HeckAI'):
+    def __init__(self, client: "HeckAI"):
         self.completions = Completions(client)
+
 
 class HeckAI(OpenAICompatibleProvider):
     """
@@ -213,6 +230,7 @@ class HeckAI(OpenAICompatibleProvider):
         )
         print(response.choices[0].message.content)
     """
+
     required_auth = False
     AVAILABLE_MODELS = [
         "google/gemini-2.5-flash-preview",
@@ -223,15 +241,10 @@ class HeckAI(OpenAICompatibleProvider):
         "x-ai/grok-3-mini-beta",
         "meta-llama/llama-4-scout",
         "openai/gpt-5-mini",
-        "openai/gpt-5-nano"
-
+        "openai/gpt-5-nano",
     ]
 
-    def __init__(
-        self,
-        timeout: int = 30,
-        language: str = "English"
-    ):
+    def __init__(self, timeout: int = 30, language: str = "English"):
         """
         Initialize the HeckAI client.
 
@@ -247,11 +260,11 @@ class HeckAI(OpenAICompatibleProvider):
         # Use LitAgent for user-agent
         agent = LitAgent()
         self.headers = {
-            'User-Agent': agent.random(),
-            'Content-Type': 'application/json',
-            'Origin': 'https://heck.ai',
-            'Referer': 'https://heck.ai/',
-            'Connection': 'keep-alive'
+            "User-Agent": agent.random(),
+            "Content-Type": "application/json",
+            "Origin": "https://heck.ai",
+            "Referer": "https://heck.ai/",
+            "Connection": "keep-alive",
         }
 
         self.session = requests.Session()
@@ -273,15 +286,15 @@ class HeckAI(OpenAICompatibleProvider):
                 return available_model
 
         # Default to gemini if no match
-        print(f"{BOLD}Warning: Model '{model}' not found, using default model 'google/gemini-2.0-flash-001'{RESET}")
+        print(
+            f"{BOLD}Warning: Model '{model}' not found, using default model 'google/gemini-2.0-flash-001'{RESET}"
+        )
         return "google/gemini-2.0-flash-001"
 
     @property
-    def models(self):
-        class _ModelList:
-            def list(inner_self):
-                return type(self).AVAILABLE_MODELS
-        return _ModelList()
+    def models(self) -> SimpleModelList:
+        return SimpleModelList(type(self).AVAILABLE_MODELS)
+
 
 # Simple test if run directly
 if __name__ == "__main__":
@@ -299,10 +312,15 @@ if __name__ == "__main__":
                     {"role": "system", "content": "You are a helpful assistant."},
                     {"role": "user", "content": "Say 'Hello' in one word"},
                 ],
-                stream=False
+                stream=False,
             )
 
-            if response and response.choices and response.choices[0].message.content:
+            if (
+                isinstance(response, ChatCompletion)
+                and response.choices
+                and response.choices[0].message
+                and response.choices[0].message.content
+            ):
                 status = "✓"
                 # Truncate response if too long
                 display_text = response.choices[0].message.content.strip()

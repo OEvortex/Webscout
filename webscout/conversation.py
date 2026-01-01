@@ -14,12 +14,15 @@ from litprinter import ic
 
 class Conversation:
     """Handles prompt generation based on history"""
-
-    intro = (
-        "You're a Large Language Model for chatting with people. "
-        "Assume role of the LLM and give your response."
-        # "Refrain from regenerating the conversation between user and LLM."
-    )
+    intro: str
+    status: bool
+    max_tokens_to_sample: int
+    chat_history: str
+    history_format: str
+    file: Optional[str]
+    update_file: bool
+    history_offset: int
+    prompt_allowance: int
 
     def __init__(
         self,
@@ -36,6 +39,10 @@ class Conversation:
             filepath (str, optional): Path to file containing conversation history. Defaults to None.
             update_file (bool, optional): Add new prompts and responses to the file. Defaults to True.
         """
+        self.intro = (
+            "You're a Large Language Model for chatting with people. "
+            "Assume role of the LLM and give your response."
+        )
         self.status = status
         self.max_tokens_to_sample = max_tokens
         self.chat_history = ""

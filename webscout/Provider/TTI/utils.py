@@ -1,5 +1,5 @@
 import time
-from typing import List, Optional
+from typing import List, Optional, Union, cast
 
 from pydantic import BaseModel, Field
 

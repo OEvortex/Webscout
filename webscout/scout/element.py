@@ -12,6 +12,9 @@ class NavigableString(str):
     Mimics BS4's NavigableString for better compatibility.
     """
 
+    # The parent may be a Tag or None
+    parent: Optional["Tag"]
+
     def __new__(cls, text: str):
         """
         Create a new NavigableString instance.
@@ -65,7 +68,7 @@ class Tag:
     Enhanced to closely mimic BS4's Tag class.
     """
 
-    def __init__(self, name: str, attrs: Dict[str, str] = None):
+    def __init__(self, name: str, attrs: Optional[Dict[str, str]] = None):
         """
         Initialize a Tag with name and attributes.
 
@@ -74,10 +77,10 @@ class Tag:
             attrs (dict, optional): Tag attributes
         """
         self.name = name
-        self.attrs = attrs or {}
-        self.contents = []
-        self.parent = None
-        self.string = None  # For single string content
+        self.attrs: Dict[str, str] = attrs or {}
+        self.contents: List[Union["Tag", NavigableString, str]] = []
+        self.parent: Optional["Tag"] = None
+        self._string: Optional[str] = None  # For single string content
 
     def __str__(self):
         """String representation of the tag."""
@@ -337,9 +340,11 @@ class Tag:
             for attr_expr in attr_matches:
                 if "=" in attr_expr:
                     attr_name, attr_value = attr_expr.split("=", 1)
-                    components["attrs"][attr_name.strip()] = attr_value.strip("'\"")
+                    if isinstance(components["attrs"], dict):
+                        components["attrs"][attr_name.strip()] = attr_value.strip("'\"")
                 else:
-                    components["attrs"][attr_expr.strip()] = None
+                    if isinstance(components["attrs"], dict):
+                        components["attrs"][attr_expr.strip()] = None
 
             return components
 
@@ -493,9 +498,11 @@ class Tag:
         for attr_expr in attr_matches:
             if "=" in attr_expr:
                 attr_name, attr_value = attr_expr.split("=", 1)
-                components["attrs"][attr_name.strip()] = attr_value.strip("'\"")
+                if isinstance(components["attrs"], dict):
+                    components["attrs"][attr_name.strip()] = attr_value.strip("'\"")
             else:
-                components["attrs"][attr_expr.strip()] = None
+                if isinstance(components["attrs"], dict):
+                    components["attrs"][attr_expr.strip()] = None
 
         return components
 
@@ -658,27 +665,28 @@ class Tag:
         self.contents.clear()
 
     @property
-    def string(self):
+    def string(self) -> Optional[str]:
         """
         Get the string content of the tag.
-        Returns the combined text of the tag's contents.
+        Returns the explicitly set _string if present or the combined text of the tag's contents.
         """
-        return self.get_text()
+        return self._string if self._string is not None else self.get_text()
 
     @property
-    def text(self):
+    def text(self) -> str:
         """BS4 compatible text property."""
         return self.get_text()
 
     @string.setter
-    def string(self, value):
+    def string(self, value: Optional[str]) -> None:
         """
         Set the string content of the tag.
         Clears existing contents and sets new string value.
 
         Args:
-            value (str): New string content
+            value (str | None): New string content
         """
+        self._string = value
         self.clear()
         if value is not None:
             self.append(value)
@@ -731,7 +739,8 @@ class Tag:
         if self.parent:
             idx = self.parent.contents.index(self)
             for child in reversed(self.contents):
-                child.parent = self.parent
+                if isinstance(child, (Tag, NavigableString)):
+                    child.parent = self.parent
                 self.parent.contents.insert(idx, child)
             self.parent.contents.remove(self)
             self.parent = None

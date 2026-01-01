@@ -8,7 +8,7 @@ from the wttr.in service with proper typing and a consistent interface.
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-import requests
+from curl_cffi.requests import Session
 
 
 class CurrentCondition:
@@ -174,7 +174,8 @@ class WeatherClient:
             Weather object containing all weather data
         """
         try:
-            response = requests.get(f"https://wttr.in/{location}?format=j1", timeout=10)
+            session = Session()
+            response = session.get(f"https://wttr.in/{location}?format=j1", timeout=10)
             response.raise_for_status()
             return Weather(response.json())
         except Exception as e:

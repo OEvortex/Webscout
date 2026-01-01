@@ -3,12 +3,13 @@ Scout LXML Parser - Advanced HTML/XML Parsing with lxml
 """
 
 import re
-from typing import Any, Dict, List, Optional, Union
-
-from lxml import etree
-from lxml import html as lxml_html
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 from ..element import NavigableString, Tag
+
+# lxml is an optional dependency; import lazily at runtime to avoid hard dependency for type checking
+etree = None  # type: ignore
+lxml_html = None  # type: ignore
 
 
 class LXMLParser:
@@ -28,9 +29,23 @@ class LXMLParser:
         self._parsing_errors = []
 
         # Select appropriate parser based on type
+        import importlib
+        global lxml_html, etree
+
         if parser_type == 'html':
+            if lxml_html is None:
+                try:
+                    # Import lazily so lxml remains optional
+                    lxml_html = importlib.import_module("lxml.html")
+                except Exception as e:
+                    raise ImportError("lxml is required for HTML parsing") from e
             self._parser = lxml_html.HTMLParser(recover=True, encoding='utf-8')
         elif parser_type == 'xml':
+            if etree is None:
+                try:
+                    etree = importlib.import_module("lxml.etree")
+                except Exception as e:
+                    raise ImportError("lxml is required for XML parsing") from e
             self._parser = etree.XMLParser(recover=True, encoding='utf-8')
         else:
             raise ValueError(f"Unsupported parser type: {parser_type}")
@@ -51,8 +66,10 @@ class LXMLParser:
 
             # Parse the markup
             if self._parser_type == 'html':
+                assert lxml_html is not None
                 tree = lxml_html.fromstring(markup, parser=self._parser)
             else:
+                assert etree is not None
                 tree = etree.fromstring(markup, parser=self._parser)
 
             # Convert lxml element to Scout Tag
@@ -81,7 +98,7 @@ class LXMLParser:
 
         return markup
 
-    def _convert_element(self, element: Union[etree._Element, lxml_html.HtmlElement]) -> Tag:
+    def _convert_element(self, element: Any) -> Tag:
         """
         Convert lxml element to Scout Tag.
 

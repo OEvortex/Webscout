@@ -6,66 +6,73 @@ import time
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-import requests
+from curl_cffi.requests import Session
 from packaging import version
 
-# Try to import rich for better UI
 try:
     from rich.console import Console
     from rich.panel import Panel
     from rich.text import Text
+
     HAS_RICH = True
 except ImportError:
+
+    class _Dummy:
+        def __init__(self, *_args: Any, **_kwargs: Any) -> None:
+            pass
+
+        def print(self, *_args: Any, **_kwargs: Any) -> None:
+            pass
+
+        @staticmethod
+        def assemble(*_args: Any, **_kwargs: Any) -> str:
+            return ""
+
+    Console = _Dummy  # type: ignore
+    Panel = _Dummy  # type: ignore
+    Text = _Dummy  # type: ignore
     HAS_RICH = False
 
-# Constants
 PYPI_URL = "https://pypi.org/pypi/webscout/json"
 YOUTUBE_URL = "https://youtube.com/@OEvortex"
 GITHUB_URL = "https://github.com/OEvortex/Webscout"
 CACHE_FILE = Path(tempfile.gettempdir()) / "webscout_update_check.cache"
 
-# Create a session for HTTP requests
-session = requests.Session()
+session = Session()
+
 
 def get_installed_version() -> str:
     """Get the currently installed version of webscout."""
-    # 1. Try to get version from the package itself (handles local dev)
     try:
-        # If we are being imported as 'webscout.update_checker'
         from .version import __version__
+
         return __version__
     except (ImportError, ValueError):
-        try:
-            # If we are running as a script inside webscout/
-            import version
-            if hasattr(version, '__version__'):
-                return version.__version__
-        except (ImportError, AttributeError):
-            pass
+        pass
 
-    # 2. Try to import as a top-level package
     try:
         import webscout.version
+
         return webscout.version.__version__
     except (ImportError, AttributeError):
         pass
 
-    # 3. Fallback to metadata (metadata often lags in dev environments)
     try:
-        return importlib.metadata.version('webscout')
+        return importlib.metadata.version("webscout")
     except importlib.metadata.PackageNotFoundError:
         return "0.0.0"
+
 
 def get_pypi_versions() -> Dict[str, Optional[str]]:
     """Get stable and latest versions from PyPI."""
     try:
-        response = session.get(PYPI_URL, timeout=3) # Faster timeout
+        response = session.get(PYPI_URL, timeout=3)
         response.raise_for_status()
         data = response.json()
 
-        stable = data.get('info', {}).get('version')
+        stable = data.get("info", {}).get("version")
 
-        releases = data.get('releases', {}).keys()
+        releases = data.get("releases", {}).keys()
         parsed_versions = []
         for v in releases:
             try:
@@ -80,6 +87,7 @@ def get_pypi_versions() -> Dict[str, Optional[str]]:
     except Exception:
         return {"stable": None, "latest": None}
 
+
 def should_check(force: bool = False) -> bool:
     """Check if we should perform an update check based on cache."""
     if os.environ.get("WEBSCOUT_NO_UPDATE"):
@@ -93,12 +101,12 @@ def should_check(force: bool = False) -> bool:
             return True
 
         last_check = float(CACHE_FILE.read_text().strip())
-        # Check every 12 hours
         if time.time() - last_check > 43200:
             return True
     except Exception:
         return True
     return False
+
 
 def mark_checked() -> Any:
     """Mark the current time as the last update check."""
@@ -107,18 +115,20 @@ def mark_checked() -> Any:
     except Exception:
         pass
 
+
 def is_venv() -> bool:
     """Check if we are running inside a virtual environment."""
-    return (
-        hasattr(sys, 'real_prefix') or
-        (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix)
+    return hasattr(sys, "real_prefix") or (
+        hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix
     )
+
 
 def get_env_name() -> str:
     """Get the name of the current environment."""
     if is_venv():
         return os.path.basename(sys.prefix)
     return "Global"
+
 
 def format_update_message(current: str, new: str, utype: str) -> str:
     """Format the update message with colors and style."""
@@ -128,6 +138,7 @@ def format_update_message(current: str, new: str, utype: str) -> str:
 
     if HAS_RICH:
         from io import StringIO
+
         capture = StringIO()
         console = Console(file=capture, force_terminal=True, width=80)
 
@@ -135,11 +146,20 @@ def format_update_message(current: str, new: str, utype: str) -> str:
             ("A new ", "white"),
             (f"{utype} ", "bold yellow" if utype == "Pre-release" else "bold green"),
             ("version of Webscout is available!\n\n", "white"),
-            ("Current:     ", "white"), (f"{current}", "bold red"), ("\n", ""),
-            ("Latest:      ", "white"), (f"{new}", "bold green"), ("\n\n", ""),
-            ("To update, run: ", "white"), (f"{cmd}", "bold cyan"), ("\n\n", ""),
-            ("Subscribe to my YouTube: ", "dim"), (f"{YOUTUBE_URL}", "dim cyan"), ("\n", ""),
-            ("Star on GitHub: ", "dim"), (f"{GITHUB_URL}", "dim cyan")
+            ("Current:     ", "white"),
+            (f"{current}", "bold red"),
+            ("\n", ""),
+            ("Latest:      ", "white"),
+            (f"{new}", "bold green"),
+            ("\n\n", ""),
+            ("To update, run: ", "white"),
+            (f"{cmd}", "bold cyan"),
+            ("\n\n", ""),
+            ("Subscribe to my YouTube: ", "dim"),
+            (f"{YOUTUBE_URL}", "dim cyan"),
+            ("\n", ""),
+            ("Star on GitHub: ", "dim"),
+            (f"{GITHUB_URL}", "dim cyan"),
         )
 
         panel = Panel(
@@ -147,7 +167,7 @@ def format_update_message(current: str, new: str, utype: str) -> str:
             title="[bold magenta]Update Available[/bold magenta]",
             border_style="bright_blue",
             expand=False,
-            padding=(1, 2)
+            padding=(1, 2),
         )
         console.print(panel)
         return capture.getvalue()
@@ -159,19 +179,26 @@ def format_update_message(current: str, new: str, utype: str) -> str:
             f"\033[1;32mYouTube: {YOUTUBE_URL}\033[0m\n"
         )
 
+
 def format_dev_message(current: str, latest: str) -> str:
     """Format the message for development versions."""
     if HAS_RICH:
         from io import StringIO
+
         capture = StringIO()
         console = Console(file=capture, force_terminal=True, width=80)
 
         content = Text.assemble(
             ("You are running a ", "white"),
             ("Development Version", "bold yellow"),
-            ("\n\nLocal Version: ", "white"), (f"{current}", "bold cyan"), ("\n", ""),
-            ("Latest PyPI:   ", "white"), (f"{latest}", "bold green"), ("\n\n", ""),
-            ("YouTube: ", "dim"), (f"{YOUTUBE_URL}", "dim cyan")
+            ("\n\nLocal Version: ", "white"),
+            (f"{current}", "bold cyan"),
+            ("\n", ""),
+            ("Latest PyPI:   ", "white"),
+            (f"{latest}", "bold green"),
+            ("\n\n", ""),
+            ("YouTube: ", "dim"),
+            (f"{YOUTUBE_URL}", "dim cyan"),
         )
 
         panel = Panel(
@@ -179,7 +206,7 @@ def format_dev_message(current: str, latest: str) -> str:
             title="[bold blue]Webscout Dev Mode[/bold blue]",
             border_style="yellow",
             expand=False,
-            padding=(1, 2)
+            padding=(1, 2),
         )
         console.print(panel)
         return capture.getvalue()
@@ -191,6 +218,7 @@ def format_dev_message(current: str, latest: str) -> str:
             f"\033[1;32mYouTube: {YOUTUBE_URL}\033[0m\n"
         )
 
+
 def check_for_updates(force: bool = False) -> Optional[str]:
     """
     Check if a newer version of Webscout is available.
@@ -201,7 +229,6 @@ def check_for_updates(force: bool = False) -> Optional[str]:
     Returns:
         Optional[str]: Formatted update message or None.
     """
-    # Don't check if not in a terminal (unless forced)
     if not sys.stdout.isatty() and not force:
         return None
 
@@ -213,44 +240,41 @@ def check_for_updates(force: bool = False) -> Optional[str]:
         installed_v = version.parse(installed_str)
 
         pypi = get_pypi_versions()
-        mark_checked() # Mark even if it fails or no update, to avoid constant hitting
+        mark_checked()
 
-        if not pypi['stable']:
+        stable_ver = pypi.get("stable")
+        latest_ver = pypi.get("latest")
+
+        if not stable_ver or not latest_ver:
             return None
 
-        latest_stable_str = pypi['stable']
+        latest_stable_str = stable_ver
         latest_stable_v = version.parse(latest_stable_str)
 
-        latest_any_str = pypi['latest']
+        latest_any_str = latest_ver
         latest_any_v = version.parse(latest_any_str)
 
-        # Decide what to recommend
         is_prerelease = installed_v.is_prerelease
 
         if is_prerelease:
-            # User is on pre-release, they should know about ANY newer version
             if installed_v < latest_any_v:
                 utype = "Pre-release" if latest_any_v.is_prerelease else "Stable"
                 return format_update_message(installed_str, latest_any_str, utype)
             elif installed_v > latest_any_v:
-                # User is on a newer pre-release than what's on PyPI
                 return format_dev_message(installed_str, latest_any_str)
         else:
-            # User is on stable
             if installed_v < latest_stable_v:
                 return format_update_message(installed_str, latest_stable_str, "Stable")
             elif installed_v > latest_stable_v:
-                # User is on a newer version (maybe a local build or unreleased stable)
                 return format_dev_message(installed_str, latest_stable_str)
 
     except Exception:
-        pass # Be silent on errors during auto-check
+        pass
 
     return None
+
 
 if __name__ == "__main__":
     msg = check_for_updates(force=True)
     if msg:
         print(msg)
-    else:
-        print("Webscout is up to date!")

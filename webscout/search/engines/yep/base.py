@@ -17,10 +17,11 @@ class YepBase:
     ):
         self.base_url = "https://api.yep.com/fs/2/search"
         self.timeout = timeout
+        from typing import Any, Optional, cast
         self.session = Session(
-            proxies=proxies,
+            proxies=cast(Any, proxies),
             verify=verify,
-            impersonate=impersonate,
+            impersonate=cast(Any, impersonate),
             timeout=timeout,
         )
         self.session.headers.update(

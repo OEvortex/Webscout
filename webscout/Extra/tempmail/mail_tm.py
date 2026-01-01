@@ -7,7 +7,7 @@ import json
 import random
 from typing import Dict, List, Optional, Tuple
 
-import requests
+from curl_cffi.requests import Session
 
 from ...scout import Scout
 from .base import (
@@ -53,11 +53,12 @@ class MailTM(TempMailProvider):
     def get_domain(self) -> str:
         """Get available domain for email creation"""
         try:
-            resp = requests.get(f"{self.url_domain}?page=1")
+            session = Session()
+            resp = session.get(f"{self.url_domain}?page=1")
             resp.raise_for_status()
             ans = json.loads(str(resp.text))
             return ans['hydra:member'][0]['domain']
-        except requests.exceptions.HTTPError:
+        except Exception:
             return ""
 
     def create_account(self) -> bool:
@@ -73,7 +74,8 @@ class MailTM(TempMailProvider):
         # Register the account
         myobj = {'address': self.email, "password": self.password}
         try:
-            resp = requests.post(self.url_accounts, json=myobj)
+            session = Session()
+            resp = session.post(self.url_accounts, json=myobj)
             resp.raise_for_status()
             ans = json.loads(str(resp.text))
             self.account_id = ans['id']
@@ -82,7 +84,7 @@ class MailTM(TempMailProvider):
             self.get_token()
             return True if self.token else False
 
-        except requests.exceptions.HTTPError:
+        except Exception:
             return False
 
     def get_token(self) -> str:
@@ -92,13 +94,14 @@ class MailTM(TempMailProvider):
 
         myobj = {'address': self.email, "password": self.password}
         try:
-            resp = requests.post(self.url_token, json=myobj)
+            session = Session()
+            resp = session.post(self.url_token, json=myobj)
             resp.raise_for_status()
             ans = json.loads(str(resp.text))
             self.token = ans['token']
             self.header = {'Authorization': 'Bearer ' + self.token}
             return self.token
-        except requests.exceptions.HTTPError:
+        except Exception:
             return ""
 
     def get_message_detail(self, msg_id: str) -> str:
@@ -107,7 +110,8 @@ class MailTM(TempMailProvider):
             return ""
 
         try:
-            resp = requests.get(f"{self.url_msg}/{msg_id}", headers=self.header)
+            session = Session()
+            resp = session.get(f"{self.url_msg}/{msg_id}", headers=self.header)
             resp.raise_for_status()
             ans = json.loads(str(resp.text))
 
@@ -117,7 +121,7 @@ class MailTM(TempMailProvider):
             # Extract text with Scout's get_text method
             return scout.get_text(strip=True)
 
-        except requests.exceptions.HTTPError:
+        except Exception:
             return ""
 
     def get_messages(self) -> List[Dict]:
@@ -126,7 +130,8 @@ class MailTM(TempMailProvider):
             return []
 
         try:
-            resp = requests.get(f"{self.url_msg}?page=1", headers=self.header)
+            session = Session()
+            resp = session.get(f"{self.url_msg}?page=1", headers=self.header)
             resp.raise_for_status()
             ans = json.loads(str(resp.text))
 
@@ -144,7 +149,7 @@ class MailTM(TempMailProvider):
                     }
                     messages.append(msg_dict)
             return messages
-        except requests.exceptions.HTTPError:
+        except Exception:
             return []
 
     def check_new_messages(self) -> List[Dict]:
@@ -168,7 +173,8 @@ class MailTM(TempMailProvider):
             return False
 
         try:
-            resp = requests.delete(f"{self.url_accounts}/{self.account_id}", headers=self.header)
+            session = Session()
+            resp = session.delete(f"{self.url_accounts}/{self.account_id}", headers=self.header)
             resp.raise_for_status()
             self.email = None
             self.password = None
@@ -177,7 +183,7 @@ class MailTM(TempMailProvider):
             self.header = None
             self.messages_count = 0
             return True
-        except requests.exceptions.HTTPError:
+        except Exception:
             return False
 
     def get_account_info(self) -> Dict:
@@ -186,10 +192,11 @@ class MailTM(TempMailProvider):
             return {}
 
         try:
-            resp = requests.get(self.url_me, headers=self.header)
+            session = Session()
+            resp = session.get(self.url_me, headers=self.header)
             resp.raise_for_status()
             return json.loads(str(resp.text))
-        except requests.exceptions.HTTPError:
+        except Exception:
             return {}
 
 
@@ -241,6 +248,9 @@ class MailTMAsync(AsyncTempMailProvider):
         if not self.session:
             await self.initialize()
 
+        if not self.session:
+            return ""
+
         try:
             async with self.session.get(f"{self.url_domain}?page=1") as resp:
                 resp.raise_for_status()
@@ -253,6 +263,9 @@ class MailTMAsync(AsyncTempMailProvider):
         """Create a new email account"""
         if not self.session:
             await self.initialize()
+
+        if not self.session:
+            return "", ""
 
         if not domain:
             domain = await self.get_domain()
@@ -285,7 +298,7 @@ class MailTMAsync(AsyncTempMailProvider):
 
     async def _get_token(self) -> str:
         """Get authentication token"""
-        if not self.email or not self.password:
+        if not self.email or not self.password or not self.session:
             return ""
 
         data = {'address': self.email, 'password': self.password}
@@ -301,7 +314,7 @@ class MailTMAsync(AsyncTempMailProvider):
 
     async def get_message_detail(self, msg_id: str) -> str:
         """Get detailed content of a message"""
-        if not self.header:
+        if not self.header or not self.session:
             return ""
 
         try:
@@ -321,7 +334,7 @@ class MailTMAsync(AsyncTempMailProvider):
 
     async def get_messages(self) -> List[Dict]:
         """Get messages for a temporary email"""
-        if not self.header:
+        if not self.header or not self.session:
             return []
 
         try:
@@ -349,7 +362,7 @@ class MailTMAsync(AsyncTempMailProvider):
 
     async def delete_email(self) -> bool:
         """Delete a temporary email"""
-        if not self.header or not self.account_id:
+        if not self.header or not self.account_id or not self.session:
             return False
 
         try:

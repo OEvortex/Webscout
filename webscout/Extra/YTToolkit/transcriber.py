@@ -14,7 +14,7 @@ from functools import lru_cache
 from typing import Dict, List, Optional, Union
 from xml.etree import ElementTree
 
-import requests
+from curl_cffi.requests import Session
 
 from webscout.exceptions import (
     CookiePathInvalidError,
@@ -52,7 +52,7 @@ class YTTranscriber:
     @classmethod
     def _get_session(cls):
         if cls._session is None:
-            cls._session = requests.Session()
+            cls._session = Session()
             cls._session.headers.update({
                 'User-Agent': LitAgent().random()
             })
@@ -61,8 +61,8 @@ class YTTranscriber:
     @classmethod
     @lru_cache(maxsize=100)
     def get_transcript(cls, video_url: str, languages: Optional[str] = 'en',
-                      proxies: Dict[str, str] = None,
-                      cookies: str = None,
+                      proxies: Optional[Dict[str, str]] = None,
+                      cookies: Optional[str] = None,
                       preserve_formatting: bool = False) -> List[Dict[str, Union[str, float]]]:
         """
         Retrieves the transcript for a given YouTube video URL.
@@ -121,7 +121,7 @@ class YTTranscriber:
         raise InvalidVideoIdError(video_url)
 
     @staticmethod
-    def _load_cookies(cookies: str, video_id: str) -> None:
+    def _load_cookies(cookies: str, video_id: str) -> cookiejar.MozillaCookieJar:
         """Loads cookies from a file."""
         try:
             cj = cookiejar.MozillaCookieJar(cookies)
@@ -134,7 +134,7 @@ class YTTranscriber:
 class TranscriptListFetcher:
     """Fetches the list of transcripts for a YouTube video using InnerTube API."""
 
-    def __init__(self, http_client: requests.Session):
+    def __init__(self, http_client: Session):
         """Initializes TranscriptListFetcher."""
         self._http_client = http_client
 
@@ -251,7 +251,7 @@ class TranscriptList:
         Factory method for TranscriptList.
 
         :param http_client: http client which is used to make the transcript retrieving http calls
-        :type http_client: requests.Session
+        :type http_client: Session
         :param video_id: the id of the video this TranscriptList is for
         :type video_id: str
         :param captions_json: the JSON parsed from the YouTube API
@@ -582,7 +582,7 @@ def _raise_http_errors(response, video_id):
             raise TooManyRequestsError(video_id)
         response.raise_for_status()
         return response
-    except requests.exceptions.HTTPError as error:
+    except Exception as error:
         raise YouTubeRequestFailedError(video_id, error)
 
 

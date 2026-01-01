@@ -23,6 +23,7 @@ Welcome to the central entry point for everything you need to know about Webscou
 | LitPrinter | Debug printing companion shipped with Webscout | [docs/litprinter.md](litprinter.md) |
 | LitAgent | Advanced User Agent & IP rotation toolkit | [docs/litagent.md](litagent.md) |
 | Weather toolkit | Weather + ASCII weather helpers inside `webscout/Extra` | [docs/weather.md](weather.md) |
+| ZeroArt ASCII generator | Zero-dependency ASCII art text generator with multiple fonts and effects | [docs/zeroart.md](zeroart.md) |
 | Provider matrix | Complete list of providers and locations | [Provider.md](../Provider.md) |
 
 ## 🧭 How to Use This Hub

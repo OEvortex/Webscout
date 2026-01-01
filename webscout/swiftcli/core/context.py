@@ -33,11 +33,11 @@ class Context:
 
     def __init__(
         self,
-        cli: 'CLI',  # type: ignore
-        parent: Optional['Context'] = None,
+        cli: Optional["CLI"] = None,
+        parent: Optional["Context"] = None,
         command: Optional[str] = None,
         obj: Any = None,
-        debug: bool = False
+        debug: bool = False,
     ):
         self.cli = cli
         self.parent = parent
@@ -69,15 +69,11 @@ class Context:
         """
         self.params[name] = value
 
-    def get_parent_context(self) -> Optional['Context']:
+    def get_parent_context(self) -> Optional["Context"]:
         """Get the parent context if it exists."""
         return self.parent
 
-    def create_child_context(
-        self,
-        command: Optional[str] = None,
-        obj: Any = None
-    ) -> 'Context':
+    def create_child_context(self, command: Optional[str] = None, obj: Any = None) -> "Context":
         """
         Create a new child context.
 
@@ -88,16 +84,10 @@ class Context:
         Returns:
             New child context
         """
-        return Context(
-            cli=self.cli,
-            parent=self,
-            command=command,
-            obj=obj,
-            debug=self.debug
-        )
+        return Context(cli=self.cli, parent=self, command=command, obj=obj, debug=self.debug)
 
     @property
-    def root_context(self) -> 'Context':
+    def root_context(self) -> "Context":
         """Get the root context by traversing up the parent chain."""
         ctx = self
         while ctx.parent is not None:

@@ -7,9 +7,9 @@ from datetime import datetime
 from os import getcwd, makedirs, path
 from threading import Thread
 from time import sleep
-from typing import Union
+from typing import Any, Optional, Tuple, Union
 
-import requests
+from curl_cffi.requests import Session
 from colorama import Fore
 from tqdm import tqdm
 
@@ -18,12 +18,12 @@ from webscout.swiftcli import CLI, argument, option
 from webscout.version import __prog__
 
 # Define cache directory using tempfile
-user_cache_dir = os.path.join(tempfile.gettempdir(), 'webscout')
+user_cache_dir = os.path.join(tempfile.gettempdir(), "webscout")
 if not os.path.exists(user_cache_dir):
     os.makedirs(user_cache_dir)
 
 
-session = requests.session()
+session = Session()
 
 headers = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -35,8 +35,10 @@ headers = {
 
 session.headers.update(headers)
 
+
 def get_excep(e):
     return e.args[1] if len(e.args) > 1 else e
+
 
 appdir = user_cache_dir
 
@@ -44,10 +46,7 @@ if not path.isdir(appdir):
     try:
         makedirs(appdir)
     except Exception as e:
-        print(
-            f"Error : {get_excep(e)}  while creating site directory - "
-            + appdir
-        )
+        print(f"Error : {get_excep(e)}  while creating site directory - " + appdir)
 
 history_path = path.join(appdir, "history.json")
 
@@ -98,7 +97,7 @@ class utils:
         """
         try:
             if not path.isfile(history_path):
-                data1 = {__prog__: []}
+                data1: dict[str, list[Any]] = {__prog__: []}
                 with open(history_path, "w") as fh:
                     json.dump(data1, fh)
             with open(history_path) as fh:
@@ -120,7 +119,7 @@ class utils:
         try:
             resp = []
             if not path.isfile(history_path):
-                data1 = {__prog__: []}
+                data1: dict[str, list[Any]] = {__prog__: []}
                 with open(history_path, "w") as fh:
                     json.dump(data1, fh)
             with open(history_path) as fh:
@@ -135,6 +134,11 @@ class utils:
 
 
 class first_query:
+    raw: dict
+    vitems: list
+    vid: str
+    title: str
+
     def __init__(self, query: str):
         r"""Initializes first query class
         :param query: Video name or youtube link
@@ -145,6 +149,10 @@ class first_query:
         self.payload = self.__get_payload()
         self.processed = False
         self.is_link = False
+        self.raw = {}
+        self.vitems = []
+        self.vid = ""
+        self.title = ""
 
     def __get_payload(self):
         return {
@@ -193,14 +201,21 @@ class first_query:
             self.is_link = not hasattr(self, "vitems")
             self.processed = True
         else:
-            raise Exception(
-                f"First query failed - [{resp.status_code} : {resp.reason}]"
-            )
+            raise Exception(f"First query failed - [{resp.status_code} : {resp.reason}]")
         return self
 
 
 class second_query:
-    def __init__(self, query_one: object, item_no: int = 0):
+    vid: str
+    a: str
+    title: str
+    video: dict
+    audio: dict
+    related: list
+    raw: dict
+    video_dict: Optional[dict]
+
+    def __init__(self, query_one: first_query, item_no: int = 0):
         r"""Initializes second_query class
         :param query_one: Query_one class
         :type query_one: object
@@ -214,7 +229,13 @@ class second_query:
         self.processed = False
         self.video_dict = None
         self.url = "https://www.y2mate.com/mates/analyzeV2/ajax"
-        # self.payload  = self.__get_payload()
+        self.vid = ""
+        self.a = ""
+        self.title = ""
+        self.video = {}
+        self.audio = {}
+        self.related = []
+        self.raw = {}
 
     def __str__(self):
         return """
@@ -259,16 +280,17 @@ class second_query:
     ]
 }
             """
-    def get_item(self, item_no: int = None):
+
+    def get_item(self, item_no: Optional[int] = None):
         r"""Return specific items on `self.query_one.vitems`"""
         if self.video_dict:
             return self.video_dict
         if self.query_one.is_link:
             return {"v": self.query_one.vid, "t": self.query_one.title}
         all_items = self.query_one.vitems
-        assert (
-            self.item_no < len(all_items) - 1
-        ), "The item_no  is greater than largest item's index -  try lower value"
+        assert self.item_no < len(all_items) - 1, (
+            "The item_no  is greater than largest item's index -  try lower value"
+        )
 
         return self.query_one.vitems[item_no or self.item_no]
 
@@ -299,9 +321,7 @@ class second_query:
         self.processed = False
         if item_no:
             self.item_no = item_no
-        okay_status, resp = utils.post(
-            self.url, data=self.get_payload(), timeout=timeout
-        )
+        okay_status, resp = utils.post(self.url, data=self.get_payload(), timeout=timeout)
 
         if okay_status:
             dict_data = resp.json()
@@ -318,7 +338,7 @@ class second_query:
 
 
 class third_query:
-    def __init__(self, query_two: object):
+    def __init__(self, query_two: second_query):
         assert query_two.processed, "Unprocessed second_query object parsed"
         self.query_two = query_two
         self.url = "https://www.y2mate.com/mates/convertV2/index"
@@ -369,7 +389,7 @@ class third_query:
         self,
         format: str = "mp4",
         quality="auto",
-        resolver: str = None,
+        resolver: Optional[str] = None,
         timeout: int = 30,
     ):
         r"""
@@ -385,13 +405,11 @@ class third_query:
             resolver = "mp4" if format == "mp4" else "mp3"
         if format == "mp3" and quality == "auto":
             quality = "128kbps"
-        assert (
-            format in self.formats
-        ), f"'{format}' is not in supported formats - {self.formats}"
+        assert format in self.formats, f"'{format}' is not in supported formats - {self.formats}"
 
-        assert (
-            quality in self.qualities[format]
-        ), f"'{quality}' is not in supported qualities - {self.qualities[format]}"
+        assert quality in self.qualities[format], (
+            f"'{quality}' is not in supported qualities - {self.qualities[format]}"
+        )
 
         items = self.query_two.video if format == "mp4" else self.query_two.audio
         hunted = []
@@ -443,7 +461,7 @@ class Handler:
     def __init__(
         self,
         query: str,
-        author: str = None,
+        author: Optional[str] = None,
         timeout: int = 30,
         confirm: bool = False,
         unique: bool = False,
@@ -466,14 +484,15 @@ class Handler:
         self.query = query
         self.author = author
         self.timeout = timeout
-        self.keyword = None
+        self.keyword: Optional[str] = None
         self.confirm = confirm
         self.unique = unique
         self.thread = thread
-        self.vitems = []
-        self.related = []
-        self.dropped = []
+        self.vitems: list[dict[str, str]] = []
+        self.related: list[dict[str, str]] = []
+        self.dropped: list[str] = []
         self.total = 1
+        self.query_one: Optional[Any] = None
         self.saved_videos = utils.get_history()
 
     def __str__(self):
@@ -508,13 +527,13 @@ class Handler:
 
     def __make_first_query(self):
         r"""Sets query_one attribute to `self`"""
-        query_one = first_query(self.query)
-        self.__setattr__("query_one", query_one.main(self.timeout))
+        q_one = first_query(self.query)
+        self.query_one = q_one.main(self.timeout)
         if not self.query_one.is_link:
             self.vitems.extend(self.__filter_videos(self.query_one.vitems))
 
     @utils.error_handler(exit_on_error=True)
-    def __verify_item(self, second_query_obj) -> bool:
+    def __verify_item(self, second_query_obj: second_query) -> Tuple[bool, str]:
         video_id = second_query_obj.vid
         video_author = second_query_obj.a
         video_title = second_query_obj.title
@@ -523,13 +542,13 @@ class Handler:
                 return False, "Duplicate"
             if self.confirm:
                 choice = confirm_from_user(
-                    f">> Re-download : {Fore.GREEN+video_title+Fore.RESET} by {Fore.YELLOW+video_author+Fore.RESET}"
+                    f">> Re-download : {Fore.GREEN}{video_title}{Fore.RESET} by {Fore.YELLOW}{video_author}{Fore.RESET}"
                 )
                 print("\n[*] Ok processing...", end="\r")
                 return choice, "User's choice"
         if self.confirm:
             choice = confirm_from_user(
-                f">> Download : {Fore.GREEN+video_title+Fore.RESET} by {Fore.YELLOW+video_author+Fore.RESET}"
+                f">> Download : {Fore.GREEN}{video_title}{Fore.RESET} by {Fore.YELLOW}{video_author}{Fore.RESET}"
             )
             print("\n[*] Ok processing...", end="\r")
             return choice, "User's choice"
@@ -537,6 +556,7 @@ class Handler:
 
     def __make_second_query(self):
         r"""Links first query with 3rd query"""
+        assert self.query_one is not None, "First query failed"
         init_query_two = second_query(self.query_one)
         x = 0
         if not self.query_one.is_link:
@@ -553,15 +573,13 @@ class Handler:
                         if not yes_download:
                             self.dropped.append(query_2.vid)
                             continue
-                        self.related.append(query_2.related)
+                        self.related.extend(query_2.related)
                         yield query_2
                         x += 1
                         if x >= self.total:
                             break
                 else:
-                    print(
-                        f"Dropping unprocessed query_two object of index {x}"
-                    )
+                    print(f"Dropping unprocessed query_two object of index {x}")
                     yield
 
         else:
@@ -577,19 +595,15 @@ class Handler:
                         init_query_two.video_dict = video_dict
                         query_2 = init_query_two.main(timeout=self.timeout)
                         if query_2.processed:
-                            if (
-                                self.author
-                                and self.author.lower() not in query_2.a.lower()
-                            ):
+                            if self.author and self.author.lower() not in query_2.a.lower():
                                 continue
                             else:
                                 yes_download, reason = self.__verify_item(query_2)
                                 if not yes_download:
-
                                     self.dropped.append(query_2.vid)
                                     continue
 
-                                self.related.append(query_2.related)
+                                self.related.extend(query_2.related)
                                 yield query_2
                                 x += 1
                                 if x >= self.total:
@@ -603,10 +617,10 @@ class Handler:
         self,
         format: str = "mp4",
         quality: str = "auto",
-        resolver: str = None,
+        resolver: Optional[str] = None,
         limit: int = 1,
-        keyword: str = None,
-        author: str = None,
+        keyword: Optional[str] = None,
+        author: Optional[str] = None,
     ):
         r"""Generate and yield video dictionary
         :param format: (Optional) Media format mp4/mp3
@@ -629,16 +643,13 @@ class Handler:
             if query_two_obj:
                 self.vitems.extend(query_two_obj.related)
                 yield third_query(query_two_obj).main(
-                    **dict(
-                        format=format,
-                        quality=quality,
-                        resolver=resolver,
-                        timeout=self.timeout,
-                    )
+                    format=format,
+                    quality=quality,
+                    resolver=resolver,
+                    timeout=self.timeout,
                 )
 
-
-    def generate_filename(self, third_dict: dict, naming_format: str = None) -> str:
+    def generate_filename(self, third_dict: dict, naming_format: Optional[str] = None) -> str:
         r"""Generate filename based on the response of `third_query`
         :param third_dict: response of `third_query.main()` object
         :param naming_format: (Optional) Format for generating filename based on `third_dict` keys
@@ -675,10 +686,10 @@ class Handler:
     def auto_save(
         self,
         dir: str = "",
-        iterator: object = None,
+        iterator: Optional[Any] = None,
         progress_bar=True,
         quiet: bool = False,
-        naming_format: str = None,
+        naming_format: Optional[str] = None,
         chunk_size: int = 512,
         play: bool = False,
         resume: bool = False,
@@ -744,7 +755,7 @@ class Handler:
         dir: str = "",
         progress_bar=True,
         quiet: bool = False,
-        naming_format: str = None,
+        naming_format: Optional[str] = None,
         chunk_size: int = 512,
         play: bool = False,
         resume: bool = False,
@@ -772,17 +783,17 @@ class Handler:
         :rtype: None
         """
         if third_dict:
-            assert third_dict.get(
-                "dlink"
-            ), "The video selected does not support that quality, try lower qualities."
+            assert third_dict.get("dlink"), (
+                "The video selected does not support that quality, try lower qualities."
+            )
             if third_dict.get("mess"):
                 pass
 
             current_downloaded_size = 0
-            current_downloaded_size_in_mb = 0
+            current_downloaded_size_in_mb = 0.0
             filename = self.generate_filename(third_dict, naming_format)
             save_to = path.join(dir, filename)
-            mod_headers = headers
+            mod_headers: dict[str, str] = headers
 
             if resume:
                 assert path.exists(save_to), f"File not found in path - '{save_to}'"
@@ -793,30 +804,22 @@ class Handler:
                     current_downloaded_size / 1000000, 2
                 )  # convert to mb
 
-            resp = requests.get(third_dict["dlink"], stream=True, headers=mod_headers)
+            resp = session.get(third_dict["dlink"], stream=True, headers=mod_headers)
 
             default_content_length = 0
-            size_in_bytes = int(
-                resp.headers.get("content-length", default_content_length)
-            )
+            size_in_bytes = int(resp.headers.get("content-length", default_content_length))
             if not size_in_bytes:
                 if resume:
-                    raise FileExistsError(
-                        f"Download completed for the file in path - '{save_to}'"
-                    )
+                    raise FileExistsError(f"Download completed for the file in path - '{save_to}'")
                 else:
-                    raise Exception(
-                        f"Cannot download file of content-length {size_in_bytes} bytes"
-                    )
+                    raise Exception(f"Cannot download file of content-length {size_in_bytes} bytes")
 
             if resume:
-                assert (
-                    size_in_bytes != current_downloaded_size
-                ), f"Download completed for the file in path - '{save_to}'"
+                assert size_in_bytes != current_downloaded_size, (
+                    f"Download completed for the file in path - '{save_to}'"
+                )
 
-            size_in_mb = (
-                round(size_in_bytes / 1000000, 2) + current_downloaded_size_in_mb
-            )
+            size_in_mb = round(size_in_bytes / 1000000, 2) + current_downloaded_size_in_mb
             chunk_size_in_bytes = chunk_size * 1024
 
             third_dict["saved_to"] = (
@@ -824,8 +827,10 @@ class Handler:
                 if any([save_to.startswith("/"), ":" in save_to])
                 else path.join(getcwd(), dir, filename)
             )
+
             def try_play_media():
-                return (launch_media(third_dict["saved_to"]) if play else None)
+                return launch_media(third_dict["saved_to"]) if play else None
+
             saving_mode = "ab" if resume else "wb"
             if progress_bar:
                 if not quiet:
@@ -857,7 +862,6 @@ class Handler:
                 return save_to
 
 
-
 mp4_qualities = [
     "4k",
     "1080p",
@@ -874,17 +878,18 @@ mp3_qualities = ["mp3", "m4a", ".m4a", "128kbps", "192kbps", "328kbps"]
 resolvers = ["m4a", "3gp", "mp4", "mp3"]
 media_qualities = mp4_qualities + mp3_qualities
 
+
 def launch_media(filepath):
     """
     Launch media file using default system application
     """
     try:
-        if sys.platform.startswith('darwin'):  # macOS
-            subprocess.call(('open', filepath))
-        elif sys.platform.startswith('win'):  # Windows
+        if sys.platform.startswith("darwin"):  # macOS
+            subprocess.call(("open", filepath))
+        elif sys.platform.startswith("win"):  # Windows
             os.startfile(filepath)
-        elif sys.platform.startswith('linux'):  # Linux
-            subprocess.call(('xdg-open', filepath))
+        elif sys.platform.startswith("linux"):  # Linux
+            subprocess.call(("xdg-open", filepath))
     except Exception as e:
         print(f"Error launching media: {e}")
 
@@ -893,8 +898,7 @@ def confirm_from_user(message, default=False):
     """
     Prompt user for confirmation
     """
-    valid = {"yes": True, "y": True, "ye": True,
-             "no": False, "n": False}
+    valid = {"yes": True, "y": True, "ye": True, "no": False, "n": False}
 
     if default is None:
         prompt = " [y/n] "
@@ -905,7 +909,7 @@ def confirm_from_user(message, default=False):
 
     while True:
         choice = input(message + prompt).lower()
-        if default is not None and choice == '':
+        if default is not None and choice == "":
             return default
         elif choice in valid:
             return valid[choice]
@@ -915,6 +919,7 @@ def confirm_from_user(message, default=False):
 
 # Create CLI app
 app = CLI(name="ytdownloader", help="YouTube Video Downloader CLI")
+
 
 @app.command()
 @option("--author", help="Specify video author/channel")
@@ -932,25 +937,17 @@ def download(query, author, timeout, confirm, unique, thread, format, quality, l
 
     # Create handler with parsed arguments
     handler = Handler(
-        query=query,
-        author=author,
-        timeout=timeout,
-        confirm=confirm,
-        unique=unique,
-        thread=thread
+        query=query, author=author, timeout=timeout, confirm=confirm, unique=unique, thread=thread
     )
 
     # Run download process
-    handler.auto_save(
-        format=format,
-        quality=quality,
-        limit=limit,
-        keyword=keyword
-    )
+    handler.auto_save(format=format, quality=quality, limit=limit, keyword=keyword)
+
 
 # Replace get_args function with swiftcli's argument parsing
 def main():
     app.run()
+
 
 if __name__ == "__main__":
     main()

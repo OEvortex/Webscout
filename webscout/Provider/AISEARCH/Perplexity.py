@@ -65,7 +65,8 @@ class Perplexity(AISearch):
         )
 
         if proxies:
-            self.session.proxies.update(proxies)
+            from typing import cast
+            self.session.proxies.update(cast(Any, proxies))
 
         # Initialize session info if possible
         try:
@@ -177,21 +178,18 @@ class Perplexity(AISearch):
     def search(
         self,
         prompt: str,
-        mode: str = "auto",
-        model: Optional[str] = None,
-        sources: Optional[list] = None,
         stream: bool = False,
         raw: bool = False,
-        language: str = "en-US",
-        follow_up: Optional[Dict[str, Any]] = None,
-        incognito: bool = False,
-        max_retries: int = 3,
-    ) -> Union[
-        SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None], List[Any]
-    ]:
+        **kwargs: Any,
+    ) -> Union[SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None], List[Any], Dict[str, Any], str]:
         """Search using the Perplexity API and get AI-generated responses."""
-        if sources is None:
-            sources = ["web"]
+        sources = kwargs.get("sources", ["web"])
+        follow_up = kwargs.get("follow_up")
+        incognito = kwargs.get("incognito", True)
+        language = kwargs.get("language", "en-US")
+        mode = kwargs.get("mode", "auto")
+        model = kwargs.get("model")
+        max_retries = kwargs.get("max_retries", 3)
 
         # Prepare request data
         json_data: Dict[str, Any] = {

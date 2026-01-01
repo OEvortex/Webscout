@@ -1,11 +1,12 @@
 """
-Install the Google AI Python SDK
+Gemini API Provider
 
-$ pip install google-generativeai
+Uses curl_cffi to interact with Google's Gemini API via OpenAI-compatible endpoint.
+Requires a valid Gemini API key.
 """
 
 import json
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
@@ -20,6 +21,7 @@ class GEMINIAPI(Provider):
     """
     A class to interact with the Gemini API using OpenAI-compatible endpoint with LitAgent user-agent.
     """
+
     required_auth = True
 
     @classmethod
@@ -44,11 +46,13 @@ class GEMINIAPI(Provider):
             response = temp_session.get(
                 "https://generativelanguage.googleapis.com/v1beta/openai/models",
                 headers=headers,
-                impersonate="chrome110"
+                impersonate="chrome110",
             )
 
             if response.status_code != 200:
-                raise Exception(f"API request failed with status {response.status_code}: {response.text}")
+                raise Exception(
+                    f"API request failed with status {response.status_code}: {response.text}"
+                )
 
             data = response.json()
             if "data" in data and isinstance(data["data"], list):
@@ -84,7 +88,7 @@ class GEMINIAPI(Provider):
         act: Optional[str] = None,
         base_url: str = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
         system_prompt: str = "You are a helpful assistant.",
-        browser: str = "chrome"
+        browser: str = "chrome",
     ):
         """Initializes the Gemini API client."""
         self.url = base_url
@@ -104,9 +108,9 @@ class GEMINIAPI(Provider):
 
         # Initialize curl_cffi Session
         self.session = Session()
-        # Update curl_cffi session headers and proxies
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies  # Assign proxies directly
+        if proxies:
+            self.session.proxies.update(cast(Any, proxies))
         self.system_prompt = system_prompt
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
@@ -132,20 +136,21 @@ class GEMINIAPI(Provider):
             for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
-
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
+        act_prompt = (
+            AwesomePrompts().get_act(
+                cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
+        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
 
-    def refresh_identity(self, browser: str = None):
+    def refresh_identity(self, browser: Optional[str] = None):
         """
         Refreshes the browser identity fingerprint.
 
@@ -156,10 +161,12 @@ class GEMINIAPI(Provider):
         self.fingerprint = self.agent.generate_fingerprint(browser)
 
         # Update headers with new fingerprint (only relevant ones)
-        self.headers.update({
-            "Accept": self.fingerprint["accept"],
-            "Accept-Language": self.fingerprint["accept_language"],
-        })
+        self.headers.update(
+            {
+                "Accept": self.fingerprint["accept"],
+                "Accept-Language": self.fingerprint["accept_language"],
+            }
+        )
 
         # Update session headers
         self.session.headers.update(self.headers)
@@ -182,7 +189,9 @@ class GEMINIAPI(Provider):
                     conversation_prompt if conversationally else prompt
                 )
             else:
-                raise exceptions.FailedToGenerateResponseError(f"Optimizer is not one of {self.__available_optimizers}")
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Optimizer is not one of {self.__available_optimizers}"
+                )
 
         # Payload construction
         payload = {
@@ -207,7 +216,7 @@ class GEMINIAPI(Provider):
                     data=json.dumps(payload),
                     stream=True,
                     timeout=self.timeout,
-                    impersonate="chrome110"
+                    impersonate="chrome110",
                 )
                 response.raise_for_status()
 
@@ -219,7 +228,7 @@ class GEMINIAPI(Provider):
                     skip_markers=["[DONE]"],
                     content_extractor=self._gemini_extractor,
                     yield_raw_on_error=False,
-                    raw=raw
+                    raw=raw,
                 )
 
                 for content_chunk in processed_stream:
@@ -232,9 +241,13 @@ class GEMINIAPI(Provider):
                             yield resp if not raw else content_chunk
 
             except CurlError as e:
-                raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {str(e)}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed (CurlError): {str(e)}"
+                ) from e
             except Exception as e:
-                raise exceptions.FailedToGenerateResponseError(f"Request failed ({type(e).__name__}): {str(e)}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed ({type(e).__name__}): {str(e)}"
+                ) from e
             finally:
                 if streaming_text:
                     self.last_response = {"text": streaming_text}
@@ -247,7 +260,7 @@ class GEMINIAPI(Provider):
                     self.url,
                     data=json.dumps(payload),
                     timeout=self.timeout,
-                    impersonate="chrome110"
+                    impersonate="chrome110",
                 )
                 response.raise_for_status()
 
@@ -258,9 +271,13 @@ class GEMINIAPI(Provider):
                     data=response_text,
                     to_json=True,
                     intro_value=None,
-                    content_extractor=lambda chunk: chunk.get("choices", [{}])[0].get("message", {}).get("content") if isinstance(chunk, dict) else None,
+                    content_extractor=lambda chunk: chunk.get("choices", [{}])[0]
+                    .get("message", {})
+                    .get("content")
+                    if isinstance(chunk, dict)
+                    else None,
                     yield_raw_on_error=False,
-                    raw=raw
+                    raw=raw,
                 )
                 # Extract the single result
                 content = next(processed_stream, None)
@@ -273,10 +290,18 @@ class GEMINIAPI(Provider):
                 return self.last_response if not raw else content
 
             except CurlError as e:
-                raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {e}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed (CurlError): {e}"
+                ) from e
             except Exception as e:
-                err_text = getattr(e, 'response', None) and getattr(e.response, 'text', '')
-                raise exceptions.FailedToGenerateResponseError(f"Request failed ({type(e).__name__}): {e} - {err_text}") from e
+                err_text = ""
+                if hasattr(e, "response"):
+                    response_obj = getattr(e, "response")
+                    if hasattr(response_obj, "text"):
+                        err_text = getattr(response_obj, "text")
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed ({type(e).__name__}): {e} - {err_text}"
+                ) from e
 
         return for_stream() if stream else for_non_stream()
 
@@ -290,21 +315,29 @@ class GEMINIAPI(Provider):
     ) -> Union[str, Generator[str, None, None]]:
         def for_stream_chat():
             gen = self.ask(
-                prompt, stream=True, raw=False,
-                optimizer=optimizer, conversationally=conversationally
+                prompt,
+                stream=True,
+                raw=False,
+                optimizer=optimizer,
+                conversationally=conversationally,
             )
             for response_dict in gen:
                 yield self.get_message(response_dict)
 
         def for_non_stream_chat():
             response_data = self.ask(
-                prompt, stream=False, raw=False,
-                optimizer=optimizer, conversationally=conversationally
+                prompt,
+                stream=False,
+                raw=False,
+                optimizer=optimizer,
+                conversationally=conversationally,
             )
             return self.get_message(response_data)
 
         return for_stream_chat() if stream else for_non_stream_chat()
 
-    def get_message(self, response: dict) -> str:
-        assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["text"]
+    def get_message(self, response: Response) -> str:
+        if not isinstance(response, dict):
+            return str(response)
+        response_dict = cast(Dict[str, Any], response)
+        return response_dict.get("text", "")

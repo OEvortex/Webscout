@@ -1,7 +1,7 @@
 
 import json
 import uuid
-from typing import Any, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 import requests
 
@@ -89,18 +89,20 @@ class Julius(Provider):
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
         self.session.headers.update(self.headers)
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
+        act_prompt = (
+            AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
+        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
-        self.session.proxies = proxies
+        if proxies:
+            self.session.proxies.update(proxies)
 
     def ask(
         self,
@@ -192,7 +194,7 @@ class Julius(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        raw: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """Generate response `str`
         Args:
@@ -200,19 +202,19 @@ class Julius(Provider):
             stream (bool, optional): Flag for streaming response. Defaults to False.
             optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
             conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-            raw (bool, optional): Return raw response chunks. Defaults to False.
+            **kwargs: Additional parameters including raw.
         Returns:
             str: Response generated
         """
-
+        raw = kwargs.get("raw", False)
         def for_stream():
             for response in self.ask(
                 prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
             ):
                 if raw:
-                    yield response
+                    yield cast(str, response)
                 else:
-                    yield self.get_message(response)
+                    yield self.get_message(cast(Dict[str, Any], response))
 
         def for_non_stream():
             result = self.ask(
@@ -223,13 +225,14 @@ class Julius(Provider):
                 conversationally=conversationally,
             )
             if raw:
-                return result
-            return self.get_message(result)
+                return cast(str, result)
+            return self.get_message(cast(Dict[str, Any], result))
 
         return for_stream() if stream else for_non_stream()
 
-    def get_message(self, response: dict) -> str:
-        assert isinstance(response, dict), "Response should be of dict data-type only"
+    def get_message(self, response: Response) -> str:
+        if not isinstance(response, dict):
+            return str(response)
         return response["text"]
 if __name__ == '__main__':
     from rich import print

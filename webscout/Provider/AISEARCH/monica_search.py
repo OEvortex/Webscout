@@ -1,4 +1,4 @@
-from typing import Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 import requests
 
@@ -62,7 +62,8 @@ class Monica(AISearch):
         prompt: str,
         stream: bool = False,
         raw: bool = False,
-    ) -> Union[SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None]]:
+        **kwargs: Any,
+    ) -> Union[SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None], List[Any], Dict[str, Any], str]:
         """
         Sends a prompt to the Monica API and returns the response.
 

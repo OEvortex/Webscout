@@ -15,11 +15,13 @@ class YepSearch(BaseSearch):
 
     def text(self, keywords: str, region: str = "all", safesearch: str = "moderate", max_results: Optional[int] = None) -> List[Dict[str, str]]:
         search = YepTextSearch()
-        return search.run(keywords, region, safesearch, max_results)
+        results = search.run(keywords, region, safesearch, max_results)
+        return [r.to_dict() for r in results]
 
     def images(self, keywords: str, region: str = "all", safesearch: str = "moderate", max_results: Optional[int] = None) -> List[Dict[str, str]]:
         search = YepImages()
-        return search.run(keywords, region, safesearch, max_results)
+        results = search.run(keywords, region, safesearch, max_results)
+        return [r.to_dict() for r in results]
 
     def suggestions(self, keywords: str, region: str = "all") -> List[str]:
         search = YepSuggestions()

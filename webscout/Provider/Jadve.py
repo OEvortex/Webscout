@@ -1,6 +1,6 @@
 import re
 import secrets
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
@@ -19,6 +19,7 @@ class JadveOpenAI(Provider):
     """
     A class to interact with the OpenAI API through jadve.com using the streaming endpoint.
     """
+
     required_auth = False
     AVAILABLE_MODELS = ["gpt-5-mini", "claude-3-5-haiku-20241022"]
 
@@ -34,7 +35,7 @@ class JadveOpenAI(Provider):
         history_offset: int = 10250,
         act: Optional[str] = None,
         model: str = "gpt-5-mini",
-        system_prompt: str = "You are a helpful AI assistant." # Note: system_prompt is not used by this API
+        system_prompt: str = "You are a helpful AI assistant.",  # Note: system_prompt is not used by this API
     ):
         """
         Initializes the JadveOpenAI client.
@@ -82,24 +83,19 @@ class JadveOpenAI(Provider):
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": '"Windows"',
             "sec-gpc": "1",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0"
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0",
         }
 
         # Update curl_cffi session headers and proxies
+        self.session = Session()
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies # Assign proxies directly
+        if proxies:
+            self.session.proxies.update(proxies)
 
         self.__available_optimizers = (
-            method for method in dir(Optimizers)
+            method
+            for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
-        )
-
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
         )
 
         self.conversation = Conversation(
@@ -107,15 +103,29 @@ class JadveOpenAI(Provider):
         )
         self.conversation.history_offset = history_offset
 
+        if act:
+            self.conversation.intro = (
+                AwesomePrompts().get_act(
+                    cast(Union[str, int], act),
+                    default=self.conversation.intro,
+                    case_insensitive=True,
+                )
+                or self.conversation.intro
+            )
+        elif intro:
+            self.conversation.intro = intro
+
     @staticmethod
     def _jadve_extractor(chunk: Union[str, Dict[str, Any]]) -> Optional[str]:
         """Extracts content from the Jadve stream format '0:"..."'."""
         if isinstance(chunk, str):
-            match = re.search(r'0:"(.*?)"(?=,|$)', chunk) # Look for 0:"...", possibly followed by comma or end of string
+            match = re.search(
+                r'0:"(.*?)"(?=,|$)', chunk
+            )  # Look for 0:"...", possibly followed by comma or end of string
             if match:
                 # Decode potential unicode escapes like \u00e9 and handle escaped quotes/backslashes
-                content = match.group(1).encode().decode('unicode_escape')
-                return content.replace('\\\\', '\\').replace('\\"', '"')
+                content = match.group(1).encode().decode("unicode_escape")
+                return content.replace("\\\\", "\\").replace('\\"', '"')
         return None
 
     def ask(
@@ -142,7 +152,9 @@ class JadveOpenAI(Provider):
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
-                conversation_prompt = getattr(Optimizers, optimizer)(conversation_prompt if conversationally else prompt)
+                conversation_prompt = getattr(Optimizers, optimizer)(
+                    conversation_prompt if conversationally else prompt
+                )
             else:
                 raise Exception(f"Optimizer is not one of {list(self.__available_optimizers)}")
 
@@ -156,11 +168,11 @@ class JadveOpenAI(Provider):
             "chatId": "",
             "stream": True,
             "returnTokensUsage": True,
-            "useTools": False
+            "useTools": False,
         }
 
         def for_stream():
-            full_response_text = "" # Initialize outside try block
+            full_response_text = ""  # Initialize outside try block
             try:
                 # Use curl_cffi session post with impersonate
                 response = self.session.post(
@@ -170,18 +182,18 @@ class JadveOpenAI(Provider):
                     stream=True,
                     timeout=self.timeout,
                     # proxies are set on the session
-                    impersonate="chrome120" # Use a common impersonation profile
+                    impersonate="chrome120",  # Use a common impersonation profile
                 )
-                response.raise_for_status() # Check for HTTP errors
+                response.raise_for_status()  # Check for HTTP errors
 
                 # Use sanitize_stream
                 processed_stream = sanitize_stream(
-                    data=response.iter_content(chunk_size=None), # Pass byte iterator
-                    intro_value=None, # No simple prefix
-                    to_json=False,    # Content is text after extraction
-                    content_extractor=self._jadve_extractor, # Use the specific extractor
+                    data=response.iter_content(chunk_size=None),  # Pass byte iterator
+                    intro_value=None,  # No simple prefix
+                    to_json=False,  # Content is text after extraction
+                    content_extractor=self._jadve_extractor,  # Use the specific extractor
                     yield_raw_on_error=True,
-                    raw=raw
+                    raw=raw,
                 )
 
                 for content_chunk in processed_stream:
@@ -199,11 +211,19 @@ class JadveOpenAI(Provider):
                 self.last_response = {"text": full_response_text}
                 self.conversation.update_chat_history(prompt, full_response_text)
 
-            except CurlError as e: # Catch CurlError
-                raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {e}") from e
-            except Exception as e: # Catch other potential exceptions (like HTTPError)
-                err_text = getattr(e, 'response', None) and getattr(e.response, 'text', '')
-                raise exceptions.FailedToGenerateResponseError(f"Failed to generate response ({type(e).__name__}): {e} - {err_text}") from e
+            except CurlError as e:  # Catch CurlError
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed (CurlError): {e}"
+                ) from e
+            except Exception as e:  # Catch other potential exceptions (like HTTPError)
+                err_text = ""
+                if hasattr(e, "response"):
+                    response_obj = getattr(e, "response")
+                    if hasattr(response_obj, "text"):
+                        err_text = getattr(response_obj, "text")
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Failed to generate response ({type(e).__name__}): {e} - {err_text}"
+                ) from e
 
         def for_non_stream():
             collected_text = ""
@@ -217,7 +237,9 @@ class JadveOpenAI(Provider):
                             collected_text += chunk_data["text"]
             except Exception as e:
                 if not collected_text:
-                    raise exceptions.FailedToGenerateResponseError(f"Failed to get non-stream response: {str(e)}") from e
+                    raise exceptions.FailedToGenerateResponseError(
+                        f"Failed to get non-stream response: {str(e)}"
+                    ) from e
             # last_response and history are updated within for_stream
             return collected_text if raw else self.last_response
 
@@ -229,7 +251,7 @@ class JadveOpenAI(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        raw: bool = False,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """
         Generate a chat response (string).
@@ -239,14 +261,15 @@ class JadveOpenAI(Provider):
             stream (bool, optional): Flag for streaming response. Defaults to False.
             optimizer (str, optional): Prompt optimizer name. Defaults to None.
             conversationally (bool, optional): Flag for conversational optimization. Defaults to False.
-            raw (bool, optional): Return raw response. Defaults to False.
+            **kwargs: Additional parameters including raw.
         Returns:
             str or generator: Generated response string or generator yielding response chunks.
         """
+        raw = kwargs.get("raw", False)
+
         def for_stream_chat():
             gen = self.ask(
-                prompt, stream=True, raw=raw,
-                optimizer=optimizer, conversationally=conversationally
+                prompt, stream=True, raw=raw, optimizer=optimizer, conversationally=conversationally
             )
             for response in gen:
                 if raw:
@@ -256,8 +279,11 @@ class JadveOpenAI(Provider):
 
         def for_non_stream_chat():
             response_data = self.ask(
-                prompt, stream=False, raw=raw,
-                optimizer=optimizer, conversationally=conversationally
+                prompt,
+                stream=False,
+                raw=raw,
+                optimizer=optimizer,
+                conversationally=conversationally,
             )
             if raw:
                 return response_data if isinstance(response_data, str) else str(response_data)
@@ -277,7 +303,8 @@ class JadveOpenAI(Provider):
         if not isinstance(response, dict):
             return str(response)
         # Extractor handles formatting
-        return response.get("text", "")
+        return cast(Dict[str, Any], response).get("text", "")
+
 
 if __name__ == "__main__":
     for model in JadveOpenAI.AVAILABLE_MODELS:

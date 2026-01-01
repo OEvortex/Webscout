@@ -1,5 +1,5 @@
 import re
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from .https import playlist_data
 from .patterns import _PlaylistPatterns as Patterns

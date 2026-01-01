@@ -1,12 +1,12 @@
 import json
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout import exceptions
 from webscout.AIbase import Provider, Response
-from webscout.AIutel import (  # Import sanitize_stream
+from webscout.AIutel import (
     AwesomePrompts,
     Conversation,
     Optimizers,
@@ -18,17 +18,14 @@ class SonusAI(Provider):
     """
     A class to interact with the Sonus AI chat API.
     """
+
     required_auth = False
-    AVAILABLE_MODELS = [
-        "pro",
-        "air",
-        "mini"
-    ]
+    AVAILABLE_MODELS = ["pro", "air", "mini"]
 
     def __init__(
         self,
         is_conversation: bool = True,
-        max_tokens: int = 2049, # Note: max_tokens is not directly used by this API
+        max_tokens: int = 2049,
         timeout: int = 30,
         intro: Optional[str] = None,
         filepath: Optional[str] = None,
@@ -36,7 +33,7 @@ class SonusAI(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: Optional[str] = None,
-        model: str = "pro"
+        model: str = "pro",
     ):
         """Initializes the Sonus AI API client."""
         if model not in self.AVAILABLE_MODELS:
@@ -44,21 +41,18 @@ class SonusAI(Provider):
 
         self.url = "https://chat.sonus.ai/chat.php"
 
-        # Headers for the request
         self.headers = {
-            'Accept': '*/*',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Origin': 'https://chat.sonus.ai',
-            'Referer': 'https://chat.sonus.ai/',
-            'User-Agent': LitAgent().random()
-            # Add sec-ch-ua headers if needed for impersonation consistency
+            "Accept": "*/*",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Origin": "https://chat.sonus.ai",
+            "Referer": "https://chat.sonus.ai/",
+            "User-Agent": LitAgent().random(),
         }
 
-        # Initialize curl_cffi Session
         self.session = Session()
-        # Update curl_cffi session headers and proxies
         self.session.headers.update(self.headers)
-        self.session.proxies = proxies # Assign proxies directly
+        if proxies:
+            self.session.proxies.update(proxies)
 
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
@@ -71,17 +65,18 @@ class SonusAI(Provider):
             for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
-
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
+        act_prompt = (
+            AwesomePrompts().get_act(
+                cast(Union[str, int], act), default=None, case_insensitive=True
+            )
+            if act
+            else intro
+        )
+        if act_prompt:
+            self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
 
     @staticmethod
@@ -110,27 +105,22 @@ class SonusAI(Provider):
             else:
                 raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
 
-        # Prepare the multipart form data (curl_cffi handles tuples for files/data)
-        # No need for explicit (None, ...) for simple fields when using `data=`
         form_data = {
-            'message': conversation_prompt,
-            'history': "", # Explicitly empty string if needed, or omit if None is acceptable
-            'reasoning': str(reasoning).lower(),
-            'model': self.model
+            "message": conversation_prompt,
+            "history": "",
+            "reasoning": str(reasoning).lower(),
+            "model": self.model,
+            "stream": "true" if stream else "false",
         }
-        # Note: curl_cffi's `files` parameter is for actual file uploads.
-        # For simple key-value pairs like this, `data` is usually sufficient for multipart/form-data.
-        # If the server strictly requires `files`, keep the original structure but it might not work as expected with curl_cffi without actual file objects.
 
         def for_stream():
             try:
-                # Use curl_cffi session post with impersonate
                 response = self.session.post(
                     self.url,
                     data=form_data,
                     stream=True,
                     timeout=self.timeout,
-                    impersonate="chrome110"
+                    impersonate="chrome110",
                 )
                 if response.status_code != 200:
                     raise exceptions.FailedToGenerateResponseError(
@@ -143,7 +133,7 @@ class SonusAI(Provider):
                     if not line:
                         continue
                     # Decode bytes to string
-                    line_str = line.decode('utf-8') if isinstance(line, bytes) else line
+                    line_str = line.decode("utf-8") if isinstance(line, bytes) else line
                     if line_str.startswith("data: "):
                         json_str = line_str[6:]  # Remove "data: " prefix
                         try:
@@ -164,28 +154,26 @@ class SonusAI(Provider):
                 self.conversation.update_chat_history(prompt, streaming_text)
 
             except CurlError as e:
-                raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {str(e)}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed (CurlError): {str(e)}"
+                ) from e
             except Exception as e:
-                 raise exceptions.FailedToGenerateResponseError(f"An unexpected error occurred ({type(e).__name__}): {e}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"An unexpected error occurred ({type(e).__name__}): {e}"
+                ) from e
 
         def for_non_stream():
             try:
-                 # Use curl_cffi session post with impersonate
                 response = self.session.post(
-                    self.url,
-                    # headers are set on the session
-                    data=form_data, # Use data for multipart form fields
-                    timeout=self.timeout,
-                    impersonate="chrome110" # Use a common impersonation profile
+                    self.url, data=form_data, timeout=self.timeout, impersonate="chrome110"
                 )
                 if response.status_code != 200:
                     raise exceptions.FailedToGenerateResponseError(
                         f"Request failed with status code {response.status_code} - {response.text}"
                     )
 
-                response_text_raw = response.text # Get raw text
+                response_text_raw = response.text
 
-                # Parse JSON lines directly
                 full_response = ""
                 for line in response_text_raw.splitlines():
                     if line.startswith("data: "):
@@ -204,10 +192,14 @@ class SonusAI(Provider):
                 # Return dict or raw string
                 return full_response if raw else {"text": full_response}
 
-            except CurlError as e: # Catch CurlError
-                raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {str(e)}") from e
-            except Exception as e: # Catch other potential exceptions
-                raise exceptions.FailedToGenerateResponseError(f"An unexpected error occurred ({type(e).__name__}): {e}") from e
+            except CurlError as e:
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed (CurlError): {str(e)}"
+                ) from e
+            except Exception as e:
+                raise exceptions.FailedToGenerateResponseError(
+                    f"An unexpected error occurred ({type(e).__name__}): {e}"
+                ) from e
 
         return for_stream() if stream else for_non_stream()
 
@@ -218,31 +210,49 @@ class SonusAI(Provider):
         optimizer: Optional[str] = None,
         conversationally: bool = False,
         reasoning: bool = False,
-        raw: bool = False,  # Added raw parameter
+        raw: bool = False,
         **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         def for_stream_chat():
             for response in self.ask(
-                prompt, stream=True, raw=raw, optimizer=optimizer, conversationally=conversationally, reasoning=reasoning
+                prompt,
+                stream=True,
+                raw=raw,
+                optimizer=optimizer,
+                conversationally=conversationally,
+                reasoning=reasoning,
             ):
                 if raw:
                     yield response
                 else:
                     yield self.get_message(response)
+
         def for_non_stream_chat():
             response_data = self.ask(
-                prompt, stream=False, raw=raw, optimizer=optimizer, conversationally=conversationally, reasoning=reasoning
+                prompt,
+                stream=False,
+                raw=raw,
+                optimizer=optimizer,
+                conversationally=conversationally,
+                reasoning=reasoning,
             )
             if raw:
-                return response_data if isinstance(response_data, str) else self.get_message(response_data)
+                return (
+                    response_data
+                    if isinstance(response_data, str)
+                    else self.get_message(response_data)
+                )
             else:
                 return self.get_message(response_data)
+
         return for_stream_chat() if stream else for_non_stream_chat()
 
     def get_message(self, response: Response) -> str:
         if not isinstance(response, dict):
             return str(response)
-        return response.get("text", "")
+        response_dict = cast(Dict[str, Any], response)
+        return response_dict.get("text", "")
+
 
 if __name__ == "__main__":
     sonus = SonusAI()

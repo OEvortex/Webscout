@@ -8,7 +8,7 @@ from functools import cached_property
 from itertools import cycle, islice
 from random import choice
 from time import sleep, time
-from typing import Any
+from typing import Any, Optional, cast
 
 try:
     import trio  # type: ignore
@@ -23,6 +23,8 @@ try:
     LXML_AVAILABLE = True
 except ImportError:
     LXML_AVAILABLE = False
+    LHTMLParser = None # type: ignore
+    document_fromstring = None # type: ignore
 
 from ....exceptions import RatelimitE, TimeoutE, WebscoutE
 from ....litagent import LitAgent
@@ -107,11 +109,11 @@ class DuckDuckGoBase:
                     remove_comments=True,
                     remove_pis=True,
                     collect_ids=False
-                )
+                ) if LHTMLParser else None
                 self.etree = __import__('lxml.etree', fromlist=['Element'])
 
             def fromstring(self, html: bytes | str) -> Any:
-                return document_fromstring(html, parser=self.lhtml_parser)
+                return document_fromstring(html, parser=self.lhtml_parser) if document_fromstring and self.lhtml_parser else None
 
         return Parser()
 
@@ -136,7 +138,7 @@ class DuckDuckGoBase:
         """Make HTTP request."""
         self._sleep()
         try:
-            request_kwargs = {
+            request_kwargs: dict[str, Any] = {
                 "params": params,
                 "headers": headers,
                 "json": json,
@@ -157,7 +159,7 @@ class DuckDuckGoBase:
             else:
                 if data or content:
                     request_kwargs["data"] = data or content
-                resp = self.client.request(method, url, **request_kwargs)
+                resp = self.client.request(cast(Any, method), url, **request_kwargs)
         except Exception as ex:
             if "time" in str(ex).lower():
                 raise TimeoutE(f"{url} {type(ex).__name__}: {ex}") from ex

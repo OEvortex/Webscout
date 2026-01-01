@@ -1,5 +1,5 @@
 import json
-from typing import Any, Callable, Dict, Generator, List, Optional, Union
+from typing import Any, Callable, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi import CurlError
 
@@ -20,6 +20,7 @@ class GROQ(Provider):
     """
     A class to interact with the GROQ AI API.
     """
+
     required_auth = True
     # Default models list (will be updated dynamically)
     AVAILABLE_MODELS = [
@@ -47,7 +48,7 @@ class GROQ(Provider):
         "llama-3.2-3b-preview",
         "llama-3.2-11b-vision-preview",
         "llama-3.2-90b-vision-preview",
-        "mixtral-8x7b-32768"
+        "mixtral-8x7b-32768",
     ]
 
     @classmethod
@@ -74,7 +75,7 @@ class GROQ(Provider):
             response = temp_session.get(
                 "https://api.groq.com/openai/v1/models",
                 headers=headers,
-                impersonate="chrome110"  # Use impersonate for fetching
+                impersonate="chrome110",  # Use impersonate for fetching
             )
 
             if response.status_code != 200:
@@ -165,21 +166,28 @@ class GROQ(Provider):
         # Update curl_cffi session headers
         self.session.headers.update(self.headers)
 
-        # Set up conversation
-        Conversation.intro = (
-            AwesomePrompts().get_act(
-                act, raise_not_found=True, default=None, case_insensitive=True
-            )
-            if act
-            else intro or Conversation.intro
-        )
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         self.conversation.history_offset = history_offset
 
+        if act:
+            self.conversation.intro = (
+                AwesomePrompts().get_act(
+                    cast(Union[str, int], act),
+                    default=self.conversation.intro,
+                    case_insensitive=True,
+                )
+                or self.conversation.intro
+            )
+        elif intro:
+            self.conversation.intro = intro
+
         # Set proxies for curl_cffi session
-        self.session.proxies = proxies
+        self.session = Session()
+        self.session.headers.update(self.headers)
+        if proxies:
+            self.session.proxies.update(proxies)
 
     @staticmethod
     def _groq_extractor(chunk: Union[str, Dict[str, Any]]) -> Optional[Dict]:
@@ -216,7 +224,7 @@ class GROQ(Provider):
         raw: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        tools: Optional[List[Dict[str, Any]]] = None,  # Add tools parameter
+        **kwargs: Any,
     ) -> Response:
         """Chat with AI
 
@@ -226,11 +234,12 @@ class GROQ(Provider):
             raw (bool, optional): Stream back raw response as received. Defaults to False.
             optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
             conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-            tools (List[Dict[str, Any]], optional): List of tool definitions. See example in class docstring. Defaults to None.
+            **kwargs: Additional parameters like tools.
 
         Returns:
            dict : {}
         """
+        tools = kwargs.get("tools")
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
@@ -238,9 +247,7 @@ class GROQ(Provider):
                     conversation_prompt if conversationally else prompt
                 )
             else:
-                raise Exception(
-                    f"Optimizer is not one of {self.__available_optimizers}"
-                )
+                raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
 
         messages = [{"content": conversation_prompt, "role": "user"}]
         if self.system_prompt:
@@ -255,17 +262,18 @@ class GROQ(Provider):
             "stream": stream,
             "temperature": self.temperature,
             "top_p": self.top_p,
-            "tools": tools  # Include tools in the payload
+            "tools": tools,  # Include tools in the payload
         }
 
         def for_stream():
+            resp = {}
             try:
                 response = self.session.post(
                     self.chat_endpoint,
                     json=payload,
                     stream=True,
                     timeout=self.timeout,
-                    impersonate="chrome110"  # Use impersonate for better compatibility
+                    impersonate="chrome110",  # Use impersonate for better compatibility
                 )
                 if not response.status_code == 200:
                     raise exceptions.FailedToGenerateResponseError(
@@ -276,12 +284,12 @@ class GROQ(Provider):
                 streaming_text = ""
                 # Use sanitize_stream
                 processed_stream = sanitize_stream(
-                    data=response.iter_content(chunk_size=None), # Pass byte iterator
+                    data=response.iter_content(chunk_size=None),  # Pass byte iterator
                     intro_value="data:",
-                    to_json=True,     # Stream sends JSON
-                    content_extractor=self._groq_extractor, # Use the delta extractor
-                    yield_raw_on_error=False, # Skip non-JSON lines or lines where extractor fails
-                    raw=raw
+                    to_json=True,  # Stream sends JSON
+                    content_extractor=self._groq_extractor,  # Use the delta extractor
+                    yield_raw_on_error=False,  # Skip non-JSON lines or lines where extractor fails
+                    raw=raw,
                 )
 
                 for delta in processed_stream:
@@ -293,9 +301,11 @@ class GROQ(Provider):
                             content = delta.get("content")
                             if content:
                                 streaming_text += content
-                                resp = {"text": content} # Yield only the new chunk text
-                            self.last_response = {"choices": [{"delta": {"content": streaming_text}}]} # Update last_response structure
-                            yield resp if not raw else content # Yield dict or raw string chunk
+                                resp = {"text": content}  # Yield only the new chunk text
+                            self.last_response = {
+                                "choices": [{"delta": {"content": streaming_text}}]
+                            }  # Update last_response structure
+                            yield resp if not raw else content  # Yield dict or raw string chunk
                         # Note: Tool calls in streaming delta are less common in OpenAI format, usually in final message
 
             except CurlError as e:
@@ -304,31 +314,33 @@ class GROQ(Provider):
                 raise exceptions.FailedToGenerateResponseError(f"Error: {str(e)}")
 
             # Handle tool calls if any
-            first_choice = self.last_response.get('choices', [{}])[0]
-            message = first_choice.get('message', {})
-            if 'tool_calls' in message:
-                tool_calls = message.get('tool_calls', [])
+            first_choice = self.last_response.get("choices", [{}])[0]
+            message = first_choice.get("message", {})
+            if "tool_calls" in message:
+                tool_calls = message.get("tool_calls", [])
                 for tool_call in tool_calls:
                     if not isinstance(tool_call, dict):
                         continue
-                    function_name = tool_call.get('function', {}).get('name')
-                    arguments = json.loads(tool_call.get('function', {}).get('arguments', "{}"))
+                    function_name = tool_call.get("function", {}).get("name")
+                    arguments = json.loads(tool_call.get("function", {}).get("arguments", "{}"))
                     if function_name in self.available_functions:
                         tool_response = self.available_functions[function_name](**arguments)
-                        messages.append({
-                            "tool_call_id": tool_call.get('id'),
-                            "role": "tool",
-                            "name": function_name,
-                            "content": tool_response
-                        })
-                        payload['messages'] = messages
+                        messages.append(
+                            {
+                                "tool_call_id": tool_call.get("id"),
+                                "role": "tool",
+                                "name": function_name,
+                                "content": tool_response,
+                            }
+                        )
+                        payload["messages"] = messages
                         # Make a second call to get the final response
                         try:
                             second_response = self.session.post(
                                 self.chat_endpoint,
                                 json=payload,
                                 timeout=self.timeout,
-                                impersonate="chrome110"  # Use impersonate for better compatibility
+                                impersonate="chrome110",  # Use impersonate for better compatibility
                             )
                             if second_response.status_code == 200:
                                 self.last_response = second_response.json()
@@ -337,42 +349,44 @@ class GROQ(Provider):
                                     f"Failed to execute tool - {second_response.text}"
                                 )
                         except CurlError as e:
-                            raise exceptions.FailedToGenerateResponseError(f"CurlError during tool execution: {str(e)}")
+                            raise exceptions.FailedToGenerateResponseError(
+                                f"CurlError during tool execution: {str(e)}"
+                            )
                         except Exception as e:
-                            raise exceptions.FailedToGenerateResponseError(f"Error during tool execution: {str(e)}")
+                            raise exceptions.FailedToGenerateResponseError(
+                                f"Error during tool execution: {str(e)}"
+                            )
 
-            self.conversation.update_chat_history(
-                prompt, self.get_message(self.last_response)
-            )
+            self.conversation.update_chat_history(prompt, self.get_message(self.last_response))
 
         def for_non_stream():
+            resp = {}
+            response = None
             try:
                 response = self.session.post(
                     self.chat_endpoint,
                     json=payload,
                     stream=False,
                     timeout=self.timeout,
-                    impersonate="chrome110"  # Use impersonate for better compatibility
+                    impersonate="chrome110",  # Use impersonate for better compatibility
                 )
-                if (
-                    not response.status_code == 200
-                ):
+                if not response.status_code == 200:
                     raise exceptions.FailedToGenerateResponseError(
-                         # Removed response.reason_phrase
+                        # Removed response.reason_phrase
                         f"Failed to generate response - ({response.status_code}) - {response.text}"
                     )
 
-                response_text = response.text # Get raw text
+                response_text = response.text  # Get raw text
 
                 # Use sanitize_stream to parse the non-streaming JSON response
                 processed_stream = sanitize_stream(
                     data=response_text,
-                    to_json=True, # Parse the whole text as JSON
+                    to_json=True,  # Parse the whole text as JSON
                     intro_value=None,
                     # Extractor for non-stream structure (returns the whole parsed dict)
                     content_extractor=lambda chunk: chunk if isinstance(chunk, dict) else None,
                     yield_raw_on_error=False,
-                    raw=raw
+                    raw=raw,
                 )
 
                 # Extract the single result (the parsed JSON dictionary)
@@ -380,44 +394,52 @@ class GROQ(Provider):
                 if raw:
                     return resp
                 if resp is None:
-                    raise exceptions.FailedToGenerateResponseError("Failed to parse non-stream JSON response")
+                    raise exceptions.FailedToGenerateResponseError(
+                        "Failed to parse non-stream JSON response"
+                    )
 
             except CurlError as e:
                 raise exceptions.FailedToGenerateResponseError(f"CurlError: {str(e)}")
             except Exception as e:
                 # Catch the original AttributeError here if it happens before the raise
-                if isinstance(e, AttributeError) and 'reason_phrase' in str(e):
-                     raise exceptions.FailedToGenerateResponseError(
+                if (
+                    isinstance(e, AttributeError)
+                    and "reason_phrase" in str(e)
+                    and response is not None
+                ):
+                    raise exceptions.FailedToGenerateResponseError(
                         f"Failed to generate response - ({response.status_code}) - {response.text}"
                     )
                 raise exceptions.FailedToGenerateResponseError(f"Error: {str(e)}")
 
             # Handle tool calls if any
-            first_choice = resp.get('choices', [{}])[0]
-            message = first_choice.get('message', {})
-            if 'tool_calls' in message:
-                tool_calls = message.get('tool_calls', [])
+            first_choice = resp.get("choices", [{}])[0]
+            message = first_choice.get("message", {})
+            if "tool_calls" in message:
+                tool_calls = message.get("tool_calls", [])
                 for tool_call in tool_calls:
                     if not isinstance(tool_call, dict):
                         continue
-                    function_name = tool_call.get('function', {}).get('name')
-                    arguments = json.loads(tool_call.get('function', {}).get('arguments', "{}"))
+                    function_name = tool_call.get("function", {}).get("name")
+                    arguments = json.loads(tool_call.get("function", {}).get("arguments", "{}"))
                     if function_name in self.available_functions:
                         tool_response = self.available_functions[function_name](**arguments)
-                        messages.append({
-                            "tool_call_id": tool_call.get('id'),
-                            "role": "tool",
-                            "name": function_name,
-                            "content": tool_response
-                        })
-                        payload['messages'] = messages
+                        messages.append(
+                            {
+                                "tool_call_id": tool_call.get("id"),
+                                "role": "tool",
+                                "name": function_name,
+                                "content": tool_response,
+                            }
+                        )
+                        payload["messages"] = messages
                         # Make a second call to get the final response
                         try:
                             second_response = self.session.post(
                                 self.chat_endpoint,
                                 json=payload,
                                 timeout=self.timeout,
-                                impersonate="chrome110"  # Use impersonate for better compatibility
+                                impersonate="chrome110",  # Use impersonate for better compatibility
                             )
                             if second_response.status_code == 200:
                                 resp = second_response.json()
@@ -426,14 +448,16 @@ class GROQ(Provider):
                                     f"Failed to execute tool - {second_response.text}"
                                 )
                         except CurlError as e:
-                            raise exceptions.FailedToGenerateResponseError(f"CurlError during tool execution: {str(e)}")
+                            raise exceptions.FailedToGenerateResponseError(
+                                f"CurlError during tool execution: {str(e)}"
+                            )
                         except Exception as e:
-                            raise exceptions.FailedToGenerateResponseError(f"Error during tool execution: {str(e)}")
+                            raise exceptions.FailedToGenerateResponseError(
+                                f"Error during tool execution: {str(e)}"
+                            )
 
             self.last_response.update(resp)
-            self.conversation.update_chat_history(
-                prompt, self.get_message(self.last_response)
-            )
+            self.conversation.update_chat_history(prompt, self.get_message(self.last_response))
             return resp
 
         return for_stream() if stream else for_non_stream()
@@ -444,7 +468,7 @@ class GROQ(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        tools: Optional[List[Dict[str, Any]]] = None,
+        **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """Generate response `str`
         Args:
@@ -452,29 +476,42 @@ class GROQ(Provider):
             stream (bool, optional): Flag for streaming response. Defaults to False.
             optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
             conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-            tools (List[Dict[str, Any]], optional): List of tool definitions. See example in class docstring. Defaults to None.
+            **kwargs: Additional parameters like tools.
         Returns:
             str: Response generated
         """
+        raw = kwargs.get("raw", False)
+        if stream:
 
-        def for_stream():
-            for response in self.ask(
-                prompt, True, optimizer=optimizer, conversationally=conversationally, tools=tools
-            ):
-                yield self.get_message(response)
-
-        def for_non_stream():
-            return self.get_message(
-                self.ask(
+            def for_stream():
+                gen = self.ask(
                     prompt,
-                    False,
+                    True,
+                    raw=raw,
                     optimizer=optimizer,
                     conversationally=conversationally,
-                    tools=tools
+                    **kwargs,
                 )
-            )
+                if hasattr(gen, "__iter__"):
+                    for response in gen:
+                        if raw:
+                            yield cast(str, response)
+                        else:
+                            yield self.get_message(response)
 
-        return for_stream() if stream else for_non_stream()
+            return for_stream()
+        else:
+            result = self.ask(
+                prompt,
+                False,
+                raw=raw,
+                optimizer=optimizer,
+                conversationally=conversationally,
+                **kwargs,
+            )
+            if raw:
+                return cast(str, result)
+            return self.get_message(result)
 
     def get_message(self, response: Response) -> str:
         """Retrieves message only from response
@@ -487,17 +524,28 @@ class GROQ(Provider):
         """
         if not isinstance(response, dict):
             return str(response)
+
+        resp_dict = cast(Dict[str, Any], response)
         try:
             # Check delta first for streaming
-            if response.get("choices") and response["choices"][0].get("delta") and response["choices"][0]["delta"].get("content"):
-                return response["choices"][0]["delta"]["content"]
+            if (
+                resp_dict.get("choices")
+                and resp_dict["choices"][0].get("delta")
+                and resp_dict["choices"][0]["delta"].get("content")
+            ):
+                return resp_dict["choices"][0]["delta"]["content"]
             # Check message content for non-streaming or final message
-            if response.get("choices") and response["choices"][0].get("message") and response["choices"][0]["message"].get("content"):
-                return response["choices"][0]["message"]["content"]
+            if (
+                resp_dict.get("choices")
+                and resp_dict["choices"][0].get("message")
+                and resp_dict["choices"][0]["message"].get("content")
+            ):
+                return resp_dict["choices"][0]["message"]["content"]
         except (KeyError, IndexError, TypeError):
             # Handle cases where the structure might be different or content is null/missing
             pass
-        return "" # Return empty string if no content found
+        return ""  # Return empty string if no content found
+
 
 if __name__ == "__main__":
     # Example usage
