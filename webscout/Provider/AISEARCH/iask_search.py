@@ -1,7 +1,7 @@
 import asyncio
 import re
 import urllib.parse
-from typing import AsyncIterator, Dict, Generator, Literal, Optional, Union
+from typing import Any, AsyncIterator, Dict, Generator, Literal, Optional, Union, cast
 
 import aiohttp
 import lxml.html
@@ -33,7 +33,7 @@ def cache_find(diff: Union[dict, list]) -> Optional[str]:
     return None
 
 
-ModeType = Literal["question", "academic", "forums", "wiki", "thinking"]
+ModeType = Literal["question", "academic", "fast", "forums", "wiki", "advanced"]
 DetailLevelType = Literal["concise", "detailed", "comprehensive"]
 
 
@@ -164,7 +164,8 @@ class IAsk(AISearch):
         raw: bool = False,
         mode: Optional[ModeType] = None,
         detail_level: Optional[DetailLevelType] = None,
-    ) -> Union[SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None]]:
+        **kwargs: Any,
+    ) -> Union[SearchResponse, Dict[str, str], Generator[Union[Dict[str, str], SearchResponse], None, None]]:
         """Search using the IAsk API and get AI-generated responses.
 
         This method sends a search query to IAsk and returns the AI-generated response.
@@ -175,15 +176,16 @@ class IAsk(AISearch):
             stream (bool, optional): If True, yields response chunks as they arrive.
                                    If False, returns complete response. Defaults to False.
             raw (bool, optional): If True, returns raw response dictionaries with 'text' key.
-                                If False, returns Response objects that convert to text automatically.
+                                If False, returns SearchResponse objects that convert to text automatically.
                                 Defaults to False.
             mode (ModeType, optional): Search mode to use. Defaults to None (uses instance default).
             detail_level (DetailLevelType, optional): Detail level to use. Defaults to None (uses instance default).
+            **kwargs: Additional keyword arguments.
 
         Returns:
-            Union[Response, Generator[Union[Dict[str, str], Response], None, None]]:
-                - If stream=False: Returns complete response as Response object
-                - If stream=True: Yields response chunks as either Dict or Response objects
+            Union[SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None]]:
+                - If stream=False: Returns complete response as SearchResponse object
+                - If stream=True: Yields response chunks as either Dict or SearchResponse objects
 
         Raises:
             APIConnectionError: If the API request fails
@@ -224,48 +226,46 @@ class IAsk(AISearch):
                 result = loop.run_until_complete(
                     self._async_search(prompt, False, raw, search_mode, search_detail_level)
                 )
-                return result
+                return cast(Union[SearchResponse, Dict[str, str]], result)
             finally:
                 loop.close()
+
+        # For streaming, use a simpler approach with a single event loop
+        # that stays open until the generator is exhausted
         buffer = ""
 
         def sync_generator():
             nonlocal buffer
-
+            # Create a new event loop for this generator
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
 
             try:
                 # Get the async generator
                 async_gen_coro = self._async_search(prompt, True, raw, search_mode, search_detail_level)
-                async_gen = loop.run_until_complete(async_gen_coro)
+                async_gen = cast(AsyncIterator, loop.run_until_complete(async_gen_coro))
 
                 # Process chunks one by one
-                if hasattr(async_gen, "__anext__"):
-                    while True:
-                        try:
-                            # Get the next chunk
-                            chunk_coro = async_gen.__anext__()
-                            chunk = loop.run_until_complete(chunk_coro)
+                while True:
+                    try:
+                        # Get the next chunk
+                        chunk_coro = async_gen.__anext__()
+                        chunk = loop.run_until_complete(chunk_coro)
 
-                            # Update buffer and yield the chunk
-                            if isinstance(chunk, dict) and 'text' in chunk:
-                                buffer += chunk['text']
-                            elif isinstance(chunk, SearchResponse):
-                                buffer += chunk.text
-                            else:
-                                buffer += str(chunk)
+                        # Update buffer and yield the chunk
+                        if isinstance(chunk, dict) and 'text' in chunk:
+                            buffer += chunk['text']
+                        elif isinstance(chunk, SearchResponse):
+                            buffer += chunk.text
+                        else:
+                            buffer += str(chunk)
 
-                            yield chunk
-                        except StopAsyncIteration:
-                            break
-                        except Exception as e:
-                            print(f"Error in generator: {e}")
-                            break
-                elif isinstance(async_gen, SearchResponse):
-                    yield async_gen
-                else:
-                    yield str(async_gen)
+                        yield chunk
+                    except StopAsyncIteration:
+                        break
+                    except Exception as e:
+                        print(f"Error in generator: {e}")
+                        break
             finally:
                 # Store the final response and close the loop
                 self.last_response = {"text": buffer}
@@ -280,7 +280,7 @@ class IAsk(AISearch):
         raw: bool = False,
         mode: ModeType = "question",
         detail_level: Optional[DetailLevelType] = None,
-    ) -> Union[SearchResponse, AsyncIterator[Union[Dict[str, str], SearchResponse]]]:
+    ) -> Union[SearchResponse, Dict[str, str], AsyncIterator[Union[Dict[str, str], SearchResponse]]]:
         """Internal async implementation of the search method."""
 
         async def stream_generator() -> AsyncIterator[str]:
@@ -299,7 +299,7 @@ class IAsk(AISearch):
                     ) as response:
                         if not response.ok:
                             raise exceptions.APIConnectionError(
-                                f"Failed to generate response - ({response.status_code}, {response.reason}) - {await response.text()}"
+                                f"Failed to generate response - ({response.status}, {response.reason}) - {await response.text()}"
                             )
 
                         etree = lxml.html.fromstring(await response.text())
@@ -362,27 +362,52 @@ class IAsk(AISearch):
             buffer = ""
             async for chunk in stream_generator():
                 buffer += chunk
-            self.last_response = SearchResponse(buffer)
-            return buffer if raw else self.last_response
+            self.last_response = {"text": buffer}
+            return SearchResponse(buffer) if not raw else {"text": buffer}
 
         # For streaming, create an async generator that yields chunks
-        async def process_stream():
+        async def process_stream() -> AsyncIterator[Union[Dict[str, str], SearchResponse]]:
             buffer = ""
             async for chunk in stream_generator():
                 buffer += chunk
                 if raw:
-                    yield chunk
+                    yield {"text": chunk}
                 else:
                     yield SearchResponse(chunk)
-            self.last_response = SearchResponse(buffer)
+            self.last_response = {"text": buffer}
 
         # Return the async generator
         return process_stream()
 
 
 if __name__ == "__main__":
+    from rich import print
 
     ai = IAsk()
+
+    # Example 1: Simple search with default mode
+    print("\n[bold cyan]Example 1: Simple search with default mode[/bold cyan]")
     response = ai.search("What is Python?", stream=True)
-    for chunk in response:
+    for chunk in cast(Generator, response):
         print(chunk, end="", flush=True)
+    print("\n\n[bold green]Response complete.[/bold green]\n")
+
+    # Example 2: Search with academic mode
+    print("\n[bold cyan]Example 2: Search with academic mode[/bold cyan]")
+    response = ai.search("Quantum computing applications", mode="academic", stream=True)
+    for chunk in cast(Generator, response):
+        print(chunk, end="", flush=True)
+    print("\n\n[bold green]Response complete.[/bold green]\n")
+
+    # Example 3: Search with advanced mode and detailed level
+    print("\n[bold cyan]Example 3: Search with advanced mode and detailed level[/bold cyan]")
+    response = ai.search("Climate change solutions", mode="advanced", detail_level="detailed", stream=True)
+    for chunk in cast(Generator, response):
+        print(chunk, end="", flush=True)
+    print("\n\n[bold green]Response complete.[/bold green]\n")
+
+    # Example 4: Demonstrating the create_url method
+    print("\n[bold cyan]Example 4: Generated URL for browser access[/bold cyan]")
+    url = ai.create_url("Helpingai details", mode="question", detail_level="detailed")
+    print(f"URL: {url}")
+    print("This URL can be used directly in a browser or with other HTTP clients.")
