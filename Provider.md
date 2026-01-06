@@ -140,7 +140,6 @@ These providers are only available in the OpenAI-compatible format and have no s
 
 ### AI Search Providers
 Located in `webscout/Provider/AISEARCH/`:
-- GenSpark Search
 - iAsk Search
 - Monica Search
 - Perplexed Search

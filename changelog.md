@@ -2,12 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026.01.06] - 2026-01-06
+
+### 🚮 Removed
+- **remove**: Completely removed `webscout/Provider/AISEARCH/genspark_search.py` provider and all references to Genspark from the codebase
+- **remove**: Updated `webscout/Provider/AISEARCH/__init__.py` to remove Genspark import and export
+- **remove**: Updated documentation in `webscout/Provider/AISEARCH/README.md` and `Provider.md` to reflect removal of Genspark provider
+
+### 🔧 Maintenance
+- **refactor**: webscout/Provider/AISEARCH/monica_search.py - Simplified streaming content extraction by switching to an inline lambda for `sanitize_stream`'s `content_extractor` that returns `chunk["text"]` when present. Removed the now-unused `_extract_monica_content` method. Note: this change intentionally stops persisting `session_id` from stream payloads; reintroduce session handling if session persistence is required.
+- **fix**: webscout/Provider/AISEARCH/webpilotai_search.py - Use `sanitize_stream`'s `content_extractor` for both streaming and non-streaming flows to parse JSON payloads and return the nested `content` (fallbacks to `text` and `data.delta.content` where present). This aligns behavior with `monica_search` and prevents empty or incomplete output when the service emits nested or delta-based content. Raw mode still returns unprocessed chunks.
+- **fix**: webscout/Provider/AISEARCH/PERPLEXED_search.py - Fixed critical streaming issues and standardized with other providers:
+  - Replaced manual JSON parsing with `sanitize_stream` using `line_delimiter="[/PERPLEXED-SEPARATOR]"` parameter
+  - Fixed streaming generator that was not yielding chunks due to incorrect delimiter handling
+  - Updated both streaming and non-streaming modes to use consistent `sanitize_stream` configuration
+  - Improved content extraction logic to properly handle answer fields from JSON responses
+  - Fixed `if __name__ == "__main__"` block to properly consume and display streaming responses
+  - Now follows same pattern as webpilotai, miromind, and monica providers for consistency
+
 ## [2026.01.01] - 2026-01-01
 
 ### 🚮 Removed
 - **remove**: Completely removed `google-generativeai` package dependency from pyproject.toml - package was not actually used in the codebase (geminiapi.py uses curl_cffi directly), removing it fixes Python 3.14 compatibility issues with pydantic-core
 - **remove**: Completely removed `openai` package dependency from pyproject.toml - project now uses `curl_cffi` exclusively for HTTP requests, reducing dependencies and improving consistency
 - **remove**: Completely removed `orjson` dependency from codebase (including imports, `HAS_ORJSON` flag, and pyproject.toml entry) for better compatibility and simpler dependencies
+- **remove**: Completely removed `webscout/Provider/VercelAI.py` provider file and updated related imports and documentation
 - **remove**: Removed `webscout/Provider/VercelAI.py` provider file and updated related imports and documentation
 - **remove**: Completely removed `nodriver` package dependency from pyproject.toml - nodriver was not actively used in the codebase, only listed as a dependency
 - **remove**: Replaced aiofiles usage with Python's built-in asyncio.to_thread for async file operations in TTS streaming, removing aiofiles dependency from pyproject.toml

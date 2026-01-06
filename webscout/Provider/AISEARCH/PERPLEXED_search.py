@@ -83,15 +83,6 @@ class PERPLEXED(AISearch):
         """
         payload = {"user_prompt": prompt}
 
-        def extract_answer_content(data):
-            """Extracts content from PERPLEXED stream JSON objects."""
-            if isinstance(data, dict):
-                if data.get("success") and "answer" in data and data["answer"]:
-                    return data["answer"]
-                elif data.get("success") and data.get("stage"):
-                    return None  # Skip stage updates without answers
-            return None
-
         def for_stream():
             try:
                 with self.session.post(
@@ -106,12 +97,11 @@ class PERPLEXED(AISearch):
                             f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                         )
 
-                    # Use sanitize_stream with comprehensive features
                     processed_chunks = sanitize_stream(
-                        data=response.iter_content(chunk_size=None),
+                        data=response.iter_content(chunk_size=1024),
+                        intro_value="",
                         to_json=True,
-                        extract_regexes=[r"data:\s*({.*})"],
-                        content_extractor=lambda chunk: extract_answer_content(chunk),
+                        content_extractor=lambda chunk: (chunk.get("answer") if isinstance(chunk, dict) and chunk.get("success") and chunk.get("answer") is not None else None),
                         yield_raw_on_error=False,
                         encoding='utf-8',
                         encoding_errors='replace',
@@ -120,7 +110,8 @@ class PERPLEXED(AISearch):
                         output_formatter=None if raw else lambda x: SearchResponse(x) if isinstance(x, str) else x,
                     )
 
-                    yield from processed_chunks
+                    for chunk in processed_chunks:
+                        yield chunk
 
             except requests.exceptions.RequestException as e:
                 raise exceptions.APIConnectionError(f"Request failed: {e}")
@@ -152,7 +143,7 @@ class PERPLEXED(AISearch):
                             strip_chars=None,
                             start_marker=None,
                             end_marker=None,
-                            content_extractor=lambda chunk: extract_answer_content(chunk),
+                            content_extractor=lambda chunk: (chunk.get("answer") if isinstance(chunk, dict) and chunk.get("success") and chunk.get("answer") is not None else None),
                             yield_raw_on_error=False,
                             encoding='utf-8',
                             encoding_errors='replace',
@@ -160,7 +151,6 @@ class PERPLEXED(AISearch):
                             line_delimiter="[/PERPLEXED-SEPARATOR]",
                             error_handler=None,
                             skip_regexes=None,
-                            extract_regexes=None,
                             raw=False,
                             output_formatter=None,
                         )
@@ -181,9 +171,5 @@ class PERPLEXED(AISearch):
 
 if __name__ == "__main__":
     ai = PERPLEXED()
-    response = ai.search("What is Python?", stream=True, raw=False)
-    if hasattr(response, "__iter__") and not isinstance(response, (str, bytes, SearchResponse)):
-        for chunks in response:
-            print(chunks, end="", flush=True)
-    else:
-        print(response)
+    response = ai.search("What is Python?", stream=False, raw=False)
+    print(response)

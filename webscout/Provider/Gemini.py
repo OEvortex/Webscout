@@ -14,11 +14,11 @@ warnings.simplefilter("ignore", category=UserWarning)
 # Define model aliases for easy usage (only supported models)
 MODEL_ALIASES: Dict[str, Model] = {
     "unspecified": Model.UNSPECIFIED,
-    "gemini-2.5-flash": Model.G_2_5_FLASH,
-    "gemini-2.5-pro": Model.G_2_5_PRO,
-    "gemini-3-pro": Model.G_3_PRO,
-    "flash-2.5": Model.G_2_5_FLASH,
-    "pro": Model.G_2_5_PRO,
+    "gemini-3.0-pro": Model.GEMINI_3_0_PRO,
+    "gemini-3.0-flash": Model.GEMINI_3_0_FLASH,
+    "gemini-3.0-flash-thinking": Model.GEMINI_3_0_FLASH_THINKING,
+    "pro-3.0": Model.GEMINI_3_0_PRO,
+    "flash-3.0": Model.GEMINI_3_0_FLASH,
 }
 
 # List of available models (friendly names)
@@ -26,10 +26,11 @@ AVAILABLE_MODELS = list(MODEL_ALIASES.keys())
 
 class GEMINI(Provider):
     required_auth = True
+
     def __init__(
         self,
         cookie_file: str,
-        model: str = "gemini-2.5-flash",  # Accepts either a Model enum or a str alias.
+        model: str = "gemini-3.0-flash",  # Accepts either a Model enum or a str alias.
         proxy: dict = {},
         timeout: int = 30,
     ):
@@ -39,8 +40,7 @@ class GEMINI(Provider):
         Args:
             cookie_file (str): Path to the cookies JSON file.
             model (Model or str): Selected model for the session. Can be a Model enum
-                or a string alias. Available aliases: flash, flash-exp, thinking, thinking-with-apps,
-                exp-advanced, 2.5-exp-advanced, 2.5-pro, 1.5-flash, 1.5-pro, 1.5-pro-research.
+                or a string alias. Available aliases: gemini-3.0-pro, gemini-3.0-flash, gemini-3.0-flash-thinking, pro-3.0, flash-3.0.
             proxy (dict, optional): HTTP request proxy. Defaults to {}.
             timeout (int, optional): HTTP request timeout in seconds. Defaults to 30.
         """
@@ -58,7 +58,9 @@ class GEMINI(Provider):
             if alias in MODEL_ALIASES:
                 selected_model = MODEL_ALIASES[alias]
             else:
-                raise Exception(f"Unknown model alias: '{model}'. Available aliases: {', '.join(AVAILABLE_MODELS)}")
+                raise Exception(
+                    f"Unknown model alias: '{model}'. Available aliases: {', '.join(AVAILABLE_MODELS)}"
+                )
         elif isinstance(model, Model):
             selected_model = model
         else:
@@ -68,7 +70,9 @@ class GEMINI(Provider):
         self.session = Chatbot(cookie_file, proxy, timeout, selected_model)
         self.last_response = {}
         self.__available_optimizers = (
-            method for method in dir(Optimizers) if callable(getattr(Optimizers, method)) and not method.startswith("__")
+            method
+            for method in dir(Optimizers)
+            if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
         # Store cookies from Chatbot for later use (e.g. image generation)
         self.session_auth1 = self.session.secure_1psid
@@ -130,17 +134,23 @@ class GEMINI(Provider):
     ) -> Union[str, Generator[str, None, None]]:
         raw = kwargs.get("raw", False)
         if stream:
+
             def for_stream():
-                gen = self.ask(prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally)
+                gen = self.ask(
+                    prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
+                )
                 if hasattr(gen, "__iter__"):
                     for response in gen:
                         if raw:
                             yield cast(str, response)
                         else:
                             yield self.get_message(response)
+
             return for_stream()
         else:
-            result = self.ask(prompt, False, raw=raw, optimizer=optimizer, conversationally=conversationally)
+            result = self.ask(
+                prompt, False, raw=raw, optimizer=optimizer, conversationally=conversationally
+            )
             if raw:
                 return cast(str, result)
             return self.get_message(result)

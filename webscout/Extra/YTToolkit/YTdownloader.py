@@ -9,8 +9,8 @@ from threading import Thread
 from time import sleep
 from typing import Any, Optional, Tuple, Union
 
-from curl_cffi.requests import Session
 from colorama import Fore
+from curl_cffi.requests import Session
 from tqdm import tqdm
 
 from webscout.litagent import LitAgent

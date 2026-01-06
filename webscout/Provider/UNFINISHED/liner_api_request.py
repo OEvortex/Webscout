@@ -233,8 +233,9 @@ class Liner(AISearch):
 
 
 if __name__ == "__main__":
-    from rich import print
     from typing import Generator
+
+    from rich import print
 
     ai = Liner(cookies_path="cookies.json")
     response = ai.search(input(">>> "), stream=True, raw=False)

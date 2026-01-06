@@ -26,12 +26,11 @@ class AskResponse(TypedDict):
     content: str
     conversation_id: str
     response_id: str
-    factualityQueries: Optional[List]
+    factualityQueries: Optional[List[Any]]
     textQuery: str
-    choices: List[Dict[str, Union[str, List]]]
+    choices: List[Dict[str, Union[str, List[str]]]]
     images: List[Dict[str, str]]
     error: bool
-
 
 
 class Endpoint(Enum):
@@ -44,10 +43,12 @@ class Endpoint(Enum):
         ROTATE_COOKIES (str): URL for rotating authentication cookies.
         UPLOAD (str): URL for uploading files/images.
     """
+
     INIT = "https://gemini.google.com/app"
     GENERATE = "https://gemini.google.com/_/BardChatUi/data/assistant.lamda.BardFrontendService/StreamGenerate"
     ROTATE_COOKIES = "https://accounts.google.com/RotateCookies"
     UPLOAD = "https://content-push.googleapis.com/upload"
+
 
 class Headers(Enum):
     """
@@ -58,6 +59,7 @@ class Headers(Enum):
         ROTATE_COOKIES (dict): Headers for rotating cookies.
         UPLOAD (dict): Headers for file/image upload.
     """
+
     GEMINI = {
         "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
         "Host": "gemini.google.com",
@@ -70,6 +72,7 @@ class Headers(Enum):
     }
     UPLOAD = {"Push-ID": "feeds/mcudyrk2a4khkz"}
 
+
 class Model(Enum):
     """
     Enum for available Gemini model configurations.
@@ -79,20 +82,27 @@ class Model(Enum):
         model_header (dict): Additional headers required for the model.
         advanced_only (bool): Whether the model is available only for advanced users.
     """
+
     UNSPECIFIED = ("unspecified", {}, False)
-    G_2_5_FLASH = (
-        "gemini-2.5-flash",
-        {"x-goog-ext-525001261-jspb": '[1,null,null,null,"71c2d248d3b102ff"]'},
+    GEMINI_3_0_PRO = (
+        "gemini-3.0-pro",
+        {
+            "x-goog-ext-525001261-jspb": '[1,null,null,null,"e6fa609c3fa255c0",null,null,0,[4],null,null,2]'
+        },
         False,
     )
-    G_2_5_PRO = (
-        "gemini-2.5-pro",
-        {"x-goog-ext-525001261-jspb": '[1,null,null,null,"2525e3954d185b3c"]'},
+    GEMINI_3_0_FLASH = (
+        "gemini-3.0-flash",
+        {
+            "x-goog-ext-525001261-jspb": '[1,null,null,null,"56fdd199312815e2",null,null,0,[4],null,null,2]'
+        },
         False,
     )
-    G_3_PRO = (
-        "gemini-3-pro",
-        {"x-goog-ext-525001261-jspb": '[1,null,null,null,"9d8ca3786ebdfbea"]'},
+    GEMINI_3_0_FLASH_THINKING = (
+        "gemini-3.0-flash-thinking",
+        {
+            "x-goog-ext-525001261-jspb": '[1,null,null,null,"e051ce1aa80aa576",null,null,0,[4],null,null,2]'
+        },
         False,
     )
 
@@ -130,10 +140,11 @@ class Model(Enum):
             f"Unknown model name: {name}. Available models: {', '.join([model.model_name for model in cls])}"
         )
 
+
 async def upload_file(
     file: Union[bytes, str, Path],
     proxy: Optional[Union[str, Dict[str, str]]] = None,
-    impersonate: str = "chrome110"
+    impersonate: str = "chrome110",
 ) -> str:
     """
     Uploads a file to Google's Gemini server using curl_cffi and returns its identifier.
@@ -170,7 +181,7 @@ async def upload_file(
         async with AsyncSession(
             proxies=cast(Any, proxies_dict),
             impersonate=cast(Any, impersonate),
-            headers=Headers.UPLOAD.value
+            headers=Headers.UPLOAD.value,
         ) as client:
             response = await client.post(
                 url=Endpoint.UPLOAD.value,
@@ -184,7 +195,6 @@ async def upload_file(
     except (RequestException, CurlError) as e:
         console.log(f"[red]Network error during file upload: {e}[/red]")
         raise
-
 
 
 def load_cookies(cookie_path: str) -> Tuple[str, str]:
@@ -201,13 +211,17 @@ def load_cookies(cookie_path: str) -> Tuple[str, str]:
         Exception: If the file is not found, invalid, or required cookies are missing.
     """
     try:
-        with open(cookie_path, 'r', encoding='utf-8') as file:
+        with open(cookie_path, "r", encoding="utf-8") as file:
             cookies = json.load(file)
-        session_auth1 = next((item['value'] for item in cookies if item['name'].upper() == '__SECURE-1PSID'), None)
-        session_auth2 = next((item['value'] for item in cookies if item['name'].upper() == '__SECURE-1PSIDTS'), None)
+        session_auth1 = next(
+            (item["value"] for item in cookies if item["name"].upper() == "__SECURE-1PSID"), None
+        )
+        session_auth2 = next(
+            (item["value"] for item in cookies if item["name"].upper() == "__SECURE-1PSIDTS"), None
+        )
 
         if not session_auth1 or not session_auth2:
-             raise ValueError("Required cookies (__Secure-1PSID or __Secure-1PSIDTS) not found.")
+            raise ValueError("Required cookies (__Secure-1PSID or __Secure-1PSIDTS) not found.")
 
         return session_auth1, session_auth2
     except FileNotFoundError:
@@ -233,13 +247,14 @@ class Chatbot:
         secure_1psidts (str): Authentication cookie.
         async_chatbot (AsyncChatbot): Underlying asynchronous chatbot instance.
     """
+
     def __init__(
         self,
         cookie_path: str,
         proxy: Optional[Union[str, Dict[str, str]]] = None,
         timeout: int = 20,
         model: Model = Model.UNSPECIFIED,
-        impersonate: str = "chrome110"
+        impersonate: str = "chrome110",
     ):
         try:
             self.loop: asyncio.AbstractEventLoop = asyncio.get_running_loop()
@@ -249,7 +264,9 @@ class Chatbot:
 
         self.secure_1psid, self.secure_1psidts = load_cookies(cookie_path)
         self.async_chatbot = self.loop.run_until_complete(
-            AsyncChatbot.create(self.secure_1psid, self.secure_1psidts, proxy, timeout, model, impersonate)
+            AsyncChatbot.create(
+                self.secure_1psid, self.secure_1psidts, proxy, timeout, model, impersonate
+            )
         )
 
     def save_conversation(self, file_path: str, conversation_name: str):
@@ -258,9 +275,7 @@ class Chatbot:
         )
 
     def load_conversations(self, file_path: str) -> List[Dict]:
-        return self.loop.run_until_complete(
-            self.async_chatbot.load_conversations(file_path)
-        )
+        return self.loop.run_until_complete(self.async_chatbot.load_conversations(file_path))
 
     def load_conversation(self, file_path: str, conversation_name: str) -> bool:
         return self.loop.run_until_complete(
@@ -269,6 +284,7 @@ class Chatbot:
 
     def ask(self, message: str, image: Optional[Union[bytes, str, Path]] = None) -> AskResponse:
         return self.loop.run_until_complete(self.async_chatbot.ask(message, image=image))
+
 
 class AsyncChatbot:
     """
@@ -293,6 +309,7 @@ class AsyncChatbot:
         model (Model): Selected Gemini model.
         impersonate (str): Browser profile for curl_cffi to impersonate.
     """
+
     __slots__ = [
         "headers",
         "_reqid",
@@ -343,7 +360,7 @@ class AsyncChatbot:
             cookies={"__Secure-1PSID": secure_1psid, "__Secure-1PSIDTS": secure_1psidts},
             proxies=cast(Any, self.proxies_dict if self.proxies_dict else None),
             timeout=timeout,
-            impersonate=cast(Any, self.impersonate if self.impersonate else None)
+            impersonate=cast(Any, self.impersonate if self.impersonate else None),
         )
 
         self.timeout = timeout
@@ -368,9 +385,12 @@ class AsyncChatbot:
         try:
             instance.SNlM0e = await instance.__get_snlm0e()
         except Exception as e:
-             console.log(f"[red]Error during AsyncChatbot initialization (__get_snlm0e): {e}[/red]", style="bold red")
-             await instance.session.close()
-             raise
+            console.log(
+                f"[red]Error during AsyncChatbot initialization (__get_snlm0e): {e}[/red]",
+                style="bold red",
+            )
+            await instance.session.close()
+            raise
         return instance
 
     def _error_response(self, message: str) -> AskResponse:
@@ -383,7 +403,7 @@ class AsyncChatbot:
             "textQuery": "",
             "choices": [],
             "images": [],
-            "error": True
+            "error": True,
         }
 
     async def save_conversation(self, file_path: str, conversation_name: str) -> None:
@@ -420,7 +440,7 @@ class AsyncChatbot:
         if not os.path.isfile(file_path):
             return []
         try:
-            with open(file_path, 'r', encoding="utf-8") as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 return json.load(f)
         except (json.JSONDecodeError, IOError) as e:
             console.log(f"[red]Error loading conversations from {file_path}: {e}[/red]")
@@ -437,16 +457,20 @@ class AsyncChatbot:
                     self.choice_id = conversation["choice_id"]
                     self.SNlM0e = conversation["SNlM0e"]
                     if "model_name" in conversation:
-                         try:
-                              self.model = Model.from_name(conversation["model_name"])
-                              self.session.headers.update(self.model.model_header)
-                         except ValueError as e:
-                              console.log(f"[yellow]Warning: Model '{conversation['model_name']}' from saved conversation not found. Using current model '{self.model.model_name}'. Error: {e}[/yellow]")
+                        try:
+                            self.model = Model.from_name(conversation["model_name"])
+                            self.session.headers.update(self.model.model_header)
+                        except ValueError as e:
+                            console.log(
+                                f"[yellow]Warning: Model '{conversation['model_name']}' from saved conversation not found. Using current model '{self.model.model_name}'. Error: {e}[/yellow]"
+                            )
 
                     console.log(f"Loaded conversation '{conversation_name}'")
                     return True
                 except KeyError as e:
-                    console.log(f"[red]Error loading conversation '{conversation_name}': Missing key {e}[/red]")
+                    console.log(
+                        f"[red]Error loading conversation '{conversation_name}': Missing key {e}[/red]"
+                    )
                     return False
         console.log(f"[yellow]Conversation '{conversation_name}' not found in {file_path}[/yellow]")
         return False
@@ -457,14 +481,13 @@ class AsyncChatbot:
             raise ValueError("__Secure-1PSID cookie is required.")
 
         try:
-            resp = await self.session.get(
-                Endpoint.INIT.value,
-                timeout=self.timeout
-            )
+            resp = await self.session.get(Endpoint.INIT.value, timeout=self.timeout)
             resp.raise_for_status()
 
             if "Sign in to continue" in resp.text or "accounts.google.com" in str(resp.url):
-                raise PermissionError("Authentication failed. Cookies might be invalid or expired. Please update them.")
+                raise PermissionError(
+                    "Authentication failed. Cookies might be invalid or expired. Please update them."
+                )
 
             snlm0e_match = re.search(r'["\']SNlM0e["\']\s*:\s*["\'](.*?)["\']', resp.text)
             if not snlm0e_match:
@@ -472,7 +495,9 @@ class AsyncChatbot:
                 if resp.status_code == 429:
                     error_message += " Rate limit likely exceeded."
                 else:
-                    error_message += f" Response status: {resp.status_code}. Check cookie validity and network."
+                    error_message += (
+                        f" Response status: {resp.status_code}. Check cookie validity and network."
+                    )
                 raise ValueError(error_message)
 
             if not self.secure_1psidts and "PSIDTS" not in self.session.cookies:
@@ -488,8 +513,12 @@ class AsyncChatbot:
         except (RequestException, CurlError) as e:
             raise ConnectionError(f"Network error while fetching SNlM0e: {e}") from e
         except Exception as e:
-            if isinstance(e, HTTPError) and (e.response.status_code == 401 or e.response.status_code == 403):
-                raise PermissionError(f"Authentication failed (status {e.response.status_code}). Check cookies. {e}") from e
+            if isinstance(e, HTTPError) and (
+                e.response.status_code == 401 or e.response.status_code == 403
+            ):
+                raise PermissionError(
+                    f"Authentication failed (status {e.response.status_code}). Check cookies. {e}"
+                ) from e
             else:
                 raise Exception(f"Error while fetching SNlM0e: {e}") from e
 
@@ -500,7 +529,7 @@ class AsyncChatbot:
                 Endpoint.ROTATE_COOKIES.value,
                 headers=Headers.ROTATE_COOKIES.value,
                 data='[000,"-0000000000000000000"]',
-                timeout=self.timeout
+                timeout=self.timeout,
             )
             response.raise_for_status()
 
@@ -512,8 +541,9 @@ class AsyncChatbot:
             console.log(f"[yellow]Cookie rotation failed: {e}[/yellow]")
             raise
 
-
-    async def ask(self, message: str, image: Optional[Union[bytes, str, Path]] = None) -> AskResponse:
+    async def ask(
+        self, message: str, image: Optional[Union[bytes, str, Path]] = None
+    ) -> AskResponse:
         """
         Sends a message to Google Gemini and returns the response using curl_cffi.
 
@@ -538,7 +568,9 @@ class AsyncChatbot:
         image_upload_id = None
         if image:
             try:
-                image_upload_id = await upload_file(image, proxy=self.proxies_dict, impersonate=self.impersonate)
+                image_upload_id = await upload_file(
+                    image, proxy=self.proxies_dict, impersonate=self.impersonate
+                )
                 console.log(f"Image uploaded successfully. ID: {image_upload_id}")
             except Exception as e:
                 console.log(f"[red]Error uploading image: {e}[/red]")
@@ -558,7 +590,9 @@ class AsyncChatbot:
             ]
 
         data = {
-            "f.req": json.dumps([None, json.dumps(message_struct, ensure_ascii=False)], ensure_ascii=False),
+            "f.req": json.dumps(
+                [None, json.dumps(message_struct, ensure_ascii=False)], ensure_ascii=False
+            ),
             "at": self.SNlM0e,
         }
 
@@ -577,7 +611,9 @@ class AsyncChatbot:
 
             lines = resp.text.splitlines()
             if len(lines) < 3:
-                raise ValueError(f"Unexpected response format. Status: {resp.status_code}. Content: {resp.text[:200]}...")
+                raise ValueError(
+                    f"Unexpected response format. Status: {resp.status_code}. Content: {resp.text[:200]}..."
+                )
 
             chat_data_line = None
             for line in lines:
@@ -617,7 +653,9 @@ class AsyncChatbot:
                 if len(body) > 4 and len(body[4]) > 0 and len(body[4][0]) > 1:
                     content = body[4][0][1][0] if len(body[4][0][1]) > 0 else ""
 
-                conversation_id = body[1][0] if len(body) > 1 and len(body[1]) > 0 else self.conversation_id
+                conversation_id = (
+                    body[1][0] if len(body) > 1 and len(body[1]) > 0 else self.conversation_id
+                )
                 response_id = body[1][1] if len(body) > 1 and len(body[1]) > 1 else self.response_id
 
                 factualityQueries = body[3] if len(body) > 3 else None
@@ -626,7 +664,11 @@ class AsyncChatbot:
                 choices = []
                 if len(body) > 4:
                     for candidate in body[4]:
-                        if len(candidate) > 1 and isinstance(candidate[1], list) and len(candidate[1]) > 0:
+                        if (
+                            len(candidate) > 1
+                            and isinstance(candidate[1], list)
+                            and len(candidate[1]) > 0
+                        ):
                             choices.append({"id": candidate[0], "content": candidate[1][0]})
 
                 choice_id = choices[0]["id"] if choices else self.choice_id
@@ -641,7 +683,9 @@ class AsyncChatbot:
                             img_title = img_data[1] if len(img_data) > 1 else "[Image]"
                             images.append({"url": img_url, "alt": img_alt, "title": img_title})
                         except (IndexError, TypeError):
-                            console.log("[yellow]Warning: Could not parse image data structure (format 1).[/yellow]")
+                            console.log(
+                                "[yellow]Warning: Could not parse image data structure (format 1).[/yellow]"
+                            )
                             continue
 
                 generated_images = []
@@ -651,9 +695,15 @@ class AsyncChatbot:
                             for img_index, img_data in enumerate(body[4][0][12][7][0]):
                                 try:
                                     img_url = img_data[0][3][3]
-                                    img_title = f"[Generated Image {img_index+1}]"
-                                    img_alt = img_data[3][5][0] if len(img_data[3]) > 5 and len(img_data[3][5]) > 0 else ""
-                                    generated_images.append({"url": img_url, "alt": img_alt, "title": img_title})
+                                    img_title = f"[Generated Image {img_index + 1}]"
+                                    img_alt = (
+                                        img_data[3][5][0]
+                                        if len(img_data[3]) > 5 and len(img_data[3][5]) > 0
+                                        else ""
+                                    )
+                                    generated_images.append(
+                                        {"url": img_url, "alt": img_alt, "title": img_title}
+                                    )
                                 except (IndexError, TypeError):
                                     continue
 
@@ -664,12 +714,25 @@ class AsyncChatbot:
                                     try:
                                         img_part = json.loads(part[2])
                                         if img_part[4][0][12][7][0]:
-                                            for img_index, img_data in enumerate(img_part[4][0][12][7][0]):
+                                            for img_index, img_data in enumerate(
+                                                img_part[4][0][12][7][0]
+                                            ):
                                                 try:
                                                     img_url = img_data[0][3][3]
-                                                    img_title = f"[Generated Image {img_index+1}]"
-                                                    img_alt = img_data[3][5][0] if len(img_data[3]) > 5 and len(img_data[3][5]) > 0 else ""
-                                                    generated_images.append({"url": img_url, "alt": img_alt, "title": img_title})
+                                                    img_title = f"[Generated Image {img_index + 1}]"
+                                                    img_alt = (
+                                                        img_data[3][5][0]
+                                                        if len(img_data[3]) > 5
+                                                        and len(img_data[3][5]) > 0
+                                                        else ""
+                                                    )
+                                                    generated_images.append(
+                                                        {
+                                                            "url": img_url,
+                                                            "alt": img_alt,
+                                                            "title": img_title,
+                                                        }
+                                                    )
                                                 except (IndexError, TypeError):
                                                     continue
                                             break
@@ -683,28 +746,37 @@ class AsyncChatbot:
                         candidate = body[4][0]
                         if len(candidate) > 22 and candidate[22]:
                             import re
-                            content = candidate[22][0] if isinstance(candidate[22], list) and len(candidate[22]) > 0 else str(candidate[22])
-                            urls = re.findall(r'https?://[^\s]+', content)
+
+                            content = (
+                                candidate[22][0]
+                                if isinstance(candidate[22], list) and len(candidate[22]) > 0
+                                else str(candidate[22])
+                            )
+                            urls = re.findall(r"https?://[^\s]+", content)
                             for i, url in enumerate(urls):
-                                if url[-1] in ['.', ',', ')', ']', '}', '"', "'"]:
+                                if url[-1] in [".", ",", ")", "]", "}", '"', "'"]:
                                     url = url[:-1]
-                                generated_images.append({
-                                    "url": url,
-                                    "title": f"[Generated Image {i+1}]",
-                                    "alt": ""
-                                })
+                                generated_images.append(
+                                    {"url": url, "title": f"[Generated Image {i + 1}]", "alt": ""}
+                                )
                     except (IndexError, TypeError) as e:
-                        console.log(f"[yellow]Warning: Could not parse alternative image structure: {e}[/yellow]")
+                        console.log(
+                            f"[yellow]Warning: Could not parse alternative image structure: {e}[/yellow]"
+                        )
 
                 if len(images) == 0 and len(generated_images) == 0 and content:
                     try:
                         import re
 
-                        urls = re.findall(r'(https?://[^\s]+\.(jpg|jpeg|png|gif|webp))', content.lower())
+                        urls = re.findall(
+                            r"(https?://[^\s]+\.(jpg|jpeg|png|gif|webp))", content.lower()
+                        )
 
-                        google_urls = re.findall(r'(https?://lh\d+\.googleusercontent\.com/[^\s]+)', content)
+                        google_urls = re.findall(
+                            r"(https?://lh\d+\.googleusercontent\.com/[^\s]+)", content
+                        )
 
-                        general_urls = re.findall(r'(https?://[^\s]+)', content)
+                        general_urls = re.findall(r"(https?://[^\s]+)", content)
 
                         all_urls = []
                         if urls:
@@ -717,16 +789,18 @@ class AsyncChatbot:
 
                         if all_urls:
                             for i, url in enumerate(all_urls):
-                                if url[-1] in ['.', ',', ')', ']', '}', '"', "'"]:
+                                if url[-1] in [".", ",", ")", "]", "}", '"', "'"]:
                                     url = url[:-1]
-                                images.append({
-                                    "url": url,
-                                    "title": f"[Image in Content {i+1}]",
-                                    "alt": ""
-                                })
-                            console.log(f"[green]Found {len(all_urls)} potential image URLs in content.[/green]")
+                                images.append(
+                                    {"url": url, "title": f"[Image in Content {i + 1}]", "alt": ""}
+                                )
+                            console.log(
+                                f"[green]Found {len(all_urls)} potential image URLs in content.[/green]"
+                            )
                     except Exception as e:
-                        console.log(f"[yellow]Warning: Error extracting URLs from content: {e}[/yellow]")
+                        console.log(
+                            f"[yellow]Warning: Error extracting URLs from content: {e}[/yellow]"
+                        )
 
                 all_images = images + generated_images
 
@@ -755,7 +829,9 @@ class AsyncChatbot:
         except json.JSONDecodeError as e:
             console.log(f"[red]Error parsing JSON response: {e}[/red]")
             resp_text = resp.text[:200] if resp else "No response"
-            return self._error_response(f"Error parsing JSON response: {e}. Response: {resp_text}...")
+            return self._error_response(
+                f"Error parsing JSON response: {e}. Response: {resp_text}..."
+            )
         except Timeout as e:
             console.log(f"[red]Request timed out: {e}[/red]")
             return self._error_response(f"Request timed out: {e}")
@@ -766,10 +842,10 @@ class AsyncChatbot:
             console.log(f"[red]Network error: {e}[/red]")
             return self._error_response(f"Network error: {e}")
         except Exception as e:
-            console.log(f"[red]An unexpected error occurred during ask: {e}[/red]", style="bold red")
+            console.log(
+                f"[red]An unexpected error occurred during ask: {e}[/red]", style="bold red"
+            )
             return self._error_response(f"An unexpected error occurred: {e}")
-
-
 
 
 class Image(BaseModel):
@@ -783,6 +859,7 @@ class Image(BaseModel):
         proxy (str | dict | None): Proxy used when saving the image.
         impersonate (str): Browser profile for curl_cffi to impersonate.
     """
+
     url: str
     title: str = "[Image]"
     alt: str = ""
@@ -828,9 +905,10 @@ class Image(BaseModel):
         if not filename:
             try:
                 from urllib.parse import unquote, urlparse
+
                 parsed_url = urlparse(self.url)
                 base_filename = os.path.basename(unquote(parsed_url.path))
-                safe_filename = re.sub(r'[<>:"/\\|?*]', '_', base_filename)
+                safe_filename = re.sub(r'[<>:"/\\|?*]', "_", base_filename)
                 if safe_filename and len(safe_filename) > 0:
                     filename = safe_filename
                 else:
@@ -843,7 +921,7 @@ class Image(BaseModel):
             max_len = 255
             if len(filename) > max_len:
                 name, ext = os.path.splitext(filename)
-                filename = name[:max_len - len(ext) - 1] + ext
+                filename = name[: max_len - len(ext) - 1] + ext
         except (OSError, ValueError):
             if verbose:
                 console.log(f"[yellow]Invalid filename generated: {filename}[/yellow]")
@@ -866,8 +944,7 @@ class Image(BaseModel):
             async with AsyncSession(
                 cookies=cookies,
                 proxies=cast(Any, proxies_dict),
-                impersonate=cast(Any, self.impersonate)
-
+                impersonate=cast(Any, self.impersonate),
             ) as client:
                 if verbose:
                     console.log(f"Attempting to download image from: {self.url}")
@@ -877,7 +954,9 @@ class Image(BaseModel):
 
                 content_type = response.headers.get("content-type", "").lower()
                 if "image" not in content_type and verbose:
-                    console.log(f"[yellow]Warning: Content type is '{content_type}', not an image. Saving anyway.[/yellow]")
+                    console.log(
+                        f"[yellow]Warning: Content type is '{content_type}', not an image. Saving anyway.[/yellow]"
+                    )
 
                 dest_path = Path(path)
                 dest_path.mkdir(parents=True, exist_ok=True)
@@ -891,7 +970,9 @@ class Image(BaseModel):
                 return str(dest.resolve())
 
         except HTTPError as e:
-            console.log(f"[red]Error downloading image {self.url}: {e.response.status_code} {e}[/red]")
+            console.log(
+                f"[red]Error downloading image {self.url}: {e.response.status_code} {e}[/red]"
+            )
             raise
         except (RequestException, CurlError) as e:
             console.log(f"[red]Network error downloading image {self.url}: {e}[/red]")
@@ -910,6 +991,7 @@ class WebImage(Image):
 
     Returned when asking Gemini to "SEND an image of [something]".
     """
+
     async def save(
         self,
         path: str = "downloaded_images",
@@ -940,6 +1022,7 @@ class WebImage(Image):
         """
         return await super().save(path, filename, cookies, verbose, skip_invalid_filename)
 
+
 class GeneratedImage(Image):
     """
     Represents an image generated by Google's AI image generator (e.g., ImageFX).
@@ -948,6 +1031,7 @@ class GeneratedImage(Image):
         cookies (dict[str, str]): Cookies required for accessing the generated image URL,
             typically from the GeminiClient/Chatbot instance.
     """
+
     cookies: Dict[str, str]
 
     @field_validator("cookies")
@@ -965,7 +1049,7 @@ class GeneratedImage(Image):
         cookies: Optional[Dict[str, str]] = None,
         verbose: bool = False,
         skip_invalid_filename: bool = True,
-        **kwargs
+        **kwargs,
     ) -> Optional[str]:
         """
         Save the generated image to disk.
@@ -979,9 +1063,10 @@ class GeneratedImage(Image):
             Absolute path of the saved image if successful, None if skipped.
         """
         if filename is None:
-             ext = ".jpg" if ".jpg" in self.url.lower() else ".png"
-             url_part = self.url.split('/')[-1][:10]
-             filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{url_part}{ext}"
+            ext = ".jpg" if ".jpg" in self.url.lower() else ".png"
+            url_part = self.url.split("/")[-1][:10]
+            filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{url_part}{ext}"
 
-        return await super().save(path, filename, cookies or self.cookies, verbose, skip_invalid_filename)
-
+        return await super().save(
+            path, filename, cookies or self.cookies, verbose, skip_invalid_filename
+        )

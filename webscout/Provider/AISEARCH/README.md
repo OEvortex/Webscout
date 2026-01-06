@@ -8,7 +8,7 @@
 
 ## ✨ Features
 
-- **Multiple Search Providers**: Support for 7 specialized AI search services
+- **Multiple Search Providers**: Support for 6 specialized AI search services
 - **Streaming Responses**: Real-time streaming of AI-generated responses
 - **Raw Response Format**: Access to raw response data when needed
 - **Automatic Text Handling**: Smart response formatting and cleaning
@@ -21,7 +21,6 @@
 |----------|-------------|-------------|
 | **PERPLEXED** | Resilient AI search | High availability, clean formatting |
 | **Perplexity** | Advanced AI search & chat | Multiple modes, model selection, source control |
-| **Genspark** | Efficient AI workspace | Fast response, multi-lingual support |
 | **IAsk** | Multi-mode research | Academic, Question, Fast modes, detail levels |
 | **Monica** | Comprehensive AI search | Clean formatted responses, web integration |
 | **WebPilotAI** | Web-integrated analysis | Content extraction, source references |
@@ -71,20 +70,6 @@ print(response)
 # Streaming search
 for chunk in ai.search("Explain black holes", stream=True):
     print(chunk, end="", flush=True)
-```
-</details>
-
-<details>
-<summary><strong>Genspark Example</strong></summary>
-
-```python
-from webscout.Provider.AISEARCH import Genspark
-
-ai = Genspark()
-
-# Get fast results with citations
-response = ai.search("Latest news on space exploration")
-print(response)
 ```
 </details>
 

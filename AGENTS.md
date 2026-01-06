@@ -110,7 +110,7 @@ class MyProvider(OpenAICompatibleProvider):
 10) Important rules
 - Keep changes focused and include small usage examples in tests or docs.
 - Run `ruff .`  using `uv run ruff` locally; respect `line-length = 100` and the Ruff select/ignore rules in pyproject.toml.
-- Run `uvx ty check <file>` or `uvx ty check .` to validate type correctness.
+- Always  use `uvx ty check <file>` or `uvx ty check .` to validate type correctness.
 - Always do ruff and ty check 
   - Dont use mypy or pyright; we use ty which is a faster alternative to these tools.
 - If the change affects runtime (server, CLI), include a short manual-test snippet that a maintainer can run (e.g., `webscout-server --debug` and a sample curl to /v1/chat/completions).

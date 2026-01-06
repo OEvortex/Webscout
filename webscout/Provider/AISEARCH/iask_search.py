@@ -408,7 +408,7 @@ class IAsk(AISearch):
 
 if __name__ == "__main__":
     ai = IAsk()
-    response = ai.search("What is Python?", stream=True)
+    response = ai.search("What is Python?", stream=True, raw=True)
     if hasattr(response, "__iter__") and not isinstance(response, (str, SearchResponse)):
         for chunk in response:
             print(chunk, end="", flush=True)

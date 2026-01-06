@@ -105,15 +105,6 @@ class Monica(AISearch):
             "task_id": task_id,
         }
 
-        def extract_monica_content(data):
-            """Extracts content from Monica stream JSON objects."""
-            if isinstance(data, dict):
-                if "session_id" in data and data["session_id"]:
-                    self.session_id = data["session_id"]
-                if "text" in data and data["text"]:
-                    return data["text"]
-            return None
-
         def for_stream():
             try:
                 # Set cookies for the session
@@ -134,12 +125,10 @@ class Monica(AISearch):
                     processed_chunks = sanitize_stream(
                         data=response.iter_content(chunk_size=None),
                         to_json=True,
-                        extract_regexes=[r"data:\s*({.*})"],
-                        content_extractor=lambda chunk: extract_monica_content(chunk),
+                        content_extractor=lambda chunk: chunk.get("text") if isinstance(chunk, dict) and chunk.get("text") is not None else None,
                         yield_raw_on_error=False,
                         encoding='utf-8',
                         encoding_errors='replace',
-                        line_delimiter=None,
                         raw=raw,
                         output_formatter=None if raw else lambda x: SearchResponse(x) if isinstance(x, str) else x,
                     )
@@ -179,17 +168,11 @@ class Monica(AISearch):
                             strip_chars=None,
                             start_marker=None,
                             end_marker=None,
-                            content_extractor=lambda chunk: extract_monica_content(chunk),
+                            content_extractor=lambda chunk: chunk.get("text") if isinstance(chunk, dict) and chunk.get("text") is not None else None,
                             yield_raw_on_error=False,
                             encoding='utf-8',
                             encoding_errors='replace',
                             buffer_size=8192,
-                            line_delimiter=None,
-                            error_handler=None,
-                            skip_regexes=None,
-                            extract_regexes=None,
-                            raw=False,
-                            output_formatter=None,
                         )
 
                         full_response = ""
@@ -207,6 +190,7 @@ class Monica(AISearch):
 
 
 if __name__ == "__main__":
+
     ai = Monica()
     response = ai.search("What is Python?", stream=True, raw=False)
     if hasattr(response, "__iter__") and not isinstance(response, (str, bytes, SearchResponse)):

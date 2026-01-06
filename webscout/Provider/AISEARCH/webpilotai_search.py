@@ -102,6 +102,12 @@ class webpilotai(AISearch):
             "threadId": ""  # Empty for new search
         }
 
+        # We'll use regex-based extraction for WebPilot events. The sanitizer will:
+        #  - skip lines that are not "type":"data" events using skip_regexes
+        #  - extract the "content" value using a regex that handles escaped quotes
+        # The regex used below for extract_regexes is: r'"content"\s*:\s*"((?:\\.|[^"\\])*)"'
+        # which captures the content string while allowing escaped characters such as \".
+
         def for_stream():
 
             try:
@@ -117,17 +123,16 @@ class webpilotai(AISearch):
                             f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                         )
 
-                    def extract_webpilot_content(data):
-                        if isinstance(data, dict):
-                            if data.get('type') == 'data':
-                                return data.get('data', {}).get('content', "")
-                        return None
-
                     processed_chunks = sanitize_stream(
                         data=response.iter_content(chunk_size=1024),
                         to_json=True,
-                        extract_regexes=[r"(\{.*\})"],
-                        content_extractor=lambda chunk: extract_webpilot_content(chunk),
+                        # Extract content from parsed JSON payload similar to Monica
+                        content_extractor=lambda chunk: (
+                            ((chunk.get("data") or {}).get("content") if isinstance(chunk, dict) else None)
+                            or ((chunk.get("data") or {}).get("text") if isinstance(chunk, dict) else None)
+                            or ((chunk.get("data") or {}).get("delta", {}).get("content") if isinstance(chunk, dict) else None)
+                        ),
+                        skip_markers=["event:message"],
                         yield_raw_on_error=False,
                         encoding='utf-8',
                         encoding_errors='replace',
@@ -145,19 +150,54 @@ class webpilotai(AISearch):
                 raise exceptions.APIConnectionError(f"Request failed: {e}")
 
         def for_non_stream():
-            full_content = ""
-            for chunk in for_stream():
-                if raw:
-                    full_content += str(chunk)
-                else:
-                    full_content += str(chunk)
+            try:
+                with self.session.post(
+                    self.api_endpoint,
+                    json=payload,
+                    stream=False,
+                    timeout=self.timeout,
+                    proxies=self.proxies,
+                ) as response:
+                    if not response.ok:
+                        raise exceptions.APIConnectionError(
+                            f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
+                        )
 
-            if raw:
-                return full_content
-            else:
-                formatted_response = self.format_SearchResponse(full_content)
-                self.last_response = SearchResponse(formatted_response)
-                return self.last_response
+                    if raw:
+                        return response.text
+
+                    # Process full response payload using sanitize_stream similar to streaming path
+                    processed_chunks = sanitize_stream(
+                        data=response.content,
+                        intro_value="",
+                        to_json=True,
+                        strip_chars=None,
+                        start_marker=None,
+                        end_marker=None,
+                        content_extractor=lambda chunk: (
+                            ((chunk.get("data") or {}).get("content") if isinstance(chunk, dict) else None)
+                            or ((chunk.get("data") or {}).get("text") if isinstance(chunk, dict) else None)
+                            or ((chunk.get("data") or {}).get("delta", {}).get("content") if isinstance(chunk, dict) else None)
+                        ),
+                        skip_markers=["event:message"],
+                        yield_raw_on_error=False,
+                        encoding='utf-8',
+                        encoding_errors='replace',
+                        buffer_size=8192,
+                        output_formatter=lambda x: SearchResponse(x) if isinstance(x, str) else x,
+                    )
+
+                    full_response = ""
+                    for content_chunk in processed_chunks:
+                        if content_chunk is not None and isinstance(content_chunk, str):
+                            full_response += content_chunk
+
+                    formatted_response = self.format_SearchResponse(full_response)
+                    self.last_response = SearchResponse(formatted_response)
+                    return self.last_response
+
+            except requests.exceptions.RequestException as e:
+                raise exceptions.APIConnectionError(f"Request failed: {e}")
 
         if stream:
             return for_stream()
@@ -194,9 +234,9 @@ if __name__ == "__main__":
     from rich import print
 
     ai = webpilotai()
-    r = ai.search("What is Python?", stream=True, raw=False)
-    if hasattr(r, "__iter__") and not isinstance(r, (str, SearchResponse)):
-        for chunk in r:
+    resp = ai.search("webscout python package details", stream=True, raw=False)
+    if hasattr(resp, "__iter__") and not isinstance(resp, (str, SearchResponse)):
+        for chunk in resp:
             print(chunk, end="", flush=True)
     else:
-        print(r)
+        print(resp)
