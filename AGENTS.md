@@ -181,8 +181,6 @@ class MyProvider(OpenAICompatibleProvider):
 
   <DocsToUpdate>
     <File>docs/</File>
-    <File>webscout/Provider/OPENAI/README.md</File>
-    <File>README.md</File>
     <File>changelog.md</File>
   </DocsToUpdate>
 
