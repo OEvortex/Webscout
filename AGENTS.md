@@ -2,6 +2,98 @@
   <Purpose>
     Concise, actionable guidance so an AI coding agent can be productive immediately when editing Webscout.
   </Purpose>
+  
+  <AgentOrchestration>
+    <Overview>
+      The main Copilot agent acts strictly as an orchestrator.
+      All research, planning, and heavy reasoning MUST be delegated
+      to specialized subagents.
+    </Overview>
+
+    <AvailableSubagents>
+      <Subagent>
+        <Name>Reverse</Name>
+        <Role>Reverse Engineering & Provider Discovery Agent</Role>
+        <Responsibilities>
+          <Item>Inspect websites or APIs</Item>
+          <Item>Extract endpoints, headers, payloads, auth, streaming patterns</Item>
+          <Item>Generate production-ready Provider classes</Item>
+        </Responsibilities>
+        <WhenToCall>
+          <Condition>User asks to reverse engineer a website or API</Condition>
+          <Condition>User requests a new Provider implementation</Condition>
+          <Condition>Unknown or undocumented API behavior</Condition>
+        </WhenToCall>
+        <MustNot>
+          <Item>Modify unrelated files</Item>
+          <Item>Plan multi-file refactors</Item>
+        </MustNot>
+      </Subagent>
+
+      <Subagent>
+        <Name>Docstring</Name>
+        <Role>Professional Docstring Generator Agent</Role>
+        <Responsibilities>
+          <Item>Read existing Python code</Item>
+          <Item>Generate accurate, professional docstrings</Item>
+          <Item>Insert docstrings without changing logic</Item>
+        </Responsibilities>
+        <WhenToCall>
+          <Condition>User requests documentation or docstring generation</Condition>
+          <Condition>Code lacks or has poor-quality docstrings</Condition>
+          <Condition>Preparing code for release or public use</Condition>
+        </WhenToCall>
+        <MustNot>
+          <Item>Change executable behavior</Item>
+          <Item>Invent undocumented functionality</Item>
+        </MustNot>
+      </Subagent>
+
+      <Subagent>
+        <Name>Plan</Name>
+        <Role>Planning & Task Decomposition Agent</Role>
+        <Responsibilities>
+          <Item>Break large requests into discrete tasks</Item>
+          <Item>Define execution order</Item>
+          <Item>Identify required files and agents</Item>
+        </Responsibilities>
+        <WhenToCall>
+          <Condition>Task spans multiple files</Condition>
+          <Condition>Complex refactors or new subsystems</Condition>
+          <Condition>Ambiguous or high-level user requests</Condition>
+        </WhenToCall>
+        <MustNot>
+          <Item>Write production code</Item>
+          <Item>Perform API research</Item>
+        </MustNot>
+      </Subagent>
+    </AvailableSubagents>
+
+    <AgentCallingRules>
+      <Rule>
+        The main agent MUST decide which subagent to call before acting.
+      </Rule>
+      <Rule>
+        Only ONE subagent may be active per task chunk.
+      </Rule>
+      <Rule>
+        If a task involves multiple concerns, call Plan first.
+      </Rule>
+      <Rule>
+        Never mix reverse engineering, planning, and documentation in one agent.
+      </Rule>
+    </AgentCallingRules>
+
+    <ExecutionFlow>
+      <Flow>
+        <Step>Receive user request</Step>
+        <Step>Classify intent (Reverse / Docstring / Plan)</Step>
+        <Step>Delegate to appropriate subagent</Step>
+        <Step>Receive result</Step>
+        <Step>Apply or present result</Step>
+      </Flow>
+    </ExecutionFlow>
+  </AgentOrchestration>
 
   <CriticalContextWindowManagement>
     <Rule>ALWAYS work in discrete, focused steps</Rule>
