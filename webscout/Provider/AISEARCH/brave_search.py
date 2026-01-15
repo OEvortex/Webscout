@@ -35,9 +35,19 @@ class BraveAI(AISearch):
         self,
         timeout: int = 30,
         proxies: Optional[dict] = None,
+        enable_research: bool = False,
+        language: str = "en",
+        country: str = "US",
+        ui_lang: str = "en-us",
+        geoloc: Optional[str] = None,
     ):
         self.timeout = timeout
         self.proxies = proxies or {}
+        self.enable_research = enable_research
+        self.language = language
+        self.country = country
+        self.ui_lang = ui_lang
+        self.geoloc = geoloc
         self.last_response = {}
         self.chat_id = None
         self.symmetric_key = None
@@ -137,13 +147,16 @@ class BraveAI(AISearch):
             if not self.chat_id or not self.symmetric_key:
                 key_b64 = self._generate_key_b64()
                 params = {
-                    "language": "en",
-                    "country": "US",
-                    "ui_lang": "en",
+                    "language": self.language,
+                    "country": self.country,
+                    "ui_lang": self.ui_lang,
                     "symmetric_key": key_b64,
-                    "source": "llmSuggest",
-                    "query": prompt
+                    "source": "home" if self.enable_research else "llmSuggest",
+                    "query": prompt,
+                    "enable_research": "true" if self.enable_research else "false",
                 }
+                if self.geoloc:
+                    params["geoloc"] = self.geoloc
                 response = await session.get(
                     f"{self.BASE_URL}/new",
                     params=params,
@@ -161,9 +174,10 @@ class BraveAI(AISearch):
                 "id": self.chat_id,
                 "query": prompt,
                 "symmetric_key": self.symmetric_key,
-                "language": "en",
-                "country": "US",
-                "ui_lang": "en"
+                "language": self.language,
+                "country": self.country,
+                "ui_lang": self.ui_lang,
+                "enable_research": "true" if self.enable_research else "false",
             }
 
             ref = f"https://search.brave.com/ask?q={quote(prompt)}&conversation={self.chat_id}"
@@ -173,7 +187,7 @@ class BraveAI(AISearch):
                 full_text = ""
                 response = await session.get(
                     f"{self.BASE_URL}/stream",
-                    params=params,
+                    params={**params, "enable_followups": "true" if self.enable_research else "false"},
                     headers=headers,
                     stream=True,
                     timeout=self.timeout,
@@ -233,8 +247,8 @@ class BraveAI(AISearch):
             raise
 
 if __name__ == "__main__":
-    ai = BraveAI()
-    res = ai.search("What is Python?", stream=True)
+    ai = BraveAI(enable_research=True)
+    res = ai.search("What is Python?", stream=True, enable_research=True)
     from collections.abc import Iterable
 
     if isinstance(res, Iterable):
