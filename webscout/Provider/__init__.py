@@ -7,8 +7,8 @@ from webscout.Provider.Andi import AndiSearch
 from webscout.Provider.Apriel import Apriel
 from webscout.Provider.Ayle import Ayle
 from webscout.Provider.cerebras import Cerebras
-from webscout.Provider.ChatZAI import ChatZAI
 from webscout.Provider.ChatSandbox import ChatSandbox
+from webscout.Provider.ChatZAI import ChatZAI
 from webscout.Provider.ClaudeOnline import ClaudeOnline
 from webscout.Provider.cleeai import Cleeai
 from webscout.Provider.Cohere import Cohere
