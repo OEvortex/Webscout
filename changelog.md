@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026.01.15] - 2026-01-15
+
+### ✨ Added
+- **feat**: webscout/Provider/AISEARCH/BraveAI.py - New BraveAI AI search provider (AI search engine) supporting normal AI search and deep research (streaming and non-streaming modes). Updated `webscout/Provider/AISEARCH/__init__.py` to export the provider and added documentation to `webscout/Provider/AISEARCH/README.md`.
+
 ## [2026.01.06] - 2026-01-06
 
 ### 🚮 Removed
