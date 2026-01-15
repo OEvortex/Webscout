@@ -5,12 +5,12 @@
 
   <CriticalContextWindowManagement>
     <Rule>ALWAYS work in discrete, focused steps</Rule>
-    <Rule>ALWAYS use runSubagent for complex multi-step tasks</Rule>
+    <Rule>ALWAYS use runSubagent for  tasks</Rule>
     <Rule>Break large tasks into smaller chunks</Rule>
-    <Rule>Avoid reading large files entirely; search for specific code first</Rule>
+    <Rule>Avoid reading large files entirely; search for specific code first using codebase-retrieval</Rule>
     <Rule>Never batch too many operations; use subagents or groups of 3–5 files</Rule>
     <Guidance>
-      When in doubt, delegate to a subagent rather than risk output truncation.
+      Always, delegate to a subagent rather than risk output truncation.
     </Guidance>
   </CriticalContextWindowManagement>
 

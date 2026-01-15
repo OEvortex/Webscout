@@ -27,6 +27,10 @@ class BraveAI(AISearch):
     Args:
         timeout (int, optional): Request timeout in seconds. Defaults to 30.
         proxies (dict, optional): Proxy configuration for requests. Defaults to None.
+        language (str, optional): Language for the search. Defaults to "en".
+        country (str, optional): Country code for localization. Defaults to "US".
+        ui_lang (str, optional): UI language. Defaults to "en-us".
+        geoloc (str, optional): Geolocation coordinates. Defaults to None.
     """
     BASE_URL = "https://search.brave.com/api/tap/v1"
 
@@ -35,7 +39,6 @@ class BraveAI(AISearch):
         self,
         timeout: int = 30,
         proxies: Optional[dict] = None,
-        enable_research: bool = False,
         language: str = "en",
         country: str = "US",
         ui_lang: str = "en-us",
@@ -43,7 +46,6 @@ class BraveAI(AISearch):
     ):
         self.timeout = timeout
         self.proxies = proxies or {}
-        self.enable_research = enable_research
         self.language = language
         self.country = country
         self.ui_lang = ui_lang
@@ -82,16 +84,53 @@ class BraveAI(AISearch):
         prompt: str,
         stream: bool = False,
         raw: bool = False,
+        enable_research: bool = False,
         **kwargs: Any,
     ) -> Union[SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None]]:
-        """Search using the Brave Search AI and get AI-generated responses."""
+        """Search using the Brave Search AI and get AI-generated responses.
+
+        This method sends a search query to Brave AI and returns the AI-generated response.
+        It supports both streaming and non-streaming modes, as well as raw response format.
+
+        Args:
+            prompt (str): The search query or prompt to send to the API.
+            stream (bool, optional): If True, yields response chunks as they arrive.
+                                   If False, returns complete response. Defaults to False.
+            raw (bool, optional): If True, returns raw response dictionaries with 'text' key.
+                                If False, returns Response objects that convert to text automatically.
+                                Defaults to False.
+            enable_research (bool, optional): If True, enables deep research mode for more comprehensive responses.
+                                           Defaults to False.
+
+        Returns:
+            Union[Response, Generator[Union[Dict[str, str], Response], None, None]]:
+                - If stream=False: Returns complete response as Response object
+                - If stream=True: Yields response chunks as either Dict or Response objects
+
+        Raises:
+            APIConnectionError: If the API request fails
+
+        Examples:
+            Basic search:
+            >>> ai = BraveAI()
+            >>> response = ai.search("What is Python?")
+            >>> print(response)
+
+            Research-enabled search:
+            >>> response = ai.search("What is Python?", enable_research=True)
+            >>> print(response)
+
+            Streaming response:
+            >>> for chunk in ai.search("Tell me about AI", stream=True):
+            ...     print(chunk, end="")
+        """
 
         if not stream:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             try:
                 result = loop.run_until_complete(
-                    self._async_search(prompt, False, raw)
+                    self._async_search(prompt, False, raw, enable_research)
                 )
                 return cast(Union[SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None]], result)
             finally:
@@ -104,7 +143,7 @@ class BraveAI(AISearch):
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             try:
-                async_gen = loop.run_until_complete(self._async_search(prompt, True, raw))
+                async_gen = loop.run_until_complete(self._async_search(prompt, True, raw, enable_research))
                 if hasattr(async_gen, "__anext__"):
                     async_iterator = cast(AsyncIterator, async_gen)
                     while True:
@@ -130,6 +169,7 @@ class BraveAI(AISearch):
         prompt: str,
         stream: bool = False,
         raw: bool = False,
+        enable_research: bool = False,
     ) -> Union[
         SearchResponse,
         str,
@@ -151,9 +191,9 @@ class BraveAI(AISearch):
                     "country": self.country,
                     "ui_lang": self.ui_lang,
                     "symmetric_key": key_b64,
-                    "source": "home" if self.enable_research else "llmSuggest",
+                    "source": "home" if enable_research else "llmSuggest",
                     "query": prompt,
-                    "enable_research": "true" if self.enable_research else "false",
+                    "enable_research": "true" if enable_research else "false",
                 }
                 if self.geoloc:
                     params["geoloc"] = self.geoloc
@@ -177,7 +217,7 @@ class BraveAI(AISearch):
                 "language": self.language,
                 "country": self.country,
                 "ui_lang": self.ui_lang,
-                "enable_research": "true" if self.enable_research else "false",
+                "enable_research": "true" if enable_research else "false",
             }
 
             ref = f"https://search.brave.com/ask?q={quote(prompt)}&conversation={self.chat_id}"
@@ -187,7 +227,7 @@ class BraveAI(AISearch):
                 full_text = ""
                 response = await session.get(
                     f"{self.BASE_URL}/stream",
-                    params={**params, "enable_followups": "true" if self.enable_research else "false"},
+                    params={**params, "enable_followups": "true" if enable_research else "false"},
                     headers=headers,
                     stream=True,
                     timeout=self.timeout,
@@ -247,7 +287,7 @@ class BraveAI(AISearch):
             raise
 
 if __name__ == "__main__":
-    ai = BraveAI(enable_research=True)
+    ai = BraveAI()
     res = ai.search("What is Python?", stream=True, enable_research=True)
     from collections.abc import Iterable
 
