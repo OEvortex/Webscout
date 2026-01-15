@@ -60,7 +60,7 @@ class AwesomePrompts:
         self.timeout = timeout
         if CURL_AVAILABLE:
             try:
-                self.session = Session(timeout=timeout, impersonate=impersonate)  # type: ignore
+                self.session = Session(timeout=timeout, impersonate=impersonate)
             except Exception:
                 self.session = requests.Session()
         else:

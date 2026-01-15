@@ -2,6 +2,37 @@
 
 Purpose: concise, actionable guidance so an AI coding agent can be productive immediately when editing Webscout.
 
+## ⚠️ CRITICAL: Context Window Management
+
+Your context window is limited - especially the output size. To avoid truncation and ensure reliable execution:
+
+- **ALWAYS work in discrete, focused steps**
+- **ALWAYS use `runSubagent` for complex multi-step tasks** - delegate research, analysis, or multi-file operations to subagents
+- **Break large tasks into smaller chunks** - process files in batches, not all at once
+- **Avoid reading large files entirely** - use search code tools to find specific code first
+- **Never batch too many operations** - if you need to modify 10+ files, use a subagent or work in groups of 3-5
+
+When in doubt, delegate to a subagent rather than risk output truncation.
+
+## Code Quality Tools - Approved List
+
+**ONLY use these tools for linting and type checking:**
+
+| Tool | Command | Purpose | Status |
+|------|---------|---------|--------|
+| **Ruff** | `uvx ruff check .` or `uvx ruff check <file>` | Linting & formatting | ✅ **USE THIS** |
+| **Ty** | `uvx ty check .` or `uvx ty check <file>` | Type checking | ✅ **USE THIS** |
+| mypy | ❌ | Type checking | ❌ **DO NOT USE** |
+| pyright | ❌ | Type checking | ❌ **DO NOT USE** |
+| pylint | ❌ | Linting | ❌ **DO NOT USE** |
+| flake8 | ❌ | Linting | ❌ **DO NOT USE** |
+| black | ❌ | Formatting | ❌ **DO NOT USE** |
+
+**Why only Ruff and Ty?**
+- Ruff is extremely fast and handles both linting and formatting
+- Ty is a modern, faster alternative to mypy/pyright
+- Using multiple tools creates conflicts and slows down development
+
 1) Big picture (what changes touch where)
 - webscout/ is the package root. Major subsystems:
   - webscout/Provider/ : Many AI provider implementations. Two important flavors:
@@ -96,8 +127,7 @@ class MyProvider(OpenAICompatibleProvider):
 
 9) Small guidance Changes
 - Keep changes focused and include small usage examples in tests or docs.
-- Run `ruff .`  using `uv run ruff` locally; respect `line-length = 100` and the Ruff select/ignore rules in pyproject.toml.
-- Run `uvx ty check <file>` to validate type correctness.
+- Run code quality checks using the approved tools (see table above).
 - If the change affects runtime (server, CLI), include a short manual-test snippet that a maintainer can run (e.g., `webscout-server --debug` and a sample curl to /v1/chat/completions).
 
 9) Use Modern Python
@@ -109,12 +139,11 @@ class MyProvider(OpenAICompatibleProvider):
 
 10) Important rules
 - Keep changes focused and include small usage examples in tests or docs.
-- Run `ruff .`  using `uv run ruff` locally; respect `line-length = 100` and the Ruff select/ignore rules in pyproject.toml.
-- Always  use `uvx ty check <file>` or `uvx ty check .` to validate type correctness.
-- Always do ruff and ty check 
-  - Dont use mypy or pyright; we use ty which is a faster alternative to these tools.
+- **Code quality checks**: See the "Code Quality Tools - Approved List" table above. ONLY use `uvx ruff check` and `uvx ty check`.
+- Respect `line-length = 100` and the Ruff select/ignore rules in pyproject.toml.
 - If the change affects runtime (server, CLI), include a short manual-test snippet that a maintainer can run (e.g., `webscout-server --debug` and a sample curl to /v1/chat/completions).
-- Always update files in small batches (manageable chunks)
-- Dont add unnecessary comments or redundant code
-- Remove unused imports, variables, comments 
-- Dont use `python <file>.py` instead of that use `uv run <file>.py`
+- Always update files in small batches (manageable chunks).
+- Don't add unnecessary comments or redundant code.
+- Remove unused imports, variables, comments.
+- Don't use `python <file>.py` - instead use `uv run <file>.py`.
+- After making changes, run `uvx ruff check .` and `uvx ty check .` to ensure code quality.

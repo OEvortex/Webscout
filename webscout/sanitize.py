@@ -472,14 +472,14 @@ def _sanitize_stream_sync(
         if isinstance(first_item, bytes):
             # Ensure stream_input_iterable is typed as Iterable[bytes] for _decode_byte_stream
             line_iterator = _decode_byte_stream(
-                stream_input_iterable,  # type: ignore
+                stream_input_iterable,
                 encoding=encoding,
                 errors=encoding_errors,
                 buffer_size=buffer_size,
             )
         elif isinstance(first_item, str):
             # Ensure stream_input_iterable is typed as Iterable[str]
-            line_iterator = stream_input_iterable  # type: ignore
+            line_iterator = stream_input_iterable
         else:
             raise TypeError(
                 f"Iterable must yield strings or bytes, not {type(first_item).__name__}"

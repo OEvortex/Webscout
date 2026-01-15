@@ -164,7 +164,7 @@ class Group:
 
             # Create command context - parent is a CLI instance, never None at this point
             # Context expects CLI type, and self.parent should be set when group is created by CLI
-            cli = self.parent  # type: ignore[arg-type]
+            cli = self.parent
             ctx = Context(
                 cli,
                 command=f"{self.name} {command_name}",

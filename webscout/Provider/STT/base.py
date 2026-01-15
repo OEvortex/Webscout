@@ -37,13 +37,13 @@ try:
         count_tokens as _count_tokens,
     )
 
-    ChatCompletion = _ChatCompletion  # type: ignore
-    ChatCompletionChunk = _ChatCompletionChunk  # type: ignore
-    Choice = _Choice  # type: ignore
-    ChoiceDelta = _ChoiceDelta  # type: ignore
-    Message = _Message  # type: ignore
-    Usage = _Usage  # type: ignore
-    count_tokens = _count_tokens  # type: ignore
+    ChatCompletion = _ChatCompletion
+    ChatCompletionChunk = _ChatCompletionChunk
+    Choice = _Choice
+    ChoiceDelta = _ChoiceDelta
+    Message = _Message
+    Usage = _Usage
+    count_tokens = _count_tokens
 except ImportError:
     # Fallback if pydantic_imports is not available
     from dataclasses import dataclass

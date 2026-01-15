@@ -209,7 +209,7 @@ class HadadXYZ(Provider):
                         return obj.get("delta") or ""
                     return None
 
-                extractor = extractor_no_tags  # type: ignore[assignment]
+                extractor = extractor_no_tags
 
             streaming_text = ""
             try:

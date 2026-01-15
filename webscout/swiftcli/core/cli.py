@@ -62,7 +62,7 @@ class CLI:
         self.debug = debug
 
         self.commands: Dict[str, Dict[str, Any]] = {}
-        self.groups: Dict[str, "Group"] = {}  # type: ignore
+        self.groups: Dict[str, "Group"] = {}
         self.command_aliases: Dict[str, str] = {}
         self.command_chain: bool = False
         self.plugin_manager = PluginManager()

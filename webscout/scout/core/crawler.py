@@ -20,7 +20,7 @@ try:
     from curl_cffi.requests import Session
 except ImportError:
     import requests
-    Session: Any = requests.Session  # type: ignore[misc]
+    Session: Any = requests.Session
 
 from ..parsers import ParserRegistry
 from .scout import Scout

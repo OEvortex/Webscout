@@ -70,7 +70,7 @@ class HTML5Parser:
         # Ensure we are working with a text string
         if isinstance(markup, (bytes, bytearray)):
             try:
-                markup = markup.decode("utf-8")  # type: ignore[arg-type]
+                markup = markup.decode("utf-8")
             except Exception:
                 markup = markup.decode("utf-8", errors="ignore")  # type: ignore[arg-type]
 
