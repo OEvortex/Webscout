@@ -505,7 +505,7 @@ class Api:
         @self.app.get(
             "/search",
             tags=["Web search"],
-            description="Unified web search endpoint supporting all available search engines with various search types including text, news, images, suggestions, answers, maps, translate, and weather."
+            description="Unified web search endpoint supporting all available search engines with various search types including text, news, images, videos (Brave, DuckDuckGo, Yahoo), suggestions (Brave, Bing, DuckDuckGo, Yep, Yahoo), answers, maps, translate, and weather."
         )
         async def websearch(
             q: str = Query(..., description="Search query"),
@@ -546,7 +546,12 @@ class Api:
                                 if type in ("text", "images", "news", "videos"):
                                     results = method(keywords=q, region=region, safesearch=safesearch, max_results=max_results)
                                 elif type == "suggestions":
-                                    results = method(q, region=region)
+                                    # Suggestions method might have different signature
+                                    try:
+                                        results = method(q, region=region, max_results=max_results)
+                                    except TypeError:
+                                        # Fallback for engines that don't accept region
+                                        results = method(q, max_results=max_results)
                                 elif type == "answers":
                                     results = method(keywords=q)
                                 elif type == "maps":

@@ -3,29 +3,32 @@
 from __future__ import annotations
 
 import base64
-from collections.abc import Mapping
-from typing import Any
+from typing import Any, Mapping
 
-from ...base import BaseSearchEngine
-from ...results import ImagesResult
+from webscout.scout import Scout
+
+from ....search.results import ImagesResult
+from .base import BraveBase
 
 
-class BraveImages(BaseSearchEngine[ImagesResult]):
+class BraveImages(BraveBase):
     """Brave images search engine."""
 
     name = "brave_images"
-    category = "images"
     provider = "brave"
-
-    search_url = "https://search.brave.com/images"
+    category = "images"
     search_method = "GET"
-
-    items_xpath = "//button[@class='image-result svelte-1qhxjcj']"
+    items_xpath = "//button[contains(@class, 'image-result')]"
     elements_xpath: Mapping[str, str] = {
         "title": ".//img/@alt",
         "image": ".//img/@src",
-        "source": ".//div[contains(@class, 'image-metadata-site')]//text()",
+        "source": "string(.//div[contains(@class, 'metadata')])",
     }
+    result_type = ImagesResult
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.search_url = f"{self.base_url}/images"
 
     def build_payload(
         self,
@@ -34,176 +37,177 @@ class BraveImages(BaseSearchEngine[ImagesResult]):
         safesearch: str,
         timelimit: str | None,
         page: int = 1,
-        **kwargs: Any,
-    ) -> dict[str, Any]:
-        """Build a payload for the search request.
+        **_: Any,
+    ) -> dict[str, str]:
+        """Build query parameters for Brave image search."""
 
-        Args:
-            query: Search query string.
-            region: Region code (e.g., 'us-en').
-            safesearch: Safe search level ('on', 'moderate', or 'off').
-            timelimit: Time limit filter (optional).
-            page: Page number for pagination.
-            **kwargs: Additional arguments.
-
-        Returns:
-            Dictionary with query parameters for the request.
-        """
         safesearch_map = {"on": "strict", "moderate": "moderate", "off": "off"}
-        payload = {
+        payload: dict[str, str] = {
             "q": query,
             "source": "web",
             "safesearch": safesearch_map.get(safesearch.lower(), "moderate"),
+            "page": str(page),
         }
+
+        # Brave uses "offset" in multiples of 40 (page 1 => 0)
+        if page > 1:
+            payload["offset"] = str((page - 1) * 40)
+
         if timelimit:
             payload["tf"] = timelimit
-        if page > 1:
-            # Brave uses offset-based pagination with 40 results per page for images
-            payload["offset"] = str((page - 1) * 40)
+
+        if region:
+            payload["region"] = region
+
         return payload
 
-    def extract_results(self, html_text: str) -> list[ImagesResult]:
-        """Extract image results from HTML.
+    def run(self, *args: Any, **kwargs: Any) -> list[ImagesResult]:
+        """Run image search on Brave."""
 
-        Args:
-            html_text: The HTML content to parse.
+        keywords = args[0] if args else kwargs.get("keywords")
+        region = args[1] if len(args) > 1 else kwargs.get("region", "us-en")
+        safesearch = args[2] if len(args) > 2 else kwargs.get("safesearch", "moderate")
+        max_results = args[3] if len(args) > 3 else kwargs.get("max_results", 10)
 
-        Returns:
-            List of ImagesResult objects extracted from the HTML.
-        """
-        if not self.parser:
-            raise ImportError("lxml is required for result extraction")
+        if max_results is None:
+            max_results = 10
 
-        html_text = self.pre_process_html(html_text)
-        tree = self.extract_tree(html_text)
+        if not keywords:
+            raise ValueError("Keywords are mandatory")
 
-        results = []
-        items = tree.xpath(self.items_xpath) if self.items_xpath else []
+        safesearch_value = self.build_payload(keywords, region, safesearch, None)["safesearch"]
 
-        for item in items:
-            result = ImagesResult()
+        fetched_results: list[ImagesResult] = []
+        fetched_urls: set[str] = set()
 
-            # Extract image URL (proxy URL)
-            img_elements = item.xpath(".//img/@src")
-            if img_elements:
-                result.image = img_elements[0]
+        def fetch_page(url: str) -> str:
+            """Fetch page content."""
+            try:
+                response = self.session.get(url, timeout=self.timeout)
+                response.raise_for_status()
+                return response.text
+            except Exception as exc:  # pragma: no cover - network handling
+                raise Exception(f"Failed to fetch page: {str(exc)}") from exc
 
-            # Extract alt text as title
-            alt_elements = item.xpath(".//img/@alt")
-            if alt_elements:
-                result.title = alt_elements[0]
+        page = 1
+        while len(fetched_results) < max_results:
+            params = {
+                "q": keywords,
+                "page": str(page),
+                "safesearch": safesearch_value,
+            }
+            full_url = f"{self.search_url}?{'&'.join(f'{k}={v}' for k, v in params.items())}"
+            html = fetch_page(full_url)
+            soup = Scout(html)
 
-            # Extract source domain and title from metadata
-            text_content = item.xpath(".//div[contains(@class, 'image-metadata')]//text()")
-            if text_content:
-                full_text = "".join(text_content).strip()
-                # The text format is typically: "domain.com Title"
-                parts = full_text.split("\n")
-                if parts:
-                    # First part is usually domain
-                    result.source = parts[0].strip() if parts[0] else ""
-                    # Try to improve title from metadata
-                    if len(parts) > 1:
-                        metadata_title = parts[1].strip()
-                        if metadata_title and not result.title:
-                            result.title = metadata_title
+            img_containers = soup.select("button.image-result")
+            if not img_containers:
+                break
 
-            # Extract dimensions if available in style attribute
-            style = item.xpath("./@style")
-            if style:
-                style_str = style[0]
-                # Parse CSS custom properties for dimensions
-                # Format: --width: 500; --height: 889;
-                if "--width:" in style_str:
+            for container in img_containers:
+                if len(fetched_results) >= max_results:
+                    break
+
+                img_elem = container.select_one("img")
+                if not img_elem:
+                    continue
+
+                title = img_elem.get("alt", "")
+                image_url = img_elem.get("src", "")
+
+                source_elem = container.select_one('div[class*="metadata"]')
+                source = source_elem.get_text(strip=True) if source_elem else ""
+
+                width = 0
+                height = 0
+                style = container.get("style", "")
+                if style:
+                    if "--width:" in style:
+                        try:
+                            width = int(style.split("--width:")[1].split(";")[0].strip())
+                        except (ValueError, IndexError):
+                            pass
+                    if "--height:" in style:
+                        try:
+                            height = int(style.split("--height:")[1].split(";")[0].strip())
+                        except (ValueError, IndexError):
+                            pass
+
+                original_url = image_url
+                if image_url and "imgs.search.brave.com" in image_url:
                     try:
-                        width_str = style_str.split("--width:")[1].split(";")[0].strip()
-                        result.width = int(width_str)
-                    except (ValueError, IndexError):
-                        pass
-                if "--height:" in style_str:
-                    try:
-                        height_str = (
-                            style_str.split("--height:")[1].split(";")[0].strip()
+                        original_url = self._extract_original_url(image_url)
+                    except Exception:
+                        original_url = image_url
+
+                if image_url and image_url not in fetched_urls:
+                    fetched_urls.add(image_url)
+                    fetched_results.append(
+                        ImagesResult(
+                            title=title,
+                            image=image_url,
+                            thumbnail=image_url,
+                            url=original_url,
+                            height=height,
+                            width=width,
+                            source=source,
                         )
-                        result.height = int(height_str)
-                    except (ValueError, IndexError):
-                        pass
+                    )
 
-            # Try to extract original URL from the proxy URL
-            # Brave proxy format: imgs.search.brave.com/[hash]/rs:fit:500:0:1:0/g:ce/[base64_url]
-            if result.image:
-                try:
-                    result.url = self._extract_original_url(result.image)
-                except Exception:
-                    # If extraction fails, use the proxy URL
-                    result.url = result.image
+            page += 1
 
-            results.append(result)
+            if self.sleep_interval:
+                from time import sleep
+
+                sleep(self.sleep_interval)
+
+        return fetched_results[:max_results]
+
+    def extract_results(self, html_text: str) -> list[ImagesResult]:
+        """Parse Brave image search HTML into results."""
+
+        soup = Scout(html_text)
+        results: list[ImagesResult] = []
+        for container in soup.select("button.image-result"):
+            img_elem = container.select_one("img")
+            if not img_elem:
+                continue
+
+            title = img_elem.get("alt", "")
+            image_url = img_elem.get("src", "")
+            source_elem = container.select_one('div[class*="metadata"]')
+            source = source_elem.get_text(strip=True) if source_elem else ""
+
+            results.append(
+                ImagesResult(
+                    title=title,
+                    image=image_url,
+                    thumbnail=image_url,
+                    url=image_url,
+                    height=0,
+                    width=0,
+                    source=source,
+                )
+            )
 
         return results
 
     def _extract_original_url(self, proxy_url: str) -> str:
-        """Extract the original image URL from the Brave proxy URL.
+        """Extract the original image URL from the Brave proxy URL."""
 
-        Args:
-            proxy_url: The Brave proxy URL.
-
-        Returns:
-            The original image URL if successfully decoded, otherwise the proxy URL.
-        """
         try:
-            # Extract the base64-encoded part from the proxy URL
-            # Format: https://imgs.search.brave.com/[hash]/rs:fit:500:0:1:0/g:ce/[base64_url]
             parts = proxy_url.split("/")
-            if len(parts) > 0:
-                # The base64 part is typically after g:ce/
-                base64_part = parts[-1] if parts[-1] else ""
-                if base64_part and len(base64_part) > 10:
-                    # Base64 might have slashes replaced with URL-safe characters
-                    # Restore them for decoding
-                    normalized = (
-                        base64_part.replace("-", "+")
-                        .replace("_", "/")
-                        .replace(" ", "")
-                    )
-                    # Add padding if necessary
-                    padding = 4 - (len(normalized) % 4)
-                    if padding and padding != 4:
-                        normalized += "=" * padding
+            base64_part = parts[-1] if parts else ""
+            if base64_part and len(base64_part) > 10:
+                normalized = base64_part.replace("-", "+").replace("_", "/").replace(" ", "")
+                padding = 4 - (len(normalized) % 4)
+                if padding and padding != 4:
+                    normalized += "=" * padding
 
-                    decoded = base64.b64decode(normalized).decode("utf-8", errors="ignore")
-                    if decoded.startswith("http"):
-                        return decoded
+                decoded = base64.b64decode(normalized).decode("utf-8", errors="ignore")
+                if decoded.startswith("http"):
+                    return decoded
         except Exception:
             pass
 
         return proxy_url
-
-    def run(self, *args, **kwargs) -> list[ImagesResult]:
-        """Run image search on Brave.
-
-        Args:
-            keywords: Search query.
-            region: Region code.
-            safesearch: Safe search level.
-            max_results: Maximum number of results (optional).
-            **kwargs: Additional arguments.
-
-        Returns:
-            List of ImagesResult objects.
-        """
-        keywords = args[0] if args else kwargs.get("keywords")
-        if keywords is None:
-            keywords = ""
-        region = args[1] if len(args) > 1 else kwargs.get("region", "us-en")
-        safesearch = (
-            args[2] if len(args) > 2 else kwargs.get("safesearch", "moderate")
-        )
-        max_results = args[3] if len(args) > 3 else kwargs.get("max_results")
-
-        results = self.search(
-            query=keywords, region=region, safesearch=safesearch
-        )
-        if results and max_results:
-            results = results[:max_results]
-        return results or []

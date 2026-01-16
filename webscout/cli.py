@@ -10,7 +10,7 @@ from .search import (
     BaseSearch,
     BaseSearchEngine,
     BingSearch,
-    Brave,
+    BraveSearch,
     DuckDuckGoSearch,
     Mojeek,
     Wikipedia,
@@ -29,7 +29,7 @@ ENGINES: Dict[str, Union[Type[BaseSearch], Type[BaseSearchEngine]]] = {
     "duckduckgo": DuckDuckGoSearch,
     "bing": BingSearch,
     "yahoo": YahooSearch,
-    "brave": Brave,
+    "brave": BraveSearch,
     "mojeek": Mojeek,
     "yandex": Yandex,
     "wikipedia": Wikipedia,
@@ -46,6 +46,220 @@ def _get_engine(name: str) -> Union[BaseSearch, BaseSearchEngine]:
     return cls()  # type: ignore[arg-type]
 
 
+def _format_views(count: int) -> str:
+    """Format view count to human readable format."""
+    if count >= 1_000_000_000:
+        return f"{count / 1_000_000_000:.1f}B"
+    elif count >= 1_000_000:
+        return f"{count / 1_000_000:.1f}M"
+    elif count >= 1_000:
+        return f"{count / 1_000:.1f}K"
+    return str(count)
+
+
+def _truncate(text: str, max_len: int = 80) -> str:
+    """Truncate text to max length."""
+    if not text:
+        return ""
+    if len(text) <= max_len:
+        return text
+    return text[: max_len - 3] + "..."
+
+
+def _print_videos(data: List[Any], title: str) -> None:
+    """Print video results in a beautiful format."""
+    if not data:
+        rprint("[bold yellow]No video results found.[/bold yellow]")
+        return
+
+    console.print(f"\n[bold cyan]{title}[/bold cyan]\n")
+
+    for i, video in enumerate(data, 1):
+        # Handle both dict and dataclass objects
+        if hasattr(video, "title"):
+            v_title = video.title
+            v_url = video.url
+            v_duration = video.duration
+            v_uploader = getattr(video, "uploader", "") or getattr(video, "publisher", "")
+            v_provider = getattr(video, "provider", "")
+            v_published = getattr(video, "published", "")
+            v_stats = getattr(video, "statistics", {}) or {}
+            v_views = v_stats.get("views", 0) if isinstance(v_stats, dict) else 0
+        else:
+            v_title = video.get("title", "")
+            v_url = video.get("url", "")
+            v_duration = video.get("duration", "")
+            v_uploader = video.get("uploader", "") or video.get("publisher", "")
+            v_provider = video.get("provider", "")
+            v_published = video.get("published", "")
+            v_stats = video.get("statistics", {}) or {}
+            v_views = v_stats.get("views", 0) if isinstance(v_stats, dict) else 0
+
+        # Build video info panel
+        info_lines = []
+        info_lines.append(f"[bold white]{v_title}[/bold white]")
+
+        meta_parts = []
+        if v_duration:
+            meta_parts.append(f"[cyan]⏱ {v_duration}[/cyan]")
+        if v_views:
+            meta_parts.append(f"[green]👁 {_format_views(v_views)} views[/green]")
+        if v_published:
+            meta_parts.append(f"[dim]{v_published}[/dim]")
+        if meta_parts:
+            info_lines.append(" • ".join(meta_parts))
+
+        if v_uploader:
+            info_lines.append(f"[yellow]📺 {v_uploader}[/yellow]")
+        if v_provider and v_provider.lower() != v_uploader.lower():
+            info_lines.append(f"[dim]via {v_provider}[/dim]")
+        info_lines.append(f"[blue underline]{v_url}[/blue underline]")
+
+        panel = Panel(
+            "\n".join(info_lines),
+            title=f"[bold magenta]#{i}[/bold magenta]",
+            title_align="left",
+            border_style="dim",
+        )
+        console.print(panel)
+
+
+def _print_news(data: List[Any], title: str) -> None:
+    """Print news results in a beautiful format."""
+    if not data:
+        rprint("[bold yellow]No news results found.[/bold yellow]")
+        return
+
+    console.print(f"\n[bold cyan]{title}[/bold cyan]\n")
+
+    for i, article in enumerate(data, 1):
+        # Handle both dict and dataclass objects
+        if hasattr(article, "title"):
+            n_title = article.title
+            n_url = article.url
+            n_source = getattr(article, "source", "")
+            n_date = getattr(article, "date", "")
+            n_body = getattr(article, "body", "")
+        else:
+            n_title = article.get("title", "")
+            n_url = article.get("url", "")
+            n_source = article.get("source", "")
+            n_date = article.get("date", "")
+            n_body = article.get("body", "")
+
+        # Build news info panel
+        info_lines = []
+        info_lines.append(f"[bold white]{n_title}[/bold white]")
+
+        meta_parts = []
+        if n_source:
+            meta_parts.append(f"[yellow]📰 {n_source}[/yellow]")
+        if n_date:
+            meta_parts.append(f"[dim]🕐 {n_date}[/dim]")
+        if meta_parts:
+            info_lines.append(" • ".join(meta_parts))
+
+        if n_body:
+            info_lines.append(f"[dim italic]{_truncate(n_body, 150)}[/dim italic]")
+        info_lines.append(f"[blue underline]{n_url}[/blue underline]")
+
+        panel = Panel(
+            "\n".join(info_lines),
+            title=f"[bold magenta]#{i}[/bold magenta]",
+            title_align="left",
+            border_style="dim",
+        )
+        console.print(panel)
+
+
+def _print_suggestions(data: List[Any], title: str) -> None:
+    """Print suggestions in a beautiful format."""
+    if not data:
+        rprint("[bold yellow]No suggestions found.[/bold yellow]")
+        return
+
+    console.print(f"\n[bold cyan]{title}[/bold cyan]\n")
+
+    table = Table(show_header=True, header_style="bold magenta", box=None, padding=(0, 2))
+    table.add_column("#", style="dim", width=4)
+    table.add_column("Suggestion", style="bold white")
+    table.add_column("Type", style="cyan", width=10)
+    table.add_column("Description", style="dim")
+
+    for i, item in enumerate(data, 1):
+        # Handle different formats
+        if isinstance(item, str):
+            table.add_row(str(i), item, "", "")
+        elif hasattr(item, "query"):
+            # Dataclass (SuggestionResult)
+            query = item.query
+            is_entity = getattr(item, "is_entity", False)
+            name = getattr(item, "name", "")
+            desc = getattr(item, "desc", "")
+            type_str = "[green]Entity[/green]" if is_entity else ""
+            display = name if name else query
+            table.add_row(str(i), display, type_str, _truncate(desc, 50))
+        elif isinstance(item, dict):
+            query = item.get("query", item.get("suggestion", str(item)))
+            is_entity = item.get("is_entity", "False")
+            name = item.get("name", "")
+            desc = item.get("desc", "")
+            type_str = "[green]Entity[/green]" if is_entity in (True, "True") else ""
+            display = name if name else query
+            table.add_row(str(i), display, type_str, _truncate(desc, 50))
+        else:
+            table.add_row(str(i), str(item), "", "")
+
+    console.print(table)
+    console.print()
+
+
+def _print_images(data: List[Any], title: str) -> None:
+    """Print image results in a beautiful format."""
+    if not data:
+        rprint("[bold yellow]No image results found.[/bold yellow]")
+        return
+
+    console.print(f"\n[bold cyan]{title}[/bold cyan]\n")
+
+    for i, img in enumerate(data, 1):
+        # Handle both dict and dataclass objects
+        if hasattr(img, "title"):
+            i_title = img.title or "Untitled"
+            i_url = getattr(img, "url", "")
+            i_source = getattr(img, "source", "")
+            i_width = getattr(img, "width", "")
+            i_height = getattr(img, "height", "")
+        else:
+            i_title = img.get("title", "Untitled")
+            i_url = img.get("url", "")
+            i_source = img.get("source", "")
+            i_width = img.get("width", "")
+            i_height = img.get("height", "")
+
+        info_lines = []
+        info_lines.append(f"[bold white]{_truncate(i_title, 70)}[/bold white]")
+
+        meta_parts = []
+        if i_width and i_height:
+            meta_parts.append(f"[cyan]{i_width}x{i_height}[/cyan]")
+        if i_source:
+            meta_parts.append(f"[yellow]{i_source}[/yellow]")
+        if meta_parts:
+            info_lines.append(" • ".join(meta_parts))
+
+        if i_url:
+            info_lines.append(f"[blue underline]{_truncate(i_url, 80)}[/blue underline]")
+
+        panel = Panel(
+            "\n".join(info_lines),
+            title=f"[bold magenta]#{i}[/bold magenta]",
+            title_align="left",
+            border_style="dim",
+        )
+        console.print(panel)
+
+
 def _print_data(data: Any, title: str = "Search Results") -> None:
     """Prints data in a beautiful table."""
     if not data:
@@ -55,8 +269,25 @@ def _print_data(data: Any, title: str = "Search Results") -> None:
     table = Table(title=title, show_header=True, header_style="bold magenta", show_lines=True)
 
     if isinstance(data, list) and len(data) > 0:
-        if isinstance(data[0], dict):
-            keys = list(data[0].keys())
+        first_item = data[0]
+
+        # Handle dataclass objects by converting to dict
+        if hasattr(first_item, "__dataclass_fields__"):
+            # Convert dataclass to dict for each item
+            data = [
+                {k: getattr(item, k, "") for k in first_item.__dataclass_fields__}
+                for item in data
+            ]
+            first_item = data[0]
+
+        if isinstance(first_item, dict):
+            # Filter out empty or less useful keys for cleaner display
+            all_keys = list(first_item.keys())
+            # Prioritize important keys
+            priority_keys = ["title", "url", "body", "description", "source", "date"]
+            keys = [k for k in priority_keys if k in all_keys]
+            keys += [k for k in all_keys if k not in keys]
+
             table.add_column("#", style="dim", width=4)
             for key in keys:
                 table.add_column(key.capitalize())
@@ -65,9 +296,11 @@ def _print_data(data: Any, title: str = "Search Results") -> None:
                 row = [str(i)]
                 for key in keys:
                     val = item.get(key, "")
-                    if key == "body" and val and len(str(val)) > 200:
-                        val = str(val)[:197] + "..."
-                    row.append(str(val))
+                    if key in ("body", "description") and val and len(str(val)) > 150:
+                        val = str(val)[:147] + "..."
+                    elif key == "url" and val and len(str(val)) > 60:
+                        val = str(val)[:57] + "..."
+                    row.append(str(val) if val else "")
                 table.add_row(*row)
         else:
             table.add_column("#", style="dim", width=4)
@@ -185,7 +418,7 @@ def text(
 
 @app.command()
 @option("--keywords", "-k", help="Search keywords", required=True)
-@option("--engine", "-e", help="Search engine (ddg, bing, yahoo)", default="ddg")
+@option("--engine", "-e", help="Search engine (ddg, bing, yahoo, brave)", default="ddg")
 @option("--max-results", "-m", help="Maximum number of results", type=int, default=10)
 def images(keywords: str, engine: str, max_results: int) -> None:
     """Perform an images search."""
@@ -194,7 +427,7 @@ def images(keywords: str, engine: str, max_results: int) -> None:
         method = getattr(search_engine, "images", None)
         if method and callable(method):
             results = method(keywords, max_results=max_results)
-            _print_data(results, title=f"{engine.upper()} Image Search: {keywords}")
+            _print_images(results, title=f"{engine.upper()} Image Search: {keywords}")
         else:
             rprint("[bold red]Error: This engine does not support image search.[/bold red]")
     except Exception as e:
@@ -203,7 +436,7 @@ def images(keywords: str, engine: str, max_results: int) -> None:
 
 @app.command()
 @option("--keywords", "-k", help="Search keywords", required=True)
-@option("--engine", "-e", help="Search engine (ddg, yahoo)", default="ddg")
+@option("--engine", "-e", help="Search engine (ddg, yahoo, brave)", default="ddg")
 @option("--max-results", "-m", help="Maximum number of results", type=int, default=10)
 def videos(keywords: str, engine: str, max_results: int) -> None:
     """Perform a videos search."""
@@ -212,7 +445,7 @@ def videos(keywords: str, engine: str, max_results: int) -> None:
         method = getattr(search_engine, "videos", None)
         if method and callable(method):
             results = method(keywords, max_results=max_results)
-            _print_data(results, title=f"{engine.upper()} Video Search: {keywords}")
+            _print_videos(results, title=f"{engine.upper()} Video Search: {keywords}")
         else:
             rprint("[bold red]Error: This engine does not support video search.[/bold red]")
     except Exception as e:
@@ -221,7 +454,7 @@ def videos(keywords: str, engine: str, max_results: int) -> None:
 
 @app.command()
 @option("--keywords", "-k", help="Search keywords", required=True)
-@option("--engine", "-e", help="Search engine (ddg, bing, yahoo)", default="ddg")
+@option("--engine", "-e", help="Search engine (ddg, bing, yahoo, brave)", default="ddg")
 @option("--max-results", "-m", help="Maximum number of results", type=int, default=10)
 def news(keywords: str, engine: str, max_results: int) -> None:
     """Perform a news search."""
@@ -230,7 +463,7 @@ def news(keywords: str, engine: str, max_results: int) -> None:
         method = getattr(search_engine, "news", None)
         if method and callable(method):
             results = method(keywords, max_results=max_results)
-            _print_data(results, title=f"{engine.upper()} News Search: {keywords}")
+            _print_news(results, title=f"{engine.upper()} News Search: {keywords}")
         else:
             rprint("[bold red]Error: This engine does not support news search.[/bold red]")
     except Exception as e:
@@ -273,7 +506,7 @@ def answers(keywords: str, engine: str) -> None:
 
 @app.command()
 @option("--query", "-q", help="Search query", required=True)
-@option("--engine", "-e", help="Search engine (ddg, bing, yahoo, yep)", default="ddg")
+@option("--engine", "-e", help="Search engine (ddg, bing, yahoo, yep, brave)", default="ddg")
 def suggestions(query: str, engine: str) -> None:
     """Get search suggestions."""
     try:
@@ -281,12 +514,7 @@ def suggestions(query: str, engine: str) -> None:
         method = getattr(search_engine, "suggestions", None)
         if method and callable(method):
             results = method(query)
-
-            # Format suggestions (Bing-style dicts)
-            if isinstance(results, list) and results and isinstance(results[0], dict):
-                results = [r.get("suggestion", str(r)) for r in results]
-
-            _print_data(results, title=f"{engine.upper()} Suggestions: {query}")
+            _print_suggestions(results, title=f"{engine.upper()} Suggestions: {query}")
         else:
             rprint("[bold red]Error: This engine does not support suggestions.[/bold red]")
     except Exception as e:

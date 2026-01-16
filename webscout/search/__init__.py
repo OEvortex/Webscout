@@ -2,10 +2,10 @@
 
 from .base import BaseSearch, BaseSearchEngine
 from .bing_main import BingSearch
+from .brave_main import BraveSearch
 from .duckduckgo_main import DuckDuckGoSearch
 
 # Import new search engines
-from .engines.brave import Brave
 from .engines.mojeek import Mojeek
 from .engines.wikipedia import Wikipedia
 from .engines.yandex import Yandex
@@ -27,13 +27,13 @@ __all__ = [
     "BaseSearchEngine",
 
     # Main search interfaces
+    "BraveSearch",
     "DuckDuckGoSearch",
     "YepSearch",
     "BingSearch",
     "YahooSearch",
 
     # Individual engines
-    "Brave",
     "Mojeek",
     "Yandex",
     "Wikipedia",

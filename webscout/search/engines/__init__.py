@@ -4,7 +4,14 @@ from __future__ import annotations
 
 from ..base import BaseSearchEngine
 from .bing import BingBase, BingImagesSearch, BingNewsSearch, BingSuggestionsSearch, BingTextSearch
-from .brave import Brave, BraveImages
+from .brave import (
+    BraveBase,
+    BraveImages,
+    BraveNews,
+    BraveSuggestions,
+    BraveTextSearch,
+    BraveVideos,
+)
 from .duckduckgo import (
     DuckDuckGoAnswers,
     DuckDuckGoBase,
@@ -33,7 +40,7 @@ from .yep import YepBase, YepImages, YepSuggestions, YepTextSearch
 # Engine categories mapping
 ENGINES = {
     "text": {
-        "brave": Brave,
+        "brave": BraveTextSearch,
         "mojeek": Mojeek,
         "yandex": Yandex,
         "bing": BingTextSearch,
@@ -42,22 +49,25 @@ ENGINES = {
         "yahoo": YahooText,
     },
     "images": {
-        "brave": BraveImages,
         "bing": BingImagesSearch,
+        "brave": BraveImages,
         "duckduckgo": DuckDuckGoImages,
         "yep": YepImages,
         "yahoo": YahooImages,
     },
     "videos": {
+        "brave": BraveVideos,
         "duckduckgo": DuckDuckGoVideos,
         "yahoo": YahooVideos,
     },
     "news": {
+        "brave": BraveNews,
         "bing": BingNewsSearch,
         "duckduckgo": DuckDuckGoNews,
         "yahoo": YahooNews,
     },
     "suggestions": {
+        "brave": BraveSuggestions,
         "bing": BingSuggestionsSearch,
         "duckduckgo": DuckDuckGoSuggestions,
         "yep": YepSuggestions,
@@ -78,8 +88,12 @@ ENGINES = {
 }
 
 __all__ = [
-    "Brave",
+    "BraveBase",
+    "BraveTextSearch",
     "BraveImages",
+    "BraveVideos",
+    "BraveNews",
+    "BraveSuggestions",
     "Mojeek",
     "Wikipedia",
     "Yandex",

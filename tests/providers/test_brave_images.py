@@ -14,7 +14,7 @@ class TestBraveImages(unittest.TestCase):
 
     def setUp(self) -> None:
         """Set up test fixtures."""
-        self.engine = BraveImages()
+        self.engine: BraveImages = BraveImages()
 
     def test_initialization(self) -> None:
         """Test that BraveImages initializes correctly."""

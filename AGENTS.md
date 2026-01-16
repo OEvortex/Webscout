@@ -5,9 +5,8 @@
   
   <AgentOrchestration>
     <Overview>
-      The main Copilot agent acts strictly as an orchestrator.
-      All research, planning, and heavy reasoning MUST be delegated
-      to specialized subagents.
+      If the subagent tool is available, the main Copilot agent acts strictly as an orchestrator.
+      All research, planning, and heavy reasoning MUST be delegated to specialized subagents.
     </Overview>
 
     <AvailableSubagents>
@@ -71,16 +70,18 @@
 
     <AgentCallingRules>
       <Rule>
-        The main agent MUST decide which subagent to call before acting.
+        If the subagent tool is available, the main agent MUST decide which subagent to call
+        before acting.
       </Rule>
       <Rule>
-        Only ONE subagent may be active per task chunk.
+        If the subagent tool is available, ONE or More subagents may be active per task chunk.
       </Rule>
       <Rule>
-        If a task involves multiple concerns, call Plan first.
+        If the subagent tool is available and a task involves multiple concerns, call Plan first.
       </Rule>
       <Rule>
-        Never mix reverse engineering, planning, and documentation in one agent.
+        If the subagent tool is available, never mix reverse engineering, planning, and
+        documentation in one agent.
       </Rule>
     </AgentCallingRules>
 
@@ -88,8 +89,8 @@
       <Flow>
         <Step>Receive user request</Step>
         <Step>Classify intent (Reverse / Docstring / Plan)</Step>
-        <Step>Delegate to appropriate subagent</Step>
-        <Step>Receive result</Step>
+        <Step>If subagent tool is available, delegate to appropriate subagent</Step>
+        <Step>If subagent tool is available, receive result</Step>
         <Step>Apply or present result</Step>
       </Flow>
     </ExecutionFlow>
@@ -97,7 +98,7 @@
 
   <CriticalContextWindowManagement>
     <Rule>ALWAYS work in discrete, focused steps</Rule>
-    <Rule>ALWAYS use runSubagent for  tasks</Rule>
+    <Rule>Use runSubagent for tasks when the subagent tool is available</Rule>
     <Rule>Break large tasks into smaller chunks</Rule>
     <Rule>Avoid reading large files entirely; search for specific code first using codebase-retrieval</Rule>
     <Rule>Never batch too many operations; use subagents or groups of 3–5 files</Rule>
@@ -288,7 +289,7 @@ class MyProvider(OpenAICompatibleProvider):
     ALWAYS divide work into small, discrete tasks before acting.
   </Rule>
   <Rule>
-    ALWAYS use tool:runSubagent for:
+    If tool:runSubagent is available, ALWAYS use it for:
     <Conditions>
       <Condition>Research or investigation</Condition>
       <Condition>Multi-step planning</Condition>
@@ -296,6 +297,7 @@ class MyProvider(OpenAICompatibleProvider):
       <Condition>Web search or external knowledge gathering</Condition>
       <Condition>Editing or analyzing many files</Condition>
     </Conditions>
+    If tool:runSubagent is not available, skip subagent-only steps entirely.
   </Rule>
   <Rule>
     NEVER perform research, exploration, or large reasoning chains in the main agent.
@@ -318,6 +320,9 @@ class MyProvider(OpenAICompatibleProvider):
   </Rule>
   <Rule>
     Remove unused imports, variables, and dead code immediately.
+  </Rule>
+  <Rule>
+    Never make new unwanted doc files.
   </Rule>
   <Rule>
     After changes, ALWAYS run:

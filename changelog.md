@@ -2,7 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2026.01.15] - 2026-01-15
+## [2026.01.16] - 2026-01-16
+
+### ✨ Added
+- **feat**: webscout/search/engines/brave/videos.py - New Brave video search engine that parses HTML to extract video results from YouTube and other platforms. Includes support for duration, view count, channel/uploader, published date, and pagination.
+- **feat**: webscout/search/engines/brave/news.py - New Brave news search engine that parses HTML to extract news articles with title, source, date, body, and thumbnail images. Includes pagination support.
+- **feat**: webscout/search/engines/brave/suggestions.py - New Brave search suggestions/autocomplete API that returns rich entity suggestions with metadata (name, description, category, image).
+- **feat**: webscout/search/engines/brave/images.py - New Brave image search engine using JavaScript-based crawling to extract image results with title, URL, dimensions, and source.
+
+### 🔧 Improved
+- **refactor**: webscout/search/brave_main.py - Implemented images(), news(), videos(), and suggestions() methods in BraveSearch unified interface to support all new Brave search types.
+- **refactor**: webscout/search/engines/__init__.py - Updated ENGINES dictionary and __all__ exports to register BraveVideos, BraveNews, and BraveSuggestions in their respective categories.
+- **refactor**: webscout/cli.py - Added specialized print functions for improved CLI UI:
+  - `_print_videos()` - Panel-based video results with duration, view count, channel, and date
+  - `_print_news()` - Clean news article display with source, date, and body preview
+  - `_print_suggestions()` - Table-based suggestions with entity type indicators
+  - `_print_images()` - Image result display with resolution and source info
+  - Updated video, news, suggestions, and images commands to use new specialized print functions
+  - Added helper functions `_format_views()` and `_truncate()` for better formatting
+- **refactor**: webscout/server/routes.py - Updated web search endpoint documentation to mention Brave support for videos and suggestions. Improved suggestions parameter handling with better fallback logic.
+- **refactor**: webscout/search/brave_main.py - Implemented images() method for Brave image search (previously raised NotImplementedError).
+
+### 📝 Documentation
+- **docs**: Updated CLI help text to reflect Brave support for videos, news, images, and suggestions searches.
 
 ### ✨ Added
 - **feat**: webscout/Provider/AISEARCH/BraveAI.py - New BraveAI search provider supporting AI search and deep research (streaming and non-streaming modes). Updated `webscout/Provider/AISEARCH/__init__.py` to export the provider and added documentation to `webscout/Provider/AISEARCH/README.md`.
