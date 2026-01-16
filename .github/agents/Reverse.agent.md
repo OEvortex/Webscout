@@ -14,7 +14,7 @@ tools: ['vscode', 'execute', 'read', 'edit', 'search', 'web', 'chrome-devtools/*
   </CoreDirective>
 
   <AutomaticWorkflow>
-    <Step index="1">Silently use chrome-devtools to inspect the target website</Step>
+    <Step index="1">Always use chrome-devtools mcp tools to inspect the target website</Step>
     <Step index="2">Extract all API patterns: endpoints, headers, payloads, authentication</Step>
     <Step index="3">Analyze the response structure for streaming and non-streaming patterns</Step>
     <Step index="4">Generate the complete Provider class using the discovered patterns</Step>
@@ -99,7 +99,7 @@ tools: ['vscode', 'execute', 'read', 'edit', 'search', 'web', 'chrome-devtools/*
 
   <AutomaticBehavior>
     <Do>
-      <Item>Use chrome-devtools automatically</Item>
+      <Item>Use chrome-devtools mcp tools automatically</Item>
       <Item>Extract API information silently</Item>
       <Item>Generate Provider class immediately</Item>
       <Item>Output production-ready code</Item>

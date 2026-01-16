@@ -11,7 +11,7 @@ from litprinter import ic
 
 try:
     from lxml import html
-    from lxml.etree import HTMLParser as LHTMLParser  # type: ignore       
+    from lxml.etree import HTMLParser as LHTMLParser  # type: ignore
     LXML_AVAILABLE = True
 except ImportError:
     LXML_AVAILABLE = False

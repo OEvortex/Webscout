@@ -325,6 +325,7 @@ class MyProvider(OpenAICompatibleProvider):
       <Command>uvx ruff check .</Command>
       <Command>uvx ty check .</Command>
     </Commands>
+    Do not proceed until all issues are resolved. Do not use 'uvx run'; always use 'uv run' instead.
   </Rule>
 </HardRules>
 </WebscoutCopilotInstructions>

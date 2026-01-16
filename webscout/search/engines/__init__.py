@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from ..base import BaseSearchEngine
 from .bing import BingBase, BingImagesSearch, BingNewsSearch, BingSuggestionsSearch, BingTextSearch
-from .brave import Brave
+from .brave import Brave, BraveImages
 from .duckduckgo import (
     DuckDuckGoAnswers,
     DuckDuckGoBase,
@@ -42,6 +42,7 @@ ENGINES = {
         "yahoo": YahooText,
     },
     "images": {
+        "brave": BraveImages,
         "bing": BingImagesSearch,
         "duckduckgo": DuckDuckGoImages,
         "yep": YepImages,
@@ -78,6 +79,7 @@ ENGINES = {
 
 __all__ = [
     "Brave",
+    "BraveImages",
     "Mojeek",
     "Wikipedia",
     "Yandex",

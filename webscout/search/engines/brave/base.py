@@ -5,8 +5,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any, Optional
 
-from ..base import BaseSearchEngine
-from ..results import TextResult
+from ...base import BaseSearchEngine
+from ...results import TextResult
 
 
 class Brave(BaseSearchEngine[TextResult]):
