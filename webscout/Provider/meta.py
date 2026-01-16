@@ -496,10 +496,8 @@ class Meta(Provider):
                 try:
                     import requests
                     resp = requests.post(url, headers=headers, data=payload, timeout=self.timeout, verify=False)
-                    response = type('Resp', (), {})()
-                    response.status_code = resp.status_code
-                    response.text = resp.text
-                    response.json = resp.json
+                    from types import SimpleNamespace
+                    response = SimpleNamespace(status_code=resp.status_code, text=resp.text, json=resp.json)
                 except Exception as e2:
                     raise exceptions.FailedToGenerateResponseError(
                         f"Failed to get access token after HTTP/1.1 fallback: {e2}"

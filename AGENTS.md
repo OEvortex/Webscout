@@ -1,44 +1,214 @@
-# Webscout - Copilot / AI Agent Instructions
+<WebscoutCopilotInstructions>
+  <Purpose>
+    Concise, actionable guidance so an AI coding agent can be productive immediately when editing Webscout.
+  </Purpose>
+  
+  <AgentOrchestration>
+    <Overview>
+      If the subagent tool is available, the main Copilot agent acts strictly as an orchestrator.
+      All research, planning, and heavy reasoning MUST be delegated to specialized subagents.
+    </Overview>
 
-Purpose: concise, actionable guidance so an AI coding agent can be productive immediately when editing Webscout.
+    <AvailableSubagents>
+      <Subagent>
+        <Name>Reverse</Name>
+        <Role>Reverse Engineering & Provider Discovery Agent</Role>
+        <Responsibilities>
+          <Item>Inspect websites or APIs</Item>
+          <Item>Extract endpoints, headers, payloads, auth, streaming patterns</Item>
+          <Item>Generate production-ready Provider classes</Item>
+        </Responsibilities>
+        <WhenToCall>
+          <Condition>User asks to reverse engineer a website or API</Condition>
+          <Condition>User requests a new Provider implementation</Condition>
+          <Condition>Unknown or undocumented API behavior</Condition>
+        </WhenToCall>
+        <MustNot>
+          <Item>Modify unrelated files</Item>
+          <Item>Plan multi-file refactors</Item>
+        </MustNot>
+      </Subagent>
 
-1) Big picture (what changes touch where)
-- webscout/ is the package root. Major subsystems:
-  - webscout/Provider/ : Many AI provider implementations. Two important flavors:
-    - webscout/Provider/OPENAI/ : OpenAI-compatible wrappers (preferred for API server discovery).
-    - webscout/Provider/TTI/ : Text-to-Image providers.
-  - webscout/search/ : Search engine backends (DuckDuckGo, Bing, Yahoo, Yep, etc.).
-  - webscout/server/ : FastAPI-based OpenAI-compatible API server (routes, provider discovery, request handling).
-  - webscout/cli.py & webscout/swiftcli/ : CLI entrypoints and helpers.
-  - webscout/Extra/ : Misc utilities (gguf, YTToolkit, tempmail, etc.).
-  - docs/ : Human-facing docs (use as canonical examples & copy for README updates).
+      <Subagent>
+        <Name>Docstring</Name>
+        <Role>Professional Docstring Generator Agent</Role>
+        <Responsibilities>
+          <Item>Read existing Python code</Item>
+          <Item>Generate accurate, professional docstrings</Item>
+          <Item>Insert docstrings without changing logic</Item>
+        </Responsibilities>
+        <WhenToCall>
+          <Condition>User requests documentation or docstring generation</Condition>
+          <Condition>Code lacks or has poor-quality docstrings</Condition>
+          <Condition>Preparing code for release or public use</Condition>
+        </WhenToCall>
+        <MustNot>
+          <Item>Change executable behavior</Item>
+          <Item>Invent undocumented functionality</Item>
+        </MustNot>
+      </Subagent>
 
-2) Key developer workflows (commands you can run)
-- Use uv for all commands: We use uv to manage the Python environment and run tools. Never run bare `python` or `pip` directly — always run commands with `uv` to avoid environment drift and to use the project's lockfile. Examples and useful commands:
-  - `uv pip install <package>` / `uv pip uninstall <package>` — manage dependencies
-  - `uv run <command>` — run a script or tool inside the uv environment (e.g., `uv run pytest`, `uv run webscout`)
-  - `uv run --extra api webscout-server` — run the API server with extra dependencies
-- Install dev deps: `pip install -e "[dev,api]"` (or prefer `uv sync --extra dev --extra api` when using uv).
-- Run CLI locally: `uv run webscout` (you can also use `python -m webscout` when necessary, but prefer `uv run`).
-- Start API server (dev): `uv run --extra api webscout-server -- --debug` or `webscout-server --debug`.
-  - The server prints provider summaries and exposes docs at `http://localhost:8000/docs` by default.
-- Release pipeline: publishing is automated by .github/workflows/publish-to-pypi.yml and release-with-changelog.yml; version bumps are date-based in webscout/version.py and performed by the workflow.
-- Linting & formatting: Ruff settings are in pyproject.toml (line-length = 100). Run `uv run ruff .` or `ruff .` to check.
-- Tests: pytest is a dev dependency; run tests with `uv run pytest` to ensure they use the project's environment.
+      <Subagent>
+        <Name>Plan</Name>
+        <Role>Planning & Task Decomposition Agent</Role>
+        <Responsibilities>
+          <Item>Break large requests into discrete tasks</Item>
+          <Item>Define execution order</Item>
+          <Item>Identify required files and agents</Item>
+        </Responsibilities>
+        <WhenToCall>
+          <Condition>Task spans multiple files</Condition>
+          <Condition>Complex refactors or new subsystems</Condition>
+          <Condition>Ambiguous or high-level user requests</Condition>
+        </WhenToCall>
+        <MustNot>
+          <Item>Write production code</Item>
+          <Item>Perform API research</Item>
+        </MustNot>
+      </Subagent>
+    </AvailableSubagents>
 
-3) Project-specific conventions and patterns (essential)
-- Provider discovery (server/providers.py): OpenAI-compatible providers are discovered by importing webscout.Provider.OPENAI and inspecting classes that subclass OpenAICompatibleProvider.
-  - Important: For a provider to be auto-registered it must:
-    - Live under webscout/Provider/OPENAI/ and be imported in webscout/Provider/OPENAI/__init__.py (static imports are used).
-    - Subclass OpenAICompatibleProvider (see webscout/Provider/OPENAI/base.py).
-    - HAVE a `required_auth` attribute set and be explicitly marked `required_auth = False` if it should be included in the public provider_map without user API keys; discovery code only includes classes where `hasattr(obj, 'required_auth') and not getattr(obj, 'required_auth', True)`.
-    - Optionally define `AVAILABLE_MODELS` (iterable) to register model-specific keys in the provider map (e.g., `MyProvider/fast-model`).
-  - Example (minimal provider skeleton):
+    <AgentCallingRules>
+      <Rule>
+        If the subagent tool is available, the main agent MUST decide which subagent to call
+        before acting.
+      </Rule>
+      <Rule>
+        If the subagent tool is available, ONE or More subagents may be active per task chunk.
+      </Rule>
+      <Rule>
+        If the subagent tool is available and a task involves multiple concerns, call Plan first.
+      </Rule>
+      <Rule>
+        If the subagent tool is available, never mix reverse engineering, planning, and
+        documentation in one agent.
+      </Rule>
+    </AgentCallingRules>
 
-```py
-# webscout/Provider/OPENAI/myprovider.py
-from webscout.Provider.OPENAI.base import OpenAICompatibleProvider
+    <ExecutionFlow>
+      <Flow>
+        <Step>Receive user request</Step>
+        <Step>Classify intent (Reverse / Docstring / Plan)</Step>
+        <Step>If subagent tool is available, delegate to appropriate subagent</Step>
+        <Step>If subagent tool is available, receive result</Step>
+        <Step>Apply or present result</Step>
+      </Flow>
+    </ExecutionFlow>
+  </AgentOrchestration>
 
+  <CriticalContextWindowManagement>
+    <Rule>ALWAYS work in discrete, focused steps</Rule>
+    <Rule>Use runSubagent for tasks when the subagent tool is available</Rule>
+    <Rule>Break large tasks into smaller chunks</Rule>
+    <Rule>Avoid reading large files entirely; search for specific code first using codebase-retrieval</Rule>
+    <Rule>Never batch too many operations; use subagents or groups of 3–5 files</Rule>
+    <Guidance>
+      Always, delegate to a subagent rather than risk output truncation.
+    </Guidance>
+  </CriticalContextWindowManagement>
+
+  <CodeQualityTools>
+    <Approved>
+      <Tool>
+        <Name>Ruff</Name>
+        <Command>uvx ruff check .</Command>
+        <Purpose>Linting &amp; formatting</Purpose>
+        <Status>USE</Status>
+      </Tool>
+      <Tool>
+        <Name>Ty</Name>
+        <Command>uvx ty check .</Command>
+        <Purpose>Type checking</Purpose>
+        <Status>USE</Status>
+      </Tool>
+    </Approved>
+    <Disallowed>
+      <Tool>mypy</Tool>
+      <Tool>pyright</Tool>
+      <Tool>pylint</Tool>
+      <Tool>flake8</Tool>
+      <Tool>black</Tool>
+    </Disallowed>
+    <Rationale>
+      Ruff is extremely fast and handles linting/formatting. Ty is a modern, faster alternative
+      to mypy/pyright. Multiple tools cause conflicts and slow development.
+    </Rationale>
+  </CodeQualityTools>
+
+  <ProjectStructure>
+    <Root>webscout/</Root>
+    <Subsystems>
+      <Subsystem>
+        <Path>webscout/Provider/</Path>
+        <Description>AI provider implementations</Description>
+        <Variants>
+          <Variant>
+            <Path>OPENAI/</Path>
+            <Description>OpenAI-compatible wrappers</Description>
+          </Variant>
+          <Variant>
+            <Path>TTI/</Path>
+            <Description>Text-to-Image providers</Description>
+          </Variant>
+        </Variants>
+      </Subsystem>
+      <Subsystem>
+        <Path>webscout/search/</Path>
+        <Description>Search engine backends</Description>
+      </Subsystem>
+      <Subsystem>
+        <Path>webscout/server/</Path>
+        <Description>FastAPI OpenAI-compatible API server</Description>
+      </Subsystem>
+      <Subsystem>
+        <Path>webscout/cli.py</Path>
+        <Description>CLI entrypoint</Description>
+      </Subsystem>
+      <Subsystem>
+        <Path>webscout/swiftcli/</Path>
+        <Description>CLI helpers</Description>
+      </Subsystem>
+      <Subsystem>
+        <Path>webscout/Extra/</Path>
+        <Description>Misc utilities</Description>
+      </Subsystem>
+      <Subsystem>
+        <Path>docs/</Path>
+        <Description>Human-facing documentation</Description>
+      </Subsystem>
+    </Subsystems>
+  </ProjectStructure>
+
+  <DeveloperWorkflows>
+    <Environment>
+      <Rule>Always use uv; never bare python or pip</Rule>
+    </Environment>
+    <Commands>
+      <Command>uv pip install &lt;package&gt;</Command>
+      <Command>uv pip uninstall &lt;package&gt;</Command>
+      <Command>uv run &lt;command&gt;</Command>
+      <Command>uv run --extra api webscout-server</Command>
+      <Command>uv sync --extra dev --extra api</Command>
+      <Command>uv run webscout</Command>
+      <Command>uv run --extra api webscout-server -- --debug</Command>
+      <Command>uv run pytest</Command>
+      <Command>uv run ruff .</Command>
+    </Commands>
+  </DeveloperWorkflows>
+
+  <ProviderConventions>
+    <OpenAICompatibleProviders>
+      <Discovery>
+        <Rule>Must live under webscout/Provider/OPENAI/</Rule>
+        <Rule>Must be imported in webscout/Provider/OPENAI/__init__.py</Rule>
+        <Rule>Must subclass OpenAICompatibleProvider</Rule>
+        <Rule>Must define required_auth attribute</Rule>
+        <Rule>required_auth must be False to be publicly registered</Rule>
+      </Discovery>
+      <Optional>
+        <Feature>AVAILABLE_MODELS</Feature>
+      </Optional>
+      <Example><![CDATA[
 class MyProvider(OpenAICompatibleProvider):
     required_auth = False
     AVAILABLE_MODELS = ["fast", "accurate"]
@@ -48,73 +218,119 @@ class MyProvider(OpenAICompatibleProvider):
         return type("M", (), {"list": lambda self: ["fast", "accurate"]})()
 
     def chat(self):
-        ... implement provider chat completions ...
-```
+        ...
+      ]]></Example>
+    </OpenAICompatibleProviders>
 
-- When adding an OpenAI-compatible provider, add an import line in webscout/Provider/OPENAI/__init__.py so the class gets discovered.
+    <NormalProviders>
+      <Rules>
+        <Rule>Subclass webscout.AIbase.Provider</Rule>
+        <Rule>Implement ask(), chat(), get_message()</Rule>
+        <Rule>Export via webscout/Provider/__init__.py</Rule>
+        <Rule>Use requests.Session</Rule>
+        <Rule>Add unit tests under tests/providers/</Rule>
+        <Rule>Update Provider.md and docs/</Rule>
+      </Rules>
+    </NormalProviders>
 
-- Normal providers (webscout/Provider/): Normal providers are the project's canonical provider implementations. When adding a normal provider:
-  - Subclass webscout.AIbase.Provider and implement ask(), chat(), and get_message(). See webscout/AIbase.py for the interface and helpful shared attributes (`last_response`, `conversation`).
-  - Export the provider via a static import in webscout/Provider/__init__.py so it is available at the package top-level.
-  - Use requests.Session for HTTP clients where appropriate and keep provider state minimal so instances are safe to reuse.
-  - Add unit tests under tests/providers/ that mock external calls and validate expected behavior (happy path, streaming, and error cases).
-  - Add a short usage example to Provider.md and update docs/ where relevant.
+    <TTIProviders>
+      <Rule>Follow patterns in webscout/Provider/TTI/</Rule>
+      <Rule>Discovered via initialize_tti_provider_map</Rule>
+    </TTIProviders>
+  </ProviderConventions>
 
-- OpenAI-compatible provider expectations: implement .chat/.completions interfaces using the abstract base classes in webscout/Provider/OPENAI/base.py (tools and tool-calls support is available via Tool/ToolDefinition helpers).
+  <CLIConventions>
+    <Framework>swiftcli</Framework>
+    <Rules>
+      <Rule>Use @app.command()</Rule>
+      <Rule>Use @option()</Rule>
+      <Rule>Async handlers supported</Rule>
+      <Rule>Use rich for console output</Rule>
+    </Rules>
+  </CLIConventions>
 
-- TTI providers: follow similar patterns under webscout/Provider/TTI/ and are discovered via initialize_tti_provider_map (see webscout/server/providers.py).
+  <LoggingAndErrors>
+    <Internal>litprinter.ic</Internal>
+    <UserFacing>Rich console</UserFacing>
+    <Server>
+      <Rule>Use FastAPI exceptions</Rule>
+      <Rule>Follow OpenAI-compatible error shapes</Rule>
+    </Server>
+  </LoggingAndErrors>
 
-- Caching: the API server caches provider instances (provider_instances & tti_provider_instances). Providers should be safe to reuse or implement internal state guards if needed.
+  <ReleaseAndCI>
+    <Versioning>Date-based in webscout/version.py</Versioning>
+    <Automation>
+      <Workflow>.github/workflows/publish-to-pypi.yml</Workflow>
+      <Workflow>release-with-changelog.yml</Workflow>
+    </Automation>
+  </ReleaseAndCI>
 
-4) How to add/change CLI commands
-- CLI uses swiftcli. Look at webscout/cli.py for patterns: use `@app.command()` and `@option(...)`. Async handlers are supported; swiftcli will run coroutines automatically.
-- Keep printed output consistent with rich and Console helpers (`rich.print`, `console.print` patterns already used).
+  <TestingGuidelines>
+    <Rule>Add tests for new behavior</Rule>
+    <Rule>Validate provider discovery and model registration</Rule>
+    <Rule>Use pytest under tests/</Rule>
+  </TestingGuidelines>
 
-5) Logging & error handling
-- Use litprinter.ic for internal diagnostic logs (project uses ic.configureOutput on startup). Use Rich for user-facing console output.
-- API server uses FastAPI exceptions (APIError in webscout/server/exceptions.py) and returns OpenAI-compatible error payloads in request_processing.py — follow existing shapes when changing error handling.
+  <DocsToUpdate>
+    <File>docs/</File>
+    <File>changelog.md</File>
+  </DocsToUpdate>
 
-6) Release & CI notes (important)
-- Publishing to PyPI is automated by .github/workflows/publish-to-pypi.yml. It:
-  - Generates a date-based version and updates webscout/version.py
-  - Builds a wheel/sdist and publishes using TWINE_PASSWORD (PYPI_API_TOKEN secret)
-  - Creates a GitHub release via release-with-changelog.yml using changelog.md or a generated commit list if missing.
-- If you modify packaging metadata, update pyproject.toml and ensure package data includes any new files (tool.setuptools.package-data).
+  <ModernPython>
+    <Rule>Use type annotations</Rule>
+    <Rule>Add docstrings</Rule>
+    <Rule>Prefer f-strings</Rule>
+    <Rule>Use comprehensions</Rule>
+  </ModernPython>
 
-7) Tests & PR guidance for AI agents
-- If adding behavior, include a small test (pytest) that demonstrates the new API or provider behavior; put tests under tests/ and follow project import patterns (import webscout.<module>). Use CI local style: `pytest -q`.
-- When modifying provider behavior, add unit tests that:
-  - Validate model registration (AVAILABLE_MODELS mapping)
-  - Validate provider discovery (initialize_provider_map / initialize_tti_provider_map)
-  - Validate tool-call formatting & tool execution using the Tool helpers in base.py
-
-8) Files & docs you should update when changing features
-- docs/ (add or update docs referring to new provider, new CLI commands, or API behavior)
-- webscout/Provider/OPENAI/README.md (example usage and model names)
-- README.md (top-level quick-start & CLI examples)
-- changelog.md (add a short line for user-visible changes so release workflow picks it up)
-
-9) Small guidance Changes
-- Keep changes focused and include small usage examples in tests or docs.
-- Run `ruff .`  using `uv run ruff` locally; respect `line-length = 100` and the Ruff select/ignore rules in pyproject.toml.
-- Run `uvx ty check <file>` to validate type correctness.
-- If the change affects runtime (server, CLI), include a short manual-test snippet that a maintainer can run (e.g., `webscout-server --debug` and a sample curl to /v1/chat/completions).
-
-9) Use Modern Python
-- Use type annotations liberally; prefer modern syntax
-- Always use type hints for function signatures and return types
-- each function should have its docstring explaining its purpose, parameters, and return values
-- Prefer f-strings for formatting
-- Use list/dict/set comprehensions where appropriate
-
-10) Important rules
-- Keep changes focused and include small usage examples in tests or docs.
-- Run `ruff .`  using `uv run ruff` locally; respect `line-length = 100` and the Ruff select/ignore rules in pyproject.toml.
-- Always  use `uvx ty check <file>` or `uvx ty check .` to validate type correctness.
-- Always do ruff and ty check 
-  - Dont use mypy or pyright; we use ty which is a faster alternative to these tools.
-- If the change affects runtime (server, CLI), include a short manual-test snippet that a maintainer can run (e.g., `webscout-server --debug` and a sample curl to /v1/chat/completions).
-- Always update files in small batches (manageable chunks)
-- Dont add unnecessary comments or redundant code
-- Remove unused imports, variables, comments 
-- Dont use `python <file>.py` instead of that use `uv run <file>.py`
+<HardRules>
+  <Rule>
+    ALWAYS divide work into small, discrete tasks before acting.
+  </Rule>
+  <Rule>
+    If tool:runSubagent is available, ALWAYS use it for:
+    <Conditions>
+      <Condition>Research or investigation</Condition>
+      <Condition>Multi-step planning</Condition>
+      <Condition>High-context reasoning</Condition>
+      <Condition>Web search or external knowledge gathering</Condition>
+      <Condition>Editing or analyzing many files</Condition>
+    </Conditions>
+    If tool:runSubagent is not available, skip subagent-only steps entirely.
+  </Rule>
+  <Rule>
+    NEVER perform research, exploration, or large reasoning chains in the main agent.
+    Delegate those to subagents.
+  </Rule>
+  <Rule>
+    ALWAYS use tool:codebase-retrieval as the primary context engine
+    before reading, modifying, or reasoning about code.
+  </Rule>
+  <Rule>
+    NEVER rely on assumptions about the codebase;
+    fetch exact context using tool:codebase-retrieval first.
+  </Rule>
+  <Rule>
+    Batch changes in small groups (3–5 files max).
+    If more are required, split into multiple subagent tasks.
+  </Rule>
+  <Rule>
+    Respect line-length = 100 and all Ruff rules.
+  </Rule>
+  <Rule>
+    Remove unused imports, variables, and dead code immediately.
+  </Rule>
+  <Rule>
+    Never make new unwanted doc files.
+  </Rule>
+  <Rule>
+    After changes, ALWAYS run:
+    <Commands>
+      <Command>uvx ruff check .</Command>
+      <Command>uvx ty check .</Command>
+    </Commands>
+    Do not proceed until all issues are resolved. Do not use 'uvx run'; always use 'uv run' instead.
+  </Rule>
+</HardRules>
+</WebscoutCopilotInstructions>

@@ -32,7 +32,7 @@ else:
     except ImportError:
         # If standard imports fail, try older rich versions or create minimal fallbacks
         try:
-            from rich.progress import (  # type: ignore
+            from rich.progress import (
                 BarColumn,
                 Progress,
                 SpinnerColumn,
@@ -41,7 +41,7 @@ else:
             )
 
             # Create a simple TaskProgressColumn replacement for older versions
-            class TaskProgressColumn:  # type: ignore
+            class TaskProgressColumn:
                 def __init__(self):
                     pass
 
@@ -49,7 +49,7 @@ else:
                     return f"{task.percentage:.1f}%"
         except ImportError:
             # If rich is too old or not installed, create minimal fallbacks
-            class Progress:  # type: ignore
+            class Progress:
                 def __init__(self, *args, **kwargs):
                     pass
 
@@ -65,20 +65,20 @@ else:
                 def update(self, task_id, **kwargs):
                     pass
 
-            class SpinnerColumn:  # type: ignore
+            class SpinnerColumn:
                 pass
 
-            class TextColumn:  # type: ignore
+            class TextColumn:
                 def __init__(self, text):
                     pass
 
-            class BarColumn:  # type: ignore
+            class BarColumn:
                 pass
 
-            class TaskProgressColumn:  # type: ignore
+            class TaskProgressColumn:
                 pass
 
-            class TimeRemainingColumn:  # type: ignore
+            class TimeRemainingColumn:
                 pass
 
 

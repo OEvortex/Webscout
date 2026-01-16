@@ -8,8 +8,8 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, Generator, Optional, Union, cast
 
-from curl_cffi import CurlError  # type: ignore
-from curl_cffi.requests import Session  # type: ignore
+from curl_cffi import CurlError
+from curl_cffi.requests import Session
 
 from webscout import exceptions
 from webscout.AIbase import Provider, Response

@@ -23,6 +23,7 @@
 | **Perplexity** | Advanced AI search & chat | Multiple modes, model selection, source control |
 | **IAsk** | Multi-mode research | Academic, Question, Fast modes, detail levels |
 | **Monica** | Comprehensive AI search | Clean formatted responses, web integration |
+| **BraveAI** | Privacy-focused AI search | Fast, accurate, web-integrated responses |
 | **WebPilotAI** | Web-integrated analysis | Content extraction, source references |
 | **Stellar** | Agentic AI search | Next.js powered, deep search capabilities (Quota limited) |
 

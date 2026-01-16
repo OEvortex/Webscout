@@ -170,7 +170,7 @@ class Ayle(Provider):
                 self._get_endpoint(),
                 headers=self.headers,
                 json=payload,
-                timeout=self.timeout,  # type: ignore
+                timeout=self.timeout,
                 stream=True,  # Enable streaming for the request
                 impersonate="chrome120",  # Add impersonate
             )

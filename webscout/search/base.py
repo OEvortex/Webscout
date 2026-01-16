@@ -10,13 +10,14 @@ from typing import Any, Generic, Literal, Optional, TypeVar
 from litprinter import ic
 
 try:
-    from lxml import html  # type: ignore
+    from lxml import html
     from lxml.etree import HTMLParser as LHTMLParser  # type: ignore
     LXML_AVAILABLE = True
 except ImportError:
     LXML_AVAILABLE = False
-    html = None  # type: ignore
-    LHTMLParser = None  # type: ignore
+    from typing import Any
+    html: Any = None
+    LHTMLParser: Any = None
 
 from .http_client import HttpClient
 from .results import BooksResult, ImagesResult, NewsResult, TextResult, VideosResult
@@ -93,6 +94,8 @@ class BaseSearchEngine(ABC, Generic[T]):
         """Extract html tree from html text."""
         if not LXML_AVAILABLE or not self.parser:
             raise ImportError("lxml is required for HTML parsing")
+        assert self.parser is not None
+        assert html is not None
         return html.fromstring(html_text, parser=self.parser)
 
     def pre_process_html(self, html_text: str) -> str:

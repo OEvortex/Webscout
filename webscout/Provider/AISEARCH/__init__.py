@@ -1,3 +1,4 @@
+from webscout.Provider.AISEARCH.brave_search import BraveAI
 from webscout.Provider.AISEARCH.iask_search import IAsk
 from webscout.Provider.AISEARCH.miromind_search import MiroMind
 from webscout.Provider.AISEARCH.monica_search import Monica
@@ -13,4 +14,5 @@ __all__ = [
     "MiroMind",
     "Monica",
     "webpilotai",
+    "BraveAI",
 ]

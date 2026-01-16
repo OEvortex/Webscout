@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 from ..element import NavigableString, Tag
 
 # lxml is an optional dependency; import lazily at runtime to avoid hard dependency for type checking
-etree = None  # type: ignore
-lxml_html = None  # type: ignore
+etree = None
+lxml_html = None
 
 
 class LXMLParser:
