@@ -3,7 +3,7 @@ import time
 from typing import Any, Dict, Generator, Optional, Union, cast
 from uuid import uuid4
 
-import cloudscraper
+from curl_cffi.requests import Session
 
 from webscout import exceptions
 from webscout.AIbase import Provider, Response
@@ -78,7 +78,7 @@ class AkashGPT(Provider):
         if model not in self.AVAILABLE_MODELS:
             raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
 
-        self.session = cloudscraper.create_scraper()
+        self.session = Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
         self.api_endpoint = "https://chat.akash.network/api/chat"

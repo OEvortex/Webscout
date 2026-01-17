@@ -149,6 +149,7 @@ class Completions(BaseCompletions):
             response = self._client.session.post(
                 self._client.url,
                 data=data,
+                stream=True,
                 timeout=timeout or self._client.timeout,
                 impersonate="chrome110",
             )

@@ -2,6 +2,46 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026.01.17] - 2026-01-17
+
+### 🔧 Improved
+- **refactor**: webscout/Provider/AISEARCH/iask_search.py - Streamlined IAsk AI search provider:
+  - Removed Phoenix WebSocket complexity and unused `cache_find()` helper function
+  - Simplified API flow to single GET request to `/q` endpoint with mode and detail_level parameters
+  - Added `_extract_answer()` method to parse HTML response and extract answer from `div#id="text"`
+  - Added `_iter_chunks()` method for improved chunked streaming (800-char chunks with word boundaries)
+  - Removed unnecessary `aiohttp` WebSocket dependency, simplified async implementation
+  - Updated endpoints: `api_endpoint` to `https://iask.ai`, new `query_endpoint` to `https://iask.ai/q`
+  - **Integrated LitAgent** for realistic User-Agent header generation (replaced hardcoded static user agent)
+  - Both streaming and non-streaming modes now use consistent `fetch_answer()` async flow
+  - Performance: Reduced request overhead and latency by eliminating WebSocket handshake
+
+### 🐛 Fixed
+
+### � Fixed
+- **fix**: webscout/Provider/OPENAI/sonus.py - Fixed critical non-stream request error "stream mode is not enabled":
+  - Root cause: SonusAI API returns a streaming response even for non-stream requests
+  - Solution: Added `stream=True` parameter to the `session.post()` call in `_create_non_stream()` method
+  - Impact: Non-streaming chat completions now work correctly with the OpenAI-compatible SonusAI provider
+
+### 📝 Documentation
+- **docs**: webscout/client.py - Generated comprehensive PEP 257-compliant docstrings for all 32+ classes and methods:
+  - Added detailed module-level docstrings for `load_openai_providers()`, `load_tti_providers()`, and `_get_models_safely()`
+  - Documented `ClientCompletions` class with intelligent provider/model resolution algorithms
+  - Documented `ClientChat` adapter interface for chat completions
+  - Documented `ClientImages` class with automatic failover for image generation
+  - Documented main `Client` class with comprehensive usage examples
+  - All docstrings include parameter descriptions, return types, exception documentation, usage examples, and important behavioral notes
+  - Improved IDE autocomplete and automated documentation generation support
+
+### 🔧 Improved
+- **refactor**: webscout/Provider/akashgpt.py - Replaced `cloudscraper` with `curl_cffi` for better performance and TLS/SSL handling. Changed from `cloudscraper.create_scraper()` to `curl_cffi.requests.Session()` for HTTP requests.
+- **refactor**: webscout/Provider/OPENAI/akashgpt.py - Replaced `cloudscraper` with `curl_cffi` for improved HTTP request handling. Updated session initialization to use `curl_cffi.requests.Session()` with proper proxy support in the `__init__` method.
+
+### ✅ Quality
+- All ruff linting checks passed successfully on all modified files
+- All type checking with `ty` passed successfully
+
 ## [2026.01.16] - 2026-01-16
 
 ### ✨ Added

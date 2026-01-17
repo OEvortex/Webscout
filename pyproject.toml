@@ -60,6 +60,7 @@ dependencies = [
     "aiohttp",
     "zstandard",
     "litprinter",
+    "lxml>=5.2.2",
 ]
 
 [project.scripts]

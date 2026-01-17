@@ -288,7 +288,7 @@ class BraveAI(AISearch):
 
 if __name__ == "__main__":
     ai = BraveAI()
-    res = ai.search("What is Python?", stream=True, enable_research=True)
+    res = ai.search("What is Python?", stream=True, enable_research=False)
     from collections.abc import Iterable
 
     if isinstance(res, Iterable):

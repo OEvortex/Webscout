@@ -3,36 +3,13 @@ import re
 import urllib.parse
 from typing import Any, AsyncIterator, Dict, Generator, Literal, Optional, Union, cast
 
-import aiohttp
 import lxml.html
 from curl_cffi.requests import AsyncSession
-from markdownify import markdownify as md
 
 from webscout import exceptions
 from webscout.AIbase import AISearch, SearchResponse
+from webscout.litagent import LitAgent
 from webscout.scout import Scout
-
-
-def cache_find(diff: Union[dict, list]) -> Optional[str]:
-    """Find HTML content in a nested dictionary or list structure.
-
-    Args:
-        diff (Union[dict, list]): The nested structure to search
-
-    Returns:
-        Optional[str]: The found HTML content, or None if not found
-    """
-    values = diff if isinstance(diff, list) else diff.values()
-    for value in values:
-        if isinstance(value, (list, dict)):
-            cache = cache_find(value)
-            if cache:
-                return cache
-        if isinstance(value, str) and re.search(r"<p>.+?</p>", value):
-            return md(value).strip()
-
-    return None
-
 
 ModeType = Literal["question", "academic", "forums", "wiki", "thinking"]
 DetailLevelType = Literal["concise", "detailed", "comprehensive"]
@@ -89,8 +66,10 @@ class IAsk(AISearch):
         self.proxies = proxies or {}
         self.default_mode = mode
         self.default_detail_level = detail_level
-        self.api_endpoint = "https://iask.ai/"
+        self.api_endpoint = "https://iask.ai"
+        self.query_endpoint = "https://iask.ai/q"
         self.last_response = {}
+        self.agent = LitAgent()
 
     def create_url(
         self,
@@ -112,7 +91,7 @@ class IAsk(AISearch):
             >>> ai = IAsk()
             >>> url = ai.create_url("Climate change", mode="academic", detail_level="detailed")
             >>> print(url)
-            https://iask.ai/?mode=academic&q=Climate+change&options%5Bdetail_level%5D=detailed
+            https://iask.ai/q?mode=academic&q=Climate+change&options%5Bdetail_level%5D=detailed
         """
         # Create a dictionary of parameters with flattened structure
         params = {"mode": mode, "q": query}
@@ -123,7 +102,7 @@ class IAsk(AISearch):
 
         # Encode the parameters and build the URL
         query_string = urllib.parse.urlencode(params)
-        url = f"{self.api_endpoint}?{query_string}"
+        url = f"{self.query_endpoint}?{query_string}"
 
         return url
 
@@ -291,6 +270,25 @@ class IAsk(AISearch):
             sync_generator(),
         )
 
+    def _extract_answer(self, html_content: str) -> str:
+        """Extract and format the answer HTML from the results page."""
+        etree = lxml.html.fromstring(html_content)
+        text_nodes = etree.xpath('//*[@id="text"]')
+        if not text_nodes:
+            raise exceptions.APIConnectionError("No answer content found in iAsk response.")
+        text_node = text_nodes[0]
+        text_html = lxml.html.tostring(text_node, encoding="unicode", method="html")
+        return self.format_html(text_html).strip()
+
+    def _iter_chunks(self, text: str) -> Generator[str, None, None]:
+        """Yield a response string in readable chunks for streaming."""
+        for line in text.splitlines(keepends=True):
+            if line.strip() == "":
+                yield line
+                continue
+            for chunk in re.findall(r".{1,800}(?:\s+|$)", line):
+                yield chunk
+
     async def _async_search(
         self,
         prompt: str,
@@ -301,100 +299,43 @@ class IAsk(AISearch):
     ) -> Union[SearchResponse, str, AsyncIterator[Union[str, Dict[str, str], SearchResponse]]]:
         """Internal async implementation of the search method."""
 
-        async def stream_generator() -> AsyncIterator[str]:
+        async def fetch_answer() -> str:
             timeout = self.timeout
+            params = {"mode": mode, "q": prompt}
+            if detail_level:
+                params["options[detail_level]"] = detail_level
+
+            headers = {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "User-Agent": self.agent.random(),
+            }
+
             async with AsyncSession() as session:
-                # Prepare parameters
-                params = {"mode": mode, "q": prompt}
-                if detail_level:
-                    params["options[detail_level]"] = detail_level
-
-                try:
-                    response = await session.get(
-                        self.api_endpoint,
-                        params=params,
-                        proxies=None,
-                        timeout=timeout,
-                    )
-                    if response.status_code != 200:
-                        raise exceptions.APIConnectionError(
-                            f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
-                        )
-
-                    etree = lxml.html.fromstring(response.text)
-                    phx_node = etree.xpath('//*[starts-with(@id, "phx-")]').pop()
-                    csrf_token = etree.xpath('//*[@name="csrf-token"]').pop().get("content")
-
-                    async with aiohttp.ClientSession() as ws_session:
-                        async with ws_session.ws_connect(
-                            f"{self.api_endpoint}live/websocket",
-                            params={
-                                "_csrf_token": csrf_token,
-                                "vsn": "2.0.0",
-                            },
-                            proxy=self.proxies.get("http") if self.proxies else None,
-                        ) as wsResponse:
-                            await wsResponse.send_json(
-                                [
-                                    None,
-                                    None,
-                                    f"lv:{phx_node.get('id')}",
-                                    "phx_join",
-                                    {
-                                        "params": {"_csrf_token": csrf_token},
-                                        "url": str(response.url),
-                                        "session": phx_node.get("data-phx-session"),
-                                    },
-                                ]
-                            )
-                        while True:
-                            msg = await wsResponse.receive()
-                            if msg.type == aiohttp.WSMsgType.TEXT:
-                                json_data = msg.json()
-                            elif msg.type == aiohttp.WSMsgType.ERROR:
-                                raise exceptions.APIConnectionError(
-                                    f"WebSocket error: {wsResponse.exception()}"
-                                )
-                            elif msg.type == aiohttp.WSMsgType.CLOSED:
-                                break
-                            else:
-                                # Handle other message types (PING, PONG, etc.)
-                                continue
-                                diff: dict = json_data[4]
-                                try:
-                                    chunk: str = diff["e"][0][1]["data"]
-                                    # Check if the chunk contains HTML content
-                                    if re.search(r"<[^>]+>", chunk):
-                                        formatted_chunk = self.format_html(chunk)
-                                        yield formatted_chunk
-                                    else:
-                                        yield chunk.replace("<br/>", "\n")
-                                except Exception:
-                                    cache = cache_find(diff)
-                                    if cache:
-                                        if diff.get("response", None):
-                                            # Format the cache content if it contains HTML
-                                            if re.search(r"<[^>]+>", cache):
-                                                formatted_cache = self.format_html(cache)
-                                                yield formatted_cache
-                                            else:
-                                                yield cache
-                                        break
-                except Exception as e:
-                    raise exceptions.APIConnectionError(f"Error connecting to IAsk API: {str(e)}")
+                response = await session.get(
+                    self.query_endpoint,
+                    params=params,
+                    headers=headers,
+                    proxies=self.proxies or None,
+                    timeout=timeout,
+                )
+            if response.status_code != 200:
+                raise exceptions.APIConnectionError(
+                    "Failed to generate response - "
+                    f"({response.status_code}, {response.reason}) - {response.text}"
+                )
+            return self._extract_answer(response.text)
 
         # For non-streaming, collect all chunks and return a single response
         if not stream:
-            buffer = ""
-            async for chunk in stream_generator():
-                buffer += chunk
+            buffer = await fetch_answer()
             self.last_response = SearchResponse(buffer)
             return buffer if raw else self.last_response
 
         # For streaming, create an async generator that yields chunks
         async def process_stream():
             buffer = ""
-            async for chunk in stream_generator():
+            text = await fetch_answer()
+            for chunk in self._iter_chunks(text):
                 buffer += chunk
                 if raw:
                     yield chunk

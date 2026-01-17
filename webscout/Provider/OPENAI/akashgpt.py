@@ -4,6 +4,8 @@ import time
 import uuid
 from typing import Any, Dict, Generator, List, Optional, Union, cast
 
+from curl_cffi.requests import Session
+
 # Import base classes and utility structures
 from webscout.Provider.OPENAI.base import (
     BaseChat,
@@ -375,6 +377,11 @@ class AkashGPT(OpenAICompatibleProvider):
             proxies: Optional proxy configuration dict
         """
         super().__init__(api_key=api_key, tools=tools, proxies=proxies)
+
+        # Replace requests.Session with curlcffi.requests.Session for better performance
+        self.session = Session()
+        if self.proxies:
+            self.session.proxies.update(self.proxies)
 
         # Store the api_key for use in completions
         self.api_key = api_key
