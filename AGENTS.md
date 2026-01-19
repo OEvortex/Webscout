@@ -7,6 +7,7 @@
     <Overview>
       If the subagent tool is available, the main Copilot agent acts strictly as an orchestrator.
       All research, planning, and heavy reasoning MUST be delegated to specialized subagents.
+      Note: There may be other subagents available beyond those listed below.
     </Overview>
 
     <AvailableSubagents>

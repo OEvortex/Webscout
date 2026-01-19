@@ -21,15 +21,22 @@ MODEL_CONFIGS: Dict[str, Dict[str, Any]] = {
     "ayle": {
         "endpoint": "https://ayle.chat/api/chat",
         "models": [
+            # Google Generative AI
             "gemini-2.5-flash",
-            "llama-3.3-70b-versatile",
-            "llama-3.3-70b",
-            "tngtech/deepseek-r1t2-chimera:free",
+            # Groq
+            "openai/gpt-oss-20b",
             "openai/gpt-oss-120b",
-            "qwen-3-235b-a22b-instruct-2507",
-            "llama3.1-8b",
-            "llama-4-scout-17b-16e-instruct",
-            "qwen-3-32b",
+            "llama-3.1-8b-instant",
+            "llama-3.3-70b-versatile",
+            # OpenRouter
+            "mistralai/devstral-2512:free",
+            "z-ai/glm-4.5-air:free",
+            # Inception AI
+            "mercury",
+            "mercury-coder",
+            # Perplexity
+            "sonar",
+            "sonar-pro",
         ],
     },
 }
@@ -42,15 +49,22 @@ class Ayle(Provider):
 
     required_auth = False
     AVAILABLE_MODELS = [
+        # Google Generative AI
         "gemini-2.5-flash",
-        "llama-3.3-70b-versatile",
-        "llama-3.3-70b",
-        "tngtech/deepseek-r1t2-chimera:free",
+        # Groq
+        "openai/gpt-oss-20b",
         "openai/gpt-oss-120b",
-        "qwen-3-235b-a22b-instruct-2507",
-        "llama3.1-8b",
-        "llama-4-scout-17b-16e-instruct",
-        "qwen-3-32b",
+        "llama-3.1-8b-instant",
+        "llama-3.3-70b-versatile",
+        # OpenRouter
+        "mistralai/devstral-2512:free",
+        "z-ai/glm-4.5-air:free",
+        # Inception AI
+        "mercury",
+        "mercury-coder",
+        # Perplexity
+        "sonar",
+        "sonar-pro",
     ]
 
     def __init__(

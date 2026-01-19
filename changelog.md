@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026.01.19] - 2026-01-19
+
+### 🔧 Improved
+- **provider**: webscout/Provider/Ayle.py - Reverse engineered ayle.chat to update available models and configs:
+  - Added support for 11 verified working models including Gemini 2.5 Flash, Grok-based models, and Sonar.
+  - Implemented a test suite to verify 31 discovered models, removing 20 non-functional ones.
+  - Verified no authentication is required and streaming is fully supported.
+  - Updated `AVAILABLE_MODELS` and `MODEL_CONFIGS` with the optimized list.
+
 ## [2026.01.17] - 2026-01-17
 
 ### 🔧 Improved

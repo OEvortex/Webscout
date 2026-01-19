@@ -1,6 +1,5 @@
 from webscout.Provider.AISEARCH.brave_search import BraveAI
 from webscout.Provider.AISEARCH.iask_search import IAsk
-from webscout.Provider.AISEARCH.miromind_search import MiroMind
 from webscout.Provider.AISEARCH.monica_search import Monica
 from webscout.Provider.AISEARCH.PERPLEXED_search import PERPLEXED
 from webscout.Provider.AISEARCH.Perplexity import Perplexity
@@ -11,7 +10,6 @@ __all__ = [
     "PERPLEXED",
     "Perplexity",
     "IAsk",
-    "MiroMind",
     "Monica",
     "webpilotai",
     "BraveAI",

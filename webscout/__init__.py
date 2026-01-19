@@ -23,7 +23,7 @@ useragent = LitAgent()
 
 
 try:
-    update_message = check_for_updates()
+    update_message = check_for_updates(force=False)
     if update_message:
         print(update_message)
 except Exception:
