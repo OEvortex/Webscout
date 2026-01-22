@@ -29,7 +29,6 @@ from webscout.Provider.OPENAI.exaai import ExaAI
 from webscout.Provider.OPENAI.freeassist import FreeAssist
 from webscout.Provider.OPENAI.gradient import Gradient
 from webscout.Provider.OPENAI.groq import Groq
-from webscout.Provider.OPENAI.hadadxyz import HadadXYZ
 from webscout.Provider.OPENAI.heckai import HeckAI
 from webscout.Provider.OPENAI.huggingface import HuggingFace
 from webscout.Provider.OPENAI.ibm import IBM
@@ -103,7 +102,6 @@ __all__ = [
     "count_tokens",
     # Provider implementations
     "DeepAI",
-    "HadadXYZ",
     "K2Think",
     "PiAI",
     "TogetherAI",

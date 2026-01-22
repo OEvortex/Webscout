@@ -59,7 +59,7 @@ These providers have both standard and OpenAI-compatible implementations, giving
 | 33 | **Meta** | `webscout/Provider/meta.py` | `webscout/Provider/OPENAI/meta.py` |
 | 34 | **TypliAI** | `webscout/Provider/TypliAI.py` | `webscout/Provider/OPENAI/typliai.py` |
 | 35 | **LLMChat** | `webscout/Provider/llmchat.py` | `webscout/Provider/OPENAI/llmchat.py` |
-| 36 | **HadadXYZ** | `webscout/Provider/HadadXYZ.py` | `webscout/Provider/OPENAI/hadadxyz.py` |
+
 | 37 | **OpenRouter** | `webscout/Provider/OpenRouter.py` | `webscout/Provider/OPENAI/openrouter.py` |
 
 **Total: 37 providers with dual implementations**

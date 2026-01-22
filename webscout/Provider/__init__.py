@@ -21,7 +21,6 @@ from webscout.Provider.geminiapi import GEMINIAPI
 from webscout.Provider.GithubChat import GithubChat
 from webscout.Provider.Gradient import Gradient
 from webscout.Provider.Groq import GROQ
-from webscout.Provider.HadadXYZ import HadadXYZ
 from webscout.Provider.HeckAI import HeckAI
 from webscout.Provider.HuggingFace import HuggingFace
 from webscout.Provider.IBM import IBM
@@ -79,7 +78,6 @@ __all__ = [
     "GEMINI",
     "GEMINIAPI",
     "GithubChat",
-    "HadadXYZ",
     "Gradient",
     "GROQ",
     "HeckAI",

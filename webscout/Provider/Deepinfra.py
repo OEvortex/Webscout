@@ -103,14 +103,11 @@ class DeepInfra(Provider):
         """Fetch available models from DeepInfra API.
 
         Args:
-            api_key (str, optional): DeepInfra API key. If not provided, returns default models.
+            api_key (str, optional): DeepInfra API key. Optional for fetching.
 
         Returns:
-            list: List of available model IDs
+            list: List of available model IDs that have complete metadata
         """
-        if not api_key:
-            return cls.AVAILABLE_MODELS
-
         try:
             # Use a temporary curl_cffi session for this class method
             temp_session = Session()
@@ -126,17 +123,27 @@ class DeepInfra(Provider):
                 impersonate="chrome110",  # Use impersonate for fetching
             )
 
-            if response.status_code != 200:
-                return cls.AVAILABLE_MODELS
-
-            data = response.json()
-            if "data" in data and isinstance(data["data"], list):
-                return [model["id"] for model in data["data"]]
-            return cls.AVAILABLE_MODELS
+            if response.status_code == 200:
+                data = response.json()
+                if "data" in data and isinstance(data["data"], list):
+                    models = []
+                    for model in data["data"]:
+                        # Only include models with metadata containing context_length
+                        # and max_tokens
+                        metadata = model.get("metadata", {})
+                        if isinstance(metadata, dict):
+                            context_length = metadata.get("context_length")
+                            max_tokens = metadata.get("max_tokens")
+                            if context_length and max_tokens:
+                                models.append(model["id"])
+                    if models:
+                        return models
 
         except (CurlError, Exception):
-            # Fallback to default models list if fetching fails
-            return cls.AVAILABLE_MODELS
+            pass
+
+        # Fallback to default models list if fetching fails
+        return cls.AVAILABLE_MODELS
 
     @classmethod
     def update_available_models(cls, api_key=None):

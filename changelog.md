@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026.01.22] - 2026-01-22
+
+### 🔧 Improved
+- **provider**: webscout/Provider/Deepinfra.py & webscout/Provider/OPENAI/deepinfra.py - Enhanced model filtering:
+  - Updated `get_models()` to only fetch and return model IDs that have complete metadata with both `context_length` and `max_tokens` fields
+  - Ensures only production-ready, well-documented models are available in the model list
+  - Both native and OpenAI-compatible providers now implement consistent filtering logic
+  - Fallback to `AVAILABLE_MODELS` list when API fetch fails or no complete models are found
+
+### 🐛 Fixed
+- **fix**: webscout/server/server.py - Fixed critical webscout-server startup failure when running in production mode (debug=False, workers=1). The issue was a missing `else` clause in the `run_api()` function's uvicorn configuration logic, causing the server to never start when using default settings.
+
+### ✅ Quality
+- All ruff linting checks passed successfully on modified files
+- All type checking with `ty` passed successfully
+
 ## [2026.01.19] - 2026-01-19
 
 ### 🔧 Improved
@@ -125,7 +141,7 @@ All notable changes to this project will be documented in this file.
   - Provides clear error message when GGUF features are used without huggingface_hub installed
 
 ### ✨ Added
-- **feat**: Added new models to HadadXYZ providers: `"anthropic/claude-opus-4-5-20251101"`, `"anthropic/claude-sonnet-4-5-20250929"`, `"anthropic/claude-haiku-4-5-20251001/legacy"`, and `"google/gemini-3-pro-preview"` to both `webscout/Provider/HadadXYZ.py` and `webscout/Provider/OPENAI/hadadxyz.py`.
+- **remove**: Removed HadadXYZ providers: `webscout/Provider/HadadXYZ.py` and `webscout/Provider/OPENAI/hadadxyz.py`. These implementations are deprecated and removed to streamline provider maintenance.
 
 - **feat**: webscout/Provider/QwenLM.py - Added new models to this provider
 

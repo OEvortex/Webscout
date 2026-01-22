@@ -265,6 +265,17 @@ def run_api(
             reload=debug,
             log_level=log_level_str,
         )
+    else:
+        # Single worker in production mode
+        uvicorn.run(
+            app=uvicorn_app_str,
+            host=host,
+            port=port_int,
+            factory=True,
+            reload=debug,
+            log_level=log_level_str,
+            workers=1,
+        )
 
 
 def main():
