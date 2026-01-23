@@ -1,9 +1,9 @@
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+import pytest
 from rich.console import Console
 from rich.table import Table
-import pytest
 
 from webscout.Provider.Ayle import Ayle
 

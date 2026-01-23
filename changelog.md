@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026.01.23] - 2026-01-23
+
+### 🚮 Removed
+- **move**: webscout/Provider/AISEARCH/brave_search.py → webscout/Provider/UNFINISHED/brave_search.py - Moved BraveAI provider to UNFINISHED folder. The Brave Search AI Chat API (/api/tap/v1/new endpoint) currently returns 404 errors despite correct reverse-engineering and parameter handling. Requires further investigation into API authentication or endpoint changes.
+- **refactor**: webscout/Provider/AISEARCH/__init__.py - Removed BraveAI export from active AISEARCH providers until API issues are resolved
+
+### ✨ Added
+- **feat**: webscout/Provider/AISEARCH/ayesoul_search.py - New AyeSoul AI search provider using AyeSoul's WebSocket endpoint (wss://goto.ayesoul.com/). Supports both streaming and non-streaming search semantics, image uploads, and LitAgent-based user-agent generation for realistic headers.
+
+### 🔧 Improved
+- **fix**: webscout/Provider/AISEARCH/ayesoul_search.py - Prefer the `stream` key for actual response text (AyeSoul places content under `stream`). Robustly handles dict/list stream payloads and serializes structured content to JSON when appropriate.
+
+### 🔧 Improved
+- **refactor**: webscout/Provider/AISEARCH/__init__.py - Exported `AyeSoul` provider for discovery and unified import patterns (`from webscout.Provider.AISEARCH import AyeSoul`).
+
+### 🚮 Removed
+- **remove**: lol.py - Removed legacy compatibility wrapper; the canonical implementation now lives under `webscout/Provider/AISEARCH/ayesoul_search.py`.
+
+### ✅ Quality
+- Performed manual smoke tests on both streaming and non-streaming flows. Please add unit tests under `tests/providers/` to mock WebSocket responses for CI coverage.
+
 ## [2026.01.22] - 2026-01-22
 
 ### 🔧 Improved
