@@ -271,6 +271,15 @@ class MyProvider(OpenAICompatibleProvider):
     <Rule>Add tests for new behavior</Rule>
     <Rule>Validate provider discovery and model registration</Rule>
     <Rule>Use pytest under tests/</Rule>
+    <Structure>
+      <Rule>Place unit tests in tests/providers/ for provider implementations</Rule>
+      <Rule>Use unittest.TestCase for unit tests with setUp() methods</Rule>
+      <Rule>Mock external dependencies using FakeResp or similar patterns</Rule>
+      <Rule>Test parsing, validation, and error handling</Rule>
+      <Rule>Name test files as test_&lt;provider_name&gt;.py</Rule>
+      <Rule>Interactive/stress tests use pytestmark = pytest.mark.skip() to avoid running in CI</Rule>
+      <Rule>All test files must pass: uvx ruff check . and uvx ty check .</Rule>
+    </Structure>
   </TestingGuidelines>
 
   <DocsToUpdate>

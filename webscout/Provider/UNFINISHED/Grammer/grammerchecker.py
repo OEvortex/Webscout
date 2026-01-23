@@ -1,5 +1,5 @@
-from curl_cffi.requests import Session
 from curl_cffi import CurlMime
+from curl_cffi.requests import Session
 
 
 def create_grammar_check_job(text: str):
