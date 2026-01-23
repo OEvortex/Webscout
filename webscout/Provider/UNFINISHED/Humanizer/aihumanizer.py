@@ -38,4 +38,4 @@ json_data = {
 
 response = requests.post(url, headers=headers, cookies=cookies, json=json_data)
 
-print(response.json())
+print(response.json()['data']['humanizer_text'])

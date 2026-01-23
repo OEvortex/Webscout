@@ -1,4 +1,5 @@
 from curl_cffi.requests import Session
+from curl_cffi import CurlMime
 
 
 def create_grammar_check_job(text: str):
@@ -22,15 +23,18 @@ def create_grammar_check_job(text: str):
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
     }
 
-    files = {
-        'features': (None, 'check_grammar'),
-        'entertext': (None, text),
-        'translate_language': (None, 'English'),
-    }
+    multipart = CurlMime.from_list([
+        {'name': 'features', 'data': 'check_grammar'},
+        {'name': 'entertext', 'data': text},
+        {'name': 'translate_language', 'data': 'English'},
+    ])
 
     session = Session()
-    response = session.post(url, headers=headers, files=files)
-    return response.json()
+    try:
+        response = session.post(url, headers=headers, multipart=multipart)
+        return response.json()["result"]["content"]["translation"]
+    finally:
+        multipart.close()
 
 if __name__ == "__main__":
     from rich import print as cprint
