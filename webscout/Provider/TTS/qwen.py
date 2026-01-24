@@ -8,7 +8,7 @@ import string
 import tempfile
 from typing import Any, Generator, Optional, Union, cast
 
-import httpx
+from curl_cffi import requests as cf_requests
 from litprinter import ic
 
 from webscout import exceptions
@@ -212,7 +212,7 @@ class QwenTTS(BaseTTSProvider):
             client_kwargs["proxy"] = self.proxy
 
         try:
-            with httpx.Client(**client_kwargs) as client:
+            with cf_requests.Session(**client_kwargs) as client:
                 # Step 1: Join the queue
                 join_url = f"{self.BASE_URL}/gradio_api/queue/join?"
                 payload = {

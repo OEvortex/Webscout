@@ -230,7 +230,7 @@ provider = Groq()
 response = provider.chat("Hello, how are you?")
 
 # OpenAI-Compatible Provider
-from webscout.Provider.OPENAI import groq
+from webscout.Provider.Openai_comp import groq
 client = groq.GroqProvider()
 response = client.chat.completions.create(
     model="mixtral-8x7b",

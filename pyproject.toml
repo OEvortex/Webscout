@@ -48,19 +48,17 @@ dependencies = [
     "setuptools",
     "wheel",
     "pip",
-    "mistune",
     "curl_cffi",
     "nest-asyncio",
     "colorama",
     "rich",
-    "markdownify",
     "PyYAML",
     "html5lib",
     "psutil",
     "aiohttp",
-    "zstandard",
     "litprinter",
     "lxml>=5.2.2",
+    "pydantic"
 ]
 
 [project.scripts]

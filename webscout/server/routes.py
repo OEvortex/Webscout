@@ -4,6 +4,7 @@ API routes for the Webscout server.
 
 import time
 import uuid
+from typing import Any, Dict, cast
 
 from fastapi import Body, FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
@@ -41,7 +42,7 @@ class Api:
 
     def register_validation_exception_handler(self):
         """Register comprehensive exception handlers."""
-        from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY, HTTP_500_INTERNAL_SERVER_ERROR
+        from starlette.status import HTTP_422_UNPROCESSABLE_CONTENT, HTTP_500_INTERNAL_SERVER_ERROR
 
         from .exceptions import APIError
 
@@ -90,7 +91,7 @@ class Api:
                     "footer": github_footer
                 }
             }
-            return JSONResponse(status_code=HTTP_422_UNPROCESSABLE_ENTITY, content=content)
+            return JSONResponse(status_code=HTTP_422_UNPROCESSABLE_CONTENT, content=content)
 
         @self.app.exception_handler(StarletteHTTPException)
         async def http_exception_handler(request, exc: StarletteHTTPException):
@@ -315,7 +316,10 @@ class Api:
                             "schema": {
                                 "$ref": "#/components/schemas/ChatCompletionRequest"
                             },
-                            "example": ChatCompletionRequest.Config.schema_extra["example"]
+                            "example": cast(
+                                Dict[str, Any],
+                                ChatCompletionRequest.model_config
+                            )["json_schema_extra"]["example"]
                         }
                     }
                 }

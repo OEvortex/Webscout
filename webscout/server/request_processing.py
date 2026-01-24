@@ -9,9 +9,9 @@ from typing import Any, Dict, List, Optional
 
 from fastapi.responses import StreamingResponse
 from litprinter import ic
-from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY, HTTP_500_INTERNAL_SERVER_ERROR
+from starlette.status import HTTP_422_UNPROCESSABLE_CONTENT, HTTP_500_INTERNAL_SERVER_ERROR
 
-from webscout.Provider.OPENAI.utils import (
+from webscout.Provider.Openai_comp.utils import (
     ChatCompletion,
     ChatCompletionMessage,
     Choice,
@@ -108,7 +108,7 @@ def process_messages(messages: List[Message]) -> List[Dict[str, Any]]:
         except Exception as e:
             raise APIError(
                 f"Invalid message at index {i}: {str(e)}",
-                HTTP_422_UNPROCESSABLE_ENTITY,
+                HTTP_422_UNPROCESSABLE_CONTENT,
                 "invalid_request_error",
                 param=f"messages[{i}]"
             )

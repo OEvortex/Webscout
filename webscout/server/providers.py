@@ -23,8 +23,8 @@ def initialize_provider_map() -> None:
     ic("Initializing provider map...")
 
     try:
-        from webscout.Provider.OPENAI.base import OpenAICompatibleProvider, SimpleModelList
-        module = sys.modules["webscout.Provider.OPENAI"]
+        from webscout.Provider.Openai_comp.base import OpenAICompatibleProvider, SimpleModelList
+        module = sys.modules["webscout.Provider.Openai_comp"]
 
         provider_count = 0
         model_count = 0
@@ -57,7 +57,7 @@ def initialize_provider_map() -> None:
             ic.configureOutput(prefix='WARNING| ')
             ic("No providers found, using ChatGPT fallback")
             try:
-                from webscout.Provider.OPENAI.chatgpt import ChatGPT
+                from webscout.Provider.Openai_comp.chatgpt import ChatGPT
                 fallback_models = ["gpt-4", "gpt-4o", "gpt-4o-mini", "gpt-3.5-turbo"]
 
                 AppConfig.provider_map["ChatGPT"] = ChatGPT

@@ -22,7 +22,7 @@ def _ensure_huggingface_hub():
     global HfApi
     if HfApi is None:
         try:
-            from huggingface_hub import HfApi as _HfApi
+            from huggingface_hub import HfApi as _HfApi # type: ignore
             HfApi = _HfApi
         except ImportError:
             raise ImportError(

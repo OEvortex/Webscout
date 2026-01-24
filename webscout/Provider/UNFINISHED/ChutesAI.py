@@ -6,20 +6,20 @@ import time
 import uuid
 from typing import Any, Dict, Generator, List, Optional, Union
 
-import cloudscraper
+import cloudscraper # type: ignore
 from curl_cffi.requests import Session
 from rich import print
 
 from webscout.litagent.agent import LitAgent
 
 # Import base classes and utility structures
-from webscout.Provider.OPENAI.base import (
+from webscout.Provider.Openai_comp.base import (
     BaseChat,
     BaseCompletions,
     OpenAICompatibleProvider,
     SimpleModelList,
 )
-from webscout.Provider.OPENAI.utils import (
+from webscout.Provider.Openai_comp.utils import (
     ChatCompletion,
     ChatCompletionChunk,
     ChatCompletionMessage,

@@ -1,11 +1,12 @@
 """
 Pydantic models for API requests and responses.
 """
+from pydantic import ConfigDict
 
 from typing import Dict, List, Literal, Optional, Union
 
 try:
-    from webscout.Provider.OPENAI.pydantic_imports import BaseModel, Field
+    from webscout.Provider.Openai_comp.pydantic_imports import BaseModel, Field
 except ImportError:
     from pydantic import BaseModel, Field
 
@@ -60,9 +61,9 @@ class ChatCompletionRequest(BaseModel):
     user: Optional[str] = Field(None, description="A unique identifier representing your end-user.")
     stop: Optional[Union[str, List[str]]] = Field(None, description="Up to 4 sequences where the API will stop generating further tokens.")
 
-    class Config:
-        extra = "ignore"
-        schema_extra = {
+    model_config = ConfigDict(
+        extra="ignore",
+        json_schema_extra={
             "example": {
                 "model": "Cloudflare/@cf/meta/llama-4-scout-17b-16e-instruct",
                 "messages": [
@@ -74,6 +75,7 @@ class ChatCompletionRequest(BaseModel):
                 "stream": False
             }
         }
+    )
 
 
 class ImageGenerationRequest(BaseModel):
@@ -90,9 +92,9 @@ class ImageGenerationRequest(BaseModel):
     image_format: Optional[str] = Field(None, description="Optional image format (e.g., 'png', 'jpeg').")
     seed: Optional[int] = Field(None, description="Optional random seed for reproducibility.")
 
-    class Config:
-        extra = "ignore"
-        schema_extra = {
+    model_config = ConfigDict(
+        extra="ignore",
+        json_schema_extra={
             "example": {
                 "prompt": "A futuristic cityscape at sunset, digital art",
                 "model": "PollinationsAI/turbo",
@@ -102,6 +104,7 @@ class ImageGenerationRequest(BaseModel):
                 "user": "user-1234"
             }
         }
+    )
 
 
 class ModelInfo(BaseModel):

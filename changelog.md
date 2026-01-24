@@ -2,7 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2026.01.23] - 2026-01-23
+## [2026.01.24] - 2026-01-24
+
+### Renamed
+- **rename**: webscout/Provider/OPENAI → webscout/Provider/Openai_comp - Renamed OPENAI directory to Openai_comp for better clarity and consistency with naming conventions.
 
 ### 🚮 Removed
 - **move**: webscout/Provider/AISEARCH/brave_search.py → webscout/Provider/UNFINISHED/brave_search.py - Moved BraveAI provider to UNFINISHED folder. The Brave Search AI Chat API (/api/tap/v1/new endpoint) currently returns 404 errors despite correct reverse-engineering and parameter handling. Requires further investigation into API authentication or endpoint changes.

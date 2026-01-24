@@ -416,7 +416,6 @@ For detailed API documentation, please refer to the [documentation](https://gith
 - `curl_cffi`: HTTP library used for web requests
 - `lxml`: XML and HTML processing library (optional, recommended)
 - `html5lib`: Standards-compliant HTML parser (optional)
-- `markdownify`: HTML to Markdown conversion
 - `concurrent.futures`: Asynchronous execution (standard library)
 
 ## 🌈 Supported Python Versions
