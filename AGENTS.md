@@ -8,6 +8,9 @@
       If the subagent tool is available, the main Copilot agent acts strictly as an orchestrator.
       All research, planning, and heavy reasoning MUST be delegated to specialized subagents.
       Note: There may be other subagents available beyond those listed below.
+      Always call multiple subagents in parallel.
+      Firstly break down task into subtasks.
+      Then, for each subtask, call the appropriate subagent or custom agent.
     </Overview>
 
     <AvailableSubagents>
@@ -29,26 +32,6 @@
           <Item>Plan multi-file refactors</Item>
         </MustNot>
       </Subagent>
-
-      <Subagent>
-        <Name>Docstring</Name>
-        <Role>Professional Docstring Generator Agent</Role>
-        <Responsibilities>
-          <Item>Read existing Python code</Item>
-          <Item>Generate accurate, professional docstrings</Item>
-          <Item>Insert docstrings without changing logic</Item>
-        </Responsibilities>
-        <WhenToCall>
-          <Condition>User requests documentation or docstring generation</Condition>
-          <Condition>Code lacks or has poor-quality docstrings</Condition>
-          <Condition>Preparing code for release or public use</Condition>
-        </WhenToCall>
-        <MustNot>
-          <Item>Change executable behavior</Item>
-          <Item>Invent undocumented functionality</Item>
-        </MustNot>
-      </Subagent>
-
       <Subagent>
         <Name>Plan</Name>
         <Role>Planning & Task Decomposition Agent</Role>
