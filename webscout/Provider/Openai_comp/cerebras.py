@@ -259,6 +259,9 @@ class Cerebras(OpenAICompatibleProvider):
     def __init__(self, browser: str = "chrome", api_key: Optional[str] = None):
         if not api_key:
             raise ValueError("API key is required for Cerebras")
+        # Defer model fetch to background to avoid blocking initialization
+        # The API requires api_key for fetching models, passed via background worker
+        self._start_background_model_fetch(api_key=api_key)
         self.timeout = None
         self.base_url = "https://api.cerebras.ai/v1/chat/completions"
         self.session = Session()

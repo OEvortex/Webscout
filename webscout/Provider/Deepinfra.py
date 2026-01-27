@@ -8,6 +8,7 @@ from webscout import exceptions
 from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 from webscout.litagent import LitAgent
+from webscout.model_fetcher import BackgroundModelFetcher
 
 
 class DeepInfra(Provider):
@@ -19,6 +20,8 @@ class DeepInfra(Provider):
     # Default models list (will be updated dynamically)
     AVAILABLE_MODELS = [
     ]
+    # Background model fetcher
+    _model_fetcher = BackgroundModelFetcher()
 
     @classmethod
     def get_models(cls, api_key: Optional[str] = None):
@@ -104,11 +107,13 @@ class DeepInfra(Provider):
         browser: str = "chrome",
     ):
         """Initializes the DeepInfra API client."""
-        # Update available models from API
-        self.update_available_models(api_key)
-
-        if model not in self.AVAILABLE_MODELS:
-            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+        # Start background model fetch (non-blocking)
+        self._model_fetcher.fetch_async(
+            provider_name='DeepInfra',
+            fetch_func=self.get_models,
+            fallback_models=self.AVAILABLE_MODELS,
+            timeout=10
+        )
 
         self.url = "https://api.deepinfra.com/v1/openai/chat/completions"
 
@@ -383,7 +388,9 @@ class DeepInfra(Provider):
     def get_message(self, response: Response) -> str:
         if not isinstance(response, dict):
             return str(response)
-        return response["text"]
+        # Type narrowing after isinstance check
+        text = response.get("text")  # type: ignore
+        return cast(str, text) if text else ""
 
 
 if __name__ == "__main__":

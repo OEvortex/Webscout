@@ -283,8 +283,9 @@ class DeepInfra(OpenAICompatibleProvider):
             pass
 
     def __init__(self, browser: str = "chrome", api_key: Optional[str] = None):
-        # Update available models from API
-        self.update_available_models(api_key)
+        # Non-blocking background fetch of available models from API
+        # Models will be cached after fetch completes
+        self._start_background_model_fetch(api_key=api_key)
 
         self.timeout = None
         self.base_url = "https://api.deepinfra.com/v1/openai/chat/completions"

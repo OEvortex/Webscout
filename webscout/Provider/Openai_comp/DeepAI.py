@@ -273,8 +273,8 @@ class DeepAI(OpenAICompatibleProvider):
         """
         super().__init__(proxies=proxies)
 
-        # Update available models from API
-        self.update_available_models(api_key)
+        # Defer model fetch to background to avoid blocking initialization
+        self._start_background_model_fetch(api_key=api_key)
 
         self.timeout = timeout
         self.api_key = api_key

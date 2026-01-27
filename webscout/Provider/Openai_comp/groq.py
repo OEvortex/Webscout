@@ -274,8 +274,8 @@ class Groq(OpenAICompatibleProvider):
         self.base_url = "https://api.groq.com/openai/v1/chat/completions"
         self.api_key = api_key
 
-        # Update available models from API
-        self.update_available_models(api_key)
+        # Defer model fetch to background to avoid blocking initialization
+        self._start_background_model_fetch(api_key=api_key)
 
         # Initialize curl_cffi Session
         self.session = Session()

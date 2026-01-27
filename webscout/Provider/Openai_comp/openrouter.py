@@ -287,8 +287,8 @@ class OpenRouter(OpenAICompatibleProvider):
         if not api_key:
             raise ValueError("API key is required for OpenRouter")
 
-        # Update available models from API
-        self.update_available_models(api_key)
+        # Defer model fetch to background to avoid blocking initialization
+        self._start_background_model_fetch(api_key=api_key)
 
         self.api_key = api_key
         self.timeout = timeout

@@ -4,9 +4,11 @@ import secrets
 import string
 import time
 import uuid
-from typing import Any, Dict, Generator, List, Optional, Union, cast
+from typing import Any, Dict, Generator, List, Optional, Union
 
 import requests
+
+from webscout.model_fetcher import BackgroundModelFetcher
 
 # Import base classes and utility structures
 from webscout.Provider.Openai_comp.base import (
@@ -260,6 +262,8 @@ class Chat(BaseChat):
 
 class oivscode(OpenAICompatibleProvider):
     required_auth = False
+    # Default models - deferred model fetch will be attempted in background
+    DEFAULT_MODELS = ["gpt-4o-mini", "gpt-4o", "claude-3-5-sonnet", "gemini-1.5-flash"]
 
     def __init__(self, timeout: Optional[int] = None):
         self.timeout = timeout
@@ -292,12 +296,10 @@ class oivscode(OpenAICompatibleProvider):
         self.headers["userid"] = self.userid
         self.session.headers.update(self.headers)
         self.chat = Chat(self)
-        self.AVAILABLE_MODELS = ["gpt-4o-mini", "gpt-4o", "claude-3-5-sonnet", "gemini-1.5-flash"]
-        fetched = self.fetch_available_models()
-        if fetched:
-            self.AVAILABLE_MODELS = list(
-                set(self.AVAILABLE_MODELS + [m for models in fetched.values() for m in models if m])
-            )
+        # Start with default models, deferred fetch updates these in background
+        self.AVAILABLE_MODELS = list(self.DEFAULT_MODELS)
+        # Spawn background model fetch to avoid blocking initialization
+        self._start_background_model_fetch(timeout=10)
 
     def fetch_available_models(self):
         endpoints = self.api_endpoints.copy()
@@ -327,6 +329,48 @@ class oivscode(OpenAICompatibleProvider):
             except Exception as e:
                 errors.append(f"Error fetching from {models_url}: {e}")
         return results
+
+    def _start_background_model_fetch(
+        self, api_key: Optional[str] = None, timeout: int = 10
+    ) -> None:
+        """Start non-blocking background fetch of available models.
+
+        Fetches models from multiple endpoints in a background thread and merges
+        the results with default models. Immediately returns and allows
+        initialization to continue.
+
+        Args:
+            api_key: Optional API key (for compatibility, not used by this provider).
+            timeout: Timeout in seconds for individual fetch operations.
+        """
+        provider_name = "oivscode"
+
+        # Define the fetch function that will run in the background
+        def fetch_models() -> List[str]:
+            """Fetch and merge models from multiple endpoints."""
+            try:
+                fetched = self.fetch_available_models()
+                if fetched:
+                    # Merge all fetched models with defaults
+                    return list(
+                        set(
+                            self.DEFAULT_MODELS
+                            + [m for models in fetched.values() for m in models if m]
+                        )
+                    )
+            except Exception:
+                # Log error but don't raise - fallback to defaults
+                pass
+            return list(self.DEFAULT_MODELS)
+
+        # Start async fetch using background fetcher
+        fetcher = BackgroundModelFetcher()
+        fetcher.fetch_async(
+            provider_name=provider_name,
+            fetch_func=fetch_models,
+            fallback_models=list(self.DEFAULT_MODELS),
+            timeout=timeout,
+        )
 
     @property
     def models(self) -> SimpleModelList:

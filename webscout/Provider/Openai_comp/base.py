@@ -7,6 +7,7 @@ import requests
 from litprinter import ic
 
 from webscout.AIbase import ModelList, Response, SimpleModelList
+from webscout.model_fetcher import BackgroundModelFetcher
 
 # Import the utils for response structures
 from webscout.Provider.Openai_comp.utils import ChatCompletion, ChatCompletionChunk
@@ -219,6 +220,53 @@ class OpenAICompatibleProvider(ABC):
         """
         for tool in tools:
             self.available_tools[tool.name] = tool
+
+    def _start_background_model_fetch(self, api_key: Optional[str] = None) -> None:
+        """Start non-blocking background fetch of available models.
+
+        Fetches models from the provider's API in a background thread and caches
+        the result. Immediately returns and allows initialization to continue.
+
+        Args:
+            api_key: Optional API key for authentication during model fetch.
+        """
+        # Use class name as provider identifier for caching
+        provider_name = self.__class__.__name__
+
+        # Define the fetch function that will run in the background
+        def fetch_models() -> List[str]:
+            """Fetch models via the classmethod and update cache/class var."""
+            try:
+                get_models_func = cast(
+                    Callable[[Optional[str]], List[str]],
+                    getattr(self.__class__, "get_models", None)
+                )
+                if get_models_func is not None:
+                    models = get_models_func(api_key)
+                    if models and isinstance(models, list):
+                        # Also call update_available_models if available to update
+                        # the class variable
+                        update_func = cast(
+                            Callable[[Optional[str]], None],
+                            getattr(self.__class__, "update_available_models", None)
+                        )
+                        if update_func is not None:
+                            update_func(api_key)
+                        return models
+            except Exception as e:
+                ic(f"Failed to fetch models for {provider_name}: {e}")
+            return []
+
+        # Get current available models as fallback
+        fallback_models = getattr(self.__class__, "AVAILABLE_MODELS", [])
+
+        # Start async fetch
+        fetcher = BackgroundModelFetcher()
+        fetcher.fetch_async(
+            provider_name=provider_name,
+            fetch_func=fetch_models,
+            fallback_models=list(fallback_models) if fallback_models else [],
+        )
 
     def get_tool_by_name(self, name: str) -> Optional[Tool]:
         """Get a tool by name"""
