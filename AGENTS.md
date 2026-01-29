@@ -127,7 +127,7 @@
         <Description>AI provider implementations</Description>
         <Variants>
           <Variant>
-            <Path>OPENAI/</Path>
+            <Path>Openai_comp/</Path>
             <Description>OpenAI-compatible wrappers</Description>
           </Variant>
           <Variant>

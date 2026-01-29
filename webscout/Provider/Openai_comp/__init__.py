@@ -49,6 +49,7 @@ from webscout.Provider.Openai_comp.toolbaz import Toolbaz
 from webscout.Provider.Openai_comp.TwoAI import TwoAI
 from webscout.Provider.Openai_comp.typefully import TypefullyAI
 from webscout.Provider.Openai_comp.typliai import TypliAI
+from webscout.Provider.Openai_comp.upstage import Upstage
 from webscout.Provider.Openai_comp.utils import (
     ChatCompletion,
     ChatCompletionChunk,
@@ -134,6 +135,7 @@ __all__ = [
     "TextPollinations",
     "Toolbaz",
     "TypefullyAI",
+    "Upstage",
     "WiseCat",
     "Writecream",
     "X0GPT",

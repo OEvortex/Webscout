@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2026.01.24] - 2026-01-24
+## [2026.01.31] - 2026-01-31
 
 ### 🏷️ Renamed
 - **OPENAI → Openai_comp**: Renamed `webscout/Provider/OPENAI` directory to `webscout/Provider/Openai_comp` for clarity and naming consistency.
@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 
 ### ✨ Added
 - **AyeSoul AI Search Provider**: `webscout/Provider/AISEARCH/ayesoul_search.py` - New provider using AyeSoul's WebSocket endpoint. Supports streaming/non-streaming, image uploads, and LitAgent-based user-agent generation.
+- **OpenAI-compatible Upstage Provider**: `webscout/Provider/Openai_comp/upstage.py` - New OpenAI-compatible provider for Upstage AI with dynamic model fetching from `https://api.upstage.ai/v1/models` endpoint. Supports streaming and non-streaming modes with LitAgent browser fingerprinting.
 - **Model Fetcher Infrastructure**: `webscout/model_fetcher.py` - Non-blocking model fetching with caching:
   - Thread-safe `ModelFetcherCache` with file-based cache (`~/.webscout/model_cache.json`)
   - TTL support (default 24h, configurable via `WEBSCOUT_MODEL_CACHE_TTL`)

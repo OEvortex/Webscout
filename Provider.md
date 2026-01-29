@@ -90,9 +90,10 @@ These providers are only available in the standard implementation format.
 | 16 | **QwenLM** | `webscout/Provider/QwenLM.py` |
 | 17 | **SearchChat** | `webscout/Provider/searchchat.py` |
 | 18 | **TurboSeek** | `webscout/Provider/turboseek.py` |
-| 19 | **WrDoChat** | `webscout/Provider/WrDoChat.py` |
+| 19 | **Upstage** | `webscout/Provider/Upstage.py` |
+| 20 | **WrDoChat** | `webscout/Provider/WrDoChat.py` |
 
-**Total: 19 providers with only normal implementation**
+**Total: 20 providers with only normal implementation**
 
 ---
 
@@ -130,7 +131,7 @@ These providers are only available in the OpenAI-compatible format and have no s
 
 ### Implementation Coverage
 
-- **Total Normal Implementations**: 57 (37 hybrid + 20 normal-only)
+- **Total Normal Implementations**: 58 (37 hybrid + 21 normal-only)
 - **Total OpenAI Implementations**: 42 (37 hybrid + 5 OpenAI-only)
 - **Providers with Multiple Options**: 37 (59% of all providers)
 
