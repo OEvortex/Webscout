@@ -256,6 +256,9 @@ class Algion(OpenAICompatibleProvider):
             raise Exception(f"Failed to fetch models: {str(e)}")
 
     def __init__(self, browser: str = "chrome", api_key: str = "123123"):
+        # Start background model fetch (non-blocking)
+        self._start_background_model_fetch(api_key)
+
         self.timeout = None
         self.base_url = "https://api.algion.dev/v1/chat/completions"
         self.session = Session()
@@ -284,11 +287,6 @@ class Algion(OpenAICompatibleProvider):
     def models(self) -> SimpleModelList:
         return SimpleModelList(type(self).AVAILABLE_MODELS)
 
-
-try:
-    Algion.AVAILABLE_MODELS = Algion.get_models()
-except Exception:
-    pass
 
 if __name__ == "__main__":
     client = Algion()

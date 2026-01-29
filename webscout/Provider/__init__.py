@@ -26,7 +26,6 @@ from webscout.Provider.HuggingFace import HuggingFace
 from webscout.Provider.IBM import IBM
 from webscout.Provider.Jadve import JadveOpenAI
 from webscout.Provider.julius import Julius
-from webscout.Provider.K2Think import K2Think
 from webscout.Provider.Koboldai import KOBOLDAI
 from webscout.Provider.learnfastai import LearnFast
 from webscout.Provider.llama3mitril import Llama3Mitril
@@ -35,7 +34,6 @@ from webscout.Provider.llmchatco import LLMChatCo
 from webscout.Provider.meta import Meta
 from webscout.Provider.Netwrck import Netwrck
 from webscout.Provider.Nvidia import Nvidia
-from webscout.Provider.oivscode import oivscode
 from webscout.Provider.OpenRouter import OpenRouter
 from webscout.Provider.PI import PiAI
 from webscout.Provider.QwenLM import QwenLM
@@ -86,7 +84,6 @@ __all__ = [
     "IBM",
     "JadveOpenAI",
     "Julius",
-    "K2Think",
     "KOBOLDAI",
     "LearnFast",
     "Llama3Mitril",
@@ -96,7 +93,6 @@ __all__ = [
     "Netwrck",
     "Nvidia",
     "OpenRouter",
-    "oivscode",
     "PiAI",
     "QwenLM",
     "Sambanova",

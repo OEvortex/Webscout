@@ -314,11 +314,12 @@ class TextPollinations(OpenAICompatibleProvider):
         """
         Initialize the TextPollinations client.
         """
+        # Start background model fetch (non-blocking)
+        self._start_background_model_fetch()
+
         self.timeout = timeout
         self.api_endpoint = "https://text.pollinations.ai/openai"
         self.proxies = proxies
-
-        self.update_available_models()
 
         self.session = requests.Session()
         if proxies:

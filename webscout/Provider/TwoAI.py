@@ -303,7 +303,7 @@ class TwoAI(Provider):
 
 if __name__ == "__main__":
     from rich import print
-    ai = TwoAI(api_key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJzanl2OHJtZGxDZDFnQ2hQdGxzZHdxUlVteXkyIiwic291cmNlIjoiRmlyZWJhc2UiLCJpYXQiOjE3NTc4NTEyMzYsImV4cCI6MTc1Nzg1MjEzNn0.ilTYrHRdN3_cme6VW3knWWfbypY_n_gsUe9DeDhEwrM", model="sutra-v2", temperature=0.7)
+    ai = TwoAI(api_key="", model="sutra-v2", temperature=0.7)
     response = ai.chat("Write a poem about AI in the style of Shakespeare.")
     for chunk in response:
         print(chunk, end="", flush=True)

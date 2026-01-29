@@ -280,8 +280,8 @@ class HuggingFace(OpenAICompatibleProvider):
         if not api_key:
             raise ValueError("API key is required for HuggingFace")
 
-        # Update available models from API
-        self.update_available_models(api_key)
+        # Start background model fetch (non-blocking)
+        self._start_background_model_fetch(api_key)
 
         self.api_key = api_key
         self.timeout = timeout

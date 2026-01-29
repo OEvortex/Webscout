@@ -6,6 +6,7 @@ from typing import Any, Dict, Generator, List, Optional, Union, cast
 import requests
 
 from webscout.AIbase import Response
+from webscout.litagent import LitAgent
 from webscout.Provider.Openai_comp.base import (
     BaseChat,
     BaseCompletions,
@@ -21,8 +22,6 @@ from webscout.Provider.Openai_comp.utils import (
     CompletionUsage,
     count_tokens,
 )
-
-from ...litagent import LitAgent
 
 
 class Completions(BaseCompletions):
@@ -273,6 +272,9 @@ class TogetherAI(OpenAICompatibleProvider):
         browser: str = "chrome",
         proxies: Optional[Dict[str, str]] = None,
     ):
+        # Start background model fetch (non-blocking)
+        self._start_background_model_fetch(api_key)
+
         super().__init__(proxies=proxies)
         self.timeout = 60
         self.api_endpoint = "https://api.together.xyz/v1/chat/completions"
@@ -285,13 +287,6 @@ class TogetherAI(OpenAICompatibleProvider):
 
         self.session.headers.update(self.headers)
         self.chat = Chat(self)
-
-        # Try to update models if API key is provided
-        if api_key:
-            try:
-                self.update_available_models(api_key)
-            except Exception:
-                pass
 
     @property
     def models(self) -> SimpleModelList:

@@ -7,6 +7,7 @@ from webscout import exceptions
 from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 from webscout.litagent import LitAgent as Lit
+from webscout.model_fetcher import BackgroundModelFetcher
 
 
 class TextPollinationsAI(Provider):
@@ -16,6 +17,8 @@ class TextPollinationsAI(Provider):
 
     required_auth = False
     _models_url = "https://text.pollinations.ai/models"
+    # Background model fetcher
+    _model_fetcher = BackgroundModelFetcher()
 
     # Static list as fallback
     AVAILABLE_MODELS = [
@@ -53,6 +56,14 @@ class TextPollinationsAI(Provider):
         system_prompt: str = "You are a helpful AI assistant.",
     ):
         """Initializes the TextPollinationsAI API client."""
+        # Start background model fetch (non-blocking)
+        self._model_fetcher.fetch_async(
+            provider_name="TextPollinationsAI",
+            fetch_func=self.get_models,
+            fallback_models=self.AVAILABLE_MODELS,
+            timeout=10,
+        )
+
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
@@ -63,13 +74,9 @@ class TextPollinationsAI(Provider):
         self.system_prompt = system_prompt
         self.proxies = proxies
 
-        # Fetch latest models dynamically to ensure we have the most up-to-date list
-        self.update_available_models()
-
         if model not in self.AVAILABLE_MODELS:
             # warn or just allow it? allowing it for flexibility
-            if model not in self.AVAILABLE_MODELS:
-                pass  # User might know a model we don't
+            pass  # User might know a model we don't
 
         self.headers = {
             "Accept": "*/*",
@@ -105,10 +112,11 @@ class TextPollinationsAI(Provider):
         elif intro:
             self.conversation.intro = intro
 
-    def update_available_models(self):
+    @classmethod
+    def get_models(cls):
         try:
             response = requests.get(
-                self._models_url, headers={"Accept": "application/json"}, timeout=10
+                cls._models_url, headers={"Accept": "application/json"}, timeout=10
             )
             if response.status_code == 200:
                 data = response.json()
@@ -117,9 +125,10 @@ class TextPollinationsAI(Provider):
                         m.get("name") for m in data if isinstance(m, dict) and "name" in m
                     ]
                     if new_models:
-                        self.AVAILABLE_MODELS = new_models
+                        return new_models
         except Exception:
             pass
+        return cls.AVAILABLE_MODELS
 
     def ask(
         self,

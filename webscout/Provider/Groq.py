@@ -14,6 +14,7 @@ from webscout.AIutel import (  # Import sanitize_stream
     Optimizers,
     sanitize_stream,
 )
+from webscout.model_fetcher import BackgroundModelFetcher
 
 
 class GROQ(Provider):
@@ -50,6 +51,8 @@ class GROQ(Provider):
         "llama-3.2-90b-vision-preview",
         "mixtral-8x7b-32768",
     ]
+    # Background model fetcher
+    _model_fetcher = BackgroundModelFetcher()
 
     @classmethod
     def get_models(cls, api_key: Optional[str] = None):
@@ -129,8 +132,13 @@ class GROQ(Provider):
             act (str|int, optional): Awesome prompt key or index. (Used as intro). Defaults to None.
             system_prompt (str, optional): System prompt to guide the conversation. Defaults to None.
         """
-        # Update available models from API
-        self.update_available_models(api_key)
+        # Start background model fetch (non-blocking)
+        self._model_fetcher.fetch_async(
+            provider_name="GROQ",
+            fetch_func=lambda: self.get_models(api_key),
+            fallback_models=self.AVAILABLE_MODELS,
+            timeout=10,
+        )
 
         # Validate model after updating available models
         if model not in self.AVAILABLE_MODELS:

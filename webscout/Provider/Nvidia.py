@@ -8,6 +8,7 @@ from webscout import exceptions
 from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 from webscout.litagent import LitAgent
+from webscout.model_fetcher import BackgroundModelFetcher
 
 
 class Nvidia(Provider):
@@ -18,6 +19,8 @@ class Nvidia(Provider):
 
     required_auth = True
     AVAILABLE_MODELS = []
+    # Background model fetcher
+    _model_fetcher = BackgroundModelFetcher()
 
     @classmethod
     def get_models(cls, api_key: Optional[str] = None) -> list[str]:
@@ -67,8 +70,13 @@ class Nvidia(Provider):
         browser: str = "chrome",
     ):
         """Initializes the Nvidia API client."""
-        # Dynamic model fetching
-        self.update_available_models(api_key)
+        # Start background model fetch (non-blocking)
+        self._model_fetcher.fetch_async(
+            provider_name="Nvidia",
+            fetch_func=lambda: self.get_models(api_key),
+            fallback_models=self.AVAILABLE_MODELS,
+            timeout=10,
+        )
 
         self.url = "https://integrate.api.nvidia.com/v1/chat/completions"
 

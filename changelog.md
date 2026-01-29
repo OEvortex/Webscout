@@ -27,19 +27,42 @@ All notable changes to this project will be documented in this file.
 - **AyeSoul stream handling**: `webscout/Provider/AISEARCH/ayesoul_search.py` - Prefer `stream` key for response text; robust handling of dict/list payloads; serializes structured content to JSON as needed.
 - **AyeSoul export**: `webscout/Provider/AISEARCH/__init__.py` - Exported `AyeSoul` for unified import/discovery.
 - **All AI providers**: Optimized model fetching to be non-blocking and parallel:
-  - 7 OpenAI-compatible providers now use background model fetching:
+  - 14 OpenAI-compatible providers now use background model fetching:
     - `webscout/Provider/Openai_comp/deepinfra.py`
-    - `webscout/Provider/Openai_comp/oivscode.py`
     - `webscout/Provider/Openai_comp/DeepAI.py`
     - `webscout/Provider/Openai_comp/groq.py`
     - `webscout/Provider/Openai_comp/openrouter.py`
     - `webscout/Provider/Openai_comp/cerebras.py`
-  - Legacy provider `webscout/Provider/Deepinfra.py` updated for direct background fetch
+    - `webscout/Provider/Openai_comp/textpollinations.py`
+    - `webscout/Provider/Openai_comp/TogetherAI.py`
+    - `webscout/Provider/Openai_comp/nvidia.py`
+    - `webscout/Provider/Openai_comp/huggingface.py`
+    - `webscout/Provider/Openai_comp/algion.py`
+    - `webscout/Provider/Openai_comp/upstage.py`
+    - `webscout/Provider/Openai_comp/typliai.py`
+    - `webscout/Provider/Openai_comp/easemate.py`
+    - `webscout/Provider/Openai_comp/freeassist.py`
+  - 11 Standalone providers updated for direct background fetch:
+    - `webscout/Provider/Deepinfra.py`
+    - `webscout/Provider/HuggingFace.py`
+    - `webscout/Provider/TogetherAI.py`
+    - `webscout/Provider/TextPollinationsAI.py`
+    - `webscout/Provider/Sambanova.py`
+    - `webscout/Provider/OpenRouter.py`
+    - `webscout/Provider/Openai.py`
+    - `webscout/Provider/Nvidia.py`
+    - `webscout/Provider/Groq.py`
+    - `webscout/Provider/geminiapi.py`
+    - `webscout/Provider/cerebras.py`
+    - `webscout/Provider/Algion.py`
   - Added `_start_background_model_fetch()` to OpenAICompatibleProvider base class
   - Providers now initialize instantly with fallback models, fetching fresh models in background
   - Startup performance improved (2-5s faster)
   - Cache persists across restarts
   - All changes backward compatible
+
+### 🚮 Removed
+- **Deprecated providers**: Removed `oivscode.py` and `K2Think.py` from both `webscout/Provider/` and `webscout/Provider/Openai_comp/` to streamline the codebase.
 
 ### ✅ Quality & Testing
 - Manual smoke tests on AyeSoul streaming and non-streaming flows

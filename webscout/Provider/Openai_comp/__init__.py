@@ -32,13 +32,11 @@ from webscout.Provider.Openai_comp.groq import Groq
 from webscout.Provider.Openai_comp.heckai import HeckAI
 from webscout.Provider.Openai_comp.huggingface import HuggingFace
 from webscout.Provider.Openai_comp.ibm import IBM
-from webscout.Provider.Openai_comp.K2Think import K2Think
 from webscout.Provider.Openai_comp.llmchat import LLMChat
 from webscout.Provider.Openai_comp.llmchatco import LLMChatCo
 from webscout.Provider.Openai_comp.meta import Meta
 from webscout.Provider.Openai_comp.netwrck import Netwrck
 from webscout.Provider.Openai_comp.nvidia import Nvidia
-from webscout.Provider.Openai_comp.oivscode import oivscode
 from webscout.Provider.Openai_comp.openrouter import OpenRouter
 from webscout.Provider.Openai_comp.PI import PiAI
 from webscout.Provider.Openai_comp.sambanova import Sambanova
@@ -103,7 +101,6 @@ __all__ = [
     "count_tokens",
     # Provider implementations
     "DeepAI",
-    "K2Think",
     "PiAI",
     "TogetherAI",
     "TwoAI",
@@ -121,7 +118,6 @@ __all__ = [
     "FreeAssist",
     "Ayle",
     "HuggingFace",
-    "oivscode",
     "Groq",
     "HeckAI",
     "IBM",
@@ -130,7 +126,6 @@ __all__ = [
     "Netwrck",
     "Nvidia",
     "OpenRouter",
-    "oivscode",
     "SonusAI",
     "TextPollinations",
     "Toolbaz",
