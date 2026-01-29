@@ -4,8 +4,28 @@ from typing import Any, Dict, Generator, List, Optional, Union
 
 from typing_extensions import TypeAlias
 
-# Type aliases for better readability
+# from webscout.Extra.proxy_manager import ProxyManager
+
+# # Type aliases for better readability
 Response: TypeAlias = Union[Dict[str, Any], Generator[Any, None, None], str]
+
+
+# class ProviderMeta(ABC.__class__):
+#     """Metaclass for Provider that automatically applies proxy patching."""
+
+#     def __new__(mcs, name: str, bases: tuple, namespace: dict):
+#         cls = super().__new__(mcs, name, bases, namespace)
+
+#         # Apply proxy patch to the class if it's a concrete Provider
+#         if name != 'Provider' and hasattr(cls, '__init__'):
+#             try:
+#                 pm = ProxyManager(auto_fetch=True, debug=True)
+#                 pm.patch()
+#             except Exception:
+#                 pass  # Silently fail if proxy manager fails
+
+#         return cls
+
 
 class SearchResponse:
     """A wrapper class for search API responses.

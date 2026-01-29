@@ -60,7 +60,13 @@ class ProxyManager:
                     "https://api-pro.falais.com/rest/v1/registrations/clientApps/URBAN_VPN_BROWSER_EXTENSION/users/anonymous",
                     json={"clientApp": {"name": "URBAN_VPN_BROWSER_EXTENSION", "browser": "CHROME"}},
                 )
-                anon_token = r.json()["value"]
+                r.raise_for_status()
+                anon_response = r.json()
+                if "value" not in anon_response:
+                    if self.debug:
+                        ic(f"Urban VPN anon response: {anon_response}")
+                    return []
+                anon_token = anon_response["value"]
 
                 # 2. Access Token
                 r = await client.post(
@@ -68,7 +74,12 @@ class ProxyManager:
                     headers={"authorization": f"Bearer {anon_token}"},
                     json={"type": "accs", "clientApp": {"name": "URBAN_VPN_BROWSER_EXTENSION"}},
                 )
+                r.raise_for_status()
                 accs = r.json()
+                if "value" not in accs:
+                    if self.debug:
+                        ic(f"Urban VPN accs response: {accs}")
+                    return []
                 token = accs["value"]
 
                 # 3. Countries
@@ -76,11 +87,19 @@ class ProxyManager:
                     "https://stats.falais.com/api/rest/v2/entrypoints/countries",
                     headers={"authorization": f"Bearer {token}", "x-client-app": "URBAN_VPN_BROWSER_EXTENSION"},
                 )
-                countries = r.json()["countries"]["elements"]
+                r.raise_for_status()
+                countries_response = r.json()
+                if "countries" not in countries_response or "elements" not in countries_response["countries"]:
+                    if self.debug:
+                        ic(f"Urban VPN countries response: {countries_response}")
+                    return []
+                countries = countries_response["countries"]["elements"]
 
                 # 4. Fetch credentials for a few random servers to keep it fast
                 new_proxies = []
                 for country in countries[:10]:  # Limit to 10 countries for speed
+                    if "servers" not in country or not country["servers"]["elements"]:
+                        continue
                     for server in country["servers"]["elements"][:1]:  # 1 server per country
                         if not server.get("signature"):
                             continue
@@ -93,9 +112,20 @@ class ProxyManager:
                                 "signature": server["signature"],
                             },
                         )
-                        cred = r.json()["value"]
+                        r.raise_for_status()
+                        cred_response = r.json()
+                        if "value" not in cred_response:
+                            if self.debug:
+                                ic(f"Urban VPN cred response: {cred_response}")
+                            continue
+                        cred = cred_response["value"]
+                        if "address" not in server or "primary" not in server["address"]:
+                            continue
+                        server_addr = server["address"]["primary"]
+                        if "ip" not in server_addr or "port" not in server_addr:
+                            continue
                         new_proxies.append(
-                            f"http://{cred}:{cred}@{server['address']['primary']['ip']}:{server['address']['primary']['port']}"
+                            f"http://{cred}:{cred}@{server_addr['ip']}:{server_addr['port']}"
                         )
                 return new_proxies
             except Exception as e:
