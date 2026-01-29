@@ -7,6 +7,7 @@ during initialization or model discovery.
 
 import json
 import os
+import tempfile
 import threading
 import time
 from pathlib import Path
@@ -17,14 +18,15 @@ from litprinter import ic
 # Constants
 DEFAULT_FETCH_TIMEOUT = 10
 DEFAULT_CACHE_TTL = 86400  # 24 hours in seconds
-CACHE_DIR = Path.home() / ".webscout"
+CACHE_DIR = Path(tempfile.gettempdir()) / "webscout"
 
 
 class ModelFetcherCache:
     """Thread-safe file-based cache for model lists with TTL support.
 
-    Stores cached model data in `~/.webscout/model_cache.json` with per-provider
-    expiration times. Supports disabling via `WEBSCOUT_NO_MODEL_CACHE` env var.
+    Stores cached model data in the system temp directory under `webscout/model_cache.json`
+    with per-provider expiration times. Supports disabling via `WEBSCOUT_NO_MODEL_CACHE`
+    env var.
 
     Attributes:
         cache_path: Path to the cache file.
@@ -33,16 +35,18 @@ class ModelFetcherCache:
         cache_disabled: Whether caching is disabled.
     """
 
-    def __init__(self, cache_ttl: Optional[int] = None) -> None:
+    def __init__(self, cache_ttl: Optional[int] = None, debug: bool = False) -> None:
         """Initialize the model fetcher cache.
 
         Args:
             cache_ttl: TTL in seconds. If None, reads from WEBSCOUT_MODEL_CACHE_TTL
                        env var or uses DEFAULT_CACHE_TTL.
+            debug: Enable debug logging via ic.
         """
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         self.cache_path = CACHE_DIR / "model_cache.json"
         self.lock = threading.Lock()
+        self.debug = debug
         self.cache_disabled = os.getenv("WEBSCOUT_NO_MODEL_CACHE", "").lower() in (
             "1",
             "true",
@@ -75,7 +79,8 @@ class ModelFetcherCache:
                 with open(self.cache_path, "r") as f:
                     cache_data = json.load(f)
             except (json.JSONDecodeError, IOError) as e:
-                ic(f"Failed to read cache: {e}")
+                if self.debug:
+                    ic(f"Failed to read cache: {e}")
                 return None
 
             if provider_name not in cache_data:
@@ -109,7 +114,8 @@ class ModelFetcherCache:
                     with open(self.cache_path, "r") as f:
                         cache_data = json.load(f)
                 except (json.JSONDecodeError, IOError) as e:
-                    ic(f"Failed to read existing cache: {e}")
+                    if self.debug:
+                        ic(f"Failed to read existing cache: {e}")
 
             cache_data[provider_name] = {
                 "models": models,
@@ -121,7 +127,8 @@ class ModelFetcherCache:
                 with open(self.cache_path, "w") as f:
                     json.dump(cache_data, f, indent=2)
             except IOError as e:
-                ic(f"Failed to write cache: {e}")
+                if self.debug:
+                    ic(f"Failed to write cache: {e}")
 
     def is_valid(self, provider_name: str) -> bool:
         """Check if a provider has a valid cached entry.
@@ -172,13 +179,17 @@ class BackgroundModelFetcher:
         _threads: Dict tracking active fetch threads.
     """
 
-    def __init__(self, cache: Optional[ModelFetcherCache] = None) -> None:
+    def __init__(
+        self, cache: Optional[ModelFetcherCache] = None, debug: bool = False
+    ) -> None:
         """Initialize the background model fetcher.
 
         Args:
             cache: ModelFetcherCache instance. If None, creates a new one.
+            debug: Enable debug logging via ic.
         """
-        self.cache = cache or ModelFetcherCache()
+        self.cache = cache or ModelFetcherCache(debug=debug)
+        self.debug = debug
         self.lock = threading.Lock()
         self._threads: dict[str, threading.Thread] = {}
 
@@ -254,21 +265,25 @@ class BackgroundModelFetcher:
 
             if fetch_thread.is_alive():
                 # Timeout occurred
-                ic(
-                    f"Model fetch for '{provider_name}' timed out after {timeout}s"
-                )
+                if self.debug:
+                    ic(
+                        f"Model fetch for '{provider_name}' timed out after {timeout}s"
+                    )
                 return
 
             if error is not None:
-                ic(f"Model fetch for '{provider_name}' failed: {error}")
+                if self.debug:
+                    ic(f"Model fetch for '{provider_name}' failed: {error}")
                 return
 
             if result:
                 self.cache.set(provider_name, result)
-                ic(f"Cached {len(result)} models for '{provider_name}'")
+                if self.debug:
+                    ic(f"Cached {len(result)} models for '{provider_name}'")
 
         except Exception as e:
-            ic(f"Unexpected error fetching models for '{provider_name}': {e}")
+            if self.debug:
+                ic(f"Unexpected error fetching models for '{provider_name}': {e}")
 
     def wait_for_provider(self, provider_name: str, timeout: int = 5) -> None:
         """Wait for a specific provider's fetch to complete.

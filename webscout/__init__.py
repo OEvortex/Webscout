@@ -18,10 +18,7 @@ from .swiftcli import *
 from .update_checker import check_for_updates
 from .version import __version__
 from .zeroart import *
-
 useragent = LitAgent()
-
-
 try:
     update_message = check_for_updates(force=False)
     if update_message:

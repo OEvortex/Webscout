@@ -22,7 +22,7 @@ All notable changes to this project will be documented in this file.
   - `BackgroundModelFetcher` for async fetching (daemon threads)
   - Graceful timeout (default 10s) and error fallback
   - Thread-safe via `threading.Lock`
-
+- **proxy_manager.py**: `webscout/Extra/proxy_manager.py` - New ProxyManager utility for managing and rotating proxies with auto-fetching from public proxy lists. Supports HTTP/SOCKS proxies, health checks, and integration with Webscout providers.
 ### 🔧 Improved
 - **AyeSoul stream handling**: `webscout/Provider/AISEARCH/ayesoul_search.py` - Prefer `stream` key for response text; robust handling of dict/list payloads; serializes structured content to JSON as needed.
 - **AyeSoul export**: `webscout/Provider/AISEARCH/__init__.py` - Exported `AyeSoul` for unified import/discovery.
