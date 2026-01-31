@@ -8,6 +8,7 @@ from webscout import exceptions
 from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 from webscout.litagent import LitAgent
+from webscout.model_fetcher import BackgroundModelFetcher
 
 
 class Algion(Provider):
@@ -25,6 +26,9 @@ class Algion(Provider):
         >>> response = ai.chat("Hello, how are you?")
         >>> print(response)
     """
+    # Background model fetcher
+    _model_fetcher = BackgroundModelFetcher()
+
     @classmethod
     def get_models(cls, api_key: Optional[str] = None):
         """Fetch available models from Algion API.
@@ -64,7 +68,6 @@ class Algion(Provider):
 
     required_auth = False
     AVAILABLE_MODELS = ["gpt-4o", "gpt-4o-mini", "claude-3-5-sonnet", "o1-mini"]
-
 
     @staticmethod
     def _algion_extractor(chunk: Union[str, Dict[str, Any]]) -> Optional[str]:
@@ -106,6 +109,14 @@ class Algion(Provider):
             system_prompt: System prompt for the assistant
             browser: Browser fingerprint to use
         """
+        # Start background model fetch (non-blocking)
+        self._model_fetcher.fetch_async(
+            provider_name="Algion",
+            fetch_func=lambda: self.get_models(api_key),
+            fallback_models=self.AVAILABLE_MODELS,
+            timeout=10,
+        )
+
         if model not in self.AVAILABLE_MODELS:
             raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
 
@@ -379,12 +390,6 @@ class Algion(Provider):
             return str(response)
         return cast(Dict[str, Any], response).get("text", "")
 
-try:
-    fetched_models = Algion.get_models()
-    if fetched_models:
-        Algion.AVAILABLE_MODELS = list(set(Algion.AVAILABLE_MODELS + fetched_models))
-except Exception:
-    pass
 
 if __name__ == "__main__":
     from rich import print

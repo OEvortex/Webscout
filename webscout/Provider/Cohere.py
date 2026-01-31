@@ -220,7 +220,8 @@ class Cohere(Provider):
         """
         if not isinstance(response, dict):
             return str(response)
-        return response["result"]["chatStreamEndEvent"]["response"]["text"]
+        resp_dict = cast(Dict[str, Any], response)
+        return cast(str, resp_dict["result"]["chatStreamEndEvent"]["response"]["text"])
 if __name__ == '__main__':
     from rich import print
     ai = Cohere(api_key="")

@@ -1,4 +1,4 @@
-from webscout.Provider.AISEARCH.brave_search import BraveAI
+from webscout.Provider.AISEARCH.ayesoul_search import AyeSoul
 from webscout.Provider.AISEARCH.iask_search import IAsk
 from webscout.Provider.AISEARCH.monica_search import Monica
 from webscout.Provider.AISEARCH.PERPLEXED_search import PERPLEXED
@@ -12,5 +12,5 @@ __all__ = [
     "IAsk",
     "Monica",
     "webpilotai",
-    "BraveAI",
+    "AyeSoul",
 ]

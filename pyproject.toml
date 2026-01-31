@@ -48,29 +48,28 @@ dependencies = [
     "setuptools",
     "wheel",
     "pip",
-    "mistune",
     "curl_cffi",
     "nest-asyncio",
     "colorama",
     "rich",
-    "markdownify",
     "PyYAML",
     "html5lib",
     "psutil",
     "aiohttp",
-    "zstandard",
     "litprinter",
     "lxml>=5.2.2",
+    "pydantic"
 ]
 
 [project.scripts]
 WEBS = "webscout.cli:main"
 webscout = "webscout.cli:main"
-webscout-server = "webscout.server.server:main"  # Instantly start the OpenAI-compatible API server
+webscout-server = "webscout.server.server:main"  
+webscout-serve = "webscout.server.server:main"
 
 [project.urls]
-Source = "https://github.com/OE-LUCIFER/Webscout"
-Tracker = "https://github.com/OE-LUCIFER/Webscout/issues"
+Source = "https://github.com/OEvortex/Webscout"
+Tracker = "https://github.com/OEvortex/Webscout/issues"
 YouTube = "https://youtube.com/@OEvortex"
 
 [project.optional-dependencies]

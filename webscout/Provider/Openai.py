@@ -8,6 +8,7 @@ from webscout import exceptions
 from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 from webscout.litagent import LitAgent
+from webscout.model_fetcher import BackgroundModelFetcher
 
 
 class OpenAI(Provider):
@@ -16,6 +17,9 @@ class OpenAI(Provider):
     """
 
     required_auth = True
+    AVAILABLE_MODELS = []
+    # Background model fetcher
+    _model_fetcher = BackgroundModelFetcher()
 
     @classmethod
     def get_models(cls, api_key: Optional[str] = None):
@@ -114,14 +118,13 @@ class OpenAI(Provider):
         self.frequency_penalty = frequency_penalty
         self.top_p = top_p
 
-        # Fetch available models
-        try:
-            self.available_models = self.get_models(self.api_key)
-        except Exception:
-            self.available_models = []
-
-        if self.available_models and self.model not in self.available_models:
-            raise ValueError(f"Invalid model: {self.model}. Choose from: {self.available_models}")
+        # Start background model fetch (non-blocking)
+        self._model_fetcher.fetch_async(
+            provider_name="OpenAI",
+            fetch_func=lambda: self.get_models(api_key),
+            fallback_models=self.AVAILABLE_MODELS,
+            timeout=10,
+        )
 
         self.__available_optimizers = (
             method

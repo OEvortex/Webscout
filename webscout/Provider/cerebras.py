@@ -21,6 +21,7 @@ from webscout.AIutel import (  # Import sanitize_stream
     sanitize_stream,
 )
 from webscout.litagent import LitAgent as UserAgent
+from webscout.model_fetcher import BackgroundModelFetcher
 
 
 class Cerebras(Provider):
@@ -39,6 +40,8 @@ class Cerebras(Provider):
         "llama-4-scout-17b-16e-instruct",
         "llama3.1-8b"
     ]
+    # Background model fetcher
+    _model_fetcher = BackgroundModelFetcher()
 
     @classmethod
     def get_models(cls, api_key: Optional[str] = None):
@@ -105,6 +108,15 @@ class Cerebras(Provider):
         self.temperature = temperature
         self.top_p = top_p
         self.last_response = {}
+
+        # Start background model fetch (non-blocking)
+        if api_key:
+            self._model_fetcher.fetch_async(
+                provider_name="Cerebras",
+                fetch_func=lambda: self.get_models(api_key),
+                fallback_models=self.AVAILABLE_MODELS,
+                timeout=10,
+            )
 
         self.session = Session() # Initialize curl_cffi session
 

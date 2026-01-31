@@ -1,3 +1,5 @@
+# The `AwesomePrompts` class is a prompts manager in Python that fetches, caches, updates, and
+# provides prompts with optimization features like LRU caching and concurrency.
 # -*- coding: utf-8 -*-
 
 
@@ -8,14 +10,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Dict, Optional, Union
 
-try:
-    from curl_cffi.requests import Session
-
-    CURL_AVAILABLE = True
-except ImportError:
-    CURL_AVAILABLE = False
-
-import requests
+from curl_cffi.requests import Session
 from rich.console import Console
 from rich.table import Table
 
@@ -58,13 +53,10 @@ class AwesomePrompts:
 
         self._max_workers = max_workers
         self.timeout = timeout
-        if CURL_AVAILABLE:
-            try:
-                self.session = Session(timeout=timeout, impersonate=impersonate)
-            except Exception:
-                self.session = requests.Session()
-        else:
-            self.session = requests.Session()
+        try:
+            self.session = Session(timeout=timeout, impersonate=impersonate)
+        except Exception:
+            self.session = Session(timeout=timeout)
         self.local_path.parent.mkdir(parents=True, exist_ok=True)
         self._cache: Dict[Union[str, int], str] = {}
         self._load_cache()
@@ -139,10 +131,7 @@ class AwesomePrompts:
 
             console.print("[cyan]Updating prompts...[/cyan]")
 
-            if CURL_AVAILABLE and hasattr(self.session, "impersonate"):
-                response = self.session.get(self.repo_url)
-            else:
-                response = self.session.get(self.repo_url, timeout=self.timeout)
+            response = self.session.get(self.repo_url)
             response.raise_for_status()
 
             new_prompts = response.json()
@@ -176,14 +165,13 @@ class AwesomePrompts:
             )
             return True
 
-        except requests.exceptions.RequestException as e:
+        except Exception as e:
             error_msg = str(e)
             if hasattr(e, "response") and e.response is not None:
-                error_msg = f"HTTP {e.response.status_code}: {error_msg}"
+                status_code = getattr(e.response, "status_code", None)
+                if status_code:
+                    error_msg = f"HTTP {status_code}: {error_msg}"
             console.print(f"[red]Update failed: {error_msg}[/red]")
-            return False
-        except Exception as e:
-            console.print(f"[red]Update failed: {str(e)}[/red]")
             return False
 
     def get_act(

@@ -16,7 +16,7 @@ class QwenLM(Provider):
 
     required_auth = True
     AVAILABLE_MODELS = [
-        "qwen3-max-2025-10-30",
+        "qwen3-max-2026-01-23",
         "qwen3-vl-plus",
         "qwen3-coder-plus",
         "qwen3-vl-32b",
@@ -63,7 +63,7 @@ class QwenLM(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: Optional[str] = None,
-        model: str = "qwen-plus-2025-09-11",
+        model: str = "qwen3-max-2026-01-23",
         system_prompt: str = "You are a helpful AI assistant.",
     ):
         """Initializes the QwenLM API client."""

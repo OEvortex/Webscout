@@ -26,7 +26,6 @@ from webscout.Provider.HuggingFace import HuggingFace
 from webscout.Provider.IBM import IBM
 from webscout.Provider.Jadve import JadveOpenAI
 from webscout.Provider.julius import Julius
-from webscout.Provider.K2Think import K2Think
 from webscout.Provider.Koboldai import KOBOLDAI
 from webscout.Provider.learnfastai import LearnFast
 from webscout.Provider.llama3mitril import Llama3Mitril
@@ -35,7 +34,6 @@ from webscout.Provider.llmchatco import LLMChatCo
 from webscout.Provider.meta import Meta
 from webscout.Provider.Netwrck import Netwrck
 from webscout.Provider.Nvidia import Nvidia
-from webscout.Provider.oivscode import oivscode
 from webscout.Provider.OpenRouter import OpenRouter
 from webscout.Provider.PI import PiAI
 from webscout.Provider.QwenLM import QwenLM
@@ -49,6 +47,7 @@ from webscout.Provider.turboseek import TurboSeek
 from webscout.Provider.TwoAI import TwoAI
 from webscout.Provider.typefully import TypefullyAI
 from webscout.Provider.TypliAI import TypliAI
+from webscout.Provider.Upstage import Upstage
 from webscout.Provider.WiseCat import WiseCat
 from webscout.Provider.WrDoChat import WrDoChat
 from webscout.Provider.x0gpt import X0GPT
@@ -85,7 +84,6 @@ __all__ = [
     "IBM",
     "JadveOpenAI",
     "Julius",
-    "K2Think",
     "KOBOLDAI",
     "LearnFast",
     "Llama3Mitril",
@@ -95,7 +93,6 @@ __all__ = [
     "Netwrck",
     "Nvidia",
     "OpenRouter",
-    "oivscode",
     "PiAI",
     "QwenLM",
     "Sambanova",
@@ -107,6 +104,7 @@ __all__ = [
     "TurboSeek",
     "TwoAI",
     "TypefullyAI",
+    "Upstage",
     "WiseCat",
     "WrDoChat",
     "X0GPT",

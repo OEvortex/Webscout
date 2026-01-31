@@ -8,6 +8,7 @@ from webscout import exceptions
 from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 from webscout.litagent import LitAgent
+from webscout.model_fetcher import BackgroundModelFetcher
 
 
 class HuggingFace(Provider):
@@ -18,6 +19,8 @@ class HuggingFace(Provider):
 
     required_auth = True
     AVAILABLE_MODELS = []
+    # Background model fetcher
+    _model_fetcher = BackgroundModelFetcher()
 
     @classmethod
     def get_models(cls, api_key: Optional[str] = None) -> list[str]:
@@ -68,8 +71,13 @@ class HuggingFace(Provider):
         browser: str = "chrome",
     ):
         """Initializes the Hugging Face API client."""
-        # Dynamic model fetching
-        self.update_available_models(api_key)
+        # Start background model fetch (non-blocking)
+        self._model_fetcher.fetch_async(
+            provider_name="HuggingFace",
+            fetch_func=lambda: self.get_models(api_key),
+            fallback_models=self.AVAILABLE_MODELS,
+            timeout=10,
+        )
 
         if model not in self.AVAILABLE_MODELS:
             # We allow it but warn if it's not in the detected list

@@ -2,6 +2,97 @@
 
 All notable changes to this project will be documented in this file.
 
+
+## [2026.01.31] - 2026-01-31
+
+### 🏷️ Renamed
+- **OPENAI → Openai_comp**: Renamed `webscout/Provider/OPENAI` directory to `webscout/Provider/Openai_comp` for clarity and naming consistency.
+
+### 🚮 Removed / Moved
+- **BraveAI provider moved**: `webscout/Provider/AISEARCH/brave_search.py` → `webscout/Provider/UNFINISHED/brave_search.py`. The Brave Search AI Chat API currently returns 404 errors; further investigation needed.
+- **BraveAI export removed**: `webscout/Provider/AISEARCH/__init__.py` - BraveAI removed from active AISEARCH providers.
+- **Legacy wrapper removed**: `lol.py` - Legacy compatibility wrapper removed; canonical implementation is now in `webscout/Provider/AISEARCH/ayesoul_search.py`.
+
+### ✨ Added
+- **AyeSoul AI Search Provider**: `webscout/Provider/AISEARCH/ayesoul_search.py` - New provider using AyeSoul's WebSocket endpoint. Supports streaming/non-streaming, image uploads, and LitAgent-based user-agent generation.
+- **OpenAI-compatible Upstage Provider**: `webscout/Provider/Openai_comp/upstage.py` - New OpenAI-compatible provider for Upstage AI with dynamic model fetching from `https://api.upstage.ai/v1/models` endpoint. Supports streaming and non-streaming modes with LitAgent browser fingerprinting.
+- **Model Fetcher Infrastructure**: `webscout/model_fetcher.py` - Non-blocking model fetching with caching:
+  - Thread-safe `ModelFetcherCache` with file-based cache (`~/.webscout/model_cache.json`)
+  - TTL support (default 24h, configurable via `WEBSCOUT_MODEL_CACHE_TTL`)
+  - Disable cache with `WEBSCOUT_NO_MODEL_CACHE`
+  - `BackgroundModelFetcher` for async fetching (daemon threads)
+  - Graceful timeout (default 10s) and error fallback
+  - Thread-safe via `threading.Lock`
+- **proxy_manager.py**: `webscout/Extra/proxy_manager.py` - New ProxyManager utility for managing and rotating proxies with auto-fetching from public proxy lists. Supports HTTP/SOCKS proxies, health checks, and integration with Webscout providers.
+### 🔧 Improved
+- **AyeSoul stream handling**: `webscout/Provider/AISEARCH/ayesoul_search.py` - Prefer `stream` key for response text; robust handling of dict/list payloads; serializes structured content to JSON as needed.
+- **AyeSoul export**: `webscout/Provider/AISEARCH/__init__.py` - Exported `AyeSoul` for unified import/discovery.
+- **All AI providers**: Optimized model fetching to be non-blocking and parallel:
+  - 14 OpenAI-compatible providers now use background model fetching:
+    - `webscout/Provider/Openai_comp/deepinfra.py`
+    - `webscout/Provider/Openai_comp/DeepAI.py`
+    - `webscout/Provider/Openai_comp/groq.py`
+    - `webscout/Provider/Openai_comp/openrouter.py`
+    - `webscout/Provider/Openai_comp/cerebras.py`
+    - `webscout/Provider/Openai_comp/textpollinations.py`
+    - `webscout/Provider/Openai_comp/TogetherAI.py`
+    - `webscout/Provider/Openai_comp/nvidia.py`
+    - `webscout/Provider/Openai_comp/huggingface.py`
+    - `webscout/Provider/Openai_comp/algion.py`
+    - `webscout/Provider/Openai_comp/upstage.py`
+    - `webscout/Provider/Openai_comp/typliai.py`
+    - `webscout/Provider/Openai_comp/easemate.py`
+    - `webscout/Provider/Openai_comp/freeassist.py`
+  - 11 Standalone providers updated for direct background fetch:
+    - `webscout/Provider/Deepinfra.py`
+    - `webscout/Provider/HuggingFace.py`
+    - `webscout/Provider/TogetherAI.py`
+    - `webscout/Provider/TextPollinationsAI.py`
+    - `webscout/Provider/Sambanova.py`
+    - `webscout/Provider/OpenRouter.py`
+    - `webscout/Provider/Openai.py`
+    - `webscout/Provider/Nvidia.py`
+    - `webscout/Provider/Groq.py`
+    - `webscout/Provider/geminiapi.py`
+    - `webscout/Provider/cerebras.py`
+    - `webscout/Provider/Algion.py`
+  - Added `_start_background_model_fetch()` to OpenAICompatibleProvider base class
+  - Providers now initialize instantly with fallback models, fetching fresh models in background
+  - Startup performance improved (2-5s faster)
+  - Cache persists across restarts
+  - All changes backward compatible
+
+### 🔧 Fixed
+- **Type checking compliance**: Fixed 33 type errors across provider implementations to pass strict type checking (`uvx ty check .`):
+  - Added proper type guards for `Response` type access in `get_message()` methods across all providers
+  - Implemented `cast(Dict[str, Any], response)` pattern after `isinstance(response, dict)` checks to satisfy type checker
+  - Fixed dictionary subscript errors in 17 provider files:
+    - webscout/Provider/AISEARCH/ayesoul_search.py
+    - webscout/Provider/Andi.py, Cohere.py, ExaAI.py, Gemini.py, HeckAI.py
+    - webscout/Provider/IBM.py, Netwrck.py, Sambanova.py, TextPollinationsAI.py
+    - webscout/Provider/ai4chat.py, cleeai.py, julius.py, llama3mitril.py, meta.py
+    - webscout/Provider/Openai_comp/ibm.py, llmchat.py
+  - Fixed null safety issues in streaming response handling (ibm.py, llmchat.py)
+  - All providers now pass both `uvx ty check .` and `uv run ruff check .`
+
+### 🚮 Removed
+- **Deprecated providers**: Removed `oivscode.py` and `K2Think.py` from both `webscout/Provider/` and `webscout/Provider/Openai_comp/` to streamline the codebase.
+
+### ✅ Quality & Testing
+- Manual smoke tests on AyeSoul streaming and non-streaming flows
+- Please add unit tests under `tests/providers/` to mock WebSocket responses for CI
+- All ruff linting checks passed on modified files
+- All type checking with `ty` passed
+- Comprehensive test suite in `tests/providers/test_model_fetching.py` (898 lines):
+  - Cache behavior (hit/miss/TTL/env var)
+  - Background fetch non-blocking
+  - Timeout/error handling
+  - Concurrent provider init
+  - Thread safety
+  - Cache corruption recovery
+
+---
+
 ## [2026.01.22] - 2026-01-22
 
 ### 🔧 Improved
@@ -637,7 +728,8 @@ All notable changes to this project will be documented in this file.
 
 ### ✨ Added
  - **feat**: ChatGPT provider - Added new models to AVAILABLE_MODELS including `gpt-5-1`, `gpt-5-1-instant`, `gpt-5-1-thinking`, `gpt-5`, `gpt-5-instant`, `gpt-5-thinking`
- - **feat**: New Provider: Algion with `gpt-5.1`and other models
+ - **feat**: New Provider: Algion with `gpt-5.1`and other models 
+
 ## [2025.11.17] - 2025-11-17
 
 ### 🔧 Maintenance

@@ -14,6 +14,7 @@ from webscout.Provider.TTS.freetts import FreeTTS
 from webscout.Provider.TTS.murfai import MurfAITTS
 from webscout.Provider.TTS.openai_fm import OpenAIFMTTS
 from webscout.Provider.TTS.parler import ParlerTTS
+from webscout.Provider.TTS.pockettts import PocketTTS
 from webscout.Provider.TTS.qwen import QwenTTS
 from webscout.Provider.TTS.sherpa import SherpaTTS
 from webscout.Provider.TTS.speechma import SpeechMaTTS
@@ -36,6 +37,7 @@ __all__ = [
     "MurfAITTS",
     "OpenAIFMTTS",
     "ParlerTTS",
+    "PocketTTS",
     "QwenTTS",
     "SherpaTTS",
     "SpeechMaTTS",

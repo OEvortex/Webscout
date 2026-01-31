@@ -13,27 +13,27 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, BinaryIO, Dict, Generator, List, Optional, Union, cast
 
-# Import OpenAI response types from the main OPENAI module
+# Import OpenAI response types from the main Openai_comp module
 try:
-    from webscout.Provider.OPENAI.utils import (
+    from webscout.Provider.Openai_comp.utils import (
         ChatCompletion as _ChatCompletion,
     )
-    from webscout.Provider.OPENAI.utils import (
+    from webscout.Provider.Openai_comp.utils import (
         ChatCompletionChunk as _ChatCompletionChunk,
     )
-    from webscout.Provider.OPENAI.utils import (
+    from webscout.Provider.Openai_comp.utils import (
         ChatCompletionMessage as _Message,
     )
-    from webscout.Provider.OPENAI.utils import (
+    from webscout.Provider.Openai_comp.utils import (
         Choice as _Choice,
     )
-    from webscout.Provider.OPENAI.utils import (
+    from webscout.Provider.Openai_comp.utils import (
         ChoiceDelta as _ChoiceDelta,
     )
-    from webscout.Provider.OPENAI.utils import (
+    from webscout.Provider.Openai_comp.utils import (
         CompletionUsage as _Usage,
     )
-    from webscout.Provider.OPENAI.utils import (
+    from webscout.Provider.Openai_comp.utils import (
         count_tokens as _count_tokens,
     )
 

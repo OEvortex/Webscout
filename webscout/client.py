@@ -19,13 +19,13 @@ import pkgutil
 import random
 from typing import Any, Dict, Generator, List, Optional, Set, Tuple, Type, Union, cast
 
-from webscout.Provider.OPENAI.base import (
+from webscout.Provider.Openai_comp.base import (
     BaseChat,
     BaseCompletions,
     OpenAICompatibleProvider,
     Tool,
 )
-from webscout.Provider.OPENAI.utils import (
+from webscout.Provider.Openai_comp.utils import (
     ChatCompletion,
     ChatCompletionChunk,
 )
@@ -35,9 +35,9 @@ from webscout.Provider.TTI.utils import ImageResponse
 
 def load_openai_providers() -> Tuple[Dict[str, Type[OpenAICompatibleProvider]], Set[str]]:
     """
-    Dynamically loads all OpenAI-compatible provider classes from the OPENAI module.
+    Dynamically loads all OpenAI-compatible provider classes from the Openai_comp module.
 
-    Scans the webscout.Provider.OPENAI package and imports all subclasses of
+    Scans the webscout.Provider.Openai_comp package and imports all subclasses of
     OpenAICompatibleProvider. Excludes base classes, utility modules, and private classes.
 
     Returns:
@@ -59,12 +59,12 @@ def load_openai_providers() -> Tuple[Dict[str, Type[OpenAICompatibleProvider]], 
     auth_required_providers = set()
 
     try:
-        provider_package = importlib.import_module("webscout.Provider.OPENAI")
+        provider_package = importlib.import_module("webscout.Provider.Openai_comp")
         for _, module_name, _ in pkgutil.iter_modules(provider_package.__path__):
             if module_name.startswith(("base", "utils", "pydantic", "__")):
                 continue
             try:
-                module = importlib.import_module(f"webscout.Provider.OPENAI.{module_name}")
+                module = importlib.import_module(f"webscout.Provider.Openai_comp.{module_name}")
                 for attr_name in dir(module):
                     attr = getattr(module, attr_name)
                     if (
@@ -162,7 +162,7 @@ def _get_models_safely(provider_cls: type, client: Optional["Client"] = None) ->
     Examples:
         >>> from webscout.client import _get_models_safely, Client
         >>> client = Client()
-        >>> from webscout.Provider.OPENAI.some_provider import SomeProvider
+        >>> from webscout.Provider.Openai_comp.some_provider import SomeProvider
         >>> models = _get_models_safely(SomeProvider, client)
         >>> print(models)
         ['gpt-4', 'gpt-3.5-turbo']
@@ -283,7 +283,7 @@ class ClientCompletions(BaseCompletions):
                          client configuration.
 
         Examples:
-            >>> from webscout.Provider.OPENAI.gpt4free import GPT4Free
+            >>> from webscout.Provider.Openai_comp.gpt4free import GPT4Free
             >>> completions = client.chat.completions
             >>> instance = completions._get_provider_instance(GPT4Free)
         """
@@ -1287,7 +1287,7 @@ class Client:
             ... )
 
             >>> # With specific default providers
-            >>> from webscout.Provider.OPENAI.groq import Groq
+            >>> from webscout.Provider.Openai_comp.groq import Groq
             >>> from webscout.Provider.TTI.stable import StableDiffusion
             >>> client = Client(
             ...     provider=Groq,

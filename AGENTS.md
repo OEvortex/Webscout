@@ -8,6 +8,9 @@
       If the subagent tool is available, the main Copilot agent acts strictly as an orchestrator.
       All research, planning, and heavy reasoning MUST be delegated to specialized subagents.
       Note: There may be other subagents available beyond those listed below.
+      Always call multiple subagents in parallel.
+      Firstly break down task into subtasks.
+      Then, for each subtask, call the appropriate subagent or custom agent.
     </Overview>
 
     <AvailableSubagents>
@@ -29,26 +32,6 @@
           <Item>Plan multi-file refactors</Item>
         </MustNot>
       </Subagent>
-
-      <Subagent>
-        <Name>Docstring</Name>
-        <Role>Professional Docstring Generator Agent</Role>
-        <Responsibilities>
-          <Item>Read existing Python code</Item>
-          <Item>Generate accurate, professional docstrings</Item>
-          <Item>Insert docstrings without changing logic</Item>
-        </Responsibilities>
-        <WhenToCall>
-          <Condition>User requests documentation or docstring generation</Condition>
-          <Condition>Code lacks or has poor-quality docstrings</Condition>
-          <Condition>Preparing code for release or public use</Condition>
-        </WhenToCall>
-        <MustNot>
-          <Item>Change executable behavior</Item>
-          <Item>Invent undocumented functionality</Item>
-        </MustNot>
-      </Subagent>
-
       <Subagent>
         <Name>Plan</Name>
         <Role>Planning & Task Decomposition Agent</Role>
@@ -144,7 +127,7 @@
         <Description>AI provider implementations</Description>
         <Variants>
           <Variant>
-            <Path>OPENAI/</Path>
+            <Path>Openai_comp/</Path>
             <Description>OpenAI-compatible wrappers</Description>
           </Variant>
           <Variant>
@@ -271,6 +254,15 @@ class MyProvider(OpenAICompatibleProvider):
     <Rule>Add tests for new behavior</Rule>
     <Rule>Validate provider discovery and model registration</Rule>
     <Rule>Use pytest under tests/</Rule>
+    <Structure>
+      <Rule>Place unit tests in tests/providers/ for provider implementations</Rule>
+      <Rule>Use unittest.TestCase for unit tests with setUp() methods</Rule>
+      <Rule>Mock external dependencies using FakeResp or similar patterns</Rule>
+      <Rule>Test parsing, validation, and error handling</Rule>
+      <Rule>Name test files as test_&lt;provider_name&gt;.py</Rule>
+      <Rule>Interactive/stress tests use pytestmark = pytest.mark.skip() to avoid running in CI</Rule>
+      <Rule>All test files must pass: uvx ruff check . and uvx ty check .</Rule>
+    </Structure>
   </TestingGuidelines>
 
   <DocsToUpdate>

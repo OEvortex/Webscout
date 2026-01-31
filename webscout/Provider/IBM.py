@@ -308,7 +308,8 @@ class IBM(Provider):
     def get_message(self, response: Response) -> str:
         if not isinstance(response, dict):
             return str(response)
-        return response["text"]
+        resp_dict = cast(Dict[str, Any], response)
+        return cast(str, resp_dict["text"])
 
 if __name__ == "__main__":
     # Ensure curl_cffi is installed

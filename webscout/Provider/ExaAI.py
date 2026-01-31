@@ -260,7 +260,8 @@ class ExaAI(Provider):
         """
         if not isinstance(response, dict):
             return str(response)
-        formatted_text = response["text"].replace('\\n', '\n').replace('\\n\\n', '\n\n')
+        resp_dict = cast(Dict[str, Any], response)
+        formatted_text = cast(str, resp_dict["text"]).replace('\\n', '\n').replace('\\n\\n', '\n\n')
         return formatted_text
 
 if __name__ == "__main__":

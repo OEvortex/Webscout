@@ -1,0 +1,159 @@
+site_name: Webscout Documentation
+site_description: Your All-in-One Python Toolkit for Web Search, AI Interaction, Digital Utilities, and More
+site_author: OEvortex
+site_url: https://oevortex.github.io/Webscout/
+repo_name: OEvortex/Webscout
+repo_url: https://github.com/OEvortex/Webscout
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  logo: https://github.com/OEvortex.png
+  favicon: https://github.com/favicon.ico
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue
+      accent: light blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue
+      accent: light blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.instant.loading
+    - navigation.tracking
+    - navigation.top
+    - navigation.footer
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.path
+    - toc.follow
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - content.action.edit
+    - content.action.view
+    - content.tabs.link
+
+markdown_extensions:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: format
+  - pymdownx.highlight:
+      use_pygments: true
+      auto_title: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: pymdownx.emoji.twemoji
+      emoji_generator: pymdownx.emoji.to_svg
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.details
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+      title: Table of Contents
+
+nav:
+  - Home: index.md
+  
+  - Getting Started:
+      - Quick Start: getting-started.md
+      - Installation: getting-started.md#installation
+      - Your First Chat: getting-started.md#your-first-chat
+      - Web Search: getting-started.md#web-search
+      - Image Generation: getting-started.md#image-generation
+      - IDE Setup: getting-started.md#ide-setup
+      - Common Issues: getting-started.md#common-issues--fixes
+
+  - Core Documentation:
+      - API Reference: api-reference.md
+      - Client API: client.md
+      - Architecture: architecture.md
+      - Models: models.md
+
+  - Examples:
+      - Overview: examples/README.md
+      - Basic Chat: examples/basic-chat.md
+      - Streaming Responses: examples/streaming-responses.md
+      - Search Queries: examples/search-queries.md
+
+  - Development:
+      - Provider Development: provider-development.md
+      - Contributing Guide: contributing.md
+      - CLI Reference: cli.md
+      - CLI Guide: cli.md
+      - Decorators: decorators.md
+
+  - Advanced Topics:
+      - Search Engines: search.md
+      - OpenAI API Server: openai-api-server.md
+      - Deployment: deployment.md
+      - Docker Guide: DOCKER.md
+      - Sanitization: sanitize.md
+      - Scout (Web Parser): scout.md
+      - Inferno: inferno.md
+
+  - Tools & Extensions:
+      - LitAgent: litagent.md
+      - LitPrinter: litprinter.md
+      - ZeroArt: zeroart.md
+      - GGUF Conversion: gguf.md
+      - Weather Utilities: weather.md
+      - Git API: gitapi.md
+      - SwiftCLI: swiftcli.md
+
+  - Support:
+      - Troubleshooting: troubleshooting.md
+      - FAQ: troubleshooting.md#faq
+      - Common Errors: troubleshooting.md#common-issues-and-solutions
+
+  - References:
+      - Awesome Prompts: awesome-prompts.md
+      - Provider Matrix: ../Provider.md
+      - Main README: ../README.md
+      - GitHub Repository: https://github.com/OEvortex/Webscout
+
+plugins:
+  - search
+  - minify:
+      minify_html: true
+      minify_css: true
+      minify_js: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/OEvortex/Webscout
+      name: GitHub
+    - icon: fontawesome/brands/telegram
+      link: https://t.me/OEvortexAI
+      name: Telegram
+    - icon: fontawesome/brands/youtube
+      link: https://youtube.com/@OEvortex
+      name: YouTube
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/webscout
+      name: PyPI
+  version:
+    provider: mike
+
+copyright: Copyright &copy; 2024-2026 Webscout Contributors

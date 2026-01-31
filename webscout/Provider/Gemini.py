@@ -166,7 +166,8 @@ class GEMINI(Provider):
         """
         if not isinstance(response, dict):
             return str(response)
-        return response["content"]
+        resp_dict = cast(Dict[str, Any], response)
+        return cast(str, resp_dict["content"])
 
     def reset(self):
         """Reset the current conversation."""

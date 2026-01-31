@@ -4,6 +4,11 @@
 
 Welcome to the central entry point for everything you need to know about Webscout. This hub is organized around the actual modules that live inside the repository so you can quickly jump from high-level concepts to concrete implementation details.
 
+## 📚 **[Complete Documentation Index →](DOCUMENTATION_INDEX.md)**
+*Navigate all docs, find learning paths, search by use case, and get started quickly!*
+
+---
+
 ## 🔗 Quick Navigation
 
 | Topic | Why it matters | Primary Reference |

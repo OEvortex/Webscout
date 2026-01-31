@@ -8,6 +8,7 @@ from webscout import exceptions
 from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 from webscout.litagent import LitAgent as Lit
+from webscout.model_fetcher import BackgroundModelFetcher
 
 
 class Sambanova(Provider):
@@ -25,17 +26,20 @@ class Sambanova(Provider):
         "Qwen2.5-72B-Instruct",
         "Qwen2.5-Coder-32B-Instruct"
     ]
+    # Background model fetcher
+    _model_fetcher = BackgroundModelFetcher()
 
-    def update_available_models(self):
-        """Update the available models list from Sambanova API."""
-        if not self.api_key:
-            return
+    @classmethod
+    def get_models(cls, api_key: Optional[str] = None):
+        """Fetch available models from Sambanova API."""
+        if not api_key:
+            return cls.AVAILABLE_MODELS
 
         try:
             temp_session = Session()
             headers = {
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.api_key}",
+                "Authorization": f"Bearer {api_key}",
             }
 
             response = temp_session.get(
@@ -49,10 +53,11 @@ class Sambanova(Provider):
                 if "data" in data and isinstance(data["data"], list):
                     new_models = [model['id'] for model in data['data'] if 'id' in model]
                     if new_models:
-                        self.AVAILABLE_MODELS = new_models
+                        return new_models
 
         except Exception:
             pass
+        return cls.AVAILABLE_MODELS
 
     def __init__(
         self,
@@ -77,9 +82,13 @@ class Sambanova(Provider):
         self.system_prompt = system_prompt
         self.timeout = timeout
 
-        # Update models list dynamically if API key is provided
-        if api_key:
-            self.update_available_models()
+        # Start background model fetch (non-blocking)
+        self._model_fetcher.fetch_async(
+            provider_name="Sambanova",
+            fetch_func=lambda: self.get_models(api_key),
+            fallback_models=self.AVAILABLE_MODELS,
+            timeout=10,
+        )
 
         # Initialize curl_cffi Session
         self.session = Session()
@@ -299,10 +308,11 @@ class Sambanova(Provider):
         if isinstance(response, str):
             return response
         elif isinstance(response, dict):
-            if "text" in response:
-                return response["text"]
-            elif "tool_calls" in response:
-                return json.dumps(response["tool_calls"])
+            resp_dict = cast(Dict[str, Any], response)
+            if "text" in resp_dict:
+                return cast(str, resp_dict["text"])
+            elif "tool_calls" in resp_dict:
+                return json.dumps(resp_dict["tool_calls"])
         return str(response)
 
 if __name__ == "__main__":

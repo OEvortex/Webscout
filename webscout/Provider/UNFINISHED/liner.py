@@ -7,13 +7,13 @@ from typing import Any, Dict, Generator, List, Optional, Union
 from curl_cffi.requests import Session
 
 # Import base classes and utility structures
-from webscout.Provider.OPENAI.base import (
+from webscout.Provider.Openai_comp.base import (
     BaseChat,
     BaseCompletions,
     OpenAICompatibleProvider,
     SimpleModelList,
 )
-from webscout.Provider.OPENAI.utils import (
+from webscout.Provider.Openai_comp.utils import (
     ChatCompletion,
     ChatCompletionChunk,
     ChatCompletionMessage,

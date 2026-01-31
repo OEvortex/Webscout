@@ -8,6 +8,7 @@ from webscout import exceptions
 from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 from webscout.litagent import LitAgent
+from webscout.model_fetcher import BackgroundModelFetcher
 
 
 class DeepInfra(Provider):
@@ -18,85 +19,9 @@ class DeepInfra(Provider):
     required_auth = False
     # Default models list (will be updated dynamically)
     AVAILABLE_MODELS = [
-        "moonshotai/Kimi-K2-Instruct",
-        "moonshotai/Kimi-K2-Thinking",
-        "MiniMaxAI/MiniMax-M2",
-        "Qwen/Qwen3-Next-80B-A3B-Instruct",
-        "Qwen/Qwen3-Next-80B-A3B-Thinking",
-        "moonshotai/Kimi-K2-Instruct-0905",
-        "Qwen/Qwen3-Coder-30B-A3B-Instruct",
-        "deepseek-ai/DeepSeek-R1-0528-Turbo",
-        "Qwen/Qwen3-235B-A22B-Thinking-2507",
-        "deepseek-ai/DeepSeek-V3.1-Terminus",
-        "deepseek-ai/DeepSeek-V3.2-Exp",
-        "Qwen/Qwen3-Coder-480B-A35B-Instruct",
-        "Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo",
-        "Qwen/Qwen3-235B-A22B-Instruct-2507",
-        "Qwen/Qwen3-235B-A22B",
-        "Qwen/Qwen3-30B-A3B",
-        "Qwen/Qwen3-32B",
-        "Qwen/Qwen3-14B",
-        "deepseek-ai/DeepSeek-V3-0324-Turbo",
-        "deepseek-ai/DeepSeek-Prover-V2-671B",
-        "meta-llama/Llama-4-Maverick-17B-128E-Instruct-Turbo",
-        "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
-        "meta-llama/Llama-4-Scout-17B-16E-Instruct",
-        "deepseek-ai/DeepSeek-R1-0528",
-        "deepseek-ai/DeepSeek-V3-0324",
-        "mistralai/Mistral-Small-3.1-24B-Instruct-2503",
-        "microsoft/phi-4-reasoning-plus",
-        "Qwen/QwQ-32B",
-        "google/gemma-3-27b-it",
-        "google/gemma-3-12b-it",
-        "google/gemma-3-4b-it",
-        "microsoft/Phi-4-multimodal-instruct",
-        "deepseek-ai/DeepSeek-R1-Distill-Llama-70B",
-        "deepseek-ai/DeepSeek-V3",
-        "deepseek-ai/DeepSeek-V3.1",
-        "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-        "meta-llama/Llama-3.3-70B-Instruct",
-        "microsoft/phi-4",
-        "Gryphe/MythoMax-L2-13b",
-        "NousResearch/Hermes-3-Llama-3.1-405B",
-        "NousResearch/Hermes-3-Llama-3.1-70B",
-        "NovaSky-AI/Sky-T1-32B-Preview",
-        "Qwen/Qwen2.5-72B-Instruct",
-        "Qwen/Qwen2.5-7B-Instruct",
-        "Qwen/Qwen2.5-Coder-32B-Instruct",
-        "Sao10K/L3-8B-Lunaris-v1-Turbo",
-        "Sao10K/L3.1-70B-Euryale-v2.2",
-        "Sao10K/L3.3-70B-Euryale-v2.3",
-        "deepseek-ai/DeepSeek-R1",
-        "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
-        "deepseek-ai/DeepSeek-R1-Turbo",
-        "google/gemini-2.0-flash-001",
-        "meta-llama/Llama-3.2-11B-Vision-Instruct",
-        "meta-llama/Llama-3.2-1B-Instruct",
-        "meta-llama/Llama-3.2-3B-Instruct",
-        "meta-llama/Llama-3.2-90B-Vision-Instruct",
-        "meta-llama/Meta-Llama-3-70B-Instruct",
-        "meta-llama/Meta-Llama-3-8B-Instruct",
-        "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
-        "meta-llama/Meta-Llama-3.1-8B-Instruct",
-        "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
-        "microsoft/WizardLM-2-8x22B",
-        "mistralai/Devstral-Small-2505",
-        "mistralai/Devstral-Small-2507",
-        "mistralai/Mistral-7B-Instruct-v0.3",
-        "mistralai/Mistral-Nemo-Instruct-2407",
-        "mistralai/Mistral-Small-24B-Instruct-2501",
-        "mistralai/Mistral-Small-3.2-24B-Instruct-2506",
-        "mistralai/Mixtral-8x7B-Instruct-v0.1",
-        "nvidia/Llama-3.1-Nemotron-70B-Instruct",
-        "nvidia/Nemotron-3-Nano-30B-A3B",
-        "zai-org/GLM-4.5-Air",
-        "zai-org/GLM-4.5",
-        "zai-org/GLM-4.5V",
-        "zai-org/GLM-4.6",
-        "openai/gpt-oss-120b",
-        "openai/gpt-oss-20b",
-        "allenai/olmOCR-7B-0725-FP8",
     ]
+    # Background model fetcher
+    _model_fetcher = BackgroundModelFetcher()
 
     @classmethod
     def get_models(cls, api_key: Optional[str] = None):
@@ -182,11 +107,13 @@ class DeepInfra(Provider):
         browser: str = "chrome",
     ):
         """Initializes the DeepInfra API client."""
-        # Update available models from API
-        self.update_available_models(api_key)
-
-        if model not in self.AVAILABLE_MODELS:
-            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+        # Start background model fetch (non-blocking)
+        self._model_fetcher.fetch_async(
+            provider_name='DeepInfra',
+            fetch_func=self.get_models,
+            fallback_models=self.AVAILABLE_MODELS,
+            timeout=10
+        )
 
         self.url = "https://api.deepinfra.com/v1/openai/chat/completions"
 
@@ -461,7 +388,9 @@ class DeepInfra(Provider):
     def get_message(self, response: Response) -> str:
         if not isinstance(response, dict):
             return str(response)
-        return response["text"]
+        # Type narrowing after isinstance check
+        text = response.get("text")  # type: ignore
+        return cast(str, text) if text else ""
 
 
 if __name__ == "__main__":
