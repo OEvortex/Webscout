@@ -41,7 +41,7 @@ class Gradient(Provider):
         intro: Optional[str] = None,
         filepath: Optional[str] = None,
         update_file: bool = True,
-        proxies: dict = {},
+        proxies: Optional[dict] = None,
         history_offset: int = 10250,
         act: Optional[str] = None,
         system_prompt: str = "You are a helpful assistant.",
@@ -66,8 +66,7 @@ class Gradient(Provider):
 
         self.session = requests.Session()
         if proxies:
-            if proxies:
-                self.session.proxies.update(proxies)
+            self.session.proxies.update(proxies)
 
         # Headers matching the working curl request
         self.headers = {
@@ -259,28 +258,6 @@ class Gradient(Provider):
 
 
 if __name__ == "__main__":
-    print("-" * 80)
-    print(f"{'Model':<50} {'Status':<10} {'Response'}")
-    print("-" * 80)
-
-    for model in Gradient.AVAILABLE_MODELS:
-        try:
-            test_ai = Gradient(model=model, timeout=120)
-            response = test_ai.chat("Say 'Hello' in one word", stream=True)
-            response_text = ""
-            if hasattr(response, "__iter__") and not isinstance(response, (str, bytes)):
-                for chunk in response:
-                    response_text += chunk
-            else:
-                response_text = str(response)
-
-            if response_text and len(response_text.strip()) > 0:
-                status = "✓"
-                clean_text = response_text.strip().encode('utf-8', errors='ignore').decode('utf-8')
-                display_text = clean_text[:50] + "..." if len(clean_text) > 50 else clean_text
-            else:
-                status = "✗"
-                display_text = "Empty or invalid response"
-            print(f"\r{model:<50} {status:<10} {display_text}")
-        except Exception as e:
-            print(f"\r{model:<50} {'✗':<10} {str(e)[:50]}")
+    gradient = Gradient(model="GPT OSS 120B", is_conversation=True)
+    response = gradient.chat("Hello, how are you?", stream=False, raw=True)
+    print(response)

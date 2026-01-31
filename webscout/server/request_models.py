@@ -1,9 +1,9 @@
 """
 Pydantic models for API requests and responses.
 """
-from pydantic import ConfigDict
-
 from typing import Dict, List, Literal, Optional, Union
+
+from pydantic import ConfigDict
 
 try:
     from webscout.Provider.Openai_comp.pydantic_imports import BaseModel, Field

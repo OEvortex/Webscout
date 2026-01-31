@@ -1,5 +1,5 @@
 import urllib.parse
-from typing import Any, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi.requests import RequestsError, Session
 
@@ -168,7 +168,8 @@ class AI4Chat(Provider):
             return response.replace('\\n', '\n').replace('\\n\\n', '\n\n')
         if not isinstance(response, dict):
             return str(response)
-        return response["text"].replace('\\n', '\n').replace('\\n\\n', '\n\n')
+        resp_dict = cast(Dict[str, Any], response)
+        return cast(str, resp_dict["text"]).replace('\\n', '\n').replace('\\n\\n', '\n\n')
 
 if __name__ == "__main__":
     from rich import print

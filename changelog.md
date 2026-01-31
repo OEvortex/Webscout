@@ -2,6 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
+
 ## [2026.01.31] - 2026-01-31
 
 ### 🏷️ Renamed
@@ -60,6 +61,19 @@ All notable changes to this project will be documented in this file.
   - Startup performance improved (2-5s faster)
   - Cache persists across restarts
   - All changes backward compatible
+
+### 🔧 Fixed
+- **Type checking compliance**: Fixed 33 type errors across provider implementations to pass strict type checking (`uvx ty check .`):
+  - Added proper type guards for `Response` type access in `get_message()` methods across all providers
+  - Implemented `cast(Dict[str, Any], response)` pattern after `isinstance(response, dict)` checks to satisfy type checker
+  - Fixed dictionary subscript errors in 17 provider files:
+    - webscout/Provider/AISEARCH/ayesoul_search.py
+    - webscout/Provider/Andi.py, Cohere.py, ExaAI.py, Gemini.py, HeckAI.py
+    - webscout/Provider/IBM.py, Netwrck.py, Sambanova.py, TextPollinationsAI.py
+    - webscout/Provider/ai4chat.py, cleeai.py, julius.py, llama3mitril.py, meta.py
+    - webscout/Provider/Openai_comp/ibm.py, llmchat.py
+  - Fixed null safety issues in streaming response handling (ibm.py, llmchat.py)
+  - All providers now pass both `uvx ty check .` and `uv run ruff check .`
 
 ### 🚮 Removed
 - **Deprecated providers**: Removed `oivscode.py` and `K2Think.py` from both `webscout/Provider/` and `webscout/Provider/Openai_comp/` to streamline the codebase.

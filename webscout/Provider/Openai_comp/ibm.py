@@ -229,7 +229,7 @@ class Completions(BaseCompletions):
             for chunk in self._create_stream(
                 request_id, created_time, model, payload, prompt_tokens
             ):
-                if chunk.choices and chunk.choices[0].delta.content:
+                if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
                     accumulated_content += chunk.choices[0].delta.content
                     completion_tokens += 1
 

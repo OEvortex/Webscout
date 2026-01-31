@@ -305,10 +305,11 @@ class TextPollinationsAI(Provider):
         """Retrieves message only from response"""
         if not isinstance(response, dict):
             return str(response)
-        if "text" in response:
-            return response["text"]
-        elif "tool_calls" in response:
-            return json.dumps(response["tool_calls"])
+        resp_dict = cast(Dict[str, Any], response)
+        if "text" in resp_dict:
+            return cast(str, resp_dict["text"])
+        elif "tool_calls" in resp_dict:
+            return json.dumps(resp_dict["tool_calls"])
         return ""
 
 

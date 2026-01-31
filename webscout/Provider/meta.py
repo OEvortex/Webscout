@@ -978,7 +978,8 @@ class Meta(Provider):
             str: Message extracted
         """
         assert isinstance(response, dict), "Response should be of dict data-type only"
-        return response["message"]
+        resp_dict = cast(Dict[str, Any], response)
+        return cast(str, resp_dict["message"])
 
 if __name__ == "__main__":
     try:

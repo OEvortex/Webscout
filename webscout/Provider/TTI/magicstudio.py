@@ -17,14 +17,14 @@ from webscout.Provider.TTI.utils import ImageData, ImageResponse
 Image: Any = None
 PILLOW_AVAILABLE = False
 try:
-    from PIL import Image # type: ignore
+    from PIL import Image  # type: ignore
 
     PILLOW_AVAILABLE = True
 except ImportError:
     pass
 
 if TYPE_CHECKING:
-    from PIL import Image as PILImage # type: ignore
+    from PIL import Image as PILImage  # type: ignore
 
 
 def _convert_image_format(img_bytes: bytes, image_format: str) -> bytes:

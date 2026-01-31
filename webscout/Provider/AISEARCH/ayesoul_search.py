@@ -5,7 +5,7 @@ import random
 import string
 import threading
 from datetime import datetime
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union, cast
 
 import aiohttp
 import requests
@@ -243,21 +243,22 @@ class AyeSoul(AISearch):
         back to 'answer' or 'finished' keys, then join stringifiable values.
         """
         if isinstance(response, dict):
+            resp_dict = cast(Dict[str, Any], response)
             # Prefer 'stream' key which contains the actual message
-            if "stream" in response:
-                val = response["stream"]
+            if "stream" in resp_dict:
+                val = cast(str, resp_dict["stream"])
                 if isinstance(val, (dict, list)):
                     try:
                         return json.dumps(val)
                     except Exception:
                         return str(val)
                 return str(val)
-            # if "answer" in response:
-            #     return str(response.get("answer"))
-            # if "finished" in response:
-            #     return str(response.get("finished"))
+            # if "answer" in resp_dict:
+            #     return str(resp_dict.get("answer"))
+            # if "finished" in resp_dict:
+            #     return str(resp_dict.get("finished"))
             out = []
-            for v in response.values():
+            for v in resp_dict.values():
                 try:
                     out.append(str(v))
                 except Exception:

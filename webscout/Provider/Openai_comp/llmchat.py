@@ -248,6 +248,7 @@ if __name__ == "__main__":
     )
     for chunk in response:
         if hasattr(chunk, "choices") and chunk.choices:
-            delta = chunk.choices[0].delta
-            if delta and delta.content:
+            choices = cast(Any, chunk.choices)
+            delta = choices[0].delta
+            if delta and hasattr(delta, "content") and delta.content:
                 print(delta.content, end="", flush=True)

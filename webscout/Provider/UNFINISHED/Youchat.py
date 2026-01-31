@@ -3,7 +3,7 @@ import json
 from typing import Any, Generator, Optional, Union, cast
 from uuid import uuid4
 
-import cloudscraper # type: ignore
+import cloudscraper  # type: ignore
 
 from webscout import exceptions
 from webscout.AIbase import Provider, Response

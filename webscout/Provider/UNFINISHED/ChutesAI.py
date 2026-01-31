@@ -6,7 +6,7 @@ import time
 import uuid
 from typing import Any, Dict, Generator, List, Optional, Union
 
-import cloudscraper # type: ignore
+import cloudscraper  # type: ignore
 from curl_cffi.requests import Session
 from rich import print
 

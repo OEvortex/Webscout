@@ -373,7 +373,8 @@ class HeckAI(Provider):
             return ""
 
         # Ensure text is a string
-        text = response["text"]
+        resp_dict = cast(Dict[str, Any], response)
+        text = cast(str, resp_dict["text"])
         if not isinstance(text, str):
             text = str(text)
 
