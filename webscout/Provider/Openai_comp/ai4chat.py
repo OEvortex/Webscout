@@ -5,6 +5,8 @@ from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi.requests import RequestsError
 
+from webscout.litagent import agent
+
 # Import base classes and utility structures
 from webscout.Provider.Openai_comp.base import (
     BaseChat,
@@ -319,7 +321,7 @@ class AI4Chat(OpenAICompatibleProvider):
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "cross-site",
-            "User-Agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36",
+            "User-Agent": agent.random(),
         }
 
         # Update session headers
@@ -334,15 +336,23 @@ class AI4Chat(OpenAICompatibleProvider):
 
 
 if __name__ == "__main__":
-    # Example usage
+    from rich import print
     client = AI4Chat()
+    print("NON-STREAMING RESPONSE:")
     response = client.chat.completions.create(
         model="default",
         messages=[
-            {"role": "system", "content": client.system_prompt},
             {"role": "user", "content": "Hello, how are you?"},
         ],
     )
-    if isinstance(response, ChatCompletion):
-        if response.choices[0].message and response.choices[0].message.content:
-            print(response.choices[0].message.content)
+    print(response)
+    print("\nSTREAMING RESPONSE:")
+    stream_response = client.chat.completions.create(
+        model="default",
+        messages=[
+            {"role": "user", "content": "Hello, how are you?"},
+        ],
+        stream=True,
+    )
+    for chunk in stream_response:
+        print(chunk)

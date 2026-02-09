@@ -31,16 +31,16 @@ class AkashGPT(Provider):
         >>> print(response)
         'The weather today depends on your location. I don't have access to real-time weather data.'
     """
-    required_auth = True
+    required_auth = False
     AVAILABLE_MODELS = [
         "Qwen/Qwen3-30B-A3B",
         "DeepSeek-V3.1",
         "Meta-Llama-3-3-70B-Instruct",
+        "DeepSeek-V3.2"
     ]
 
     def __init__(
         self,
-        api_key: str,
         is_conversation: bool = True,
         max_tokens: int = 600,
         timeout: int = 30,
@@ -59,7 +59,6 @@ class AkashGPT(Provider):
         Initializes the AkashGPT API with given parameters.
 
         Args:
-            api_key (str): Session token (used as API key here) for authentication. If None, auto-generates one.
             is_conversation (bool): Whether the provider is in conversation mode.
             max_tokens (int): Maximum number of tokens to sample.
             timeout (int): Timeout for API requests.
@@ -89,28 +88,19 @@ class AkashGPT(Provider):
         self.temperature = temperature
         self.top_p = top_p
 
-        # Generate session token if not provided
-        if not api_key:
-            self.api_key = str(uuid4()).replace("-", "") + str(int(time.time()))
-        else:
-            self.api_key = api_key
-
         self.agent = LitAgent()
 
         self.headers = {
-            "authority": "chat.akash.network",
-            "method": "POST",
-            "path": "/api/chat",
-            "scheme": "https",
             "accept": "*/*",
             "accept-encoding": "gzip, deflate, br, zstd",
             "accept-language": "en-US,en;q=0.9,en-IN;q=0.8",
             "content-type": "application/json",
+            "cookie": "cookie-consent=accepted; _ga=GA1.1.411212745.1768894804; cf_clearance=kUAFsdi8masn4kzDg.g3pDEYmIefkuN4kPT8kAmC.wI-1769979385-1.2.1.1-5i01zppXtcir7LNZjhp.JiQVGEU.ewcNSRnrhdm9uvnuqvgkv_IQmUI0ec9vI7u9kBibnMuKYvteTdmlMyCxXr9RUlhS5hT8MW860slfcjsTbzzsgk7os0LGu9yfVzbZfHm5Qeoo_FFF4ckJz_gnSxKkF0QVzAOv6uwGvICLvv3hNyzgzWV.sEJJi6Fx8dSlze5u5StYbYhbRD97W3rDMpqDyIQBTF8Ts3jh_2keQxA; _ga_LFRGN2J2RV=GS2.1.s1769979388$o2$g0$t1769979388$j60$l0$h0; session_token=ffe05badc451a5f1571a2cd85a5205f650cb2549a6c805162c27d18cc64d5ab7",
             "dnt": "1",
             "origin": "https://chat.akash.network",
             "priority": "u=1, i",
             "referer": "https://chat.akash.network/",
-            "sec-ch-ua": '"Microsoft Edge";v="135", "Not-A.Brand";v="8", "Chromium";v="135"',
+            "sec-ch-ua": '"Not:A-Brand";v="99", "Microsoft Edge";v="145", "Chromium";v="145"',
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": '"Windows"',
             "sec-fetch-dest": "empty",
@@ -119,9 +109,6 @@ class AkashGPT(Provider):
             "sec-gpc": "1",
             "user-agent": self.agent.random()
         }
-
-        # Set cookies with the session token
-        self.session.cookies.set("session_token", self.api_key, domain="chat.akash.network")
 
         self.__available_optimizers = (
             method
@@ -133,8 +120,7 @@ class AkashGPT(Provider):
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         act_prompt = (
-            AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True
-            )
+            AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True)
             if act
             else intro
         )
@@ -310,7 +296,7 @@ if __name__ == "__main__":
 
     for model in AkashGPT.AVAILABLE_MODELS:
         try:
-            test_ai = AkashGPT(model=model, timeout=60, api_key="5ef9b0782df982fab720810f6ee72a9af01ebadbd9eb05adae0ecc8711ec79c5; _ga_LFRGN2J2RV=GS2.1.s1763554272$o4$g1$t1763554284$j48$l0$h0") # Example key
+            test_ai = AkashGPT(model=model, timeout=60)
             response = test_ai.chat("Say 'Hello' in one word")
 
             if hasattr(response, "__iter__") and not isinstance(response, (str, bytes)):

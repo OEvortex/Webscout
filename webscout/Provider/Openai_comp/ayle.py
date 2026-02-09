@@ -5,6 +5,7 @@ from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 import requests
 
+from webscout.litagent import LitAgent
 from webscout.Provider.Openai_comp.base import (
     BaseChat,
     BaseCompletions,
@@ -20,8 +21,6 @@ from webscout.Provider.Openai_comp.utils import (
     CompletionUsage,
     count_tokens,
 )
-
-from ...litagent import LitAgent
 
 # ANSI escape codes for formatting
 BOLD = "\033[1m"
@@ -324,42 +323,21 @@ class Ayle(OpenAICompatibleProvider):
 
 # Simple test if run directly
 if __name__ == "__main__":
-    print("-" * 80)
-    print(f"{'Model':<50} {'Status':<10} {'Response'}")
-    print("-" * 80)
+    from rich import print
 
-    # Test a subset of models to avoid excessive API calls
-    test_models = [
-        "gemini-2.5-flash",
-    ]
+    client = Ayle()
+    print("NON-STREAMING RESPONSE:")
+    response = client.chat.completions.create(
+        model="gemini-2.5-flash",
+        messages=[{"role": "user", "content": "Hello, how are you?"}],
+    )
+    print(response)
 
-    for model in test_models:
-        try:
-            client = Ayle(timeout=60)
-            # Test with a simple conversation to demonstrate format_prompt usage
-            response = client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": "You are a helpful assistant."},
-                    {"role": "user", "content": "Say 'Hello' in one word"},
-                ],
-                stream=False,
-            )
-
-            if (
-                isinstance(response, ChatCompletion)
-                and response.choices
-                and response.choices[0].message
-                and response.choices[0].message.content
-            ):
-                status = "✓"
-                # Truncate response if too long
-                display_text = response.choices[0].message.content.strip()
-                display_text = display_text[:50] + "..." if len(display_text) > 50 else display_text
-            else:
-                status = "✗"
-                display_text = "Empty or invalid response"
-            print(f"{model:<50} {status:<10} {display_text}")
-        except Exception as e:
-            print(f"{model:<50} {'✗':<10} {str(e)}")
-            print(f"{model:<50} {'✗':<10} {str(e)}")
+    print("\nSTREAMING RESPONSE:")
+    stream_response = client.chat.completions.create(
+        model="gemini-2.5-flash",
+        messages=[{"role": "user", "content": "Tell me a joke."}],
+        stream=True,
+    )
+    for chunk in stream_response:
+        print(chunk)

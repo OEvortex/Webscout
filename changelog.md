@@ -2,7 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026.02.10] - 2026-02-10
 
+### ✨ Added
+- **K2Think Provider**: `webscout/Provider/k2think.py` - New provider for K2 Think AI (https://www.k2think.ai/guest). Features no-auth guest access, streaming/non-streaming support using `sanitize_stream`, conversation history, optimizer support, and OpenAI-compatible API responses. Fully integrated with Webscout's provider discovery system.
+- **K2Think OpenAI-Compatible Provider**: `webscout/Provider/Openai_comp/k2think.py` - OpenAI-compatible implementation of K2Think provider following the same pattern as DeepInfra, Groq, and Sonus providers. Features direct JSON parsing without `sanitize_stream`, proper OpenAI-compatible streaming chunks, and full compatibility with OpenAI API interface.
+
+### 🚮 Removed
+ - **X0GPT provider**: Removed the X0GPT provider from the codebase.
+
+### 🚮 Removed
+- **ChatSandbox provider**: Completely removed `webscout/Provider/ChatSandbox.py` and `webscout/Provider/Openai_comp/chatsandbox.py`. The provider has been deprecated and removed from the codebase.
+
+## [2026.02.01] - 2026-02-01
+
+### 🚮 Removed
+- **Algion provider**: Completely removed `webscout/Provider/Algion.py` and `webscout/Provider/Openai_comp/algion.py`. The provider has been deprecated and removed from the codebase.
+
+## [2026.02.02] - 2026-02-02
+
+### 🔧 Improved
+ - **AkashGPT provider**: `webscout/Provider/Openai_comp/akashgpt.py` & `webscout\Provider\akashgpt.py`- Refactored to remove all `api_key` logic. The provider no longer requires or uses an API key for any operation. The constructor and all internal logic have been updated to reflect this, making AkashGPT fully no-auth and easier to use out of the box.
+
+### 🔧 Improved
+- **AkashGPT provider**: `webscout/Provider/Openai_comp/akashgpt.py` & `webscout\Provider\akashgpt.py`- Refactored to remove all `api_key` logic. The provider no longer requires or uses an API key for any operation. The constructor and all internal logic have been updated to reflect this, making AkashGPT fully no-auth and easier to use out of the box.
+- Cleaned up docstrings and type hints for clarity and consistency.
+- All ruff linting and ty type checks pass after the update.
+  
 ## [2026.01.31] - 2026-01-31
 
 ### 🏷️ Renamed

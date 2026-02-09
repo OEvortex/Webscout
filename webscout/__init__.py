@@ -17,6 +17,7 @@ from .search import *
 from .swiftcli import *
 from .update_checker import check_for_updates
 from .version import __version__
+# x0gpt.py and X0GPT removed; no import here
 from .zeroart import *
 
 useragent = LitAgent()

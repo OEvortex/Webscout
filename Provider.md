@@ -39,7 +39,7 @@ These providers have both standard and OpenAI-compatible implementations, giving
 | 11 | **HeckAI** | `webscout/Provider/HeckAI.py` | `webscout/Provider/OPENAI/heckai.py` |
 | 12 | **HuggingFace** | `webscout/Provider/HuggingFace.py` | `webscout/Provider/OPENAI/huggingface.py` |
 | 13 | **IBM** | `webscout/Provider/IBM.py` | `webscout/Provider/OPENAI/ibm.py` |
-| 14 | **K2Think** | `webscout/Provider/K2Think.py` | `webscout/Provider/OPENAI/K2Think.py` |
+| 14 | **K2Think** | `webscout/Provider/k2think.py` | `webscout/Provider/Openai_comp/k2think.py` |
 | 15 | **LLMChatCo** | `webscout/Provider/llmchatco.py` | `webscout/Provider/OPENAI/llmchatco.py` |
 | 17 | **Netwrck** | `webscout/Provider/Netwrck.py` | `webscout/Provider/OPENAI/netwrck.py` |
 | 18 | **Nvidia** | `webscout/Provider/Nvidia.py` | `webscout/Provider/OPENAI/nvidia.py` |
@@ -137,16 +137,6 @@ These providers are only available in the OpenAI-compatible format and have no s
 
 ---
 
-## Provider Categories
-
-### AI Search Providers
-Located in `webscout/Provider/AISEARCH/`:
-- iAsk Search
-- Monica Search
-- Perplexed Search
-- Perplexity
-- Stellar Search
-- WebPilot AI Search
 
 ### Text-to-Image Providers
 Located in `webscout/Provider/TTI/`:
@@ -192,7 +182,6 @@ Located in `webscout/Provider/UNFINISHED/`:
 - YouChat
 
 ---
-
 ## Usage Notes
 
 ### Choosing Between Normal and OpenAI-Compatible Versions

@@ -6,6 +6,8 @@ from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi.requests import Session
 
+from webscout.litagent import LitAgent as agent
+
 # Import base classes and utility structures
 from webscout.Provider.Openai_comp.base import (
     BaseChat,
@@ -24,14 +26,12 @@ from webscout.Provider.Openai_comp.utils import (
     format_prompt,
 )
 
-# Import LitAgent for user agent generation
-from ...litagent import LitAgent
-
 # AkashGPT constants
 AVAILABLE_MODELS = [
     "Qwen/Qwen3-30B-A3B",
     "DeepSeek-V3.1",
     "Meta-Llama-3-3-70B-Instruct",
+    "DeepSeek-V3.2"
 ]
 
 
@@ -71,10 +71,6 @@ class Completions(BaseCompletions):
         """
         # Use format_prompt utility to format the conversation
         conversation_prompt = format_prompt(messages, add_special_tokens=True, include_system=True)
-
-        # Set up request parameters
-        kwargs.get("api_key", self._client.api_key)
-
         # Generate request ID and timestamp
         request_id = str(uuid.uuid4())
         created_time = int(time.time())
@@ -143,9 +139,9 @@ class Completions(BaseCompletions):
                 self._client.api_endpoint,
                 headers=self._client.headers,
                 json=payload,
-                stream=True,
                 timeout=timeout or 30,
                 proxies=proxies,
+                stream=True,
             )
 
             if not response.ok:
@@ -154,84 +150,68 @@ class Completions(BaseCompletions):
                 )
 
             full_content = ""
+            prompt_tokens = 0
+            completion_tokens = 0
 
             # Process the streaming response
-            for line in response.iter_lines(decode_unicode=True):
-                if line and line.startswith("data: "):
-                    data_str = line[6:]
-                    if data_str.strip() == "[DONE]":
-                        break
+            for line in response.iter_lines(decode_unicode=False):
+                if line:
+                    if isinstance(line, bytes):
+                        line = line.decode("utf-8")
+                    line = line.strip()
 
-                    try:
-                        # Try to parse as JSON first
-                        data = json.loads(data_str)
-                        if isinstance(data, dict) and "text" in data:
-                            new_content = data["text"]
-                        elif isinstance(data, str):
-                            # Use the extractor for raw string responses
-                            extracted = _akash_extractor(data_str)
-                            new_content = extracted or data_str
-                        else:
-                            continue
+                    # Parse the AkashGPT response format
+                    if line.startswith('0:"') and line.endswith('"'):
+                        # Extract content from 0:"content" format
+                        content = line[3:-1]  # Remove 0:" and "
+                        # Decode escaped characters
+                        content = content.encode().decode('unicode_escape')
 
-                        if new_content and new_content != full_content:
-                            # Calculate delta (new content since last chunk)
-                            delta_content = (
-                                new_content[len(full_content) :]
-                                if new_content.startswith(full_content)
-                                else new_content
-                            )
-                            full_content = new_content
+                        # Calculate delta (new content since last chunk)
+                        delta_content = content[len(full_content):] if content.startswith(full_content) else content
+                        full_content = content
+
+                        if delta_content:
                             completion_tokens = count_tokens(full_content)
                             total_tokens = prompt_tokens + completion_tokens
 
-                            # Only yield chunk if there's new content
-                            if delta_content:
-                                delta = ChoiceDelta(content=delta_content, role="assistant")
-                                choice = Choice(index=0, delta=delta, finish_reason=None)
-                                chunk_response = ChatCompletionChunk(
-                                    id=request_id,
-                                    choices=[choice],
-                                    created=created_time,
-                                    model=model,
-                                )
-                                chunk_response.usage = {
-                                    "prompt_tokens": prompt_tokens,
-                                    "completion_tokens": completion_tokens,
-                                    "total_tokens": total_tokens,
-                                }
-                                yield chunk_response
-
-                    except json.JSONDecodeError:
-                        # Handle non-JSON responses
-                        extracted = _akash_extractor(data_str)
-                        if extracted and extracted != full_content:
-                            delta_content = (
-                                extracted[len(full_content) :]
-                                if extracted.startswith(full_content)
-                                else extracted
+                            delta = ChoiceDelta(content=delta_content, role="assistant")
+                            choice = Choice(index=0, delta=delta, finish_reason=None)
+                            chunk_response = ChatCompletionChunk(
+                                id=request_id,
+                                choices=[choice],
+                                created=created_time,
+                                model=model,
                             )
-                            full_content = extracted
-                            completion_tokens = count_tokens(full_content)
-                            total_tokens = prompt_tokens + completion_tokens
+                            chunk_response.usage = {
+                                "prompt_tokens": prompt_tokens,
+                                "completion_tokens": completion_tokens,
+                                "total_tokens": total_tokens,
+                            }
+                            yield chunk_response
 
-                            if delta_content:
-                                delta = ChoiceDelta(content=delta_content, role="assistant")
-                                choice = Choice(index=0, delta=delta, finish_reason=None)
-                                chunk_response = ChatCompletionChunk(
-                                    id=request_id,
-                                    choices=[choice],
-                                    created=created_time,
-                                    model=model,
-                                )
-                                chunk_response.usage = {
-                                    "prompt_tokens": prompt_tokens,
-                                    "completion_tokens": completion_tokens,
-                                    "total_tokens": total_tokens,
-                                }
-                                yield chunk_response
+                    elif line.startswith('e:{'):
+                        # Extract usage from e: line
+                        import json
+                        try:
+                            usage_data = json.loads(line[2:])  # Remove 'e:'
+                            prompt_tokens = usage_data.get('usage', {}).get('promptTokens', prompt_tokens)
+                            completion_tokens = usage_data.get('usage', {}).get('completionTokens', completion_tokens)
+                        except json.JSONDecodeError:
+                            pass
+                    elif line.startswith('d:{'):
+                        # Alternative usage extraction from d: line
+                        if prompt_tokens == 0:  # Only if not already set
+                            import json
+                            try:
+                                usage_data = json.loads(line[2:])  # Remove 'd:'
+                                prompt_tokens = usage_data.get('usage', {}).get('promptTokens', prompt_tokens)
+                                completion_tokens = usage_data.get('usage', {}).get('completionTokens', completion_tokens)
+                            except json.JSONDecodeError:
+                                pass
 
             # Final chunk with finish_reason
+            total_tokens = prompt_tokens + completion_tokens
             delta = ChoiceDelta(content=None)
             choice = Choice(index=0, delta=delta, finish_reason="stop")
             final_chunk = ChatCompletionChunk(
@@ -281,6 +261,7 @@ class Completions(BaseCompletions):
                 json=payload,
                 timeout=timeout or 30,
                 proxies=proxies,
+                stream=True,  # <-- Enable streaming mode for iter_lines
             )
 
             if not response.ok:
@@ -290,30 +271,45 @@ class Completions(BaseCompletions):
 
             # Collect the full response
             full_content = ""
-            for line in response.iter_lines(decode_unicode=True):
-                if line and line.startswith("data: "):
-                    data_str = line[6:]
-                    if data_str.strip() == "[DONE]":
-                        break
+            prompt_tokens = 0
+            completion_tokens = 0
 
-                    try:
-                        # Try to parse as JSON first
-                        data = json.loads(data_str)
-                        if isinstance(data, dict) and "text" in data:
-                            full_content = data["text"]
-                        elif isinstance(data, str):
-                            # Use the extractor for raw string responses
-                            extracted = _akash_extractor(data_str)
-                            if extracted:
-                                full_content = extracted
-                    except json.JSONDecodeError:
-                        # Handle non-JSON responses
-                        extracted = _akash_extractor(data_str)
-                        if extracted:
-                            full_content = extracted
+            for line in response.iter_lines(decode_unicode=False):
+                if line:
+                    if isinstance(line, bytes):
+                        line = line.decode("utf-8")
+                    line = line.strip()
 
-            # Calculate completion tokens
-            completion_tokens = count_tokens(full_content)
+                    # Parse the AkashGPT response format
+                    if line.startswith('0:"') and line.endswith('"'):
+                        # Extract content from 0:"content" format
+                        content = line[3:-1]  # Remove 0:" and "
+                        # Decode escaped characters
+                        content = content.encode().decode('unicode_escape')
+                        full_content += content
+                    elif line.startswith('e:{'):
+                        # Extract usage from e: line
+                        import json
+                        try:
+                            usage_data = json.loads(line[2:])  # Remove 'e:'
+                            prompt_tokens = usage_data.get('usage', {}).get('promptTokens', 0)
+                            completion_tokens = usage_data.get('usage', {}).get('completionTokens', 0)
+                        except json.JSONDecodeError:
+                            pass
+                    elif line.startswith('d:{'):
+                        # Alternative usage extraction from d: line
+                        if prompt_tokens == 0:  # Only if not already set
+                            import json
+                            try:
+                                usage_data = json.loads(line[2:])  # Remove 'd:'
+                                prompt_tokens = usage_data.get('usage', {}).get('promptTokens', 0)
+                                completion_tokens = usage_data.get('usage', {}).get('completionTokens', 0)
+                            except json.JSONDecodeError:
+                                pass
+
+            # Calculate completion tokens if not provided by API
+            if completion_tokens == 0:
+                completion_tokens = count_tokens(full_content)
             total_tokens = prompt_tokens + completion_tokens
 
             # Create the completion message
@@ -353,7 +349,7 @@ class AkashGPT(OpenAICompatibleProvider):
     OpenAI-compatible client for AkashGPT API.
 
     Usage:
-        client = AkashGPT(api_key="your_api_key")
+        client = AkashGPT()
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": "Hello!"}]
@@ -361,57 +357,48 @@ class AkashGPT(OpenAICompatibleProvider):
         print(response.choices[0].message.content)
     """
 
-    required_auth = True
+    required_auth = False
 
     AVAILABLE_MODELS = AVAILABLE_MODELS
 
     def __init__(
-        self, api_key: str, tools: Optional[List] = None, proxies: Optional[Dict[str, str]] = None
+        self, tools: Optional[List] = None, proxies: Optional[Dict[str, str]] = None
     ):
         """
         Initialize the AkashGPT-compatible client.
 
         Args:
-            api_key: Required API key for AkashGPT
             tools: Optional list of tools to register with the provider
             proxies: Optional proxy configuration dict
         """
-        super().__init__(api_key=api_key, tools=tools, proxies=proxies)
+        super().__init__(api_key=None, tools=tools, proxies=proxies)
 
         # Replace requests.Session with curlcffi.requests.Session for better performance
         self.session = Session()
         if self.proxies:
             self.session.proxies.update(self.proxies)
 
-        # Store the api_key for use in completions
-        self.api_key = api_key
         self.timeout = 30
         self.api_endpoint = "https://chat.akash.network/api/chat"
-
-        # Initialize LitAgent for user agent generation
-        agent = LitAgent()
-        user_agent = agent.random()
-
+        self.user_agent = agent().random()
         self.headers = {
-            "authority": "chat.akash.network",
-            "method": "POST",
-            "path": "/api/chat",
-            "scheme": "https",
             "accept": "*/*",
+            "accept-encoding": "gzip, deflate, br, zstd",
             "accept-language": "en-US,en;q=0.9,en-IN;q=0.8",
             "content-type": "application/json",
+            "cookie": "cookie-consent=accepted; _ga=GA1.1.411212745.1768894804; cf_clearance=kUAFsdi8masn4kzDg.g3pDEYmIefkuN4kPT8kAmC.wI-1769979385-1.2.1.1-5i01zppXtcir7LNZjhp.JiQVGEU.ewcNSRnrhdm9uvnuqvgkv_IQmUI0ec9vI7u9kBibnMuKYvteTdmlMyCxXr9RUlhS5hT8MW860slfcjsTbzzsgk7os0LGu9yfVzbZfHm5Qeoo_FFF4ckJz_gnSxKkF0QVzAOv6uwGvICLvv3hNyzgzWV.sEJJi6Fx8dSlze5u5StYbYhbRD97W3rDMpqDyIQBTF8Ts3jh_2keQxA; _ga_LFRGN2J2RV=GS2.1.s1769979388$o2$g0$t1769979388$j60$l0$h0; session_token=ffe05badc451a5f1571a2cd85a5205f650cb2549a6c805162c27d18cc64d5ab7",
             "dnt": "1",
             "origin": "https://chat.akash.network",
             "priority": "u=1, i",
             "referer": "https://chat.akash.network/",
-            "sec-ch-ua": '"Microsoft Edge";v="135", "Not-A.Brand";v="8", "Chromium";v="135"',
+            "sec-ch-ua": '"Not:A-Brand";v="99", "Microsoft Edge";v="145", "Chromium";v="145"',
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": '"Windows"',
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
             "sec-gpc": "1",
-            "user-agent": user_agent,
+            "user-agent": self.user_agent,
         }
 
         self.session.headers.update(self.headers)
@@ -425,12 +412,23 @@ class AkashGPT(OpenAICompatibleProvider):
 
 
 if __name__ == "__main__":
-    # Example usage
-    client = AkashGPT(api_key="your_api_key_here")
+    from rich import print
+    client = AkashGPT()
+    print("NON-STREAMING RESPONSE:")
     response = client.chat.completions.create(
-        model="gpt-4o", messages=[{"role": "user", "content": "Hello! How are you?"}]
+        model="DeepSeek-V3.2",
+        messages=[
+            {"role": "user", "content": "Hello, how are you?"},
+        ],
     )
-    if isinstance(response, ChatCompletion):
-        if response.choices[0].message and response.choices[0].message.content:
-            print(response.choices[0].message.content)
-        print(f"Usage: {response.usage}")
+    print(response)
+    print("\nSTREAMING RESPONSE:")
+    stream_response = client.chat.completions.create(
+        model="DeepSeek-V3.2",
+        messages=[
+            {"role": "user", "content": "Hello, how are you?"},
+        ],
+        stream=True,
+    )
+    for chunk in stream_response:
+        print(chunk)

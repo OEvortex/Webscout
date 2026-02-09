@@ -21,7 +21,7 @@ from webscout.Provider.Openai_comp.utils import (
     CompletionUsage,
 )
 
-from ...litagent import LitAgent
+from webscout.litagent import LitAgent
 
 
 class Completions(BaseCompletions):
@@ -268,11 +268,14 @@ class Elmo(OpenAICompatibleProvider):
 if __name__ == "__main__":
     client = Elmo()
     response = client.chat.completions.create(
-        model="elmo",
-        messages=[{"role": "user", "content": "Hello, how are you?"}],
-        max_tokens=600,
-        stream=False,
+        model="elmo", messages=[{"role": "user", "content": "Hello!"}], stream=True
     )
     if isinstance(response, ChatCompletion):
-        if response.choices[0].message and response.choices[0].message.content:
-            print(response.choices[0].message.content)
+        if not isinstance(response, Generator):
+            message = response.choices[0].message
+            if message and message.content:
+                print(message.content)
+    else:
+        for chunk in cast(Generator[ChatCompletionChunk, None, None], response):
+            if chunk.choices[0].delta and chunk.choices[0].delta.content:
+                print(chunk.choices[0].delta.content, end="")

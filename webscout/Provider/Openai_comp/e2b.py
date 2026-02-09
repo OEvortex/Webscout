@@ -29,7 +29,7 @@ from webscout.Provider.Openai_comp.utils import (
 
 # Attempt to import LitAgent, fallback if not available
 try:
-    from ...litagent import LitAgent
+    from webscout.litagent import LitAgent
 except ImportError:
     LitAgent = None  # type: ignore
 # ANSI escape codes for formatting

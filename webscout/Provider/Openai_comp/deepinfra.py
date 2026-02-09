@@ -21,7 +21,7 @@ from webscout.Provider.Openai_comp.utils import (
     CompletionUsage,
 )
 
-from ...litagent import LitAgent
+from webscout.litagent import LitAgent
 
 
 class Completions(BaseCompletions):

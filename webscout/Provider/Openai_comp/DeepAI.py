@@ -7,6 +7,7 @@ from typing import Any, Dict, Generator, List, Optional, Union, cast
 from curl_cffi.requests import RequestsError, Session
 
 from webscout.AIbase import Response
+from webscout.litagent import LitAgent
 
 # Import base classes and utility structures
 from webscout.Provider.Openai_comp.base import (
@@ -24,9 +25,6 @@ from webscout.Provider.Openai_comp.utils import (
     CompletionUsage,
     count_tokens,
 )
-
-# Attempt to import LitAgent, fallback if not available
-from ...litagent import LitAgent
 
 # --- DeepAI Client ---
 
@@ -276,6 +274,9 @@ class DeepAI(OpenAICompatibleProvider):
         # Defer model fetch to background to avoid blocking initialization
         self._start_background_model_fetch(api_key=api_key)
 
+        # Initialize chat interface
+        self.chat = Chat(self)
+
         self.timeout = timeout
         self.api_key = api_key
         self.model = model
@@ -476,7 +477,7 @@ class DeepAI(OpenAICompatibleProvider):
 if __name__ == "__main__":
     client = DeepAI()
     response = client.chat.completions.create(
-        model="standard", messages=[{"role": "user", "content": "Hello!"}], stream=False
+        model="standard", messages=[{"role": "user", "content": "Hello!"}], stream=True
     )
     if isinstance(response, ChatCompletion):
         if not isinstance(response, Generator):
