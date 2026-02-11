@@ -6,6 +6,7 @@ from typing import Any, Dict, Generator, List, Optional, Union, cast
 from curl_cffi.requests import Session
 
 from webscout.AIutel import sanitize_stream
+from webscout.litagent import LitAgent
 from webscout.Provider.Openai_comp.base import (
     BaseChat,
     BaseCompletions,
@@ -20,8 +21,6 @@ from webscout.Provider.Openai_comp.utils import (
     ChoiceDelta,
     CompletionUsage,
 )
-
-from webscout.litagent import LitAgent
 
 
 class Completions(BaseCompletions):
