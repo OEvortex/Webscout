@@ -357,7 +357,7 @@ class ModelConverter:
 
         # Check for BLAS libraries
         try:
-            import numpy as np  # type: ignore
+            import numpy as np
             # Check if numpy is linked with optimized BLAS
             config = np.__config__.show()
             if any(lib in str(config).lower() for lib in ['openblas', 'mkl', 'atlas', 'blis']):
@@ -418,7 +418,7 @@ class ModelConverter:
                     # In Nix, we need to use the system Python packages
                     try:
                         # Try to import required packages to check if they're available
-                        import numpy  # type: ignore
+                        import numpy
                         import sentencepiece  # type: ignore
                         import torch  # type: ignore
                         import transformers  # type: ignore
