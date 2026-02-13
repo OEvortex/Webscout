@@ -117,19 +117,64 @@ def process_messages(messages: List[Message]) -> List[Dict[str, Any]]:
 
 
 def prepare_provider_params(chat_request: ChatCompletionRequest, model_name: str,
-                          processed_messages: List[Dict[str, Any]]) -> Dict[str, Any]:
+                          processed_messages: List[Dict[str, Any]],
+                          provider_name: Optional[str] = None) -> Dict[str, Any]:
     """Prepare parameters for the provider."""
+    provider_name_normalized = provider_name or ""
+
+    def normalize_text_messages(messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Normalize message content to plain text for text-only providers."""
+        normalized_messages: List[Dict[str, Any]] = []
+
+        for message in messages:
+            normalized_message = dict(message)
+            content = normalized_message.get("content")
+
+            if content is None:
+                normalized_message["content"] = ""
+            elif isinstance(content, str):
+                normalized_message["content"] = content
+            elif isinstance(content, list):
+                text_parts: List[str] = []
+                for part in content:
+                    if isinstance(part, str):
+                        text_parts.append(part)
+                    elif isinstance(part, dict):
+                        if isinstance(part.get("text"), str):
+                            text_parts.append(part["text"])
+                normalized_message["content"] = "".join(text_parts)
+            elif isinstance(content, dict) and isinstance(content.get("text"), str):
+                normalized_message["content"] = content["text"]
+            else:
+                normalized_message["content"] = str(content)
+
+            normalized_messages.append(normalized_message)
+
+        return normalized_messages
+
+    use_text_only_compat = provider_name_normalized in {"Toolbaz", "TypliAI"}
+    messages = normalize_text_messages(processed_messages) if use_text_only_compat else processed_messages
+
     params = {
         "model": model_name,
-        "messages": processed_messages,
-        "stream": chat_request.stream,
+        "messages": messages,
+        "stream": bool(chat_request.stream),
     }
 
     # Add optional parameters if present
-    optional_params = [
-        "temperature", "max_tokens", "top_p", "presence_penalty",
-        "frequency_penalty", "stop", "user"
-    ]
+    optional_params = (
+        ["temperature", "max_tokens", "top_p"]
+        if use_text_only_compat
+        else [
+            "temperature",
+            "max_tokens",
+            "top_p",
+            "presence_penalty",
+            "frequency_penalty",
+            "stop",
+            "user",
+        ]
+    )
 
     for param in optional_params:
         value = getattr(chat_request, param, None)

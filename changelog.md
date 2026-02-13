@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026.02.14] - 2026-02-14
+
+### 🐛 Fixed
+- **TypliAI Provider**: Fixed 403 errors by implementing CSRF token handling in the TypliAI provider. The provider now initializes the session properly to retrieve and use CSRF tokens, resolving authentication issues that were causing 403 errors.
+- **OpenAI-Compatible TypliAI Provider**: Fixed 403 errors in the OpenAI-compatible TypliAI provider by implementing the same CSRF token handling logic as the main TypliAI provider. This ensures both providers can authenticate successfully and avoid 403 errors when making requests to the TypliAI service.
+- **Toolbaz Provider**: Fixed 400 errors in the Toolbaz provider 
+- **Server**: Fixed critical startup failure in `webscout/server/server.py` when running with default settings (debug=False, workers=1) due to missing `else` clause in `run_api()` function's uvicorn configuration logic. The server now starts correctly in production mode.
+
+### ✨ Added
+- **TypliAI Reasoning Support**: Added support for reasoning models (e.g., `moonshotai/kimi-k2.5`) in both TypliAI providers:
+  - Updated to use new `/api/chat2` endpoint
+  - Added support for `reasoning-delta` and `text-delta` SSE event types
+  - Exposed `reasoning_content` and `reasoning` fields in OpenAI-compatible response
+  - Updated headers to match new API requirements (referer changed to `/ai-chat`)
+- **Reasoning Fields in OpenAI Responses**: Added `reasoning_content` and `reasoning` fields to `ChoiceDelta` and `ChatCompletionMessage` classes in `webscout/Provider/Openai_comp/utils.py` for OpenAI-compatible provider responses
+
+### 🔧 Improved
+- **OpenAI-Compatible TypliAI Provider**: Replaced `sanitize_stream` with manual SSE parsing for better control over streaming responses. Now parses both `reasoning-delta` and `text-delta` events directly without relying on the utility function.
+
 ## [2026.02.13] - 2026-02-13
 
 ### 🔧 Improved

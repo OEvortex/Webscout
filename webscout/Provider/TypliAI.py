@@ -1,6 +1,7 @@
 import random
 import string
 from typing import Any, Dict, Generator, Optional, Union, cast
+from urllib.parse import unquote
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
@@ -36,8 +37,10 @@ class TypliAI(Provider):
 
     required_auth = False
     AVAILABLE_MODELS = [
+        "openai/gpt-4o-mini",
         "openai/gpt-4.1-mini",
         "openai/gpt-4.1",
+        "openai/gpt-5-nano",
         "openai/gpt-5-mini",
         "openai/gpt-5.2",
         "openai/gpt-5.2-pro",
@@ -45,6 +48,8 @@ class TypliAI(Provider):
         "anthropic/claude-haiku-4-5",
         "xai/grok-4-fast-reasoning",
         "xai/grok-4-fast",
+        "moonshotai/kimi-k2.5",
+        "alibaba/qwen-3-235b",
     ]
 
     def __init__(
@@ -59,7 +64,7 @@ class TypliAI(Provider):
         history_offset: int = 10250,
         act: Optional[str] = None,
         system_prompt: str = "You are a helpful assistant.",
-        model: str = "openai/gpt-4.1-mini",
+        model: str = "openai/gpt-4o-mini",
     ):
         """
         Initializes the TypliAI API with given parameters.
@@ -81,7 +86,8 @@ class TypliAI(Provider):
         self.session = Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.api_endpoint = "https://typli.ai/api/generators/chat"
+        # Use the new chat2 API endpoint
+        self.api_endpoint = "https://typli.ai/api/chat2"
         self.timeout = timeout
         self.last_response = {}
         self.system_prompt = system_prompt
@@ -92,14 +98,14 @@ class TypliAI(Provider):
         self.agent = LitAgent()
         user_agent = self.agent.random()  # Let impersonate handle the user-agent
         self.headers = {
-            "accept": "/",
+            "accept": "*/*",
             "accept-language": "en-US,en;q=0.9,en-IN;q=0.8",
             "content-type": "application/json",
             "dnt": "1",
             "origin": "https://typli.ai",
             "priority": "u=1, i",
-            "referer": "https://typli.ai/free-no-sign-up-chatgpt",
-            "sec-ch-ua": '"Not(A:Brand";v="8", "Chromium";v="144", "Microsoft Edge";v="144"',
+            "referer": "https://typli.ai/ai-chat",
+            "sec-ch-ua": '"Not:A-Brand";v="99", "Microsoft Edge";v="145", "Chromium";v="145"',
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": '"Windows"',
             "sec-fetch-dest": "empty",
@@ -136,6 +142,29 @@ class TypliAI(Provider):
         elif intro:
             self.conversation.intro = intro
 
+    def _init_session(self) -> None:
+        """Initialize session by visiting the page to get CSRF token and cookies."""
+        try:
+            # Visit the page first to get CSRF token cookie
+            self.session.get(
+                "https://typli.ai/ai-chat",
+                headers=self.headers,
+                timeout=self.timeout,
+                impersonate="chrome120",
+            )
+            # Extract CSRF token from cookies and decode it
+            csrf_token = self.session.cookies.get("csrf-token")
+            if csrf_token:
+                # URL decode the CSRF token
+                csrf_decoded = unquote(csrf_token)
+                # Add x-csrf-token header with the decoded value
+                self.headers["x-csrf-token"] = csrf_decoded
+                # Update session headers
+                self.session.headers.update(self.headers)
+        except Exception:
+            # Continue even if init fails - cookies might still work
+            pass
+
     def ask(
         self,
         prompt: str,
@@ -168,7 +197,6 @@ class TypliAI(Provider):
                 raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
 
         payload = {
-            "slug": "free-no-sign-up-chatgpt",
             "modelId": self.model,
             "id": generate_random_id(),
             "messages": [
@@ -183,6 +211,9 @@ class TypliAI(Provider):
 
         def for_stream():
             try:
+                # Initialize session to get CSRF token
+                self._init_session()
+
                 # Use curl_cffi session post with updated impersonate and http_version
                 response = self.session.post(
                     self.api_endpoint,
@@ -198,7 +229,8 @@ class TypliAI(Provider):
                     raise exceptions.FailedToGenerateResponseError(error_msg)
 
                 streaming_response = ""
-                # Use sanitize_stream with content_extractor for the new JSON format
+                # Use sanitize_stream with content_extractor for SSE format
+                # Response format: data: {"type":"text-delta","delta":"content"}
                 processed_stream = sanitize_stream(
                     data=response.iter_content(chunk_size=None),
                     intro_value="data: ",

@@ -363,13 +363,28 @@ if __name__ == "__main__":
     # Test the provider
     client = Toolbaz()
     response = client.chat.completions.create(
-        model="gemini-2.0-flash",
+        model="gpt-5.2",
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": "Hello! How are you today?"},
         ],
+        stream=True
     )
-    if isinstance(response, ChatCompletion):
-        message = response.choices[0].message
+    # OpenAI-compatible streaming response handling
+    try:
+        from webscout.Provider.Openai_comp.utils import ChatCompletion
+    except ImportError:
+        ChatCompletion = None  # ty:ignore[invalid-assignment]
+
+    if ChatCompletion and isinstance(response, ChatCompletion):
+        message = response.choices[0].message  # ty:ignore[possibly-missing-attribute]
         if message:
             print(message.content)
+    else:
+        # Streaming generator
+        for chunk in response:
+            if hasattr(chunk, "choices") and chunk.choices:
+                delta = getattr(chunk.choices[0], "delta", None)  # ty:ignore[not-subscriptable]
+                if delta and getattr(delta, "content", None):
+                    print(delta.content, end="", flush=True)
+        print()

@@ -41,6 +41,8 @@ class ChoiceDelta(BaseModel):
     function_call: Optional[FunctionCall] = None
     role: Optional[StrictStr] = None
     tool_calls: Optional[List[ToolCall]] = None
+    reasoning_content: Optional[StrictStr] = None  # For reasoning models
+    reasoning: Optional[StrictStr] = None  # For reasoning models
 
 class ChatCompletionMessage(BaseModel):
     """Chat message in completion response."""
@@ -48,6 +50,8 @@ class ChatCompletionMessage(BaseModel):
     content: Optional[StrictStr] = None
     function_call: Optional[FunctionCall] = None
     tool_calls: Optional[List[ToolCall]] = None
+    reasoning_content: Optional[StrictStr] = None  # For reasoning models (OpenAI o1 style)
+    reasoning: Optional[StrictStr] = None  # For reasoning models (alternative field)
 
     def __getitem__(self, key):
         """Allow dict-like access."""

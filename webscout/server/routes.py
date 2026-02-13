@@ -358,7 +358,12 @@ class Api:
                 processed_messages = process_messages(chat_request.messages)
 
                 # Prepare parameters for provider
-                params = prepare_provider_params(chat_request, model_name, processed_messages)
+                params = prepare_provider_params(
+                    chat_request,
+                    model_name,
+                    processed_messages,
+                    provider_class.__name__,
+                )
 
                 # Extract client IP address
                 client_ip = request.client.host if request.client else "unknown"
