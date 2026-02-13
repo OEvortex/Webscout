@@ -7,8 +7,7 @@ import time
 from io import BytesIO
 from typing import TYPE_CHECKING, Any, Optional
 
-import requests
-from requests.exceptions import RequestException
+from curl_cffi import CurlError, requests
 
 from webscout.AIbase import SimpleModelList
 from webscout.litagent import LitAgent
@@ -197,7 +196,7 @@ class Images(BaseImages):
 
             return ImageResponse(created=int(time.time()), data=result_data)
 
-        except RequestException as e:
+        except CurlError as e:
             raise RuntimeError(f"Failed to generate image with Claude Online: {e}")
         except ImportError:
             raise

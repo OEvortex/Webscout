@@ -3,7 +3,7 @@ import time
 import uuid
 from typing import Any, Dict, Generator, List, Optional, Union, cast
 
-import requests
+from curl_cffi import requests
 
 from webscout.AIbase import Response
 from webscout.litagent import LitAgent

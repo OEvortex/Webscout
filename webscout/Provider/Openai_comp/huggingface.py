@@ -3,6 +3,7 @@ import time
 import uuid
 from typing import Any, Dict, Generator, List, Optional, Union, cast
 
+from curl_cffi import requests
 from curl_cffi.requests import Session
 
 from webscout.Provider.Openai_comp.base import (
@@ -75,8 +76,8 @@ class Completions(BaseCompletions):
         import requests as requests_lib
 
         try:
-            # Use requests for streaming to rule out curl_cffi issues
-            response = requests_lib.post(
+            # Use curl_cffi for streaming
+            response = requests.post(
                 self._client.base_url,
                 headers=self._client.headers,
                 json=payload,

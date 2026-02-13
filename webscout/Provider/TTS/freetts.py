@@ -6,7 +6,7 @@ import tempfile
 import time
 from typing import Any, Optional, Union, cast
 
-import requests
+from curl_cffi import requests
 from litprinter import ic
 
 from webscout import exceptions
@@ -23,6 +23,7 @@ class FreeTTS(BaseTTSProvider):
     - High-quality neural voices
     - Supports long texts via polling
     """
+
     required_auth = False
 
     headers = {
@@ -31,7 +32,7 @@ class FreeTTS(BaseTTSProvider):
         "Content-Type": "application/json",
         "Origin": "https://freetts.ru",
         "Referer": "https://freetts.ru/",
-        "User-Agent": LitAgent().random()
+        "User-Agent": LitAgent().random(),
     }
 
     # Supported formats
@@ -80,12 +81,12 @@ class FreeTTS(BaseTTSProvider):
                             self.voices[v_id] = {
                                 "lang": v_lang,
                                 "name": v_name,
-                                "sex": voice.get("sex")
+                                "sex": voice.get("sex"),
                             }
                             if v_id not in self.SUPPORTED_VOICES:
                                 self.SUPPORTED_VOICES.append(v_id)
         except Exception as e:
-            ic.configureOutput(prefix='WARNING| ')
+            ic.configureOutput(prefix="WARNING| ")
             ic(f"Error loading FreeTTS voices: {e}")
 
     def _get_default_voice(self):
@@ -98,13 +99,7 @@ class FreeTTS(BaseTTSProvider):
         """Return all available voices for the current language."""
         return [v_id for v_id, info in self.voices.items() if info["lang"] == self.lang]
 
-    def tts(
-        self,
-        text: str,
-        voice: Optional[str] = None,
-        verbose: bool = False,
-        **kwargs
-    ) -> str:
+    def tts(self, text: str, voice: Optional[str] = None, verbose: bool = False, **kwargs) -> str:
         """
         Convert text to speech.
         """
@@ -116,16 +111,12 @@ class FreeTTS(BaseTTSProvider):
         if not voice:
             raise ValueError("No voices available")
 
-        payload = {
-            "text": text,
-            "voiceid": voice,
-            "ext": response_format
-        }
+        payload = {"text": text, "voiceid": voice, "ext": response_format}
 
         try:
             # Step 1: Start synthesis
             if verbose:
-                ic.configureOutput(prefix='DEBUG| ')
+                ic.configureOutput(prefix="DEBUG| ")
                 ic(f"FreeTTS: Starting synthesis for voice {voice}")
 
             response = self.session.post(self.api_url, json=payload, timeout=self.timeout)
@@ -142,12 +133,12 @@ class FreeTTS(BaseTTSProvider):
 
                 if poll_data.get("status") == 200 or poll_data.get("message") == "Обработка: 100%":
                     if verbose:
-                        ic.configureOutput(prefix='DEBUG| ')
+                        ic.configureOutput(prefix="DEBUG| ")
                         ic("FreeTTS: Synthesis completed")
                     break
 
                 if verbose:
-                    ic.configureOutput(prefix='DEBUG| ')
+                    ic.configureOutput(prefix="DEBUG| ")
                     ic(f"FreeTTS: {poll_data.get('message', 'Processing...')}")
 
                 time.sleep(poll_interval)
@@ -174,18 +165,22 @@ class FreeTTS(BaseTTSProvider):
                         audio_file_resp.raise_for_status()
 
                         # Save to temp file
-                        temp_file = tempfile.NamedTemporaryFile(suffix=f".{response_format}", dir=self.temp_dir, delete=False)
+                        temp_file = tempfile.NamedTemporaryFile(
+                            suffix=f".{response_format}", dir=self.temp_dir, delete=False
+                        )
                         temp_file.close()
                         filename = pathlib.Path(temp_file.name)
                         with open(filename, "wb") as f:
                             f.write(audio_file_resp.content)
 
                         if verbose:
-                            ic.configureOutput(prefix='DEBUG| ')
+                            ic.configureOutput(prefix="DEBUG| ")
                             ic(f"FreeTTS: Audio saved to {filename}")
                         return str(filename)
 
-            raise exceptions.FailedToGenerateResponseError("Failed to retrieve audio URL from history")
+            raise exceptions.FailedToGenerateResponseError(
+                "Failed to retrieve audio URL from history"
+            )
 
         except Exception as e:
             raise exceptions.FailedToGenerateResponseError(f"FreeTTS failed: {e}")
@@ -198,7 +193,7 @@ class FreeTTS(BaseTTSProvider):
         response_format: Optional[str] = None,
         instructions: Optional[str] = None,
         verbose: bool = False,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> str:
         return self.tts(
             text=input_text,
@@ -206,8 +201,9 @@ class FreeTTS(BaseTTSProvider):
             voice=voice,
             response_format=response_format or "mp3",
             instructions=instructions,
-            verbose=verbose
+            verbose=verbose,
         )
+
 
 if __name__ == "__main__":
     tts = FreeTTS()

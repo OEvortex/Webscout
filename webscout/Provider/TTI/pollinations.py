@@ -7,8 +7,7 @@ import time
 from io import BytesIO
 from typing import TYPE_CHECKING, Any, Optional
 
-import requests
-from requests.exceptions import RequestException
+from curl_cffi import CurlError, requests
 
 from webscout.AIbase import SimpleModelList
 from webscout.litagent import LitAgent
@@ -237,7 +236,7 @@ class Images(BaseImages):
                 )
                 resp.raise_for_status()
                 img_bytes = resp.content
-            except RequestException as e:
+            except CurlError as e:
                 raise RuntimeError(f"Failed to fetch image from Pollinations API: {e}")
 
             # Convert image format if requested

@@ -3,7 +3,7 @@ import time
 import uuid
 from typing import Any, Dict, Generator, List, Optional, Union, cast
 
-import requests
+from curl_cffi import requests
 
 # Attempt to import LitAgent, fallback if not available
 from ...litagent import LitAgent

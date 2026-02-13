@@ -15,7 +15,7 @@ This document provides a comprehensive overview of all AI providers available in
 
 Webscout supports multiple AI providers with different implementation approaches:
 - **Normal Providers**: Standard implementation located in `webscout/Provider/`
-- **OpenAI-Compatible Providers**: OpenAI API-compatible implementation located in `webscout/Provider/OPENAI/`
+- **OpenAI-Compatible Providers**: OpenAI API-compatible implementation located in `webscout/Provider/Openai_comp/`
 - **Hybrid Providers**: Available in both normal and OpenAI-compatible versions
 
 ---
@@ -26,41 +26,41 @@ These providers have both standard and OpenAI-compatible implementations, giving
 
 | # | Provider Name | Normal Path | OpenAI Path |
 |---|---------------|-------------|-------------|
-| 1 | **AI4Chat** | `webscout/Provider/ai4chat.py` | `webscout/Provider/OPENAI/ai4chat.py` |
-| 2 | **AkashGPT** | `webscout/Provider/akashgpt.py` | `webscout/Provider/OPENAI/akashgpt.py` |
-| 3 | **Algion** | `webscout/Provider/Algion.py` | `webscout/Provider/OPENAI/algion.py` |
-| 4 | **Cerebras** | `webscout/Provider/cerebras.py` | `webscout/Provider/OPENAI/cerebras.py` |
-| 5 | **DeepAI** | `webscout/Provider/DeepAI.py` | `webscout/Provider/OPENAI/DeepAI.py` |
-| 6 | **DeepInfra** | `webscout/Provider/Deepinfra.py` | `webscout/Provider/OPENAI/deepinfra.py` |
-| 7 | **Elmo** | `webscout/Provider/elmo.py` | `webscout/Provider/OPENAI/elmo.py` |
-| 8 | **ExaAI** | `webscout/Provider/ExaAI.py` | `webscout/Provider/OPENAI/exaai.py` |
-| 9 | **Ayle** | `webscout/Provider/Ayle.py` | `webscout/Provider/OPENAI/ayle.py` |
-| 10 | **Groq** | `webscout/Provider/Groq.py` | `webscout/Provider/OPENAI/groq.py` |
-| 11 | **HeckAI** | `webscout/Provider/HeckAI.py` | `webscout/Provider/OPENAI/heckai.py` |
-| 12 | **HuggingFace** | `webscout/Provider/HuggingFace.py` | `webscout/Provider/OPENAI/huggingface.py` |
-| 13 | **IBM** | `webscout/Provider/IBM.py` | `webscout/Provider/OPENAI/ibm.py` |
+| 1 | **AI4Chat** | `webscout/Provider/ai4chat.py` | `webscout/Provider/Openai_comp/ai4chat.py` |
+| 2 | **AkashGPT** | `webscout/Provider/akashgpt.py` | `webscout/Provider/Openai_comp/akashgpt.py` |
+| 3 | **Algion** | `webscout/Provider/Algion.py` | `webscout/Provider/Openai_comp/algion.py` |
+| 4 | **Cerebras** | `webscout/Provider/cerebras.py` | `webscout/Provider/Openai_comp/cerebras.py` |
+| 5 | **DeepAI** | `webscout/Provider/DeepAI.py` | `webscout/Provider/Openai_comp/DeepAI.py` |
+| 6 | **DeepInfra** | `webscout/Provider/Deepinfra.py` | `webscout/Provider/Openai_comp/deepinfra.py` |
+| 7 | **Elmo** | `webscout/Provider/elmo.py` | `webscout/Provider/Openai_comp/elmo.py` |
+| 8 | **ExaAI** | `webscout/Provider/ExaAI.py` | `webscout/Provider/Openai_comp/exaai.py` |
+| 9 | **Ayle** | `webscout/Provider/Ayle.py` | `webscout/Provider/Openai_comp/ayle.py` |
+| 10 | **Groq** | `webscout/Provider/Groq.py` | `webscout/Provider/Openai_comp/groq.py` |
+| 11 | **HeckAI** | `webscout/Provider/HeckAI.py` | `webscout/Provider/Openai_comp/heckai.py` |
+| 12 | **HuggingFace** | `webscout/Provider/HuggingFace.py` | `webscout/Provider/Openai_comp/huggingface.py` |
+| 13 | **IBM** | `webscout/Provider/IBM.py` | `webscout/Provider/Openai_comp/ibm.py` |
 | 14 | **K2Think** | `webscout/Provider/k2think.py` | `webscout/Provider/Openai_comp/k2think.py` |
-| 15 | **LLMChatCo** | `webscout/Provider/llmchatco.py` | `webscout/Provider/OPENAI/llmchatco.py` |
-| 17 | **Netwrck** | `webscout/Provider/Netwrck.py` | `webscout/Provider/OPENAI/netwrck.py` |
-| 18 | **Nvidia** | `webscout/Provider/Nvidia.py` | `webscout/Provider/OPENAI/nvidia.py` |
-| 19 | **OIVSCode** | `webscout/Provider/oivscode.py` | `webscout/Provider/OPENAI/oivscode.py` |
-| 20 | **PI** | `webscout/Provider/PI.py` | `webscout/Provider/OPENAI/PI.py` |
-| 21 | **Sonus** | `webscout/Provider/sonus.py` | `webscout/Provider/OPENAI/sonus.py` |
-| 22 | **TextPollinationsAI** | `webscout/Provider/TextPollinationsAI.py` | `webscout/Provider/OPENAI/textpollinations.py` |
-| 23 | **TogetherAI** | `webscout/Provider/TogetherAI.py` | `webscout/Provider/OPENAI/TogetherAI.py` |
-| 24 | **Toolbaz** | `webscout/Provider/toolbaz.py` | `webscout/Provider/OPENAI/toolbaz.py` |
-| 25 | **TwoAI** | `webscout/Provider/TwoAI.py" | `webscout/Provider/OPENAI/TwoAI.py` |
-| 26 | **Typefully** | `webscout/Provider/typefully.py` | `webscout/Provider/OPENAI/typefully.py` |
-| 27 | **WiseCat** | `webscout/Provider/WiseCat.py` | `webscout/Provider/OPENAI/wisecat.py` |
-| 29 | **X0GPT** | `webscout/Provider/x0gpt.py` | `webscout/Provider/OPENAI/x0gpt.py` |
-| 30 | **Yep** | `webscout/Provider/yep.py` | `webscout/Provider/OPENAI/yep.py` |
-| 31 | **Gradient** | `webscout/Provider/Gradient.py` | `webscout/Provider/OPENAI/gradient.py` |
-| 32 | **Sambanova** | `webscout/Provider/Sambanova.py` | `webscout/Provider/OPENAI/sambanova.py` |
-| 33 | **Meta** | `webscout/Provider/meta.py` | `webscout/Provider/OPENAI/meta.py` |
-| 34 | **TypliAI** | `webscout/Provider/TypliAI.py` | `webscout/Provider/OPENAI/typliai.py` |
-| 35 | **LLMChat** | `webscout/Provider/llmchat.py` | `webscout/Provider/OPENAI/llmchat.py` |
+| 15 | **LLMChatCo** | `webscout/Provider/llmchatco.py` | `webscout/Provider/Openai_comp/llmchatco.py` |
+| 17 | **Netwrck** | `webscout/Provider/Netwrck.py` | `webscout/Provider/Openai_comp/netwrck.py` |
+| 18 | **Nvidia** | `webscout/Provider/Nvidia.py` | `webscout/Provider/Openai_comp/nvidia.py` |
+| 19 | **OIVSCode** | `webscout/Provider/oivscode.py` | `webscout/Provider/Openai_comp/oivscode.py` |
+| 20 | **PI** | `webscout/Provider/PI.py` | `webscout/Provider/Openai_comp/PI.py` |
+| 21 | **Sonus** | `webscout/Provider/sonus.py` | `webscout/Provider/Openai_comp/sonus.py` |
+| 22 | **TextPollinationsAI** | `webscout/Provider/TextPollinationsAI.py` | `webscout/Provider/Openai_comp/textpollinations.py` |
+| 23 | **TogetherAI** | `webscout/Provider/TogetherAI.py` | `webscout/Provider/Openai_comp/TogetherAI.py` |
+| 24 | **Toolbaz** | `webscout/Provider/toolbaz.py` | `webscout/Provider/Openai_comp/toolbaz.py` |
+| 25 | **TwoAI** | `webscout/Provider/TwoAI.py" | `webscout/Provider/Openai_comp/TwoAI.py` |
+| 26 | **Typefully** | `webscout/Provider/typefully.py` | `webscout/Provider/Openai_comp/typefully.py` |
+| 27 | **WiseCat** | `webscout/Provider/WiseCat.py` | `webscout/Provider/Openai_comp/wisecat.py` |
+| 29 | **X0GPT** | `webscout/Provider/x0gpt.py` | `webscout/Provider/Openai_comp/x0gpt.py` |
+| 30 | **Yep** | `webscout/Provider/yep.py` | `webscout/Provider/Openai_comp/yep.py` |
+| 31 | **Gradient** | `webscout/Provider/Gradient.py` | `webscout/Provider/Openai_comp/gradient.py` |
+| 32 | **Sambanova** | `webscout/Provider/Sambanova.py` | `webscout/Provider/Openai_comp/sambanova.py` |
+| 33 | **Meta** | `webscout/Provider/meta.py` | `webscout/Provider/Openai_comp/meta.py` |
+| 34 | **TypliAI** | `webscout/Provider/TypliAI.py` | `webscout/Provider/Openai_comp/typliai.py` |
+| 35 | **LLMChat** | `webscout/Provider/llmchat.py` | `webscout/Provider/Openai_comp/llmchat.py` |
 
-| 37 | **OpenRouter** | `webscout/Provider/OpenRouter.py` | `webscout/Provider/OPENAI/openrouter.py` |
+| 37 | **OpenRouter** | `webscout/Provider/OpenRouter.py` | `webscout/Provider/Openai_comp/openrouter.py` |
 
 **Total: 37 providers with dual implementations**
 
@@ -78,8 +78,9 @@ These providers are only available in the standard implementation format.
 | 4 | **CleeAI** | `webscout/Provider/cleeai.py` |
 | 5 | **Cohere** | `webscout/Provider/Cohere.py` |
 | 6 | **EssentialAI** | `webscout/Provider/EssentialAI.py` |
-| 7 | **Gemini** | `webscout/Provider/Gemini.py` |
-| 8 | **GeminiAPI** | `webscout/Provider/geminiapi.py` |
+| 7 | **Falcon** | `webscout/Provider/Falcon.py` |
+| 8 | **Gemini** | `webscout/Provider/Gemini.py` |
+| 9 | **GeminiAPI** | `webscout/Provider/geminiapi.py` |
 | 9 | **GithubChat** | `webscout/Provider/GithubChat.py` |
 | 10 | **Jadve** | `webscout/Provider/Jadve.py` |
 | 11 | **Julius** | `webscout/Provider/julius.py` |
@@ -93,7 +94,7 @@ These providers are only available in the standard implementation format.
 | 19 | **Upstage** | `webscout/Provider/Upstage.py` |
 | 20 | **WrDoChat** | `webscout/Provider/WrDoChat.py` |
 
-**Total: 20 providers with only normal implementation**
+**Total: 21 providers with only normal implementation**
 
 ---
 
@@ -103,11 +104,11 @@ These providers are only available in the OpenAI-compatible format and have no s
 
 | # | Provider Name | Path |
 |---|---------------|------|
-| 1 | **ChatGPT** | `webscout/Provider/OPENAI/chatgpt.py` |
-| 2 | **E2B** | `webscout/Provider/OPENAI/e2b.py` |
-| 3 | **FreeAssist** | `webscout/Provider/OPENAI/freeassist.py` |
-| 4 | **WriteCream** | `webscout/Provider/OPENAI/writecream.py` |
-| 5 | **Zenmux** | `webscout/Provider/OPENAI/zenmux.py" |
+| 1 | **ChatGPT** | `webscout/Provider/Openai_comp/chatgpt.py` |
+| 2 | **E2B** | `webscout/Provider/Openai_comp/e2b.py` |
+| 3 | **FreeAssist** | `webscout/Provider/Openai_comp/freeassist.py` |
+| 4 | **WriteCream** | `webscout/Provider/Openai_comp/writecream.py` |
+| 5 | **Zenmux** | `webscout/Provider/Openai_comp/zenmux.py` |
 
 **Total: 5 providers with only OpenAI-compatible implementation**
 
@@ -122,10 +123,10 @@ These providers are only available in the OpenAI-compatible format and have no s
 │ Category                                │ Count │
 ├─────────────────────────────────────────┼───────┤
 │ Both Normal & OpenAI-Compatible         │  37   │
-│ Only Normal Version                     │  20   │
+│ Only Normal Version                     │  21   │
 │ Only OpenAI-Compatible Version          │   5   │
 ├─────────────────────────────────────────┼───────┤
-│ TOTAL UNIQUE PROVIDERS                  │  62   │
+│ TOTAL UNIQUE PROVIDERS                  │  63   │
 └─────────────────────────────────────────┴───────┘
 ```
 
@@ -234,7 +235,7 @@ response = client.chat.completions.create(
 
 When adding new providers:
 1. Implement the normal version in `webscout/Provider/`
-2. If applicable, create an OpenAI-compatible version in `webscout/Provider/OPENAI/`
+2. If applicable, create an OpenAI-compatible version in `webscout/Provider/Openai_comp/`
 3. Update this documentation
 4. Add tests for both implementations
 

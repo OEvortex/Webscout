@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import Any, Dict, Generator, Optional, Union, cast
 
 import aiohttp
-import requests
+from curl_cffi import requests
 
 from webscout import exceptions
 from webscout.AIbase import AISearch, Response, SearchResponse
@@ -63,12 +63,22 @@ class AyeSoul(AISearch):
             )
             upload_resp.raise_for_status()
             data = upload_resp.json()
-            return {"file_id": data["file_id"], "imageName": image_name, "contentType": content_type}
+            return {
+                "file_id": data["file_id"],
+                "imageName": image_name,
+                "contentType": content_type,
+            }
         except Exception as e:
             raise exceptions.FailedToGenerateResponseError(f"Failed to upload image: {e}")
 
     def _build_payload(
-        self, prompt: str, follow_up: bool = False, cid: Optional[str] = None, question: Optional[str] = None, answer: Optional[str] = None, image_url: Optional[str] = None
+        self,
+        prompt: str,
+        follow_up: bool = False,
+        cid: Optional[str] = None,
+        question: Optional[str] = None,
+        answer: Optional[str] = None,
+        image_url: Optional[str] = None,
     ) -> Dict[str, Any]:
         now = datetime.now()
         payload = {
@@ -78,7 +88,9 @@ class AyeSoul(AISearch):
             "id": self._gen_id(),
             "x-cache-sec": f"{self._gen_id(7)}-|BANKAI|-{self._gen_id(7)}",
             "chin_tapak_dum_dum": {"cf_config": {"unos": "", "dos": "", "tres": "", "chin": ""}},
-            "nostal": [{"id": cid, "rank": 1, "question": question, "answer": answer}] if follow_up and cid else [],
+            "nostal": [{"id": cid, "rank": 1, "question": question, "answer": answer}]
+            if follow_up and cid
+            else [],
             "ultra_mode": True,
             "customExcludeList": [],
         }
@@ -86,11 +98,18 @@ class AyeSoul(AISearch):
         if image_url:
             info = self.upload_image(image_url)
             payload["attach"] = [
-                {"file_id": info["file_id"], "name": info["imageName"], "type": info["contentType"].split("/")[1], "mime": info["contentType"]}
+                {
+                    "file_id": info["file_id"],
+                    "name": info["imageName"],
+                    "type": info["contentType"].split("/")[1],
+                    "mime": info["contentType"],
+                }
             ]
         return payload
 
-    async def _ws_worker(self, payload: Dict[str, Any], out_q: "queue.Queue[Optional[tuple]]") -> None:
+    async def _ws_worker(
+        self, payload: Dict[str, Any], out_q: "queue.Queue[Optional[tuple]]"
+    ) -> None:
         try:
             async with aiohttp.ClientSession(headers=self.headers) as session:
                 async with session.ws_connect(self.url, timeout=self.timeout) as ws:
@@ -106,11 +125,15 @@ class AyeSoul(AISearch):
                             key = self.map_status(res.get("status"))
                             if key:
                                 temp.setdefault(key, []).append(
-                                    json.dumps(res.get("message", "")) if isinstance(res.get("message"), dict) else str(res.get("message", ""))
+                                    json.dumps(res.get("message", ""))
+                                    if isinstance(res.get("message"), dict)
+                                    else str(res.get("message", ""))
                                 )
                                 out_q.put(("chunk", key, temp[key][-1]))
                             if res.get("status") == "SOUL XOver":
-                                final = {k: "".join(v) for k, v in temp.items() if "".join(v).strip()}
+                                final = {
+                                    k: "".join(v) for k, v in temp.items() if "".join(v).strip()
+                                }
                                 for k in final:
                                     try:
                                         final[k] = json.loads(final[k])
@@ -134,9 +157,17 @@ class AyeSoul(AISearch):
         conversationally: bool = False,
         **kwargs: Any,
     ) -> Response:
-        payload = self._build_payload(prompt, kwargs.get("follow_up", False), kwargs.get("id"), kwargs.get("question"), kwargs.get("answer"), kwargs.get("image_url"))
+        payload = self._build_payload(
+            prompt,
+            kwargs.get("follow_up", False),
+            kwargs.get("id"),
+            kwargs.get("question"),
+            kwargs.get("answer"),
+            kwargs.get("image_url"),
+        )
 
         if stream:
+
             def stream_gen() -> Generator[Union[str, Dict[str, Any]], None, None]:
                 q: "queue.Queue[Optional[tuple]]" = queue.Queue()
 
@@ -290,6 +321,7 @@ class AyeSoul(AISearch):
 
 if __name__ == "__main__":
     from rich import print
+
     ai = AyeSoul()
     response = ai.search("What is AI?", stream=True, raw=False)
     if hasattr(response, "__iter__") and not isinstance(response, (str, SearchResponse)):

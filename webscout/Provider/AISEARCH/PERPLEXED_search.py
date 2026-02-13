@@ -1,6 +1,7 @@
 from typing import Any, Dict, Generator, List, Optional, Union, cast
 
-import requests
+from curl_cffi import requests
+from curl_cffi.requests.exceptions import RequestException
 
 from webscout import exceptions
 from webscout.AIbase import AISearch, SearchResponse
@@ -50,7 +51,13 @@ class PERPLEXED(AISearch):
         stream: bool = False,
         raw: bool = False,
         **kwargs: Any,
-    ) -> Union[SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None], List[Any], Dict[str, Any], str]:
+    ) -> Union[
+        SearchResponse,
+        Generator[Union[Dict[str, str], SearchResponse], None, None],
+        List[Any],
+        Dict[str, Any],
+        str,
+    ]:
         """
         Sends a prompt to the PERPLEXED API and returns the response.
 
@@ -101,19 +108,27 @@ class PERPLEXED(AISearch):
                         data=response.iter_content(chunk_size=1024),
                         intro_value="",
                         to_json=True,
-                        content_extractor=lambda chunk: (chunk.get("answer") if isinstance(chunk, dict) and chunk.get("success") and chunk.get("answer") is not None else None),
+                        content_extractor=lambda chunk: (
+                            chunk.get("answer")
+                            if isinstance(chunk, dict)
+                            and chunk.get("success")
+                            and chunk.get("answer") is not None
+                            else None
+                        ),
                         yield_raw_on_error=False,
-                        encoding='utf-8',
-                        encoding_errors='replace',
+                        encoding="utf-8",
+                        encoding_errors="replace",
                         line_delimiter="[/PERPLEXED-SEPARATOR]",
                         raw=raw,
-                        output_formatter=None if raw else lambda x: SearchResponse(x) if isinstance(x, str) else x,
+                        output_formatter=None
+                        if raw
+                        else lambda x: SearchResponse(x) if isinstance(x, str) else x,
                     )
 
                     for chunk in processed_chunks:
                         yield chunk
 
-            except requests.exceptions.RequestException as e:
+            except RequestException as e:
                 raise exceptions.APIConnectionError(f"Request failed: {e}")
 
         def for_non_stream():
@@ -143,10 +158,16 @@ class PERPLEXED(AISearch):
                             strip_chars=None,
                             start_marker=None,
                             end_marker=None,
-                            content_extractor=lambda chunk: (chunk.get("answer") if isinstance(chunk, dict) and chunk.get("success") and chunk.get("answer") is not None else None),
+                            content_extractor=lambda chunk: (
+                                chunk.get("answer")
+                                if isinstance(chunk, dict)
+                                and chunk.get("success")
+                                and chunk.get("answer") is not None
+                                else None
+                            ),
                             yield_raw_on_error=False,
-                            encoding='utf-8',
-                            encoding_errors='replace',
+                            encoding="utf-8",
+                            encoding_errors="replace",
                             buffer_size=8192,
                             line_delimiter="[/PERPLEXED-SEPARATOR]",
                             error_handler=None,
@@ -163,7 +184,7 @@ class PERPLEXED(AISearch):
                         self.last_response = SearchResponse(full_response)
                         return self.last_response
 
-            except requests.exceptions.RequestException as e:
+            except RequestException as e:
                 raise exceptions.APIConnectionError(f"Request failed: {e}")
 
         return for_stream() if stream else for_non_stream()

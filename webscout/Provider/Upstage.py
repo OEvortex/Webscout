@@ -3,7 +3,7 @@
 import json
 from typing import Any, Dict, Generator, Optional, Union, cast
 
-import requests
+from curl_cffi import CurlError, requests
 
 from webscout import exceptions
 from webscout.AIbase import Provider, Response
@@ -97,9 +97,7 @@ class Upstage(Provider):
             ValueError: If model is not in AVAILABLE_MODELS.
         """
         if model not in self.AVAILABLE_MODELS:
-            raise ValueError(
-                f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}"
-            )
+            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
 
         if not api_key:
             import os
@@ -136,9 +134,7 @@ class Upstage(Provider):
         self.top_p = top_p
         self.system_message = system_message
 
-        self.__available_optimizers = (
-            dir(Optimizers) if is_conversation else None
-        )
+        self.__available_optimizers = dir(Optimizers) if is_conversation else None
 
         self.conversation: Conversation = Conversation(
             filepath=filepath,
@@ -159,9 +155,7 @@ class Upstage(Provider):
             )
 
     @staticmethod
-    def _upstage_extractor(
-        chunk_json: Union[str, Dict[str, Any]]
-    ) -> Optional[str]:
+    def _upstage_extractor(chunk_json: Union[str, Dict[str, Any]]) -> Optional[str]:
         """
         Extract content from Upstage streaming response.
 
@@ -213,19 +207,12 @@ class Upstage(Provider):
             InvalidArgumentError: If optimizer is not valid.
         """
         conversation_prompt = (
-            self.conversation.gen_complete_prompt(prompt)
-            if conversationally
-            else prompt
+            self.conversation.gen_complete_prompt(prompt) if conversationally else prompt
         )
 
         if optimizer:
-            if (
-                self.__available_optimizers
-                and optimizer in self.__available_optimizers
-            ):
-                conversation_prompt = getattr(Optimizers, optimizer)(
-                    conversation_prompt
-                )
+            if self.__available_optimizers and optimizer in self.__available_optimizers:
+                conversation_prompt = getattr(Optimizers, optimizer)(conversation_prompt)
             else:
                 raise exceptions.InvalidOptimizerError(
                     f"Optimizer is not one of {self.__available_optimizers}"
@@ -258,9 +245,7 @@ class Upstage(Provider):
                 if response.status_code != 200:
                     try:
                         error_detail = response.json()
-                        error_msg = error_detail.get("error", {}).get(
-                            "message", response.text
-                        )
+                        error_msg = error_detail.get("error", {}).get("message", response.text)
                     except (json.JSONDecodeError, AttributeError):
                         error_msg = response.text
 
@@ -287,20 +272,14 @@ class Upstage(Provider):
                 # Update conversation history
                 self.last_response = {"text": streaming_text}
                 if conversationally:
-                    self.conversation.update_chat_history(
-                        prompt, streaming_text
-                    )
+                    self.conversation.update_chat_history(prompt, streaming_text)
 
-            except requests.RequestException as e:
-                raise exceptions.APIConnectionError(
-                    f"Network error: {e}"
-                ) from e
+            except CurlError as e:
+                raise exceptions.APIConnectionError(f"Network error: {e}") from e
             except exceptions.WebscoutE:
                 raise
             except Exception as e:
-                raise exceptions.FailedToGenerateResponseError(
-                    f"Unexpected error: {e}"
-                ) from e
+                raise exceptions.FailedToGenerateResponseError(f"Unexpected error: {e}") from e
 
         def for_non_stream() -> Dict[str, Any]:
             """Handle non-streaming response."""
@@ -312,9 +291,7 @@ class Upstage(Provider):
                 if response.status_code != 200:
                     try:
                         error_detail = response.json()
-                        error_msg = error_detail.get("error", {}).get(
-                            "message", response.text
-                        )
+                        error_msg = error_detail.get("error", {}).get("message", response.text)
                     except (json.JSONDecodeError, AttributeError):
                         error_msg = response.text
 
@@ -330,9 +307,7 @@ class Upstage(Provider):
                     and response_json["choices"]
                     and "message" in response_json["choices"][0]
                 ):
-                    content = response_json["choices"][0]["message"].get(
-                        "content", ""
-                    )
+                    content = response_json["choices"][0]["message"].get("content", "")
                 else:
                     content = ""
 
@@ -347,16 +322,12 @@ class Upstage(Provider):
 
                 return {"text": content} if not raw else response_json
 
-            except requests.RequestException as e:
-                raise exceptions.APIConnectionError(
-                    f"Network error: {e}"
-                ) from e
+            except CurlError as e:
+                raise exceptions.APIConnectionError(f"Network error: {e}") from e
             except exceptions.WebscoutE:
                 raise
             except Exception as e:
-                raise exceptions.FailedToGenerateResponseError(
-                    f"Unexpected error: {e}"
-                ) from e
+                raise exceptions.FailedToGenerateResponseError(f"Unexpected error: {e}") from e
 
         return for_stream() if stream else for_non_stream()
 
@@ -448,16 +419,12 @@ if __name__ == "__main__":
 
         # Non-streaming example
         print("[cyan]Non-Streaming Response:[/cyan]")
-        response = api.chat(
-            "What are the limitations of current AI models?", stream=False
-        )
+        response = api.chat("What are the limitations of current AI models?", stream=False)
         print(response)
 
         print("\n[cyan]Streaming Response:[/cyan]")
         # Streaming example
-        for chunk in api.chat(
-            "Write a short poem about machine learning", stream=True
-        ):
+        for chunk in api.chat("Write a short poem about machine learning", stream=True):
             print(chunk, end="", flush=True)
         print()
 

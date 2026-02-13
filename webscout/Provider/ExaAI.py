@@ -2,7 +2,7 @@ import json
 from typing import Any, Dict, Generator, Optional, Union, cast
 from uuid import uuid4
 
-import requests
+from curl_cffi import requests
 
 from webscout import exceptions
 from webscout.AIbase import Provider, Response
@@ -24,8 +24,10 @@ class ExaAI(Provider):
         >>> print(response)
         'The weather today depends on your location...'
     """
+
     AVAILABLE_MODELS = ["O3-Mini"]
     required_auth = False
+
     def __init__(
         self,
         is_conversation: bool = True,
@@ -38,7 +40,7 @@ class ExaAI(Provider):
         history_offset: int = 10250,
         act: Optional[str] = None,
         # system_prompt: str = "You are a helpful assistant.",
-        model: str = "O3-Mini", # >>> THIS FLAG IS NOT USED <<<
+        model: str = "O3-Mini",  # >>> THIS FLAG IS NOT USED <<<
     ):
         """
         Initializes the ExaAI API with given parameters.
@@ -88,7 +90,7 @@ class ExaAI(Provider):
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
             "sec-gpc": "1",
-            "user-agent": self.agent.random()  # Use LitAgent to generate a random user agent
+            "user-agent": self.agent.random(),  # Use LitAgent to generate a random user agent
         }
 
         self.__available_optimizers = (
@@ -103,8 +105,14 @@ class ExaAI(Provider):
         self.conversation.history_offset = history_offset
 
         if act:
-            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
-            ) or self.conversation.intro
+            self.conversation.intro = (
+                AwesomePrompts().get_act(
+                    cast(Union[str, int], act),
+                    default=self.conversation.intro,
+                    case_insensitive=True,
+                )
+                or self.conversation.intro
+            )
         elif intro:
             self.conversation.intro = intro
         if proxies:
@@ -145,9 +153,7 @@ class ExaAI(Provider):
                     conversation_prompt if conversationally else prompt
                 )
             else:
-                raise Exception(
-                    f"Optimizer is not one of {self.__available_optimizers}"
-                )
+                raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
 
         # Generate a unique ID for the conversation
         conversation_id = uuid4().hex[:16]
@@ -157,11 +163,17 @@ class ExaAI(Provider):
             "messages": [
                 # {"role": "system", "content": self.system_prompt}, # system role not supported by this provider
                 {"role": "user", "content": conversation_prompt}
-            ]
+            ],
         }
 
         def for_stream():
-            response = self.session.post(self.api_endpoint, headers=self.headers, json=payload, stream=True, timeout=self.timeout)
+            response = self.session.post(
+                self.api_endpoint,
+                headers=self.headers,
+                json=payload,
+                stream=True,
+                timeout=self.timeout,
+            )
             if not response.ok:
                 raise exceptions.FailedToGenerateResponseError(
                     f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
@@ -175,7 +187,7 @@ class ExaAI(Provider):
                 to_json=False,
                 extract_regexes=[r'0:"(.*?)"'],
                 yield_raw_on_error=False,
-                raw=raw
+                raw=raw,
             )
 
             for content in processed_stream:
@@ -225,6 +237,7 @@ class ExaAI(Provider):
             'The weather today depends on your location...'
         """
         raw = kwargs.get("raw", False)
+
         def for_stream():
             for response in self.ask(
                 prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
@@ -261,11 +274,13 @@ class ExaAI(Provider):
         if not isinstance(response, dict):
             return str(response)
         resp_dict = cast(Dict[str, Any], response)
-        formatted_text = cast(str, resp_dict["text"]).replace('\\n', '\n').replace('\\n\\n', '\n\n')
+        formatted_text = cast(str, resp_dict["text"]).replace("\\n", "\n").replace("\\n\\n", "\n\n")
         return formatted_text
+
 
 if __name__ == "__main__":
     from rich import print
+
     ai = ExaAI(timeout=5000)
     response = ai.chat("Tell me about HelpingAI", stream=True)
     if hasattr(response, "__iter__") and not isinstance(response, (str, bytes)):

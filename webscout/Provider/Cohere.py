@@ -1,16 +1,17 @@
 import json
 from typing import Any, Dict, Generator, Optional, Union, cast
 
-import requests
+from curl_cffi import requests
 
 from webscout import exceptions
 from webscout.AIbase import Provider, Response
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 
 
-#-----------------------------------------------Cohere--------------------------------------------
+# -----------------------------------------------Cohere--------------------------------------------
 class Cohere(Provider):
     required_auth = True
+
     def __init__(
         self,
         api_key: str,
@@ -76,8 +77,14 @@ class Cohere(Provider):
         self.conversation.history_offset = history_offset
 
         if act:
-            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
-            ) or self.conversation.intro
+            self.conversation.intro = (
+                AwesomePrompts().get_act(
+                    cast(Union[str, int], act),
+                    default=self.conversation.intro,
+                    case_insensitive=True,
+                )
+                or self.conversation.intro
+            )
         elif intro:
             self.conversation.intro = intro
         if proxies:
@@ -115,9 +122,7 @@ class Cohere(Provider):
                     conversation_prompt if conversationally else prompt
                 )
             else:
-                raise Exception(
-                    f"Optimizer is not one of {self.__available_optimizers}"
-                )
+                raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
         self.session.headers.update(self.headers)
         payload = {
             "message": conversation_prompt,
@@ -141,7 +146,7 @@ class Cohere(Provider):
                 intro_value=None,
                 to_json=True,
                 yield_raw_on_error=False,
-                raw=raw
+                raw=raw,
             )
 
             for chunk in processed_stream:
@@ -186,6 +191,7 @@ class Cohere(Provider):
             str: Response generated
         """
         raw = kwargs.get("raw", False)
+
         def for_stream():
             for response in self.ask(
                 prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
@@ -222,8 +228,11 @@ class Cohere(Provider):
             return str(response)
         resp_dict = cast(Dict[str, Any], response)
         return cast(str, resp_dict["result"]["chatStreamEndEvent"]["response"]["text"])
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     from rich import print
+
     ai = Cohere(api_key="")
     response = ai.chat("tell me about india")
     if hasattr(response, "__iter__") and not isinstance(response, (str, bytes)):

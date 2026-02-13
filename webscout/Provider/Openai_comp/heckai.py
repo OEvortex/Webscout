@@ -2,7 +2,7 @@ import time
 import uuid
 from typing import Any, Dict, Generator, List, Optional, Union, cast
 
-import requests
+from curl_cffi import CurlError, requests
 
 from webscout.Provider.Openai_comp.base import (
     BaseChat,
@@ -142,7 +142,7 @@ class Completions(BaseCompletions):
                 model=model,
             )
             yield chunk
-        except requests.exceptions.RequestException as e:
+        except CurlError as e:
             print(f"{RED}Error during HeckAI stream request: {e}{RESET}")
             raise IOError(f"HeckAI request failed: {e}") from e
 

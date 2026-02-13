@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Iterator, Optional
 
 import httpx
-import requests
+from curl_cffi import requests
 from curl_cffi.requests import Session as CurlSession
 from litprinter import ic
 
@@ -58,7 +58,9 @@ class ProxyManager:
                 # 1. Anon Token
                 r = await client.post(
                     "https://api-pro.falais.com/rest/v1/registrations/clientApps/URBAN_VPN_BROWSER_EXTENSION/users/anonymous",
-                    json={"clientApp": {"name": "URBAN_VPN_BROWSER_EXTENSION", "browser": "CHROME"}},
+                    json={
+                        "clientApp": {"name": "URBAN_VPN_BROWSER_EXTENSION", "browser": "CHROME"}
+                    },
                 )
                 r.raise_for_status()
                 anon_response = r.json()
@@ -85,11 +87,17 @@ class ProxyManager:
                 # 3. Countries
                 r = await client.get(
                     "https://stats.falais.com/api/rest/v2/entrypoints/countries",
-                    headers={"authorization": f"Bearer {token}", "x-client-app": "URBAN_VPN_BROWSER_EXTENSION"},
+                    headers={
+                        "authorization": f"Bearer {token}",
+                        "x-client-app": "URBAN_VPN_BROWSER_EXTENSION",
+                    },
                 )
                 r.raise_for_status()
                 countries_response = r.json()
-                if "countries" not in countries_response or "elements" not in countries_response["countries"]:
+                if (
+                    "countries" not in countries_response
+                    or "elements" not in countries_response["countries"]
+                ):
                     if self.debug:
                         ic(f"Urban VPN countries response: {countries_response}")
                     return []

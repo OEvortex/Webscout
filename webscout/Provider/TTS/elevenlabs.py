@@ -7,7 +7,7 @@ import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Optional, Union, cast
 
-import requests
+from curl_cffi import requests
 from litprinter import ic
 
 from webscout import exceptions
@@ -20,9 +20,11 @@ except ImportError:
     # Handle direct execution
     import os
     import sys
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
     from webscout.Provider.TTS import utils
     from webscout.Provider.TTS.base import BaseTTSProvider
+
 
 class ElevenlabsTTS(BaseTTSProvider):
     """
@@ -31,6 +33,7 @@ class ElevenlabsTTS(BaseTTSProvider):
     This provider supports both authenticated (with API key) and
     unauthenticated (limited) usage if available.
     """
+
     required_auth = True
 
     # Supported models
@@ -40,7 +43,7 @@ class ElevenlabsTTS(BaseTTSProvider):
         "eleven_flash_v2",
         "eleven_turbo_v2_5",
         "eleven_turbo_v2",
-        "eleven_monolingual_v1"
+        "eleven_monolingual_v1",
     ]
 
     # Request headers
@@ -52,9 +55,23 @@ class ElevenlabsTTS(BaseTTSProvider):
 
     # ElevenLabs voices
     SUPPORTED_VOICES = [
-        "brian", "alice", "bill", "callum", "charlie", "charlotte",
-        "chris", "daniel", "eric", "george", "jessica", "laura",
-        "liam", "lily", "matilda", "sarah", "will"
+        "brian",
+        "alice",
+        "bill",
+        "callum",
+        "charlie",
+        "charlotte",
+        "chris",
+        "daniel",
+        "eric",
+        "george",
+        "jessica",
+        "laura",
+        "liam",
+        "lily",
+        "matilda",
+        "sarah",
+        "will",
     ]
 
     # Voice mapping
@@ -75,10 +92,12 @@ class ElevenlabsTTS(BaseTTSProvider):
         "lily": "pFZP5JQG7iQjIQuC4Bku",
         "matilda": "XrExE9yKIg1WjnnlVkGX",
         "sarah": "EXAVITQu4vr4xnSDxMaL",
-        "will": "bIHbv24MWmeRgasZH58o"
+        "will": "bIHbv24MWmeRgasZH58o",
     }
 
-    def __init__(self, api_key: Optional[str] = None, timeout: int = 30, proxies: Optional[dict] = None):
+    def __init__(
+        self, api_key: Optional[str] = None, timeout: int = 30, proxies: Optional[dict] = None
+    ):
         """
         Initialize the ElevenLabs TTS client.
 
@@ -99,13 +118,7 @@ class ElevenlabsTTS(BaseTTSProvider):
         self.timeout = timeout
         self.default_voice = "brian"
 
-    def tts(
-        self,
-        text: str,
-        voice: str | None = None,
-        verbose: bool = False,
-        **kwargs
-    ) -> str:
+    def tts(self, text: str, voice: str | None = None, verbose: bool = False, **kwargs) -> str:
         """
         Convert text to speech using ElevenLabs API.
         """
@@ -121,50 +134,54 @@ class ElevenlabsTTS(BaseTTSProvider):
         voice_id = self.voice_mapping.get(voice.lower(), voice)
 
         file_extension = f".{response_format}"
-        temp_file = tempfile.NamedTemporaryFile(suffix=file_extension, dir=self.temp_dir, delete=False)
+        temp_file = tempfile.NamedTemporaryFile(
+            suffix=file_extension, dir=self.temp_dir, delete=False
+        )
         temp_file.close()
         filename = pathlib.Path(temp_file.name)
 
         sentences = utils.split_sentences(text)
         if verbose:
-            ic.configureOutput(prefix='DEBUG| ')
+            ic.configureOutput(prefix="DEBUG| ")
             ic(f"ElevenlabsTTS: Processing {len(sentences)} chunks")
 
         def generate_chunk(part_text: str, part_num: int):
             payload = {
                 "text": part_text,
                 "model_id": model,
-                "voice_settings": {
-                    "stability": 0.5,
-                    "similarity_boost": 0.5
-                }
+                "voice_settings": {"stability": 0.5, "similarity_boost": 0.5},
             }
             url = f"{self.api_url}/{voice_id}"
             params = {}
             if not self.api_key:
                 # Some public endpoints might still work without key but they are very restricted
-                params['allow_unauthenticated'] = '1'
+                params["allow_unauthenticated"] = "1"
 
             response = self.session.post(url, json=payload, params=params, timeout=self.timeout)
             if response.status_code == 401 and not self.api_key:
-                raise exceptions.FailedToGenerateResponseError("ElevenLabs requires an API key for this request.")
+                raise exceptions.FailedToGenerateResponseError(
+                    "ElevenLabs requires an API key for this request."
+                )
             response.raise_for_status()
             return part_num, response.content
 
         try:
             with ThreadPoolExecutor(max_workers=2) as executor:
-                futures = {executor.submit(generate_chunk, s.strip(), i): i for i, s in enumerate(sentences)}
+                futures = {
+                    executor.submit(generate_chunk, s.strip(), i): i
+                    for i, s in enumerate(sentences)
+                }
                 audio_chunks = {}
                 for future in as_completed(futures):
                     idx, data = future.result()
                     audio_chunks[idx] = data
 
-                with open(filename, 'wb') as f:
+                with open(filename, "wb") as f:
                     for i in sorted(audio_chunks.keys()):
                         f.write(audio_chunks[i])
 
                 if verbose:
-                    ic.configureOutput(prefix='INFO| ')
+                    ic.configureOutput(prefix="INFO| ")
                     ic(f"Audio saved to {filename}")
                 return str(filename)
         except Exception as e:
@@ -178,12 +195,12 @@ class ElevenlabsTTS(BaseTTSProvider):
         response_format: Optional[str] = None,
         instructions: Optional[str] = None,
         verbose: bool = False,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> str:
         return self.tts(
             text=input_text,
             model=model or "eleven_multilingual_v2",
             voice=voice or "brian",
             response_format=response_format or "mp3",
-            verbose=verbose
+            verbose=verbose,
         )

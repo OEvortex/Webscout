@@ -8,7 +8,7 @@ import time
 import uuid
 from typing import Any, Dict, Generator, List, Optional, Union, cast
 
-import requests
+from curl_cffi import requests
 
 from webscout.Provider.Openai_comp.base import (
     BaseChat,

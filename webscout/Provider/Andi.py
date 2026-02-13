@@ -2,7 +2,7 @@ import json
 from typing import Any, Dict, Generator, Optional, Union, cast
 from uuid import uuid4
 
-import requests
+from curl_cffi import requests
 
 from webscout import exceptions
 from webscout.AIbase import Provider, Response
@@ -13,6 +13,7 @@ from webscout.search import DuckDuckGoSearch
 
 class AndiSearch(Provider):
     required_auth = False
+
     def __init__(
         self,
         is_conversation: bool = True,
@@ -79,8 +80,14 @@ class AndiSearch(Provider):
         self.conversation.history_offset = history_offset
 
         if act:
-            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
-            ) or self.conversation.intro
+            self.conversation.intro = (
+                AwesomePrompts().get_act(
+                    cast(Union[str, int], act),
+                    default=self.conversation.intro,
+                    case_insensitive=True,
+                )
+                or self.conversation.intro
+            )
         elif intro:
             self.conversation.intro = intro
         if proxies:
@@ -95,7 +102,6 @@ class AndiSearch(Provider):
         conversationally: bool = False,
         **kwargs: Any,
     ) -> Response:
-
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
             if optimizer in self.__available_optimizers:
@@ -103,9 +109,7 @@ class AndiSearch(Provider):
                     conversation_prompt if conversationally else prompt
                 )
             else:
-                raise Exception(
-                    f"Optimizer is not one of {self.__available_optimizers}"
-                )
+                raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
 
         # Initialize the DuckDuckGo search instance
         ddg_search = DuckDuckGoSearch()
@@ -134,11 +138,13 @@ class AndiSearch(Provider):
                         "desc": result.body,
                         "image": "",
                         "type": "website",
-                        "source": result.href.split("//")[1].split("/")[0] if "//" in result.href else result.href.split("/")[0]  # Extract the domain name
+                        "source": result.href.split("//")[1].split("/")[0]
+                        if "//" in result.href
+                        else result.href.split("/")[0],  # Extract the domain name
                     }
                     for result in search_results
-                ]
-            }
+                ],
+            },
         }
         self.session.headers.update(self.headers)
         payload = serp_payload
@@ -155,11 +161,13 @@ class AndiSearch(Provider):
             streaming_text = ""
             # Use sanitize_stream for processing
             processed_stream = sanitize_stream(
-                data=response.iter_lines(decode_unicode=True, chunk_size=self.stream_chunk_size, delimiter="\n"),
+                data=response.iter_lines(
+                    decode_unicode=True, chunk_size=self.stream_chunk_size, delimiter="\n"
+                ),
                 intro_value=None,  # No prefix to strip
                 to_json=False,  # Response is plain text
                 yield_raw_on_error=True,
-                raw=raw
+                raw=raw,
             )
 
             for content_chunk in processed_stream:
@@ -189,6 +197,7 @@ class AndiSearch(Provider):
         **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         raw = kwargs.get("raw", False)
+
         def for_stream():
             for response in self.ask(
                 prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
@@ -226,8 +235,10 @@ class AndiSearch(Provider):
         resp_dict = cast(Dict[str, Any], response)
         return cast(str, resp_dict["text"])
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     from rich import print
+
     ai = AndiSearch()
     response = ai.chat("tell me about india")
     for chunk in response:

@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Generator, List, Optional, TypedDict, Union, cast
 
-import requests
+from curl_cffi import requests
 from litprinter import ic
 
 from webscout.AIbase import ModelList, Response, SimpleModelList
@@ -16,24 +16,31 @@ from webscout.Provider.Openai_comp.utils import ChatCompletion, ChatCompletionCh
 # Define tool-related structures
 class ToolDefinition(TypedDict):
     """Definition of a tool that can be called by the AI"""
+
     type: str
     function: Dict[str, Any]
 
+
 class FunctionParameters(TypedDict):
     """Parameters for a function"""
+
     type: str
     properties: Dict[str, Dict[str, Any]]
     required: List[str]
 
+
 class FunctionDefinition(TypedDict):
     """Definition of a function that can be called by the AI"""
+
     name: str
     description: str
     parameters: FunctionParameters
 
+
 @dataclass
 class Tool:
     """Tool class that can be passed to the provider"""
+
     name: str
     description: str
     parameters: Dict[str, Dict[str, Any]]
@@ -48,14 +55,11 @@ class Tool:
             "parameters": {
                 "type": "object",
                 "properties": self.parameters,
-                "required": self.required_params or list(self.parameters.keys())
-            }
+                "required": self.required_params or list(self.parameters.keys()),
+            },
         }
 
-        return {
-            "type": "function",
-            "function": function_def
-        }
+        return {"type": "function", "function": function_def}
 
     def execute(self, arguments: Dict[str, Any]) -> Any:
         """Execute the tool with the given arguments"""
@@ -65,9 +69,10 @@ class Tool:
         try:
             return self.implementation(**arguments)
         except Exception as e:
-            ic.configureOutput(prefix='ERROR| ')
+            ic.configureOutput(prefix="ERROR| ")
             ic(f"Error executing tool '{self.name}': {str(e)}")
             return f"Error executing tool '{self.name}': {str(e)}"
+
 
 class BaseCompletions(ABC):
     @abstractmethod
@@ -81,10 +86,12 @@ class BaseCompletions(ABC):
         temperature: Optional[float] = None,
         top_p: Optional[float] = None,
         tools: Optional[List[Union[Tool, Dict[str, Any]]]] = None,  # Support for tool definitions
-        tool_choice: Optional[Union[str, Dict[str, Any]]] = None,  # Support for tool_choice parameter
+        tool_choice: Optional[
+            Union[str, Dict[str, Any]]
+        ] = None,  # Support for tool_choice parameter
         timeout: Optional[int] = None,
         proxies: Optional[dict] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
         """
         Abstract method to create chat completions with tool support.
@@ -116,12 +123,14 @@ class BaseCompletions(ABC):
                 # Assume already formatted correctly
                 formatted_tools.append(tool)
             else:
-                ic.configureOutput(prefix='WARNING| ')
+                ic.configureOutput(prefix="WARNING| ")
                 ic(f"Skipping invalid tool type: {type(tool)}")
 
         return formatted_tools
 
-    def process_tool_calls(self, tool_calls: List[Dict[str, Any]], available_tools: Dict[str, Tool]) -> List[Dict[str, Any]]:
+    def process_tool_calls(
+        self, tool_calls: List[Dict[str, Any]], available_tools: Dict[str, Tool]
+    ) -> List[Dict[str, Any]]:
         """
         Process tool calls and execute the relevant tools.
 
@@ -147,31 +156,34 @@ class BaseCompletions(ABC):
                     else:
                         arguments = arguments_str
                 except json.JSONDecodeError:
-                    results.append({
-                        "tool_call_id": call.get("id"),
-                        "result": f"Error: Could not parse arguments JSON: {arguments_str}"
-                    })
+                    results.append(
+                        {
+                            "tool_call_id": call.get("id"),
+                            "result": f"Error: Could not parse arguments JSON: {arguments_str}",
+                        }
+                    )
                     continue
 
                 # Execute the tool if available
                 if tool_name in available_tools:
                     tool_result = available_tools[tool_name].execute(arguments)
-                    results.append({
-                        "tool_call_id": call.get("id"),
-                        "result": str(tool_result)
-                    })
+                    results.append({"tool_call_id": call.get("id"), "result": str(tool_result)})
                 else:
-                    results.append({
-                        "tool_call_id": call.get("id"),
-                        "result": f"Error: Tool '{tool_name}' not found."
-                    })
+                    results.append(
+                        {
+                            "tool_call_id": call.get("id"),
+                            "result": f"Error: Tool '{tool_name}' not found.",
+                        }
+                    )
             except Exception as e:
-                ic.configureOutput(prefix='ERROR| ')
+                ic.configureOutput(prefix="ERROR| ")
                 ic(f"Error processing tool call: {str(e)}")
-                results.append({
-                    "tool_call_id": call.get("id", "unknown"),
-                    "result": f"Error processing tool call: {str(e)}"
-                })
+                results.append(
+                    {
+                        "tool_call_id": call.get("id", "unknown"),
+                        "result": f"Error processing tool call: {str(e)}",
+                    }
+                )
 
         return results
 
@@ -186,13 +198,20 @@ class OpenAICompatibleProvider(ABC):
     Requires a nested 'chat.completions' structure with tool support.
     Users can provide their own proxies via the proxies parameter.
     """
+
     chat: BaseChat
     available_tools: Dict[str, Tool] = {}  # Dictionary of available tools
     supports_tools: bool = False  # Whether the provider supports tools
     supports_tool_choice: bool = False  # Whether the provider supports tool_choice
     required_auth: bool = False  # Whether the provider requires authentication
 
-    def __init__(self, api_key: Optional[str] = None, tools: Optional[List[Tool]] = None, proxies: Optional[dict] = None, **kwargs: Any):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        tools: Optional[List[Tool]] = None,
+        proxies: Optional[dict] = None,
+        **kwargs: Any,
+    ):
         self.available_tools = {}
         if tools:
             self.register_tools(tools)
@@ -239,7 +258,7 @@ class OpenAICompatibleProvider(ABC):
             try:
                 get_models_func = cast(
                     Callable[[Optional[str]], List[str]],
-                    getattr(self.__class__, "get_models", None)
+                    getattr(self.__class__, "get_models", None),
                 )
                 if get_models_func is not None:
                     models = get_models_func(api_key)
@@ -248,7 +267,7 @@ class OpenAICompatibleProvider(ABC):
                         # the class variable
                         update_func = cast(
                             Callable[[Optional[str]], None],
-                            getattr(self.__class__, "update_available_models", None)
+                            getattr(self.__class__, "update_available_models", None),
                         )
                         if update_func is not None:
                             update_func(api_key)
@@ -272,7 +291,9 @@ class OpenAICompatibleProvider(ABC):
         """Get a tool by name"""
         return self.available_tools.get(name)
 
-    def format_tool_response(self, messages: List[Dict[str, Any]], tool_results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def format_tool_response(
+        self, messages: List[Dict[str, Any]], tool_results: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """
         Format tool results as messages to be sent back to the provider.
 
@@ -293,7 +314,7 @@ class OpenAICompatibleProvider(ABC):
                     tool_message = {
                         "role": "tool",
                         "tool_call_id": result["tool_call_id"],
-                        "content": result["result"]
+                        "content": result["result"],
                     }
                     updated_messages.append(tool_message)
                 break

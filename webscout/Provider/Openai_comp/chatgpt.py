@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, Generator, List, Optional, Union, cast
 
-import requests
+from curl_cffi import requests
 
 # Import base classes and utility structures
 from webscout.Provider.Openai_comp.base import (

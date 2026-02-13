@@ -3,7 +3,7 @@ import time
 import uuid
 from typing import Any, Dict, Generator, List, Optional, Union, cast
 
-import requests
+from curl_cffi import CurlError, requests
 
 # Import base classes and utility structures
 from webscout.Provider.Openai_comp.base import (
@@ -207,7 +207,7 @@ class Completions(BaseCompletions):
                             yield chunk
                             return  # End the generator
 
-        except requests.exceptions.RequestException as e:
+        except CurlError as e:
             print(f"Error during LLMChatCo stream request: {e}")
             raise IOError(f"LLMChatCo request failed: {e}") from e
         except Exception as e:

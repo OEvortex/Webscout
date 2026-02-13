@@ -5,7 +5,7 @@ Reverse engineered from https://chat.gradient.network/
 
 from typing import Any, Dict, Generator, Optional, Union, cast
 
-import requests
+from curl_cffi import CurlError, requests
 
 from webscout import exceptions
 from webscout.AIbase import Provider, Response
@@ -100,7 +100,8 @@ class Gradient(Provider):
         self.conversation.history_offset = history_offset
 
         act_prompt = (
-            AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True
+            AwesomePrompts().get_act(
+                cast(Union[str, int], act), default=None, case_insensitive=True
             )
             if act
             else intro
@@ -182,7 +183,7 @@ class Gradient(Provider):
                     skip_markers=[],
                     content_extractor=self._gradient_extractor,
                     yield_raw_on_error=False,
-                    raw=raw
+                    raw=raw,
                 )
 
                 for content_chunk in processed_stream:
@@ -193,10 +194,12 @@ class Gradient(Provider):
                             streaming_text += content_chunk
                         yield {"text": content_chunk}
 
-            except requests.exceptions.RequestException as e:
+            except CurlError as e:
                 raise exceptions.FailedToGenerateResponseError(f"Request failed: {str(e)}") from e
             except Exception as e:
-                raise exceptions.FailedToGenerateResponseError(f"Request failed ({type(e).__name__}): {str(e)}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed ({type(e).__name__}): {str(e)}"
+                ) from e
             finally:
                 if streaming_text:
                     self.last_response = {"text": streaming_text}
@@ -215,7 +218,9 @@ class Gradient(Provider):
                 return self.last_response if not raw else full_response
 
             except Exception as e:
-                raise exceptions.FailedToGenerateResponseError(f"Request failed ({type(e).__name__}): {str(e)}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed ({type(e).__name__}): {str(e)}"
+                ) from e
 
         return for_stream() if stream else for_non_stream()
 
@@ -233,10 +238,10 @@ class Gradient(Provider):
         **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         raw = kwargs.get("raw", False)
+
         def for_stream_chat():
             gen = self.ask(
-                prompt, stream=True, raw=raw,
-                optimizer=optimizer, conversationally=conversationally
+                prompt, stream=True, raw=raw, optimizer=optimizer, conversationally=conversationally
             )
             for response_dict in gen:
                 if raw:
@@ -246,8 +251,11 @@ class Gradient(Provider):
 
         def for_non_stream_chat():
             response_data = self.ask(
-                prompt, stream=False, raw=raw,
-                optimizer=optimizer, conversationally=conversationally
+                prompt,
+                stream=False,
+                raw=raw,
+                optimizer=optimizer,
+                conversationally=conversationally,
             )
             if raw:
                 return cast(str, response_data)

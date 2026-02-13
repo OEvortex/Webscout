@@ -1,7 +1,8 @@
 import re
 from typing import Any, Dict, Generator, List, Optional, Union, cast
 
-import requests
+from curl_cffi import requests
+from curl_cffi.requests.exceptions import RequestException, Timeout
 
 from webscout import exceptions
 from webscout.AIbase import AISearch, SearchResponse
@@ -58,12 +59,12 @@ class webpilotai(AISearch):
 
         # The 'Bearer null' is part of the API's expected headers
         self.headers = {
-            'Accept': 'application/json, text/plain, */*, text/event-stream',
-            'Content-Type': 'application/json;charset=UTF-8',
-            'Authorization': 'Bearer null',
-            'Origin': 'https://www.webpilot.ai',
-            'Referer': 'https://www.webpilot.ai/',
-            'User-Agent': LitAgent().random(),
+            "Accept": "application/json, text/plain, */*, text/event-stream",
+            "Content-Type": "application/json;charset=UTF-8",
+            "Authorization": "Bearer null",
+            "Origin": "https://www.webpilot.ai",
+            "Referer": "https://www.webpilot.ai/",
+            "User-Agent": LitAgent().random(),
         }
 
         self.session.headers.update(self.headers)
@@ -75,7 +76,13 @@ class webpilotai(AISearch):
         stream: bool = False,
         raw: bool = False,
         **kwargs: Any,
-    ) -> Union[SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None], List[Any], Dict[str, Any], str]:
+    ) -> Union[
+        SearchResponse,
+        Generator[Union[Dict[str, str], SearchResponse], None, None],
+        List[Any],
+        Dict[str, Any],
+        str,
+    ]:
         """Search using the webpilotai API and get AI-generated SearchResponses.
 
         This method sends a search query to webpilotai and returns the AI-generated SearchResponse.
@@ -99,7 +106,7 @@ class webpilotai(AISearch):
         """
         payload = {
             "q": prompt,
-            "threadId": ""  # Empty for new search
+            "threadId": "",  # Empty for new search
         }
 
         # We'll use regex-based extraction for WebPilot events. The sanitizer will:
@@ -109,14 +116,13 @@ class webpilotai(AISearch):
         # which captures the content string while allowing escaped characters such as \".
 
         def for_stream():
-
             try:
                 with self.session.post(
                     self.api_endpoint,
                     json=payload,
                     stream=True,
                     timeout=self.timeout,
-                    proxies=self.proxies
+                    proxies=self.proxies,
                 ) as response:
                     if not response.ok:
                         raise exceptions.APIConnectionError(
@@ -128,25 +134,39 @@ class webpilotai(AISearch):
                         to_json=True,
                         # Extract content from parsed JSON payload similar to Monica
                         content_extractor=lambda chunk: (
-                            ((chunk.get("data") or {}).get("content") if isinstance(chunk, dict) else None)
-                            or ((chunk.get("data") or {}).get("text") if isinstance(chunk, dict) else None)
-                            or ((chunk.get("data") or {}).get("delta", {}).get("content") if isinstance(chunk, dict) else None)
+                            (
+                                (chunk.get("data") or {}).get("content")
+                                if isinstance(chunk, dict)
+                                else None
+                            )
+                            or (
+                                (chunk.get("data") or {}).get("text")
+                                if isinstance(chunk, dict)
+                                else None
+                            )
+                            or (
+                                (chunk.get("data") or {}).get("delta", {}).get("content")
+                                if isinstance(chunk, dict)
+                                else None
+                            )
                         ),
                         skip_markers=["event:message"],
                         yield_raw_on_error=False,
-                        encoding='utf-8',
-                        encoding_errors='replace',
+                        encoding="utf-8",
+                        encoding_errors="replace",
                         line_delimiter="\n",
                         raw=raw,
-                        output_formatter=None if raw else lambda x: SearchResponse(x) if isinstance(x, str) else x,
+                        output_formatter=None
+                        if raw
+                        else lambda x: SearchResponse(x) if isinstance(x, str) else x,
                     )
 
                     for chunk in processed_chunks:
                         yield chunk
 
-            except requests.exceptions.Timeout:
+            except Timeout:
                 raise exceptions.APIConnectionError("Request timed out")
-            except requests.exceptions.RequestException as e:
+            except RequestException as e:
                 raise exceptions.APIConnectionError(f"Request failed: {e}")
 
         def for_non_stream():
@@ -175,14 +195,26 @@ class webpilotai(AISearch):
                         start_marker=None,
                         end_marker=None,
                         content_extractor=lambda chunk: (
-                            ((chunk.get("data") or {}).get("content") if isinstance(chunk, dict) else None)
-                            or ((chunk.get("data") or {}).get("text") if isinstance(chunk, dict) else None)
-                            or ((chunk.get("data") or {}).get("delta", {}).get("content") if isinstance(chunk, dict) else None)
+                            (
+                                (chunk.get("data") or {}).get("content")
+                                if isinstance(chunk, dict)
+                                else None
+                            )
+                            or (
+                                (chunk.get("data") or {}).get("text")
+                                if isinstance(chunk, dict)
+                                else None
+                            )
+                            or (
+                                (chunk.get("data") or {}).get("delta", {}).get("content")
+                                if isinstance(chunk, dict)
+                                else None
+                            )
                         ),
                         skip_markers=["event:message"],
                         yield_raw_on_error=False,
-                        encoding='utf-8',
-                        encoding_errors='replace',
+                        encoding="utf-8",
+                        encoding_errors="replace",
                         buffer_size=8192,
                         output_formatter=lambda x: SearchResponse(x) if isinstance(x, str) else x,
                     )
@@ -196,7 +228,7 @@ class webpilotai(AISearch):
                     self.last_response = SearchResponse(formatted_response)
                     return self.last_response
 
-            except requests.exceptions.RequestException as e:
+            except RequestException as e:
                 raise exceptions.APIConnectionError(f"Request failed: {e}")
 
         if stream:
@@ -216,16 +248,16 @@ class webpilotai(AISearch):
         """
         # Clean up formatting
         # Remove excessive newlines
-        clean_text = re.sub(r'\n{3,}', '\n\n', text)
+        clean_text = re.sub(r"\n{3,}", "\n\n", text)
 
         # Ensure consistent spacing around sections
-        clean_text = re.sub(r'([.!?])\s*\n\s*([A-Z])', r'\1\n\n\2', clean_text)
+        clean_text = re.sub(r"([.!?])\s*\n\s*([A-Z])", r"\1\n\n\2", clean_text)
 
         # Clean up any leftover HTML or markdown artifacts
-        clean_text = re.sub(r'<[^>]*>', '', clean_text)
+        clean_text = re.sub(r"<[^>]*>", "", clean_text)
 
         # Remove trailing whitespace on each line
-        clean_text = '\n'.join(line.rstrip() for line in clean_text.split('\n'))
+        clean_text = "\n".join(line.rstrip() for line in clean_text.split("\n"))
 
         return clean_text.strip()
 

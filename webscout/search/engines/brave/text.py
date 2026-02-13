@@ -46,17 +46,21 @@ class BraveTextSearch(BraveBase):
             url = f"{self.base_url}/search"
             # Merge session headers to include fingerprint (User-Agent, etc.)
             headers = dict(self.session.headers) if getattr(self, "session", None) else {}
-            headers.update({
-                "Referer": "https://search.brave.com/",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                "Accept-Language": "en-US,en;q=0.9",
-            })
+            headers.update(
+                {
+                    "Referer": "https://search.brave.com/",
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    "Accept-Language": "en-US,en;q=0.9",
+                }
+            )
             attempts = 3
             backoff = 1.0
             last_exc: Exception | None = None
             for attempt in range(attempts):
                 try:
-                    resp = self.session.get(url, params=params, headers=headers, timeout=self.timeout)
+                    resp = self.session.get(
+                        url, params=params, headers=headers, timeout=self.timeout
+                    )
                     resp.raise_for_status()
                     return resp.text
                 except Exception as exc:  # network or HTTP errors
@@ -72,15 +76,25 @@ class BraveTextSearch(BraveBase):
                         continue
                     # As a last attempt, try a simple GET without params appended (fallback)
                     try:
-                        fallback_resp = self.session.get(url + "?" + "&".join(f"{k}={v}" for k, v in params.items()), headers=headers, timeout=self.timeout)
+                        fallback_resp = self.session.get(
+                            url + "?" + "&".join(f"{k}={v}" for k, v in params.items()),
+                            headers=headers,
+                            timeout=self.timeout,
+                        )
                         fallback_resp.raise_for_status()
                         return fallback_resp.text
                     except Exception:
-                        # Final fallback: try using the requests library (less features but sometimes works)
+                        # Final fallback: try using the curl_cffi library
                         try:
-                            import requests
+                            from curl_cffi import requests as curl_requests
 
-                            r = requests.get(url, params=params, headers=headers, timeout=self.timeout, verify=getattr(self, "verify", True))
+                            r = curl_requests.get(
+                                url,
+                                params=params,
+                                headers=headers,
+                                timeout=self.timeout,
+                                verify=getattr(self, "verify", True),
+                            )
                             r.raise_for_status()
                             return r.text
                         except Exception:
@@ -125,7 +139,9 @@ class BraveTextSearch(BraveBase):
         for container in containers:
             a_elem = container.select_one("a[href]")
             # Title may be in .title.search-snippet-title or nested inside the anchor
-            title_elem = container.select_one(".title.search-snippet-title") or (a_elem.select_one(".title") if a_elem else None)
+            title_elem = container.select_one(".title.search-snippet-title") or (
+                a_elem.select_one(".title") if a_elem else None
+            )
 
             # Try multiple snippet locations: inside container, sibling .snippet, parent fallbacks
             body = ""

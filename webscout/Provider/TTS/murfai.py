@@ -6,7 +6,7 @@ from io import BytesIO
 from typing import Generator, Optional
 from urllib.parse import urlencode
 
-import requests
+from curl_cffi import CurlError, requests
 from litprinter import ic
 
 from webscout import exceptions
@@ -112,7 +112,9 @@ class MurfAITTS(BaseTTSProvider):
 
         # Create temporary file with appropriate extension
         file_extension = f".{response_format}" if response_format != "pcm" else ".wav"
-        temp_file = tempfile.NamedTemporaryFile(suffix=file_extension, dir=self.temp_dir, delete=False)
+        temp_file = tempfile.NamedTemporaryFile(
+            suffix=file_extension, dir=self.temp_dir, delete=False
+        )
         temp_file.close()
         filename = pathlib.Path(temp_file.name)
 
@@ -142,7 +144,7 @@ class MurfAITTS(BaseTTSProvider):
                         if verbose:
                             ic.configureOutput(prefix="DEBUG| ")
                             ic(f"No data received for chunk {part_number}. Retrying...")
-                except requests.RequestException as e:
+                except CurlError as e:
                     if verbose:
                         ic.configureOutput(prefix="DEBUG| ")
                         ic(f"Error for chunk {part_number}: {e}. Retrying...")
@@ -189,7 +191,7 @@ class MurfAITTS(BaseTTSProvider):
                 ic(f"Final Audio Saved as {filename}")
             return filename.as_posix()
 
-        except requests.exceptions.RequestException as e:
+        except CurlError as e:
             if verbose:
                 ic.configureOutput(prefix="DEBUG| ")
                 ic(f"Failed to perform the operation: {e}")

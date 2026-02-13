@@ -17,7 +17,7 @@ import io
 import tempfile
 from typing import Any, Optional
 
-import requests
+from curl_cffi import requests
 from litprinter import ic
 
 from webscout import exceptions
@@ -146,12 +146,10 @@ class KyutaiTTS(BaseTTSProvider):
 
     # API endpoints
     POCKET_TTS_ENDPOINT = (
-        "https://kyutaipockettts6ylex2y4-kyutai-pocket-tts"
-        ".functions.fnc.fr-par.scw.cloud/tts"
+        "https://kyutaipockettts6ylex2y4-kyutai-pocket-tts.functions.fnc.fr-par.scw.cloud/tts"
     )
     TTS_1_6B_ENDPOINT = (
-        "https://kyutaitts1_6b6ylex2y4-kyutai-tts-1-6b"
-        ".functions.fnc.fr-par.scw.cloud/tts"
+        "https://kyutaitts1_6b6ylex2y4-kyutai-tts-1-6b.functions.fnc.fr-par.scw.cloud/tts"
     )
 
     def __init__(
@@ -304,9 +302,7 @@ class KyutaiTTS(BaseTTSProvider):
         except exceptions.FailedToGenerateResponseError:
             raise
         except Exception as e:
-            raise exceptions.FailedToGenerateResponseError(
-                f"Kyutai TTS generation failed: {e}"
-            )
+            raise exceptions.FailedToGenerateResponseError(f"Kyutai TTS generation failed: {e}")
 
     def _generate_pocket_tts(self, text: str, voice: str) -> bytes:
         """Generate audio using Pocket TTS API."""
@@ -393,6 +389,7 @@ class KyutaiTTS(BaseTTSProvider):
         """Context manager exit."""
         self.close()
 
+
 # Backward compatibility alias
 class PocketTTS(KyutaiTTS):
     """
@@ -407,8 +404,8 @@ class PocketTTS(KyutaiTTS):
 
 
 if __name__ == "__main__":
-
     import os
+
     tts = PocketTTS()
     try:
         audio_file = tts.create_speech(

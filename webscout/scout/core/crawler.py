@@ -19,7 +19,8 @@ except ImportError:
 try:
     from curl_cffi.requests import Session
 except ImportError:
-    import requests
+    from curl_cffi import requests
+
     Session: Any = requests.Session
 
 from ..parsers import ParserRegistry
@@ -29,6 +30,7 @@ from .scout import Scout
 @dataclass
 class CrawlConfig:
     """Configuration for the crawler."""
+
     max_pages: int = 1000
     max_depth: int = 10
     delay: float = 0.5
@@ -46,6 +48,7 @@ class CrawlConfig:
 @dataclass
 class PageData:
     """Comprehensive page data for LLM training."""
+
     url: str
     title: str
     text: str
@@ -70,7 +73,17 @@ class ScoutCrawler:
     """
     Ultra-advanced web crawling utility optimized for LLM data collection.
     """
-    def __init__(self, base_url: str, max_pages: int = 50, tags_to_remove: Optional[List[str]] = None, session: Optional[Any] = None, delay: float = 0.5, obey_robots: bool = True, allowed_domains: Optional[List[str]] = None):
+
+    def __init__(
+        self,
+        base_url: str,
+        max_pages: int = 50,
+        tags_to_remove: Optional[List[str]] = None,
+        session: Optional[Any] = None,
+        delay: float = 0.5,
+        obey_robots: bool = True,
+        allowed_domains: Optional[List[str]] = None,
+    ):
         """
         Initialize the web crawler.
 
@@ -81,10 +94,7 @@ class ScoutCrawler:
         """
         self.base_url = base_url
         self.max_pages = max_pages
-        self.tags_to_remove = tags_to_remove if tags_to_remove is not None else [
-            "script",
-            "style"
-        ]
+        self.tags_to_remove = tags_to_remove if tags_to_remove is not None else ["script", "style"]
         self.visited_urls = set()
         self.crawled_pages = []
         self.session = session or Session()
@@ -92,6 +102,7 @@ class ScoutCrawler:
         if LitAgent is not None:
             self.agent = LitAgent()
         else:
+
             class _SimpleAgent:
                 def generate_fingerprint(self) -> Dict[str, str]:
                     return {"user_agent": "Mozilla/5.0"}
@@ -132,8 +143,10 @@ class ScoutCrawler:
         # Secure domain handling
         parsed_base = urllib.parse.urlparse(base_url)
         self.base_netloc = parsed_base.netloc
-        base_domain_parts = self.base_netloc.split('.')
-        self.base_domain = '.'.join(base_domain_parts[-2:]) if len(base_domain_parts) > 1 else self.base_netloc
+        base_domain_parts = self.base_netloc.split(".")
+        self.base_domain = (
+            ".".join(base_domain_parts[-2:]) if len(base_domain_parts) > 1 else self.base_netloc
+        )
 
         self.allowed_domains = allowed_domains or [self.base_netloc]
         self.last_request_time = 0
@@ -141,7 +154,7 @@ class ScoutCrawler:
 
         if obey_robots:
             self.robots = robotparser.RobotFileParser()
-            robots_url = urllib.parse.urljoin(base_url, '/robots.txt')
+            robots_url = urllib.parse.urljoin(base_url, "/robots.txt")
             try:
                 # Use session for robots.txt to respect headers/UA
                 robots_resp = self.session.get(robots_url, timeout=5)
@@ -156,8 +169,8 @@ class ScoutCrawler:
 
     def _normalize_url(self, url: str) -> str:
         """Normalize URL by removing fragments and trailing slashes."""
-        url = url.split('#')[0]
-        return url.rstrip('/')
+        url = url.split("#")[0]
+        return url.rstrip("/")
 
     def _is_valid_url(self, url: str) -> bool:
         """
@@ -172,7 +185,9 @@ class ScoutCrawler:
             target_netloc = parsed_url.netloc.lower()
             is_allowed = False
             for allowed in self.allowed_domains:
-                if target_netloc == allowed.lower() or target_netloc.endswith('.' + allowed.lower()):
+                if target_netloc == allowed.lower() or target_netloc.endswith(
+                    "." + allowed.lower()
+                ):
                     is_allowed = True
                     break
 
@@ -197,14 +212,14 @@ class ScoutCrawler:
 
     def _extract_main_text(self, soup):
         # Try to extract main content (simple heuristic)
-        main = soup.find('main')
+        main = soup.find("main")
         if main:
             return main.get_text(separator=" ", strip=True)
-        article = soup.find('article')
+        article = soup.find("article")
         if article:
             return article.get_text(separator=" ", strip=True)
         # fallback to body
-        body = soup.find('body')
+        body = soup.find("body")
         if body:
             return body.get_text(separator=" ", strip=True)
         return soup.get_text(separator=" ", strip=True)
@@ -235,7 +250,7 @@ class ScoutCrawler:
         try:
             response = self.session.get(url, timeout=10)
             response.raise_for_status()
-            if not response.headers.get('Content-Type', '').startswith('text/html'):
+            if not response.headers.get("Content-Type", "").startswith("text/html"):
                 return {}
             scout = Scout(response.content, features=self.features)
             title_tag = scout.find("title")
@@ -250,32 +265,33 @@ class ScoutCrawler:
 
             # Extract links from header, footer, nav, etc.
             essential_links = []
-            for essential_tag in ['header', 'nav', 'footer']:
+            for essential_tag in ["header", "nav", "footer"]:
                 elements = scout.find_all(essential_tag)
                 for element in elements:
-                    links = element.find_all('a', href=True)
+                    links = element.find_all("a", href=True)
                     essential_links.extend(
-                        urllib.parse.urljoin(url, link.get('href'))
+                        urllib.parse.urljoin(url, link.get("href"))
                         for link in links
-                        if link.get('href') and self._is_valid_url(urllib.parse.urljoin(url, link.get('href')))
+                        if link.get("href")
+                        and self._is_valid_url(urllib.parse.urljoin(url, link.get("href")))
                     )
 
             all_links = [
-                urllib.parse.urljoin(url, link.get('href'))
-                for link in scout.find_all('a', href=True)
-                if self._is_valid_url(urllib.parse.urljoin(url, link.get('href')))
+                urllib.parse.urljoin(url, link.get("href"))
+                for link in scout.find_all("a", href=True)
+                if self._is_valid_url(urllib.parse.urljoin(url, link.get("href")))
             ]
 
             combined_links = list(set(all_links + essential_links))
 
             page_info = {
-                'url': url,
-                'title': title,
-                'links': combined_links,
-                'text': visible_text,
-                'depth': depth,
-                'timestamp': datetime.now().isoformat(),
-                'headers': dict(response.headers),
+                "url": url,
+                "title": title,
+                "links": combined_links,
+                "text": visible_text,
+                "depth": depth,
+                "timestamp": datetime.now().isoformat(),
+                "headers": dict(response.headers),
             }
             self.visited_urls.add(url)
             self.crawled_pages.append(page_info)

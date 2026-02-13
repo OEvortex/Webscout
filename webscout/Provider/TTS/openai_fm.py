@@ -5,7 +5,7 @@ import pathlib
 import tempfile
 from typing import Any, Generator, List, Optional, Union, cast
 
-import requests
+from curl_cffi import CurlError, requests
 from litprinter import ic
 
 from webscout import exceptions
@@ -24,6 +24,7 @@ class OpenAIFMTTS(BaseTTSProvider):
     - Multiple output formats
     - Streaming support
     """
+
     required_auth = False
 
     # Request headers
@@ -36,28 +37,28 @@ class OpenAIFMTTS(BaseTTSProvider):
         "sec-fetch-mode": "no-cors",
         "sec-fetch-site": "same-origin",
         "user-agent": LitAgent().random(),
-        "referer": "https://www.openai.fm"
+        "referer": "https://www.openai.fm",
     }
 
     # Override supported models for OpenAI.fm
     SUPPORTED_MODELS = [
         "gpt-4o-mini-tts",  # Latest intelligent realtime model
-        "tts-1",            # Lower latency model
-        "tts-1-hd"          # Higher quality model
+        "tts-1",  # Lower latency model
+        "tts-1-hd",  # Higher quality model
     ]
 
     # OpenAI.fm supported voices (11 built-in voices)
     SUPPORTED_VOICES = [
-        "alloy",    # Neutral voice with balanced tone
-        "ash",      # Calm and thoughtful male voice
-        "ballad",   # Soft and melodic voice
-        "coral",    # Warm and inviting female voice
-        "echo",     # Clear and precise voice
-        "fable",    # Authoritative and narrative voice
-        "nova",     # Energetic and bright female voice
-        "onyx",     # Deep and resonant male voice
-        "sage",     # Measured and contemplative voice
-        "shimmer"   # Bright and optimistic voice
+        "alloy",  # Neutral voice with balanced tone
+        "ash",  # Calm and thoughtful male voice
+        "ballad",  # Soft and melodic voice
+        "coral",  # Warm and inviting female voice
+        "echo",  # Clear and precise voice
+        "fable",  # Authoritative and narrative voice
+        "nova",  # Energetic and bright female voice
+        "onyx",  # Deep and resonant male voice
+        "sage",  # Measured and contemplative voice
+        "shimmer",  # Bright and optimistic voice
     ]
 
     # Voice mapping for API compatibility
@@ -71,7 +72,7 @@ class OpenAIFMTTS(BaseTTSProvider):
         "nova": "nova",
         "onyx": "onyx",
         "sage": "sage",
-        "shimmer": "shimmer"
+        "shimmer": "shimmer",
     }
 
     def __init__(self, timeout: int = 20, proxies: Optional[dict] = None):
@@ -90,13 +91,7 @@ class OpenAIFMTTS(BaseTTSProvider):
             self.session.proxies.update(proxies)
         self.timeout = timeout
 
-    def tts(
-        self,
-        text: str,
-        voice: Optional[str] = None,
-        verbose: bool = False,
-        **kwargs
-    ) -> str:
+    def tts(self, text: str, voice: Optional[str] = None, verbose: bool = False, **kwargs) -> str:
         """
         Convert text to speech using OpenAI.fm API with OpenAI-compatible parameters.
 
@@ -140,7 +135,9 @@ class OpenAIFMTTS(BaseTTSProvider):
 
         # Create temporary file with appropriate extension
         file_extension = f".{response_format}" if response_format != "pcm" else ".wav"
-        with tempfile.NamedTemporaryFile(suffix=file_extension, dir=self.temp_dir, delete=False) as temp_file:
+        with tempfile.NamedTemporaryFile(
+            suffix=file_extension, dir=self.temp_dir, delete=False
+        ) as temp_file:
             filename = pathlib.Path(temp_file.name)
 
         # Prepare parameters for the API request
@@ -149,16 +146,12 @@ class OpenAIFMTTS(BaseTTSProvider):
             "prompt": instructions,
             "voice": voice_id,
             "model": model,
-            "response_format": response_format
+            "response_format": response_format,
         }
 
         try:
             # Make the API request
-            response = self.session.get(
-                self.api_url,
-                params=params,
-                timeout=self.timeout
-            )
+            response = self.session.get(self.api_url, params=params, timeout=self.timeout)
             response.raise_for_status()
 
             # Validate response content
@@ -170,29 +163,27 @@ class OpenAIFMTTS(BaseTTSProvider):
                 f.write(response.content)
 
             if verbose:
-                ic.configureOutput(prefix='DEBUG| ')
+                ic.configureOutput(prefix="DEBUG| ")
                 ic("Speech generated successfully")
-                ic.configureOutput(prefix='DEBUG| ')
+                ic.configureOutput(prefix="DEBUG| ")
                 ic(f"Model: {model}")
-                ic.configureOutput(prefix='DEBUG| ')
+                ic.configureOutput(prefix="DEBUG| ")
                 ic(f"Voice: {voice}")
-                ic.configureOutput(prefix='DEBUG| ')
+                ic.configureOutput(prefix="DEBUG| ")
                 ic(f"Format: {response_format}")
-                ic.configureOutput(prefix='DEBUG| ')
+                ic.configureOutput(prefix="DEBUG| ")
                 ic(f"Audio saved to {filename}")
 
             return filename.as_posix()
 
-        except requests.exceptions.RequestException as e:
+        except CurlError as e:
             if verbose:
-                ic.configureOutput(prefix='DEBUG| ')
+                ic.configureOutput(prefix="DEBUG| ")
                 ic(f"Failed to generate speech: {e}")
-            raise exceptions.FailedToGenerateResponseError(
-                f"Failed to generate speech: {e}"
-            )
+            raise exceptions.FailedToGenerateResponseError(f"Failed to generate speech: {e}")
         except Exception as e:
             if verbose:
-                ic.configureOutput(prefix='DEBUG| ')
+                ic.configureOutput(prefix="DEBUG| ")
                 ic(f"Unexpected error: {e}")
             raise exceptions.FailedToGenerateResponseError(
                 f"Unexpected error during speech generation: {e}"
@@ -206,7 +197,7 @@ class OpenAIFMTTS(BaseTTSProvider):
         response_format: Optional[str] = "mp3",
         instructions: Optional[str] = None,
         verbose: bool = False,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> str:
         """
         OpenAI-compatible speech creation interface.
@@ -227,7 +218,7 @@ class OpenAIFMTTS(BaseTTSProvider):
             voice=voice or "alloy",
             model=model or "gpt-4o-mini-tts",
             response_format=response_format or "mp3",
-            verbose=verbose
+            verbose=verbose,
         )
 
     def with_streaming_response(self):
@@ -255,7 +246,7 @@ class StreamingResponseContextManager:
         model: Optional[str] = "gpt-4o-mini-tts",
         voice: Optional[str] = "coral",
         response_format: Optional[str] = "mp3",
-        instructions: Optional[str] = None
+        instructions: Optional[str] = None,
     ):
         """
         Create speech with streaming capability.
@@ -275,7 +266,7 @@ class StreamingResponseContextManager:
             model=model,
             voice=voice,
             response_format=response_format,
-            instructions=instructions
+            instructions=instructions,
         )
         return StreamingResponse(self.audio_file)
 
@@ -311,6 +302,7 @@ class StreamingResponse:
             chunk_size (int): Size of chunks to read/write
         """
         import shutil
+
         shutil.copy2(self.audio_file, file_path)
 
     def iter_bytes(self, chunk_size: int = 1024):
@@ -323,7 +315,7 @@ class StreamingResponse:
         Yields:
             bytes: Audio data chunks
         """
-        with open(self.audio_file, 'rb') as f:
+        with open(self.audio_file, "rb") as f:
             while chunk := f.read(chunk_size):
                 yield chunk
 
@@ -334,31 +326,29 @@ if __name__ == "__main__":
 
     try:
         # Basic usage
-        ic.configureOutput(prefix='DEBUG| ')
+        ic.configureOutput(prefix="DEBUG| ")
         ic("Testing basic speech generation...")
         audio_file = tts_provider.create_speech(
             input_text="Today is a wonderful day to build something people love!",
             model="gpt-4o-mini-tts",
             voice="coral",
-            instructions="Speak in a cheerful and positive tone."
+            instructions="Speak in a cheerful and positive tone.",
         )
         print(f"Audio file generated: {audio_file}")
 
         # Streaming usage
-        ic.configureOutput(prefix='DEBUG| ')
+        ic.configureOutput(prefix="DEBUG| ")
         ic("Testing streaming response...")
         with tts_provider.with_streaming_response().create(
-            input_text="This is a streaming test.",
-            voice="alloy",
-            response_format="wav"
+            input_text="This is a streaming test.", voice="alloy", response_format="wav"
         ) as response:
             response.stream_to_file("streaming_test.wav")
-            ic.configureOutput(prefix='INFO| ')
+            ic.configureOutput(prefix="INFO| ")
             ic("Streaming audio saved to streaming_test.wav")
 
     except exceptions.FailedToGenerateResponseError as e:
-        ic.configureOutput(prefix='ERROR| ')
+        ic.configureOutput(prefix="ERROR| ")
         ic(f"Error: {e}")
     except Exception as e:
-        ic.configureOutput(prefix='ERROR| ')
+        ic.configureOutput(prefix="ERROR| ")
         ic(f"Unexpected error: {e}")

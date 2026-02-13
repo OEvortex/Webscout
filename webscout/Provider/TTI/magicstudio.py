@@ -6,7 +6,7 @@ import uuid
 from io import BytesIO
 from typing import TYPE_CHECKING, Any, Optional
 
-import requests
+from curl_cffi import requests
 
 from webscout.AIbase import SimpleModelList
 from webscout.litagent import LitAgent

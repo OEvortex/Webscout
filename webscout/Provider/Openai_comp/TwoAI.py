@@ -71,7 +71,7 @@ class Completions(BaseCompletions):
         if proxies is not None:
             self._client.session.proxies.update(cast(Any, proxies))
         else:
-            self._client.session.proxies.clear()
+            cast(Dict, self._client.session.proxies).clear()
         try:
             response = self._client.session.post(
                 self._client.base_url,
@@ -138,7 +138,7 @@ class Completions(BaseCompletions):
         except Exception as e:
             raise IOError(f"TwoAI request failed: {e}") from e
         finally:
-            self._client.session.proxies.clear()
+            cast(Dict, self._client.session.proxies).clear()
             self._client.session.proxies.update(cast(Any, original_proxies))
 
     def _create_non_stream(
@@ -149,7 +149,7 @@ class Completions(BaseCompletions):
         if proxies is not None:
             self._client.session.proxies.update(cast(Any, proxies))
         else:
-            self._client.session.proxies.clear()
+            cast(Dict, self._client.session.proxies).clear()
         try:
             response = self._client.session.post(
                 self._client.base_url,

@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from io import BytesIO
 from typing import Any, Generator, Optional, Union, cast
 
-import requests
+from curl_cffi import CurlError, requests
 from litprinter import ic
 
 from webscout import exceptions
@@ -521,7 +521,7 @@ class SpeechMaTTS(BaseTTSProvider):
                             f"Unexpected response format. Content-Type: {content_type}"
                         )
 
-                except requests.exceptions.RequestException as e:
+                except CurlError as e:
                     retry_count += 1
                     if retry_count >= max_retries:
                         raise exceptions.FailedToGenerateResponseError(

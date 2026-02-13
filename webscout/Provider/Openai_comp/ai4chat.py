@@ -242,7 +242,7 @@ class Completions(BaseCompletions):
             raise IOError(f"Failed to generate response: {e}")
         finally:
             if proxies is not None:
-                self._client.session.proxies.clear()
+                cast(Dict, self._client.session.proxies).clear()
                 self._client.session.proxies.update(cast(Any, original_proxies))
 
         # Process the response text

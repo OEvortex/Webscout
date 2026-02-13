@@ -1,7 +1,7 @@
 import json
 from typing import Any, Dict, Generator, List, Optional, Union, cast
 
-import requests
+from curl_cffi import requests
 
 from webscout import exceptions
 from webscout.AIbase import Provider, Response

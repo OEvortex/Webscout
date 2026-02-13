@@ -1,6 +1,7 @@
 from typing import Any, Dict, Generator, List, Optional, Union, cast
 
-import requests
+from curl_cffi import requests
+from curl_cffi.requests.exceptions import RequestException
 
 from webscout import exceptions
 from webscout.AIbase import AISearch, SearchResponse
@@ -20,6 +21,7 @@ class Monica(AISearch):
     ):
         """Initializes the Monica API client."""
         import uuid
+
         self.session = requests.Session()
         self.api_endpoint = "https://monica.so/api/search_v1/search"
         self.stream_chunk_size = 64
@@ -63,7 +65,13 @@ class Monica(AISearch):
         stream: bool = False,
         raw: bool = False,
         **kwargs: Any,
-    ) -> Union[SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None], List[Any], Dict[str, Any], str]:
+    ) -> Union[
+        SearchResponse,
+        Generator[Union[Dict[str, str], SearchResponse], None, None],
+        List[Any],
+        Dict[str, Any],
+        str,
+    ]:
         """
         Sends a prompt to the Monica API and returns the response.
 
@@ -95,6 +103,7 @@ class Monica(AISearch):
             ...     print(chunk, end='', flush=True)
         """
         import uuid
+
         task_id = str(uuid.uuid4())
         payload = {
             "pro": False,
@@ -125,17 +134,21 @@ class Monica(AISearch):
                     processed_chunks = sanitize_stream(
                         data=response.iter_content(chunk_size=None),
                         to_json=True,
-                        content_extractor=lambda chunk: chunk.get("text") if isinstance(chunk, dict) and chunk.get("text") is not None else None,
+                        content_extractor=lambda chunk: chunk.get("text")
+                        if isinstance(chunk, dict) and chunk.get("text") is not None
+                        else None,
                         yield_raw_on_error=False,
-                        encoding='utf-8',
-                        encoding_errors='replace',
+                        encoding="utf-8",
+                        encoding_errors="replace",
                         raw=raw,
-                        output_formatter=None if raw else lambda x: SearchResponse(x) if isinstance(x, str) else x,
+                        output_formatter=None
+                        if raw
+                        else lambda x: SearchResponse(x) if isinstance(x, str) else x,
                     )
 
                     yield from processed_chunks
 
-            except requests.exceptions.RequestException as e:
+            except RequestException as e:
                 raise exceptions.APIConnectionError(f"Request failed: {e}")
 
         def for_non_stream():
@@ -168,10 +181,12 @@ class Monica(AISearch):
                             strip_chars=None,
                             start_marker=None,
                             end_marker=None,
-                            content_extractor=lambda chunk: chunk.get("text") if isinstance(chunk, dict) and chunk.get("text") is not None else None,
+                            content_extractor=lambda chunk: chunk.get("text")
+                            if isinstance(chunk, dict) and chunk.get("text") is not None
+                            else None,
                             yield_raw_on_error=False,
-                            encoding='utf-8',
-                            encoding_errors='replace',
+                            encoding="utf-8",
+                            encoding_errors="replace",
                             buffer_size=8192,
                         )
 
@@ -183,14 +198,13 @@ class Monica(AISearch):
                         self.last_response = SearchResponse(full_response)
                         return self.last_response
 
-            except requests.exceptions.RequestException as e:
+            except RequestException as e:
                 raise exceptions.APIConnectionError(f"Request failed: {e}")
 
         return for_stream() if stream else for_non_stream()
 
 
 if __name__ == "__main__":
-
     ai = Monica()
     response = ai.search("What is Python?", stream=True, raw=False)
     if hasattr(response, "__iter__") and not isinstance(response, (str, bytes, SearchResponse)):

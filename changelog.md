@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026.02.13] - 2026-02-13
+
+### 🔧 Improved
+- **curl_cffi Migration**: Complete migration from `requests` to `curl_cffi` library across all providers:
+  - Updated all Provider files (`webscout/Provider/`) to use `curl_cffi` for HTTP operations
+  - Updated search engine files (`webscout/search/`) to use curl_cffi
+  - Updated core modules (`webscout/scout/core/`) and Extra modules
+  - Replaced `requests.Session()` with `curl_cffi.requests.Session()`
+  - Updated exception handling from `requests.exceptions` to `curl_cffi.CurlError`
+  - All ruff linting and ty type checks pass after migration
+  - curl_cffi provides better browser impersonation, streaming support, and performance
+
+### 🔧 Improved
+- **Falcon provider**: `webscout/Provider/Falcon.py` - Major refactor to align with QwenLM pattern:
+  - Implemented cookie-from-file logic using `cookies_path` and `_load_cookies()`.
+  - Updated to use `curl_cffi.Session` with chrome impersonation for better anti-detection.
+  - Refactored `ask()` and `chat()` methods for consistent streaming and non-streaming behavior.
+  - Added support for dynamic model selection and improved error handling.
+  - Verified with `ruff` and `ty` for code quality and type safety.
+
 ## [2026.02.10] - 2026-02-10
 
 ### ✨ Added

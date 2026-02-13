@@ -7,7 +7,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Optional, Union, cast
 
-import requests
+from curl_cffi import CurlError, requests
 from litprinter import ic
 
 from webscout import exceptions
@@ -178,7 +178,7 @@ class DeepgramTTS(BaseTTSProvider):
                             ic(f"Chunk {part_number} processed successfully")
                         return part_number, response.content
 
-                except requests.RequestException as e:
+                except CurlError as e:
                     if verbose:
                         ic.configureOutput(prefix="WARNING| ")
                         ic(

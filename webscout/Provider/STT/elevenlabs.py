@@ -8,7 +8,7 @@ speech-to-text transcription service.
 from pathlib import Path
 from typing import Any, BinaryIO, Generator, List, Optional, Union, cast
 
-import requests
+from curl_cffi import requests
 
 from webscout import exceptions
 from webscout.litagent import LitAgent
@@ -252,7 +252,7 @@ if __name__ == "__main__":
         transcription = client.audio.transcriptions.create(
             model="scribe_v1", file=audio_file, stream=False
         )
-        if hasattr(transcription, 'text'):
+        if hasattr(transcription, "text"):
             print(transcription.text)
 
     print("\n=== Streaming example ===")

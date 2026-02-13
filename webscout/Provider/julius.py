@@ -1,9 +1,8 @@
-
 import json
 import uuid
 from typing import Any, Dict, Generator, Optional, Union, cast
 
-import requests
+from curl_cffi import requests
 
 from webscout import exceptions
 from webscout.AIbase import Provider, Response
@@ -27,9 +26,8 @@ class Julius(Provider):
         "Command R+",
         "o1-mini",
         "o1-preview",
-
-
     ]
+
     def __init__(
         self,
         api_key: str,
@@ -80,7 +78,7 @@ class Julius(Provider):
             "orient-split": "true",
             "request-id": str(uuid.uuid4()),
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0",
-            "visitor-id": str(uuid.uuid4())
+            "visitor-id": str(uuid.uuid4()),
         }
 
         self.__available_optimizers = (
@@ -93,7 +91,8 @@ class Julius(Provider):
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
         act_prompt = (
-            AwesomePrompts().get_act(cast(Union[str, int], act), default=None, case_insensitive=True
+            AwesomePrompts().get_act(
+                cast(Union[str, int], act), default=None, case_insensitive=True
             )
             if act
             else intro
@@ -132,9 +131,7 @@ class Julius(Provider):
                     conversation_prompt if conversationally else prompt
                 )
             else:
-                raise Exception(
-                    f"Optimizer is not one of {self.__available_optimizers}"
-                )
+                raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
 
         payload = {
             "message": {"content": conversation_prompt, "role": "user"},
@@ -145,12 +142,16 @@ class Julius(Provider):
             "new_images": None,
             "new_attachments": None,
             "dataframe_format": "json",
-            "selectedModels": [self.model] # Choose the model here
+            "selectedModels": [self.model],  # Choose the model here
         }
 
         def for_stream():
             response = self.session.post(
-                self.chat_endpoint, json=payload, headers=self.headers, stream=True, timeout=self.timeout
+                self.chat_endpoint,
+                json=payload,
+                headers=self.headers,
+                stream=True,
+                timeout=self.timeout,
             )
 
             if not response.ok:
@@ -164,9 +165,11 @@ class Julius(Provider):
                 data=response.iter_lines(decode_unicode=True),
                 intro_value=None,
                 to_json=True,
-                content_extractor=lambda chunk: chunk.get('content') if isinstance(chunk, dict) else None,
+                content_extractor=lambda chunk: chunk.get("content")
+                if isinstance(chunk, dict)
+                else None,
                 yield_raw_on_error=False,
-                raw=raw
+                raw=raw,
             )
 
             for content in processed_stream:
@@ -186,8 +189,8 @@ class Julius(Provider):
                 pass
             return self.last_response if not raw else json.dumps(self.last_response)
 
-
         return for_stream() if stream else for_non_stream()
+
     def chat(
         self,
         prompt: str,
@@ -207,6 +210,7 @@ class Julius(Provider):
             str: Response generated
         """
         raw = kwargs.get("raw", False)
+
         def for_stream():
             for response in self.ask(
                 prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
@@ -235,9 +239,12 @@ class Julius(Provider):
             return str(response)
         resp_dict = cast(Dict[str, Any], response)
         return cast(str, resp_dict["text"])
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     from rich import print
-    ai = Julius(api_key="",timeout=5000)
+
+    ai = Julius(api_key="", timeout=5000)
     response = ai.chat("write a poem about AI", stream=True)
     if hasattr(response, "__iter__") and not isinstance(response, (str, bytes)):
         for chunk in response:

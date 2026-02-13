@@ -3,7 +3,7 @@ import time
 import uuid
 from typing import Any, Dict, Generator, List, Optional, Union, cast
 
-import requests
+from curl_cffi import CurlError, requests
 
 from webscout.litagent import LitAgent
 from webscout.Provider.Openai_comp.base import (
@@ -151,7 +151,7 @@ class Completions(BaseCompletions):
 
             yield chunk
 
-        except requests.exceptions.RequestException as e:
+        except CurlError as e:
             print(f"{RED}Error during Ayle stream request: {e}{RESET}")
             raise IOError(f"Ayle request failed: {e}") from e
 

@@ -2,9 +2,8 @@ import json
 import random
 from typing import Any, Dict, Optional, Union, cast
 
-import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
+from curl_cffi import CurlError, requests
+from curl_cffi.requests import Session
 
 from webscout.AIbase import SimpleModelList
 from webscout.litagent import LitAgent
@@ -16,23 +15,11 @@ class Images(BaseImages):
     def __init__(self, client):
         self._client = client
         self.base_url = "https://api.together.xyz/v1"
-        # Create a session - it will automatically get proxies from the global monkey patch!
-        self.session = requests.Session()
-        self._setup_session_with_retries()
+        self.session = Session()
 
     def _setup_session_with_retries(self):
         """Setup session with retry strategy and timeout configurations"""
-        # Configure retry strategy
-        retry_strategy = Retry(
-            total=3,
-            status_forcelist=[429, 500, 502, 503, 504],
-            backoff_factor=1,
-            allowed_methods=["HEAD", "GET", "OPTIONS", "POST"],
-        )
-
-        adapter = HTTPAdapter(max_retries=retry_strategy)
-        self.session.mount("http://", adapter)
-        self.session.mount("https://", adapter)
+        pass
 
     def build_headers(self, extra: Optional[Dict[str, str]] = None) -> Dict[str, str]:
         """Build headers with API authorization using consistent fingerprint"""
@@ -162,7 +149,7 @@ class Images(BaseImages):
 
         try:
             resp = self.session.request(
-                "post",
+                "POST",
                 f"{self.base_url}/images/generations",
                 json=body,
                 headers=self.build_headers(),
@@ -195,16 +182,8 @@ class Images(BaseImages):
 
             return ImageResponse(data=result_data)
 
-        except requests.exceptions.Timeout:
-            raise RuntimeError(
-                f"Request timed out after {timeout} seconds. Try reducing image size or steps."
-            )
-        except requests.exceptions.RequestException as e:
-            if hasattr(e, "response") and e.response is not None:
-                try:
-                    print("[Together.xyz API error details]", e.response.text)
-                except Exception:
-                    pass
+        except CurlError as e:
+            print(f"[Together.xyz API error] {e}")
             raise RuntimeError(f"Network error: {str(e)}")
         except json.JSONDecodeError:
             raise RuntimeError("Invalid JSON response from Together.xyz API")

@@ -2,7 +2,7 @@ import json
 import random
 from typing import Any, Optional
 
-import requests
+from curl_cffi import requests
 
 from webscout.AIbase import SimpleModelList
 from webscout.litagent import LitAgent
