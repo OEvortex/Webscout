@@ -5,6 +5,7 @@ from webscout.Provider.akashgpt import AkashGPT
 from webscout.Provider.Andi import AndiSearch
 from webscout.Provider.Apriel import Apriel
 from webscout.Provider.Ayle import Ayle
+from webscout.Provider.blackbox import Blackbox
 from webscout.Provider.cerebras import Cerebras
 from webscout.Provider.ClaudeOnline import ClaudeOnline
 from webscout.Provider.cleeai import Cleeai
@@ -61,6 +62,7 @@ __all__ = [
     "AkashGPT",
     "AndiSearch",
     "Apriel",
+    "Blackbox",
     "Cerebras",
     "ClaudeOnline",
     "Cleeai",

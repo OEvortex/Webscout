@@ -15,6 +15,7 @@ from webscout.Provider.Openai_comp.base import (
     Tool,
     ToolDefinition,
 )
+from webscout.Provider.Openai_comp.blackbox import Blackbox
 from webscout.Provider.Openai_comp.cerebras import Cerebras
 from webscout.Provider.Openai_comp.chatgpt import ChatGPT, ChatGPTReversed
 
@@ -104,6 +105,7 @@ __all__ = [
     "TwoAI",
     "AI4Chat",
     "AkashGPT",
+    "Blackbox",
     "Cerebras",
     "ChatGPT",
     "ChatGPTReversed",

@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026.02.18] - 2026-02-18
+
+### ✨ Added
+- **Blackbox Provider**: Added new Blackbox AI provider in both standard and OpenAI-compatible formats:
+  - `webscout/Provider/blackbox.py` - Standard provider implementation with conversation support, streaming/non-streaming responses, and LitAgent fingerprinting
+  - `webscout/Provider/Openai_comp/blackbox.py` - OpenAI-compatible provider following the same pattern as Groq, Cerebras, and other OpenAI-compatible providers
+  - Supports models: `moonshotai/kimi-k2.5`, `custom/blackbox-base-2`, `minimax-m2`
+  - Uses Blackbox VSCode extension API endpoint with required headers (customerId, userId, version)
+  - Both providers support streaming responses with proper SSE parsing
+
+### 🔧 Improved
+- **lmarena.py (UNFINISHED)**: Fixed all ruff linting errors and improved type safety:
+  - Fixed 317+ ruff linting issues automatically (trailing whitespace, blank lines, f-string prefixes, etc.)
+  - Fixed duplicate dictionary keys in `_ARENA_HOST_TO_ORIGIN`
+  - Fixed bare `except` clause to `except Exception`
+  - Added pyright type suppression comments for external library type stub issues
+  - Added UNFINISHED directory to ty check exclusions in pyproject.toml
+  - All ruff checks now pass successfully
+
 ## [2026.02.14] - 2026-02-14
 
 ### 🐛 Fixed
