@@ -43,7 +43,10 @@ def _get_engine(name: str) -> Union[BaseSearch, BaseSearchEngine]:
         rprint(f"[bold red]Error: Engine '{name}' not supported.[/bold red]")
         rprint(f"Available engines: {', '.join(sorted(set(e for e in ENGINES.keys())))}")
         sys.exit(1)
-    return cls()  # type: ignore[arg-type]
+    if not callable(cls):
+        rprint(f"[bold red]Error: Engine '{name}' is not callable.[/bold red]")
+        sys.exit(1)
+    return cls()  # type: ignore[return-value]
 
 
 def _format_views(count: int) -> str:

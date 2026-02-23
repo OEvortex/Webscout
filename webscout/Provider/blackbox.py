@@ -14,11 +14,11 @@ from webscout.model_fetcher import BackgroundModelFetcher
 class Blackbox(Provider):
     """
     A class to interact with Blackbox AI API.
-    
+
     Blackbox AI is a code-focused AI assistant that provides code generation
     and understanding capabilities. This provider uses the Blackbox VSCode
     extension API endpoint.
-    
+
     Example:
         >>> client = Blackbox()
         >>> response = client.ask("Write a Python function to calculate factorial")
@@ -37,13 +37,13 @@ class Blackbox(Provider):
     @classmethod
     def get_models(cls, api_key: Optional[str] = None):
         """Fetch available models from Blackbox API.
-        
+
         Note: Blackbox API doesn't have a public models endpoint,
         so we return the default known models.
-        
+
         Args:
             api_key (str, optional): Blackbox API key (not required)
-            
+
         Returns:
             list: List of available model IDs
         """
@@ -84,7 +84,7 @@ class Blackbox(Provider):
         version: str = "1.1",
     ):
         """Initializes the Blackbox AI client.
-        
+
         Args:
             api_key: Optional API key for authentication
             is_conversation: Whether to maintain conversation context
@@ -114,7 +114,7 @@ class Blackbox(Provider):
         self.agent = LitAgent()
         self.fingerprint = self.agent.generate_fingerprint(browser)
         self.api_key = api_key
-        
+
         # Build headers with fingerprint
         self.headers = {
             "Accept": self.fingerprint["accept"],
@@ -125,11 +125,11 @@ class Blackbox(Provider):
             "Sec-CH-UA-Mobile": "?0",
             "Sec-CH-UA-Platform": f'"{self.fingerprint.get("platform", "")}"',
         }
-        
+
         # Add API key if provided
         if api_key:
             self.headers["Authorization"] = f"Bearer {api_key}"
-        
+
         # Add required Blackbox headers
         self.headers["customerId"] = customer_id
         self.headers["userId"] = user_id
@@ -141,7 +141,7 @@ class Blackbox(Provider):
         self.session.headers.update(self.headers)
         if proxies:
             self.session.proxies.update(cast(Any, proxies))
-        
+
         self.system_prompt = system_prompt
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
@@ -186,10 +186,10 @@ class Blackbox(Provider):
     def refresh_identity(self, browser: Optional[str] = None):
         """
         Refreshes the browser identity fingerprint.
-        
+
         Args:
             browser: Specific browser to use for the new fingerprint
-            
+
         Returns:
             dict: New fingerprint dictionary
         """
@@ -221,7 +221,7 @@ class Blackbox(Provider):
         **kwargs: Any,
     ) -> Response:
         """Send a prompt to Blackbox AI and get a response.
-        
+
         Args:
             prompt: User input prompt
             stream: Whether to stream the response
@@ -230,7 +230,7 @@ class Blackbox(Provider):
             conversationally: Whether to treat as conversation
             model: Model to use (overrides instance model)
             **kwargs: Additional parameters
-            
+
         Returns:
             Response object or generator for streaming
         """
@@ -369,7 +369,7 @@ class Blackbox(Provider):
         **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """Chat with Blackbox AI.
-        
+
         Args:
             prompt: User input prompt
             stream: Whether to stream the response
@@ -377,7 +377,7 @@ class Blackbox(Provider):
             conversationally: Whether to treat as conversation
             model: Model to use (overrides instance model)
             **kwargs: Additional parameters
-            
+
         Returns:
             String response or generator for streaming
         """
@@ -410,10 +410,10 @@ class Blackbox(Provider):
 
     def get_message(self, response: Response) -> str:
         """Extract message text from response.
-        
+
         Args:
             response: Response object or dictionary
-            
+
         Returns:
             Extracted message text
         """
@@ -425,7 +425,7 @@ class Blackbox(Provider):
 if __name__ == "__main__":
     # Test the provider
     client = Blackbox()
-    
+
     # Test streaming
     print("Testing streaming:")
     response = client.chat(
@@ -433,11 +433,11 @@ if __name__ == "__main__":
         stream=True,
         max_tokens=500,
     )
-    
+
     for chunk in response:
         print(chunk, end="", flush=True)
     print("\n")
-    
+
     # Test non-streaming
     print("Testing non-streaming:")
     response = client.chat(

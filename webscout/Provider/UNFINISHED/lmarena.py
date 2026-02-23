@@ -3,7 +3,7 @@
 # pyright: reportUnknownParameterType=none
 # pyright: reportMissingTypeStubs=none
 # pyright: reportUnknownArgumentType=none
-# ty: ignore
+# ty: ignore  # ty:ignore[unused-ignore-comment]
 import asyncio
 import base64
 import builtins as _builtins
@@ -1642,6 +1642,33 @@ def _arena_auth_cookie_specs(token: str, *, page_url: Optional[str] = None) -> l
     return specs
 
 
+def _dict_cookies_to_playwright(cookies: list[dict]) -> list[dict]:
+    """
+    Convert dict format cookies to Playwright-compatible format.
+    Playwright expects cookies with specific fields like name, value, domain, path, etc.
+    """
+    return cookies
+
+
+def _playwright_cookies_to_dict(cookies: list) -> list[dict]:
+    """
+    Convert Playwright cookies to dict format.
+    """
+    return [
+        {
+            "name": cookie.get("name", ""),
+            "value": cookie.get("value", ""),
+            "domain": cookie.get("domain", ""),
+            "path": cookie.get("path", ""),
+            "expires": cookie.get("expires", -1),
+            "httpOnly": cookie.get("httpOnly", False),
+            "secure": cookie.get("secure", False),
+            "sameSite": cookie.get("sameSite", "Lax"),
+        }
+        for cookie in cookies
+    ]
+
+
 def _provisional_user_id_cookie_specs(provisional_user_id: str, *, page_url: Optional[str] = None) -> list[dict]:
     """
     Build `provisional_user_id` cookie specs for both origins.
@@ -1793,7 +1820,7 @@ async def fetch_lmarena_stream_via_chrome(
     This tends to align cookies/UA/TLS with what LMArena expects and can reduce reCAPTCHA flakiness.
     """
     try:
-        from playwright.async_api import async_playwright  # type: ignore
+        from playwright.async_api import async_playwright
     except Exception:
         return None
 
@@ -2177,7 +2204,7 @@ async def fetch_lmarena_stream_via_chrome(
                 elif meta:
                     result = meta
 
-                status_code = int(result.get("status") or 0)
+                status_code = int(result.get("status") or 0)  # ty:ignore[invalid-argument-type]
 
                 # If upstream rate limits us, wait and retry inside the same browser session to avoid hammering.
                 if status_code == HTTPStatus.TOO_MANY_REQUESTS and attempt < max_recaptcha_attempts - 1:
@@ -3483,7 +3510,7 @@ def _combine_split_arena_auth_cookies(cookies: list[dict]) -> Optional[str]:
 
 
 
-def _capture_ephemeral_arena_auth_token_from_cookies(cookies: list[dict]) -> None:
+def _capture_ephemeral_arena_auth_token_from_cookies(cookies: list[dict] | list) -> None:
     """
     Capture the current `arena-auth-prod-v1` cookie value into an in-memory global.
 
@@ -3532,7 +3559,7 @@ def _capture_ephemeral_arena_auth_token_from_cookies(cookies: list[dict]) -> Non
     except Exception:
         return None
 
-def _upsert_browser_session_into_config(config: dict, cookies: list[dict], user_agent: str | None = None) -> bool:
+def _upsert_browser_session_into_config(config: dict, cookies: list[dict] | list, user_agent: str | None = None) -> bool:
     """
     Persist useful browser session identity (cookies + UA) into config.json.
     This helps keep Cloudflare + LMArena auth aligned with reCAPTCHA/browser fetch flows.
@@ -3748,7 +3775,7 @@ def maybe_build_arena_auth_cookie_from_signup_response_body(
         else:
             nested = obj.get("session")
             if _looks_like_session(nested):
-                session = nested  # type: ignore[assignment]
+                session = nested
             else:
                 data = obj.get("data")
                 if isinstance(data, dict):
@@ -3757,7 +3784,7 @@ def maybe_build_arena_auth_cookie_from_signup_response_body(
                     else:
                         nested2 = data.get("session")
                         if _looks_like_session(nested2):
-                            session = nested2  # type: ignore[assignment]
+                            session = nested2
     if not isinstance(session, dict):
         return None
 
@@ -4222,7 +4249,7 @@ async def maybe_refresh_expired_auth_tokens(exclude_tokens: Optional[set] = None
     return None
 
 
-def get_next_auth_token(exclude_tokens: set = None, *, allow_ephemeral_fallback: bool = True):
+def get_next_auth_token(exclude_tokens: set | None = None, *, allow_ephemeral_fallback: bool = True):
     """Get next auth token using round-robin selection
 
     Args:
@@ -4516,7 +4543,21 @@ async def get_initial_data():
                 # Sometimes Cloudflare/BM cookies are still set and can help subsequent attempts.
                 try:
                     cookies = await page.context.cookies()
-                    _capture_ephemeral_arena_auth_token_from_cookies(cookies)
+                    # Convert Playwright cookies to dict format
+                    cookies_dict = [
+                        {
+                            "name": cookie.get("name", ""),
+                            "value": cookie.get("value", ""),
+                            "domain": cookie.get("domain", ""),
+                            "path": cookie.get("path", ""),
+                            "expires": cookie.get("expires", -1),
+                            "httpOnly": cookie.get("httpOnly", False),
+                            "secure": cookie.get("secure", False),
+                            "sameSite": cookie.get("sameSite", "Lax"),
+                        }
+                        for cookie in cookies
+                    ]
+                    _capture_ephemeral_arena_auth_token_from_cookies(cookies_dict)
                     try:
                         user_agent = await page.evaluate("() => navigator.userAgent")
                     except Exception:
@@ -4526,7 +4567,7 @@ async def get_initial_data():
                     ua_for_config = None
                     if not normalize_user_agent_value(config.get("user_agent")):
                         ua_for_config = user_agent
-                    if _upsert_browser_session_into_config(config, cookies, user_agent=ua_for_config):
+                    if _upsert_browser_session_into_config(config, cookies_dict, user_agent=ua_for_config):
                         save_config(config)
                 except Exception:
                     pass
@@ -4537,7 +4578,21 @@ async def get_initial_data():
 
             # Persist cookies + UA for downstream httpx/chrome-fetch alignment.
             cookies = await page.context.cookies()
-            _capture_ephemeral_arena_auth_token_from_cookies(cookies)
+            # Convert Playwright cookies to dict format
+            cookies_dict = [
+                {
+                    "name": cookie.get("name", ""),
+                    "value": cookie.get("value", ""),
+                    "domain": cookie.get("domain", ""),
+                    "path": cookie.get("path", ""),
+                    "expires": cookie.get("expires", -1),
+                    "httpOnly": cookie.get("httpOnly", False),
+                    "secure": cookie.get("secure", False),
+                    "sameSite": cookie.get("sameSite", "Lax"),
+                }
+                for cookie in cookies
+            ]
+            _capture_ephemeral_arena_auth_token_from_cookies(cookies_dict)
             try:
                 user_agent = await page.evaluate("() => navigator.userAgent")
             except Exception:
@@ -4548,7 +4603,7 @@ async def get_initial_data():
             ua_for_config = None
             if not normalize_user_agent_value(config.get("user_agent")):
                 ua_for_config = user_agent
-            if _upsert_browser_session_into_config(config, cookies, user_agent=ua_for_config):
+            if _upsert_browser_session_into_config(config, cookies_dict, user_agent=ua_for_config):
                 save_config(config)
 
             if str(config.get("cf_clearance") or "").strip():
@@ -7235,7 +7290,10 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
             # Use LMArena's retry endpoint
             # Format: PUT /nextjs-api/stream/retry-evaluation-session-message/{sessionId}/messages/{messageId}
             payload = {}
-            url = f"https://arena.ai/nextjs-api/stream/retry-evaluation-session-message/{session['conversation_id']}/messages/{retry_message_id}"
+            if session and isinstance(session, dict):
+                url = f"https://arena.ai/nextjs-api/stream/retry-evaluation-session-message/{session['conversation_id']}/messages/{retry_message_id}"
+            else:
+                url = ""
             debug_print(f"📤 Target URL: {url}")
             debug_print("📦 Using PUT method for retry")
             http_method = "PUT"

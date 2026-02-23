@@ -117,5 +117,3 @@ target-version = "py39"
 select = ["E", "F", "W", "I"]
 ignore = ["E501", "F403", "F401"]
 
-[tool.ty]
-exclude = ["webscout/Provider/UNFINISHED/**"]

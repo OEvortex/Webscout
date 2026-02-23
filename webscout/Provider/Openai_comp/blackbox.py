@@ -6,6 +6,7 @@ from typing import Any, Dict, Generator, List, Optional, Union, cast
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
+from webscout.litagent import LitAgent
 from webscout.Provider.Openai_comp.base import (
     BaseChat,
     BaseCompletions,
@@ -20,8 +21,6 @@ from webscout.Provider.Openai_comp.utils import (
     ChoiceDelta,
     CompletionUsage,
 )
-
-from webscout.litagent import LitAgent
 
 
 class Completions(BaseCompletions):
@@ -228,10 +227,10 @@ class Chat(BaseChat):
 class Blackbox(OpenAICompatibleProvider):
     """
     Blackbox AI provider - OpenAI Compatible implementation.
-    
+
     This provider mimics the OpenAI API structure to work with Blackbox AI's API endpoint.
     It supports both streaming and non-streaming responses.
-    
+
     Example:
         >>> client = Blackbox()
         >>> response = client.chat.completions.create(
@@ -249,13 +248,13 @@ class Blackbox(OpenAICompatibleProvider):
     @classmethod
     def get_models(cls, api_key: Optional[str] = None):
         """Fetch available models from Blackbox API.
-        
+
         Note: Blackbox API doesn't have a public models endpoint,
         so we return the default known models.
-        
+
         Args:
             api_key: Optional API key (not used for Blackbox)
-            
+
         Returns:
             list: List of available model IDs
         """
@@ -270,7 +269,7 @@ class Blackbox(OpenAICompatibleProvider):
         **kwargs: Any,
     ):
         """Initialize Blackbox provider.
-        
+
         Args:
             api_key: API key (optional, Blackbox may not require it)
             timeout: Request timeout in seconds
@@ -280,18 +279,18 @@ class Blackbox(OpenAICompatibleProvider):
         """
         # Defer model fetch to background (non-blocking)
         self._start_background_model_fetch(api_key=api_key)
-        
+
         self.timeout = timeout or 60
         self.base_url = "https://oi-vscode-server-985058387028.europe-west1.run.app/chat/completions"
         self.api_key = api_key
-        
+
         # Initialize curl_cffi Session
         self.session = Session()
-        
+
         # Generate browser fingerprint
         agent = LitAgent()
         fingerprint = agent.generate_fingerprint(browser)
-        
+
         # Build headers
         self.headers = {
             "Accept": fingerprint["accept"],
@@ -302,21 +301,21 @@ class Blackbox(OpenAICompatibleProvider):
             "Sec-CH-UA-Mobile": "?0",
             "Sec-CH-UA-Platform": f'"{fingerprint.get("platform", "")}"',
         }
-        
+
         # Add API key if provided
         if api_key:
             self.headers["Authorization"] = f"Bearer {api_key}"
-        
+
         # Add required Blackbox headers
         self.headers["customerId"] = kwargs.get("customerId", "")
         self.headers["userId"] = kwargs.get("userId", "")
         self.headers["version"] = kwargs.get("version", "1.1")
-        
+
         # Update session headers and proxies
         self.session.headers.update(self.headers)
         if proxies:
             self.session.proxies.update(cast(Any, proxies))
-        
+
         # Initialize chat interface
         self.chat = Chat(self)
 
@@ -329,7 +328,7 @@ class Blackbox(OpenAICompatibleProvider):
 if __name__ == "__main__":
     # Test the provider
     client = Blackbox()
-    
+
     # Test streaming
     print("Testing streaming:")
     response = client.chat.completions.create(
@@ -341,12 +340,17 @@ if __name__ == "__main__":
         stream=True,
         max_tokens=500,
     )
-    
+
     for chunk in response:
-        if chunk.choices[0].delta.content:
+        if (
+            isinstance(chunk, ChatCompletionChunk)
+            and chunk.choices
+            and chunk.choices[0].delta
+            and chunk.choices[0].delta.content
+        ):
             print(chunk.choices[0].delta.content, end="", flush=True)
     print("\n")
-    
+
     # Test non-streaming
     print("Testing non-streaming:")
     response = client.chat.completions.create(
@@ -358,6 +362,11 @@ if __name__ == "__main__":
         stream=False,
         max_tokens=100,
     )
-    
+
     if isinstance(response, ChatCompletion):
-        print(response.choices[0].message.content)
+        if (
+            response.choices
+            and response.choices[0].message
+            and response.choices[0].message.content
+        ):
+            print(response.choices[0].message.content)

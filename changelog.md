@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2026.02.18] - 2026-02-18
+## [2026.02.23] - 2026-02-23
 
 ### ✨ Added
 - **Blackbox Provider**: Added new Blackbox AI provider in both standard and OpenAI-compatible formats:
