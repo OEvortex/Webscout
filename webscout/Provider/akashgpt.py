@@ -1,5 +1,7 @@
+import json
 import re
 import time
+from os import path
 from typing import Any, Dict, Generator, Optional, Union, cast
 from uuid import uuid4
 
@@ -20,27 +22,37 @@ class AkashGPT(Provider):
     """
     A class to interact with the Akash Network Chat API.
 
+    This provider requires Cloudflare clearance cookies (cf_clearance and session_token)
+    that must be obtained from a browser session. To get these:
+    1. Visit https://chat.akash.network in your browser
+    2. Complete any Cloudflare challenge if presented
+    3. Export cookies using a browser extension (e.g., "Get cookies.txt LOCALLY")
+       or manually create a JSON file with the format:
+       [{"name": "cf_clearance", "value": "YOUR_TOKEN", ...}, {"name": "session_token", "value": "YOUR_TOKEN", ...}]
+    4. Pass the path to this JSON file as the `cookie_file` parameter.
+
     Attributes:
         system_prompt (str): The system prompt to define the assistant's role.
         model (str): The model to use for generation.
 
     Examples:
         >>> from webscout.Provider.akashgpt import AkashGPT
-        >>> ai = AkashGPT()
+        >>> ai = AkashGPT(cookie_file="/path/to/cookies.json")
         >>> response = ai.chat("What's the weather today?")
         >>> print(response)
-        'The weather today depends on your location. I don't have access to real-time weather data.'
     """
-    required_auth = False
+    required_auth = True
     AVAILABLE_MODELS = [
         "Qwen/Qwen3-30B-A3B",
         "DeepSeek-V3.1",
         "Meta-Llama-3-3-70B-Instruct",
-        "DeepSeek-V3.2"
+        "DeepSeek-V3.2",
+        "AkashGen"
     ]
 
     def __init__(
         self,
+        cookie_file: Optional[str] = None,
         is_conversation: bool = True,
         max_tokens: int = 600,
         timeout: int = 30,
@@ -51,7 +63,7 @@ class AkashGPT(Provider):
         history_offset: int = 10250,
         act: Optional[str] = None,
         system_prompt: str = "You are a helpful assistant.",
-        model: str = "meta-llama-3-3-70b-instruct",
+        model: str = "Meta-Llama-3-3-70B-Instruct",
         temperature: float = 0.6,
         top_p: float = 0.9,
     ):
@@ -59,6 +71,7 @@ class AkashGPT(Provider):
         Initializes the AkashGPT API with given parameters.
 
         Args:
+            cookie_file (str): Path to a JSON file containing cookies (cf_clearance and session_token).
             is_conversation (bool): Whether the provider is in conversation mode.
             max_tokens (int): Maximum number of tokens to sample.
             timeout (int): Timeout for API requests.
@@ -72,15 +85,59 @@ class AkashGPT(Provider):
             model (str): The model to use for generation.
             temperature (float): Controls randomness in generation.
             top_p (float): Controls diversity via nucleus sampling.
+
+        Raises:
+            ValueError: If cookie_file is not provided or doesn't exist.
+            ValueError: If cf_clearance or session_token cookies are missing from the file.
         """
+        if not cookie_file:
+            raise ValueError(
+                "AkashGPT requires a cookie_file path. "
+                "Visit https://chat.akash.network in your browser, complete any Cloudflare challenge, "
+                "export cookies to a JSON file, and pass the file path."
+            )
+
+        if not path.isfile(cookie_file):
+            raise ValueError(f"Cookie file not found: {cookie_file}")
+
+        # Load cookies from the JSON file
+        try:
+            with open(cookie_file, "r", encoding="utf-8") as f:
+                cookies_list = json.load(f)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid JSON in cookie file: {e}")
+        except Exception as e:
+            raise ValueError(f"Failed to read cookie file: {e}")
+
+        # Convert cookie list to dictionary
+        self.cookies = {}
+        if isinstance(cookies_list, list):
+            for cookie in cookies_list:
+                if isinstance(cookie, dict) and "name" in cookie and "value" in cookie:
+                    self.cookies[cookie["name"]] = cookie["value"]
+        elif isinstance(cookies_list, dict):
+            self.cookies = cookies_list
+
+        # Validate required cookies
+        if "cf_clearance" not in self.cookies or "session_token" not in self.cookies:
+            raise ValueError(
+                "Cookie file must contain 'cf_clearance' and 'session_token' cookies. "
+                "These can be obtained from DevTools -> Application -> Cookies after visiting "
+                "https://chat.akash.network"
+            )
         # Validate model choice
         if model not in self.AVAILABLE_MODELS:
-            raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
+            # Try case-insensitive match
+            matched_model = next((m for m in self.AVAILABLE_MODELS if m.lower() == model.lower()), None)
+            if matched_model:
+                model = matched_model
+            else:
+                raise ValueError(f"Invalid model: {model}. Choose from: {self.AVAILABLE_MODELS}")
 
         self.session = Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.api_endpoint = "https://chat.akash.network/api/chat"
+        self.api_endpoint = "https://chat.akash.network/api/chat/"
         self.timeout = timeout
         self.last_response = {}
         self.system_prompt = system_prompt
@@ -92,21 +149,10 @@ class AkashGPT(Provider):
 
         self.headers = {
             "accept": "*/*",
-            "accept-encoding": "gzip, deflate, br, zstd",
             "accept-language": "en-US,en;q=0.9,en-IN;q=0.8",
             "content-type": "application/json",
-            "cookie": "cookie-consent=accepted; _ga=GA1.1.411212745.1768894804; cf_clearance=kUAFsdi8masn4kzDg.g3pDEYmIefkuN4kPT8kAmC.wI-1769979385-1.2.1.1-5i01zppXtcir7LNZjhp.JiQVGEU.ewcNSRnrhdm9uvnuqvgkv_IQmUI0ec9vI7u9kBibnMuKYvteTdmlMyCxXr9RUlhS5hT8MW860slfcjsTbzzsgk7os0LGu9yfVzbZfHm5Qeoo_FFF4ckJz_gnSxKkF0QVzAOv6uwGvICLvv3hNyzgzWV.sEJJi6Fx8dSlze5u5StYbYhbRD97W3rDMpqDyIQBTF8Ts3jh_2keQxA; _ga_LFRGN2J2RV=GS2.1.s1769979388$o2$g0$t1769979388$j60$l0$h0; session_token=ffe05badc451a5f1571a2cd85a5205f650cb2549a6c805162c27d18cc64d5ab7",
-            "dnt": "1",
             "origin": "https://chat.akash.network",
-            "priority": "u=1, i",
             "referer": "https://chat.akash.network/",
-            "sec-ch-ua": '"Not:A-Brand";v="99", "Microsoft Edge";v="145", "Chromium";v="145"',
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": '"Windows"',
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-origin",
-            "sec-gpc": "1",
             "user-agent": self.agent.random()
         }
 
@@ -116,6 +162,8 @@ class AkashGPT(Provider):
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
         self.session.headers.update(self.headers)
+        self.session.cookies.update(self.cookies)
+
         self.conversation = Conversation(
             is_conversation, self.max_tokens_to_sample, filepath, update_file
         )
@@ -183,12 +231,16 @@ class AkashGPT(Provider):
         payload = {
             "id": str(uuid4()).replace("-", ""),  # Generate a unique request ID in the correct format
             "messages": [
-                {"role": "user", "content": conversation_prompt}
+                {
+                    "role": "user",
+                    "content": conversation_prompt,
+                    "parts": [{"type": "text", "text": conversation_prompt}]
+                }
             ],
             "model": self.model,
             "system": self.system_prompt,
-            "temperature": self.temperature,
-            "topP": self.top_p,
+            "temperature": str(self.temperature),
+            "topP": str(self.top_p),
             "context": []
         }
 
@@ -199,7 +251,8 @@ class AkashGPT(Provider):
                     headers=self.headers,
                     json=payload,
                     stream=True,
-                    timeout=self.timeout
+                    timeout=self.timeout,
+                    impersonate="chrome110"
                 )
                 if not response.ok:
                     raise exceptions.FailedToGenerateResponseError(
@@ -290,13 +343,32 @@ class AkashGPT(Provider):
         return cast(Dict[str, Any], response).get("text", "")
 
 if __name__ == "__main__":
+    import os
+    import sys
+
+    # Get cookie file path from environment variable or command line argument
+    cookie_file = os.environ.get("AKASH_COOKIES") or (sys.argv[1] if len(sys.argv) > 1 else None)
+
+    if not cookie_file:
+        print("Error: Cookie file path required.")
+        print("Usage: python akashgpt.py <cookie_file.json>")
+        print("   or: AKASH_COOKIES=/path/to/cookies.json python akashgpt.py")
+        print("")
+        print("To obtain cookies:")
+        print("1. Visit https://chat.akash.network in your browser")
+        print("2. Complete any Cloudflare challenge if presented")
+        print("3. Export cookies using 'Get cookies.txt LOCALLY' extension")
+        print("4. Save as cookies.json in the format:")
+        print('   [{"name": "cf_clearance", "value": "..."}, {"name": "session_token", "value": "..."}]')
+        sys.exit(1)
+
     print("-" * 80)
     print(f"{'Model':<50} {'Status':<10} {'Response'}")
     print("-" * 80)
 
     for model in AkashGPT.AVAILABLE_MODELS:
         try:
-            test_ai = AkashGPT(model=model, timeout=60)
+            test_ai = AkashGPT(cookie_file=cookie_file, model=model, timeout=60)
             response = test_ai.chat("Say 'Hello' in one word")
 
             if hasattr(response, "__iter__") and not isinstance(response, (str, bytes)):

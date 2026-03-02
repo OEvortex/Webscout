@@ -376,15 +376,15 @@ if __name__ == "__main__":
     except ImportError:
         ChatCompletion = None  # ty:ignore[invalid-assignment]
 
-    if ChatCompletion and isinstance(response, ChatCompletion):
-        message = response.choices[0].message  # ty:ignore[possibly-missing-attribute]
-        if message:
-            print(message.content)
-    else:
-        # Streaming generator
-        for chunk in response:
-            if hasattr(chunk, "choices") and chunk.choices:
-                delta = getattr(chunk.choices[0], "delta", None)  # ty:ignore[not-subscriptable]
-                if delta and getattr(delta, "content", None):
-                    print(delta.content, end="", flush=True)
-        print()
+if ChatCompletion and isinstance(response, ChatCompletion):
+    message = response.choices[0].message  # type: ignore[possibly-missing-attribute]
+    if message:
+        print(message.content)
+else:
+    # Streaming generator
+    for chunk in response:
+        if hasattr(chunk, "choices") and chunk.choices:
+            delta = getattr(chunk.choices[0], "delta", None)  # ty:ignore[not-subscriptable]
+            if delta and getattr(delta, "content", None):
+                print(delta.content, end="", flush=True)
+    print()

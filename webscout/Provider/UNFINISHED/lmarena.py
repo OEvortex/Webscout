@@ -3,7 +3,10 @@
 # pyright: reportUnknownParameterType=none
 # pyright: reportMissingTypeStubs=none
 # pyright: reportUnknownArgumentType=none
-# ty: ignore  # ty:ignore[unused-ignore-comment]
+# pyright: reportOptionalMemberAccess=none
+# pyright: reportCallIssue=none
+# pyright: reportUnresolvedAttribute=none
+# pyright: reportInvalidTypeVarUsage=none
 import asyncio
 import base64
 import builtins as _builtins
@@ -20,7 +23,7 @@ from collections import defaultdict
 from contextlib import AsyncExitStack, asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, cast, Sequence
 from urllib.parse import urlsplit
 
 import httpx

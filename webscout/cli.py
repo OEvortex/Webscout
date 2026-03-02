@@ -38,7 +38,7 @@ ENGINES: Dict[str, Union[Type[BaseSearch], Type[BaseSearchEngine]]] = {
 
 
 def _get_engine(name: str) -> Union[BaseSearch, BaseSearchEngine]:
-    cls = ENGINES.get(name.lower())
+    cls: type[BaseSearch | BaseSearchEngine] | None = ENGINES.get(name.lower())
     if not cls:
         rprint(f"[bold red]Error: Engine '{name}' not supported.[/bold red]")
         rprint(f"Available engines: {', '.join(sorted(set(e for e in ENGINES.keys())))}")
@@ -46,7 +46,9 @@ def _get_engine(name: str) -> Union[BaseSearch, BaseSearchEngine]:
     if not callable(cls):
         rprint(f"[bold red]Error: Engine '{name}' is not callable.[/bold red]")
         sys.exit(1)
-    return cls()  # type: ignore[return-value]
+    # Explicitly assert cls is not None after the check
+    assert cls is not None
+    return cls()
 
 
 def _format_views(count: int) -> str:
@@ -278,8 +280,7 @@ def _print_data(data: Any, title: str = "Search Results") -> None:
         if hasattr(first_item, "__dataclass_fields__"):
             # Convert dataclass to dict for each item
             data = [
-                {k: getattr(item, k, "") for k in first_item.__dataclass_fields__}
-                for item in data
+                {k: getattr(item, k, "") for k in first_item.__dataclass_fields__} for item in data
             ]
             first_item = data[0]
 
