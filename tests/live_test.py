@@ -1,14 +1,16 @@
 import argparse
-import sys
-import webscout.Provider
-from webscout.Provider import __all__ as PROVIDER_ALL
-from webscout.AIbase import Provider as BaseProvider
 import inspect
+import json
+import sys
+
 from rich.console import Console
-from rich.table import Table
 from rich.live import Live
 from rich.panel import Panel
-import json
+from rich.table import Table
+
+import webscout.Provider
+from webscout.AIbase import Provider as BaseProvider
+from webscout.Provider import __all__ as PROVIDER_ALL
 
 console = Console()
 
@@ -29,7 +31,7 @@ def list_providers():
             models = getattr(provider_cls, "AVAILABLE_MODELS", [])
             models_str = ", ".join(models[:3]) + ("..." if len(models) > 3 else "")
             table.add_row(name, str(auth), models_str)
-    
+
     console.print(table)
 
 def test_provider(provider_name, model=None, prompt="Say 'Hello World' in one word", stream=False, api_key=None):
@@ -40,7 +42,7 @@ def test_provider(provider_name, model=None, prompt="Say 'Hello World' in one wo
         return
 
     console.print(f"[yellow]Testing provider: {provider_name}[/yellow]")
-    
+
     # Prepare initialization arguments
     init_args = {}
     if getattr(provider_cls, "required_auth", False):
@@ -50,7 +52,7 @@ def test_provider(provider_name, model=None, prompt="Say 'Hello World' in one wo
         # Some providers use 'api_key', some might use something else.
         # Most use 'api_key' in __init__.
         init_args["api_key"] = api_key
-    
+
     if model:
         init_args["model"] = model
 
@@ -69,7 +71,7 @@ def test_provider(provider_name, model=None, prompt="Say 'Hello World' in one wo
             return
 
         console.print(f"[blue]Prompt: {prompt}[/blue]")
-        
+
         if stream:
             console.print("[blue]Streaming response:[/blue]")
             full_response = ""
@@ -85,7 +87,7 @@ def test_provider(provider_name, model=None, prompt="Say 'Hello World' in one wo
         else:
             response = provider.chat(prompt, stream=False)
             console.print(Panel(str(response), title="Response"))
-            
+
     except Exception as e:
         console.print(f"[red]Error during test: {e}[/red]")
         import traceback
@@ -94,9 +96,9 @@ def test_provider(provider_name, model=None, prompt="Say 'Hello World' in one wo
 def test_all_providers(api_keys=None, prompt="Say 'Hello World' in one word"):
     provider_module = sys.modules['webscout.Provider']
     results = []
-    
+
     console.print(f"[yellow]Testing all {len(PROVIDER_ALL)} providers...[/yellow]")
-    
+
     for name in PROVIDER_ALL:
         provider_cls = getattr(provider_module, name, None)
         if not provider_cls or not inspect.isclass(provider_cls) or not issubclass(provider_cls, BaseProvider):
@@ -119,7 +121,7 @@ def test_all_providers(api_keys=None, prompt="Say 'Hello World' in one word"):
             init_args = {}
             if auth_required:
                 init_args["api_key"] = api_key
-            
+
             # Special case for Gemini which needs cookie_file
             if name == "GEMINI":
                 results.append({"name": name, "status": "Skipped (Needs cookie file)", "error": None})
@@ -128,14 +130,14 @@ def test_all_providers(api_keys=None, prompt="Say 'Hello World' in one word"):
 
             provider = provider_cls(**init_args)
             response = provider.chat(prompt, stream=False)
-            
+
             if response:
                 results.append({"name": name, "status": "Working", "error": None})
                 console.print("[green]Working[/green]")
             else:
                 results.append({"name": name, "status": "Empty Response", "error": None})
                 console.print("[red]Empty Response[/red]")
-                
+
         except Exception as e:
             results.append({"name": name, "status": "Failed", "error": str(e)})
             console.print(f"[red]Failed: {e}[/red]")
@@ -148,7 +150,7 @@ def test_all_providers(api_keys=None, prompt="Say 'Hello World' in one word"):
 
     for res in results:
         table.add_row(res["name"], res["status"], res["error"] or "")
-    
+
     console.print(table)
 
 def test_provider_models(provider_name, api_key=None, prompt="Say 'Hello World' in one word"):
@@ -172,10 +174,10 @@ def test_provider_models(provider_name, api_key=None, prompt="Say 'Hello World' 
             init_args = {"model": model}
             if getattr(provider_cls, "required_auth", False):
                 init_args["api_key"] = api_key
-            
+
             provider = provider_cls(**init_args)
             response = provider.chat(prompt, stream=False)
-            
+
             if response:
                 results.append({"model": model, "status": "Working"})
                 console.print("[green]Working[/green]")

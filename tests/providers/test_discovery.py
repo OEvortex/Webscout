@@ -1,6 +1,8 @@
-import unittest
-import webscout.Provider as ProviderModule
 import inspect
+import unittest
+
+import webscout.Provider as ProviderModule
+
 
 class TestProviderDiscovery(unittest.TestCase):
     def test_all_providers_importable(self):

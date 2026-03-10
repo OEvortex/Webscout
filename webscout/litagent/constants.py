@@ -1,4 +1,5 @@
 """Constants used by the LitAgent module."""
+from typing import Any
 
 # Browser versions we support
 BROWSERS = {
@@ -35,7 +36,7 @@ DEVICES = {
 }
 
 # Browser fingerprinting components
-FINGERPRINTS = {
+FINGERPRINTS: dict[str, Any] = {
     "accept_language": [
         "en-US,en;q=0.9",
         "en-GB,en;q=0.8,en-US;q=0.6",

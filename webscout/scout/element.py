@@ -316,9 +316,9 @@ class Tag:
             List[Tag]: List of matching elements
         """
 
-        def _parse_simple_selector(simple_sel: str) -> dict:
+        def _parse_simple_selector(simple_sel: str) -> dict[str, Any]:
             """Parse a simple selector like 'p.class#id[attr=value]' into components."""
-            components = {"tag": None, "id": None, "classes": [], "attrs": {}}
+            components: dict[str, Any] = {"tag": None, "id": None, "classes": [], "attrs": {}}
 
             # Extract tag name (at the start)
             tag_match = re.match(r"^([a-zA-Z][\w-]*)", simple_sel)
@@ -474,9 +474,9 @@ class Tag:
                         results.extend(descendants)
             return results
 
-    def _parse_selector_components(self, simple_sel: str) -> dict:
+    def _parse_selector_components(self, simple_sel: str) -> dict[str, Any]:
         """Parse a simple selector like 'p.class#id[attr=value]' into components."""
-        components = {"tag": None, "id": None, "classes": [], "attrs": {}}
+        components: dict[str, Any] = {"tag": None, "id": None, "classes": [], "attrs": {}}
 
         # Extract tag name (at the start)
         tag_match = re.match(r"^([a-zA-Z][\w-]*)", simple_sel)

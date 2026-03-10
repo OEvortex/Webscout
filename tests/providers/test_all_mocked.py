@@ -1,12 +1,14 @@
-import unittest
-from unittest.mock import patch, MagicMock
-import sys
-import os
-import tempfile
-import webscout.Provider as ProviderModule
-from webscout.AIbase import Provider as BaseProvider
-from tests.providers.utils import FakeResp
 import inspect
+import os
+import sys
+import tempfile
+import unittest
+from unittest.mock import MagicMock, patch
+
+import webscout.Provider as ProviderModule
+from tests.providers.utils import FakeResp
+from webscout.AIbase import Provider as BaseProvider
+
 
 class TestAllProvidersMocked(unittest.TestCase):
     @classmethod
@@ -14,7 +16,7 @@ class TestAllProvidersMocked(unittest.TestCase):
         cls.provider_module = sys.modules['webscout.Provider']
         from webscout.Provider import __all__ as PROVIDER_ALL
         cls.provider_names = PROVIDER_ALL
-        
+
         # Create a dummy cookie file for providers that need it
         cls.temp_dir = tempfile.TemporaryDirectory()
         cls.dummy_cookie_file = os.path.join(cls.temp_dir.name, "cookies.json")
@@ -37,21 +39,25 @@ class TestAllProvidersMocked(unittest.TestCase):
                 with patch('webscout.Provider.Openai.BackgroundModelFetcher'), \
                      patch('webscout.Provider.Groq.BackgroundModelFetcher'), \
                      patch('webscout.Provider.HuggingFace.BackgroundModelFetcher'), \
-                     patch('webscout.Provider.blackbox.BackgroundModelFetcher'), \
                      patch('webscout.Provider.Gemini.Chatbot'), \
                      patch('webscout.litagent.LitAgent'):
-                    
+
                     # Prepare init args
                     init_args = {}
                     sig = inspect.signature(provider_cls.__init__)
                     for param_name, param in sig.parameters.items():
-                        if param_name == 'self': continue
-                        if param_name == 'api_key': init_args['api_key'] = 'test_key'
-                        elif param_name == 'cookie_file': init_args['cookie_file'] = self.dummy_cookie_file
+                        if param_name == "self":
+                            continue
+                        if param_name == "api_key":
+                            init_args["api_key"] = "test_key"
+                        elif param_name == "cookie_file":
+                            init_args["cookie_file"] = self.dummy_cookie_file
                         elif param.default is inspect.Parameter.empty:
                             # Mandatory parameter without a default
-                            if 'file' in param_name: init_args[param_name] = self.dummy_cookie_file
-                            else: init_args[param_name] = 'test_value'
+                            if "file" in param_name:
+                                init_args[param_name] = self.dummy_cookie_file
+                            else:
+                                init_args[param_name] = "test_value"
 
                     try:
                         provider = provider_cls(**init_args)
@@ -69,7 +75,7 @@ class TestAllProvidersMocked(unittest.TestCase):
                                 "message": {"content": "Mocked response"}
                             }
                         )
-                        
+
                         try:
                             # Test non-streaming ask
                             # We use a short timeout to avoid hanging

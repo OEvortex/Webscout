@@ -561,7 +561,7 @@ class ClientCompletions(BaseCompletions):
         except Exception:
             resolved_provider, resolved_model = None, model
 
-        call_kwargs = {
+        call_kwargs: Dict[str, Any] = {
             "model": resolved_model,
             "messages": messages,
             "stream": stream,
@@ -586,7 +586,7 @@ class ClientCompletions(BaseCompletions):
             try:
                 provider_instance = self._get_provider_instance(resolved_provider)
                 response = provider_instance.chat.completions.create(
-                    **cast(Dict[str, Any], call_kwargs)
+                    **call_kwargs
                 )
 
                 if stream and inspect.isgenerator(response):
@@ -681,9 +681,7 @@ class ClientCompletions(BaseCompletions):
         for p_name, p_cls, p_model in fallback_queue:
             try:
                 provider_instance = self._get_provider_instance(p_cls)
-                fallback_kwargs = cast(
-                    Dict[str, Any], {**call_kwargs, "model": p_model}
-                )
+                fallback_kwargs = {**call_kwargs, "model": p_model}
                 response = provider_instance.chat.completions.create(**fallback_kwargs)
 
                 if stream and inspect.isgenerator(response):
@@ -1088,7 +1086,7 @@ class ClientImages(BaseImages):
         except Exception:
             resolved_provider, resolved_model = None, model
 
-        call_kwargs = {
+        call_kwargs: Dict[str, Any] = {
             "prompt": prompt,
             "model": resolved_model,
             "n": n,
@@ -1101,7 +1099,7 @@ class ClientImages(BaseImages):
             try:
                 provider_instance = self._get_provider_instance(resolved_provider)
                 response = provider_instance.images.create(
-                    **cast(Dict[str, Any], call_kwargs)
+                    **call_kwargs
                 )
                 self._last_provider = resolved_provider.__name__
                 if self._client.print_provider_info:
@@ -1154,9 +1152,7 @@ class ClientImages(BaseImages):
         for p_name, p_cls, p_model in fallback_queue:
             try:
                 provider_instance = self._get_provider_instance(p_cls)
-                fallback_kwargs = cast(
-                    Dict[str, Any], {**call_kwargs, "model": p_model}
-                )
+                fallback_kwargs = {**call_kwargs, "model": p_model}
                 response = provider_instance.images.create(**fallback_kwargs)
                 self._last_provider = p_name
                 if self._client.print_provider_info:

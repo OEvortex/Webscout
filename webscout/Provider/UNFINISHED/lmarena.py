@@ -1,12 +1,3 @@
-# pyright: reportUnknownMemberType=none
-# pyright: reportUnknownVariableType=none
-# pyright: reportUnknownParameterType=none
-# pyright: reportMissingTypeStubs=none
-# pyright: reportUnknownArgumentType=none
-# pyright: reportOptionalMemberAccess=none
-# pyright: reportCallIssue=none
-# pyright: reportUnresolvedAttribute=none
-# pyright: reportInvalidTypeVarUsage=none
 import asyncio
 import base64
 import builtins as _builtins
@@ -23,7 +14,7 @@ from collections import defaultdict
 from contextlib import AsyncExitStack, asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, cast, Sequence
+from typing import Dict, List, Optional, Sequence, cast
 from urllib.parse import urlsplit
 
 import httpx
@@ -41,6 +32,7 @@ DEBUG = True
 
 # Port to run the server on
 PORT = 8000
+
 
 # HTTP Status Codes
 class HTTPStatus:
@@ -112,6 +104,7 @@ class HTTPStatus:
     INSUFFICIENT_STORAGE = 507
     NETWORK_AUTHENTICATION_REQUIRED = 511
 
+
 # Status code descriptions for logging
 STATUS_MESSAGES = {
     100: "Continue",
@@ -171,8 +164,9 @@ STATUS_MESSAGES = {
     504: "Gateway Timeout",
     505: "HTTP Version Not Supported",
     507: "Insufficient Storage",
-    511: "Network Authentication Required"
+    511: "Network Authentication Required",
 }
+
 
 def get_status_emoji(status_code: int) -> str:
     """Get emoji for status code"""
@@ -194,6 +188,7 @@ def get_status_emoji(status_code: int) -> str:
         return "❌"
     return "ℹ️"
 
+
 def log_http_status(status_code: int, context: str = ""):
     """Log HTTP status with readable message"""
     emoji = get_status_emoji(status_code)
@@ -202,7 +197,10 @@ def log_http_status(status_code: int, context: str = ""):
         debug_print(f"{emoji} HTTP {status_code}: {message} ({context})")
     else:
         debug_print(f"{emoji} HTTP {status_code}: {message}")
+
+
 # ============================================================
+
 
 def get_rate_limit_sleep_seconds(retry_after: Optional[str], attempt: int) -> int:
     """Compute backoff seconds for upstream 429 responses."""
@@ -225,6 +223,7 @@ def get_general_backoff_seconds(attempt: int) -> int:
     attempt = max(0, int(attempt))
     return int(min(2 * (2**attempt), 30))
 
+
 def safe_print(*args, **kwargs) -> None:
     """
     Print without crashing on Windows console encoding issues (e.g., GBK can't encode emoji).
@@ -240,8 +239,12 @@ def safe_print(*args, **kwargs) -> None:
 
         try:
             text = sep.join(str(a) for a in args) + end
-            encoding = getattr(file, "encoding", None) or getattr(sys.stdout, "encoding", None) or "utf-8"
-            safe_text = text.encode(encoding, errors="backslashreplace").decode(encoding, errors="ignore")
+            encoding = (
+                getattr(file, "encoding", None) or getattr(sys.stdout, "encoding", None) or "utf-8"
+            )
+            safe_text = text.encode(encoding, errors="backslashreplace").decode(
+                encoding, errors="ignore"
+            )
             file.write(safe_text)
             if flush:
                 try:
@@ -256,10 +259,12 @@ def safe_print(*args, **kwargs) -> None:
 # (Some environments default to GBK, which cannot encode emoji.)
 print = safe_print
 
+
 def debug_print(*args, **kwargs):
     """Print debug messages only if DEBUG is True"""
     if DEBUG:
         print(*args, **kwargs)
+
 
 # --- New reCAPTCHA Functions ---
 
@@ -271,6 +276,7 @@ RECAPTCHA_V2_SITEKEY = "6Ld7ePYrAAAAAB34ovoFoDau1fqCJ6IyOjFEQaMn"
 # Cloudflare Turnstile sitekey used by LMArena to mint anonymous-user signup tokens.
 # (Used for POST /nextjs-api/sign-up before `arena-auth-prod-v1` exists.)
 TURNSTILE_SITEKEY = "0x4AAAAAAA65vWDmG-O_lPtT"
+
 
 # LMArena occasionally changes the reCAPTCHA sitekey/action. We try to discover them from captured JS chunks on startup
 # and persist them into config.json; these helpers read and apply those values with safe fallbacks.
@@ -304,8 +310,8 @@ def extract_recaptcha_params_from_text(text: str) -> tuple[Optional[str], Option
     # 2) Discover sitekey from the enterprise.js/api.js render URL (common in HTML/JS chunks).
     # Example: https://www.google.com/recaptcha/enterprise.js?render=SITEKEY
     sitekey_patterns = [
-        r'recaptcha/(?:enterprise|api)\.js\?render=(?P<sitekey>[0-9A-Za-z_-]{8,200})',
-        r'(?:enterprise|api)\.js\?render=(?P<sitekey>[0-9A-Za-z_-]{8,200})',
+        r"recaptcha/(?:enterprise|api)\.js\?render=(?P<sitekey>[0-9A-Za-z_-]{8,200})",
+        r"(?:enterprise|api)\.js\?render=(?P<sitekey>[0-9A-Za-z_-]{8,200})",
     ]
     for pattern in sitekey_patterns:
         try:
@@ -350,6 +356,7 @@ def get_recaptcha_settings(config: Optional[dict] = None) -> tuple[str, str]:
     if not action:
         action = RECAPTCHA_ACTION
     return sitekey, action
+
 
 # Models that should always use the in-browser (Chrome fetch) transport for streaming.
 # These are especially sensitive to reCAPTCHA / bot scoring and are much more reliable when executed in-page.
@@ -498,7 +505,9 @@ def _windows_apply_window_mode_by_title_substring(title_substring: str, mode: st
             elif normalized_mode == "minimize":
                 ShowWindow(hwnd, SW_MINIMIZE)
             elif normalized_mode == "offscreen":
-                SetWindowPos(hwnd, 0, -32000, -32000, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE)
+                SetWindowPos(
+                    hwnd, 0, -32000, -32000, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE
+                )
         except Exception:
             return True
         return True
@@ -596,11 +605,11 @@ async def click_turnstile(page):
     try:
         # Common selectors used by LMArena's Turnstile implementation
         selectors = [
-            '#lm-bridge-turnstile',
-            '#lm-bridge-turnstile iframe',
-            '#cf-turnstile',
+            "#lm-bridge-turnstile",
+            "#lm-bridge-turnstile iframe",
+            "#cf-turnstile",
             'iframe[src*="challenges.cloudflare.com"]',
-            '[style*="display: grid"] iframe' # The grid style often wraps the checkbox
+            '[style*="display: grid"] iframe',  # The grid style often wraps the checkbox
         ]
 
         for selector in selectors:
@@ -663,8 +672,8 @@ async def click_turnstile(page):
                 except Exception:
                     box = None
                 if box:
-                    x = box['x'] + (box['width'] / 2)
-                    y = box['y'] + (box['height'] / 2)
+                    x = box["x"] + (box["width"] / 2)
+                    y = box["y"] + (box["height"] / 2)
                     debug_print(f"  🎯 Found widget at {x},{y}. Clicking...")
                     await page.mouse.click(x, y)
                     await asyncio.sleep(2)
@@ -868,7 +877,9 @@ async def _set_provisional_user_id_in_browser(page, context, *, provisional_user
             # If the two disagree, upstream can reject /nextjs-api/sign-up with confusing errors.
             await context.add_cookies(_provisional_user_id_cookie_specs(provisional_user_id))
     except Exception as e:
-        debug_print(f"Failed to set provisional_user_id cookies in browser context: {type(e).__name__}: {e}")
+        debug_print(
+            f"Failed to set provisional_user_id cookies in browser context: {type(e).__name__}: {e}"
+        )
 
     try:
         await page.evaluate(
@@ -942,7 +953,9 @@ async def _maybe_inject_arena_auth_cookie_from_localstorage(page, context) -> Op
             except Exception:
                 page_url = ""
             await context.add_cookies(_arena_auth_cookie_specs(cookie, page_url=page_url))
-            _capture_ephemeral_arena_auth_token_from_cookies([{"name": "arena-auth-prod-v1", "value": cookie}])
+            _capture_ephemeral_arena_auth_token_from_cookies(
+                [{"name": "arena-auth-prod-v1", "value": cookie}]
+            )
             debug_print("🦊 Camoufox proxy: injected arena-auth cookie from localStorage session.")
             return cookie
         except Exception:
@@ -1021,14 +1034,21 @@ async def get_recaptcha_v3_token_with_chrome(config: dict) -> Optional[str]:
 
     cookies = []
     if cf_clearance:
-        cookies.append({"name": "cf_clearance", "value": cf_clearance, "domain": ".arena.ai", "path": "/"})
+        cookies.append(
+            {"name": "cf_clearance", "value": cf_clearance, "domain": ".arena.ai", "path": "/"}
+        )
     if cf_bm:
         cookies.append({"name": "__cf_bm", "value": cf_bm, "domain": ".arena.ai", "path": "/"})
     if cfuvid:
         cookies.append({"name": "_cfuvid", "value": cfuvid, "domain": ".arena.ai", "path": "/"})
     if provisional_user_id:
         cookies.append(
-            {"name": "provisional_user_id", "value": provisional_user_id, "domain": ".arena.ai", "path": "/"}
+            {
+                "name": "provisional_user_id",
+                "value": provisional_user_id,
+                "domain": ".arena.ai",
+                "path": "/",
+            }
         )
 
     async with async_playwright() as p:
@@ -1097,7 +1117,9 @@ async def get_recaptcha_v3_token_with_chrome(config: dict) -> Optional[str]:
                 marker="LMArenaBridge Chrome Fetch",
                 headless=bool(headless),
             )
-            await page.goto("https://arena.ai/?mode=direct", wait_until="domcontentloaded", timeout=120000)
+            await page.goto(
+                "https://arena.ai/?mode=direct", wait_until="domcontentloaded", timeout=120000
+            )
 
             # Best-effort: if we land on a Cloudflare challenge page, try clicking Turnstile.
             try:
@@ -1117,13 +1139,15 @@ async def get_recaptcha_v3_token_with_chrome(config: dict) -> Optional[str]:
                 await asyncio.sleep(1)
                 await page.mouse.move(200, 300)
                 await page.mouse.wheel(0, 300)
-                await asyncio.sleep(3) # Increased "Human" pause
+                await asyncio.sleep(3)  # Increased "Human" pause
             except Exception:
                 pass
 
             # Persist updated cookies/UA from this real browser context (often refreshes arena-auth-prod-v1).
             try:
-                fresh_cookies = await _get_arena_context_cookies(context, page_url=str(getattr(page, "url", "") or ""))
+                fresh_cookies = await _get_arena_context_cookies(
+                    context, page_url=str(getattr(page, "url", "") or "")
+                )
                 try:
                     ua_now = await page.evaluate("() => navigator.userAgent")
                 except Exception:
@@ -1198,7 +1222,9 @@ def _consume_background_task_exception(task: "asyncio.Task") -> None:
         pass
 
 
-async def _cancel_background_task(task: Optional["asyncio.Task"], *, timeout_seconds: float = 1.0) -> None:
+async def _cancel_background_task(
+    task: Optional["asyncio.Task"], *, timeout_seconds: float = 1.0
+) -> None:
     if task is None:
         return
     if task.done():
@@ -1268,7 +1294,7 @@ class BrowserFetchStreamResponse:
                 try:
                     # Brief timeout to check done_event occasionally
                     line = await asyncio.wait_for(self._lines_queue.get(), timeout=1.0)
-                    if line is None: # Sentinel for EOF
+                    if line is None:  # Sentinel for EOF
                         break
                     yield line
                 except asyncio.TimeoutError:
@@ -1292,13 +1318,18 @@ class BrowserFetchStreamResponse:
     def raise_for_status(self) -> None:
         if self.status_code == 0 or self.status_code >= 400:
             request = httpx.Request(self._method, self._url or "https://arena.ai/")
-            response = httpx.Response(self.status_code or 502, request=request, content=self._text.encode("utf-8"))
-            raise httpx.HTTPStatusError(f"HTTP {self.status_code}", request=request, response=response)
+            response = httpx.Response(
+                self.status_code or 502, request=request, content=self._text.encode("utf-8")
+            )
+            raise httpx.HTTPStatusError(
+                f"HTTP {self.status_code}", request=request, response=response
+            )
 
 
 USERSCRIPT_PROXY_LAST_POLL_AT: float = 0.0
 _USERSCRIPT_PROXY_QUEUE: Optional[asyncio.Queue] = None
 _USERSCRIPT_PROXY_JOBS: dict[str, dict] = {}
+
 
 def _touch_userscript_poll(now: Optional[float] = None) -> None:
     """
@@ -1396,7 +1427,9 @@ def _mark_userscript_proxy_inactive() -> None:
     last_userscript_poll = 0.0
 
 
-async def _finalize_userscript_proxy_job(job_id: str, *, error: Optional[str] = None, remove: bool = False) -> None:
+async def _finalize_userscript_proxy_job(
+    job_id: str, *, error: Optional[str] = None, remove: bool = False
+) -> None:
     """
     Finalize a userscript-proxy job without touching proxy "last seen" timestamps.
 
@@ -1583,8 +1616,12 @@ class UserscriptProxyStreamResponse:
         job = _USERSCRIPT_PROXY_JOBS.get(self.job_id)
         if isinstance(job, dict) and job.get("error"):
             request = httpx.Request(self._method, self._url)
-            response = httpx.Response(503, request=request, content=str(job.get("error")).encode("utf-8"))
-            raise httpx.HTTPStatusError("Userscript proxy error", request=request, response=response)
+            response = httpx.Response(
+                503, request=request, content=str(job.get("error")).encode("utf-8")
+            )
+            raise httpx.HTTPStatusError(
+                "Userscript proxy error", request=request, response=response
+            )
         status = int(self.status_code or 0)
         if status == 0 or status >= 400:
             request = httpx.Request(self._method, self._url)
@@ -1672,7 +1709,9 @@ def _playwright_cookies_to_dict(cookies: list) -> list[dict]:
     ]
 
 
-def _provisional_user_id_cookie_specs(provisional_user_id: str, *, page_url: Optional[str] = None) -> list[dict]:
+def _provisional_user_id_cookie_specs(
+    provisional_user_id: str, *, page_url: Optional[str] = None
+) -> list[dict]:
     """
     Build `provisional_user_id` cookie specs for both origins.
 
@@ -1815,7 +1854,7 @@ async def fetch_lmarena_stream_via_chrome(
     payload: dict,
     auth_token: str,
     timeout_seconds: int = 120,
-    headless: bool = False, # Default to Headful for better reliability
+    headless: bool = False,  # Default to Headful for better reliability
     max_recaptcha_attempts: int = 3,
 ) -> Optional[BrowserFetchStreamResponse]:
     """
@@ -1848,22 +1887,37 @@ async def fetch_lmarena_stream_via_chrome(
     cf_clearance = str(config.get("cf_clearance") or cookie_map.get("cf_clearance") or "").strip()
     cf_bm = str(config.get("cf_bm") or cookie_map.get("__cf_bm") or "").strip()
     cfuvid = str(config.get("cfuvid") or cookie_map.get("_cfuvid") or "").strip()
-    provisional_user_id = str(config.get("provisional_user_id") or cookie_map.get("provisional_user_id") or "").strip()
+    provisional_user_id = str(
+        config.get("provisional_user_id") or cookie_map.get("provisional_user_id") or ""
+    ).strip()
     grecaptcha_cookie = str(cookie_map.get("_GRECAPTCHA") or "").strip()
 
     desired_cookies: list[dict] = []
     if cf_clearance:
-        desired_cookies.append({"name": "cf_clearance", "value": cf_clearance, "domain": ".arena.ai", "path": "/"})
+        desired_cookies.append(
+            {"name": "cf_clearance", "value": cf_clearance, "domain": ".arena.ai", "path": "/"}
+        )
     if cf_bm:
-        desired_cookies.append({"name": "__cf_bm", "value": cf_bm, "domain": ".arena.ai", "path": "/"})
+        desired_cookies.append(
+            {"name": "__cf_bm", "value": cf_bm, "domain": ".arena.ai", "path": "/"}
+        )
     if cfuvid:
-        desired_cookies.append({"name": "_cfuvid", "value": cfuvid, "domain": ".arena.ai", "path": "/"})
+        desired_cookies.append(
+            {"name": "_cfuvid", "value": cfuvid, "domain": ".arena.ai", "path": "/"}
+        )
     if provisional_user_id:
         desired_cookies.append(
-            {"name": "provisional_user_id", "value": provisional_user_id, "domain": ".arena.ai", "path": "/"}
+            {
+                "name": "provisional_user_id",
+                "value": provisional_user_id,
+                "domain": ".arena.ai",
+                "path": "/",
+            }
         )
     if grecaptcha_cookie:
-        desired_cookies.append({"name": "_GRECAPTCHA", "value": grecaptcha_cookie, "domain": ".arena.ai", "path": "/"})
+        desired_cookies.append(
+            {"name": "_GRECAPTCHA", "value": grecaptcha_cookie, "domain": ".arena.ai", "path": "/"}
+        )
     if auth_token:
         desired_cookies.extend(_arena_auth_cookie_specs(auth_token))
 
@@ -1951,15 +2005,19 @@ async def fetch_lmarena_stream_via_chrome(
                 marker="LMArenaBridge Chrome Fetch",
                 headless=bool(headless),
             )
-            await page.goto("https://arena.ai/?mode=direct", wait_until="domcontentloaded", timeout=120000)
+            await page.goto(
+                "https://arena.ai/?mode=direct", wait_until="domcontentloaded", timeout=120000
+            )
 
             # Best-effort: if we land on a Cloudflare challenge page, try clicking Turnstile before minting tokens.
             try:
-                for i in range(10): # Up to 30 seconds
+                for i in range(10):  # Up to 30 seconds
                     title = await page.title()
                     if "Just a moment" not in title:
                         break
-                    debug_print(f"  ⏳ Waiting for Cloudflare challenge in Chrome... (attempt {i+1}/10)")
+                    debug_print(
+                        f"  ⏳ Waiting for Cloudflare challenge in Chrome... (attempt {i + 1}/10)"
+                    )
                     await click_turnstile(page)
                     await asyncio.sleep(3)
                 try:
@@ -1978,13 +2036,15 @@ async def fetch_lmarena_stream_via_chrome(
                 await page.mouse.move(200, 300)
                 await asyncio.sleep(0.5)
                 await page.mouse.wheel(0, 300)
-                await asyncio.sleep(2) # Reduced "Human" pause for faster response
+                await asyncio.sleep(2)  # Reduced "Human" pause for faster response
             except Exception:
                 pass
 
             # Persist updated cookies/UA from this browser context (helps keep auth + cf cookies fresh).
             try:
-                fresh_cookies = await _get_arena_context_cookies(context, page_url=str(getattr(page, "url", "") or ""))
+                fresh_cookies = await _get_arena_context_cookies(
+                    context, page_url=str(getattr(page, "url", "") or "")
+                )
                 _capture_ephemeral_arena_auth_token_from_cookies(fresh_cookies)
                 try:
                     ua_now = await page.evaluate("() => navigator.userAgent")
@@ -2163,16 +2223,18 @@ async def fetch_lmarena_stream_via_chrome(
                 body = json.dumps(payload) if payload is not None else ""
 
                 # Start fetch task
-                fetch_task = asyncio.create_task(page.evaluate(
-                    fetch_script,
-                    {
-                        "url": fetch_url,
-                        "method": http_method,
-                        "body": body,
-                        "extraHeaders": extra_headers,
-                        "timeoutMs": int(timeout_seconds * 1000),
-                    },
-                ))
+                fetch_task = asyncio.create_task(
+                    page.evaluate(
+                        fetch_script,
+                        {
+                            "url": fetch_url,
+                            "method": http_method,
+                            "body": body,
+                            "extraHeaders": extra_headers,
+                            "timeoutMs": int(timeout_seconds * 1000),
+                        },
+                    )
+                )
 
                 # Wait for initial meta (status/headers) OR task completion
                 meta = None
@@ -2210,11 +2272,16 @@ async def fetch_lmarena_stream_via_chrome(
                 status_code = int(result.get("status") or 0)  # ty:ignore[invalid-argument-type]
 
                 # If upstream rate limits us, wait and retry inside the same browser session to avoid hammering.
-                if status_code == HTTPStatus.TOO_MANY_REQUESTS and attempt < max_recaptcha_attempts - 1:
+                if (
+                    status_code == HTTPStatus.TOO_MANY_REQUESTS
+                    and attempt < max_recaptcha_attempts - 1
+                ):
                     retry_after = None
                     if isinstance(result, dict) and isinstance(result.get("headers"), dict):
                         headers_map = result.get("headers") or {}
-                        retry_after = headers_map.get("retry-after") or headers_map.get("Retry-After")
+                        retry_after = headers_map.get("retry-after") or headers_map.get(
+                            "Retry-After"
+                        )
                     sleep_seconds = get_rate_limit_sleep_seconds(
                         str(retry_after) if retry_after is not None else None,
                         attempt,
@@ -2230,13 +2297,17 @@ async def fetch_lmarena_stream_via_chrome(
                         # If the in-page script returned a buffered body (e.g. in unit tests/mocks where
                         # `reportChunk` isn't exercised), fall back to a plain buffered response.
                         try:
-                            candidate_body = result.get("text") if isinstance(result, dict) else None
+                            candidate_body = (
+                                result.get("text") if isinstance(result, dict) else None
+                            )
                         except Exception:
                             candidate_body = None
                         if isinstance(candidate_body, str) and candidate_body:
                             return BrowserFetchStreamResponse(
                                 status_code=status_code,
-                                headers=result.get("headers", {}) if isinstance(result, dict) else {},
+                                headers=result.get("headers", {})
+                                if isinstance(result, dict)
+                                else {},
                                 text=candidate_body,
                                 method=http_method,
                                 url=url,
@@ -2260,7 +2331,7 @@ async def fetch_lmarena_stream_via_chrome(
                             method=http_method,
                             url=url,
                             lines_queue=lines_queue,
-                            done_event=done_event
+                            done_event=done_event,
                         )
                     await _cancel_background_task(fetch_task)
                     break
@@ -2334,22 +2405,37 @@ async def fetch_lmarena_stream_via_camoufox(
     cf_clearance = str(config.get("cf_clearance") or cookie_map.get("cf_clearance") or "").strip()
     cf_bm = str(config.get("cf_bm") or cookie_map.get("__cf_bm") or "").strip()
     cfuvid = str(config.get("cfuvid") or cookie_map.get("_cfuvid") or "").strip()
-    provisional_user_id = str(config.get("provisional_user_id") or cookie_map.get("provisional_user_id") or "").strip()
+    provisional_user_id = str(
+        config.get("provisional_user_id") or cookie_map.get("provisional_user_id") or ""
+    ).strip()
     grecaptcha_cookie = str(cookie_map.get("_GRECAPTCHA") or "").strip()
 
     desired_cookies: list[dict] = []
     if cf_clearance:
-        desired_cookies.append({"name": "cf_clearance", "value": cf_clearance, "domain": ".arena.ai", "path": "/"})
+        desired_cookies.append(
+            {"name": "cf_clearance", "value": cf_clearance, "domain": ".arena.ai", "path": "/"}
+        )
     if cf_bm:
-        desired_cookies.append({"name": "__cf_bm", "value": cf_bm, "domain": ".arena.ai", "path": "/"})
+        desired_cookies.append(
+            {"name": "__cf_bm", "value": cf_bm, "domain": ".arena.ai", "path": "/"}
+        )
     if cfuvid:
-        desired_cookies.append({"name": "_cfuvid", "value": cfuvid, "domain": ".arena.ai", "path": "/"})
+        desired_cookies.append(
+            {"name": "_cfuvid", "value": cfuvid, "domain": ".arena.ai", "path": "/"}
+        )
     if provisional_user_id:
         desired_cookies.append(
-            {"name": "provisional_user_id", "value": provisional_user_id, "domain": ".arena.ai", "path": "/"}
+            {
+                "name": "provisional_user_id",
+                "value": provisional_user_id,
+                "domain": ".arena.ai",
+                "path": "/",
+            }
         )
     if grecaptcha_cookie:
-        desired_cookies.append({"name": "_GRECAPTCHA", "value": grecaptcha_cookie, "domain": ".arena.ai", "path": "/"})
+        desired_cookies.append(
+            {"name": "_GRECAPTCHA", "value": grecaptcha_cookie, "domain": ".arena.ai", "path": "/"}
+        )
     if auth_token:
         desired_cookies.extend(_arena_auth_cookie_specs(auth_token))
 
@@ -2403,7 +2489,11 @@ async def fetch_lmarena_stream_via_camoufox(
             debug_print("  🦊 Navigating to arena.ai...")
             try:
                 await asyncio.wait_for(
-                    page.goto("https://arena.ai/?mode=direct", wait_until="domcontentloaded", timeout=60000),
+                    page.goto(
+                        "https://arena.ai/?mode=direct",
+                        wait_until="domcontentloaded",
+                        timeout=60000,
+                    ),
                     timeout=70.0,
                 )
             except Exception:
@@ -2422,7 +2512,9 @@ async def fetch_lmarena_stream_via_camoufox(
 
             # Persist cookies
             try:
-                fresh_cookies = await _get_arena_context_cookies(context, page_url=str(getattr(page, "url", "") or ""))
+                fresh_cookies = await _get_arena_context_cookies(
+                    context, page_url=str(getattr(page, "url", "") or "")
+                )
                 _capture_ephemeral_arena_auth_token_from_cookies(fresh_cookies)
                 try:
                     ua_now = await page.evaluate("() => navigator.userAgent")
@@ -2442,7 +2534,9 @@ async def fetch_lmarena_stream_via_camoufox(
 
                 # SIDE-CHANNEL MINTING:
                 # 1. Setup result variable
-                await safe_page_evaluate(page, "() => { (window.wrappedJSObject || window).__token_result = 'PENDING'; }")
+                await safe_page_evaluate(
+                    page, "() => { (window.wrappedJSObject || window).__token_result = 'PENDING'; }"
+                )
 
                 # 2. Trigger execution (fire and forget from Python's perspective)
                 trigger_script = f"""() => {{
@@ -2490,10 +2584,14 @@ async def fetch_lmarena_stream_via_camoufox(
                 await safe_page_evaluate(page, trigger_script)
 
                 # 3. Poll for result
-                for _ in range(40): # 20 seconds max (0.5s interval)
-                    val = await safe_page_evaluate(page, "() => (window.wrappedJSObject || window).__token_result")
-                    if val != 'PENDING':
-                        if isinstance(val, str) and (val.startswith('ERROR') or val.startswith('SYNC_ERROR')):
+                for _ in range(40):  # 20 seconds max (0.5s interval)
+                    val = await safe_page_evaluate(
+                        page, "() => (window.wrappedJSObject || window).__token_result"
+                    )
+                    if val != "PENDING":
+                        if isinstance(val, str) and (
+                            val.startswith("ERROR") or val.startswith("SYNC_ERROR")
+                        ):
                             debug_print(f"  ⚠️ Camoufox token mint error: {val}")
                             return None
                         return val
@@ -2642,16 +2740,18 @@ async def fetch_lmarena_stream_via_camoufox(
                 body = json.dumps(payload) if payload is not None else ""
 
                 # Execute fetch
-                fetch_task = asyncio.create_task(page.evaluate(
-                    fetch_script,
-                    {
-                        "url": fetch_url,
-                        "method": http_method,
-                        "body": body,
-                        "extraHeaders": extra_headers,
-                        "timeoutMs": int(timeout_seconds * 1000),
-                    },
-                ))
+                fetch_task = asyncio.create_task(
+                    page.evaluate(
+                        fetch_script,
+                        {
+                            "url": fetch_url,
+                            "method": http_method,
+                            "body": body,
+                            "extraHeaders": extra_headers,
+                            "timeoutMs": int(timeout_seconds * 1000),
+                        },
+                    )
+                )
 
                 # Wait for initial meta (status/headers) OR task completion
                 meta = None
@@ -2683,13 +2783,17 @@ async def fetch_lmarena_stream_via_camoufox(
 
                 status_code = int(result.get("status") or 0)
 
-                if status_code == HTTPStatus.TOO_MANY_REQUESTS and attempt < max_recaptcha_attempts - 1:
+                if (
+                    status_code == HTTPStatus.TOO_MANY_REQUESTS
+                    and attempt < max_recaptcha_attempts - 1
+                ):
                     await _cancel_background_task(fetch_task)
                     await asyncio.sleep(5)
                     continue
 
                 if not _is_recaptcha_validation_failed(status_code, result.get("text")):
                     if status_code < 400:
+
                         def _on_fetch_task_done(task: "asyncio.Task") -> None:
                             _consume_background_task_exception(task)
                             try:
@@ -2708,13 +2812,17 @@ async def fetch_lmarena_stream_via_camoufox(
                             method=http_method,
                             url=url,
                             lines_queue=lines_queue,
-                            done_event=done_event
+                            done_event=done_event,
                         )
                     await _cancel_background_task(fetch_task)
                     break
 
                 await _cancel_background_task(fetch_task)
-                if attempt < max_recaptcha_attempts - 1 and isinstance(payload, dict) and not bool(payload.get("recaptchaV2Token")):
+                if (
+                    attempt < max_recaptcha_attempts - 1
+                    and isinstance(payload, dict)
+                    and not bool(payload.get("recaptchaV2Token"))
+                ):
                     try:
                         v2_token = await _mint_recaptcha_v2_token()
                     except Exception:
@@ -2782,12 +2890,14 @@ async def fetch_via_proxy_queue(
     proxy_pending_tasks[task_id] = future
 
     # Add to queue
-    proxy_task_queue.append({
-        "id": task_id,
-        "url": url,
-        "method": http_method,
-        "body": json.dumps(payload) if payload else ""
-    })
+    proxy_task_queue.append(
+        {
+            "id": task_id,
+            "url": url,
+            "method": http_method,
+            "body": json.dumps(payload) if payload else "",
+        }
+    )
 
     debug_print(f"📫 Added task {task_id} to Proxy Queue. Waiting for Userscript...")
 
@@ -2844,22 +2954,23 @@ async def fetch_via_proxy_queue(
                 headers=result.get("headers", {}),
                 text=text,
                 method=http_method,
-                url=url
+                url=url,
             )
 
     except asyncio.TimeoutError:
         debug_print(f"❌ Proxy Task {task_id} timed out. Is the Userscript running?")
         if task_id in proxy_pending_tasks:
             del proxy_pending_tasks[task_id]
-        if task_id in [t['id'] for t in proxy_task_queue]:
+        if task_id in [t["id"] for t in proxy_task_queue]:
             # Remove from queue if not picked up
-            proxy_task_queue[:] = [t for t in proxy_task_queue if t['id'] != task_id]
+            proxy_task_queue[:] = [t for t in proxy_task_queue if t["id"] != task_id]
         return None
     except Exception as e:
         debug_print(f"❌ Proxy Task Exception: {e}")
         return None
 
     return None
+
 
 async def get_recaptcha_v3_token() -> Optional[str]:
     """
@@ -2886,12 +2997,16 @@ async def get_recaptcha_v3_token() -> Optional[str]:
         async with AsyncCamoufox(headless=True, main_world_eval=False) as browser:
             context = await browser.new_context()
             if cf_clearance:
-                await context.add_cookies([{
-                    "name": "cf_clearance",
-                    "value": cf_clearance,
-                    "domain": ".arena.ai",
-                    "path": "/"
-                }])
+                await context.add_cookies(
+                    [
+                        {
+                            "name": "cf_clearance",
+                            "value": cf_clearance,
+                            "domain": ".arena.ai",
+                            "path": "/",
+                        }
+                    ]
+                )
 
             page = await context.new_page()
 
@@ -2929,7 +3044,7 @@ async def get_recaptcha_v3_token() -> Optional[str]:
             debug_print("  🖱️  Waking up page...")
             await page.mouse.move(100, 100)
             await page.mouse.wheel(0, 200)
-            await asyncio.sleep(2) # Vital "Human" pause
+            await asyncio.sleep(2)  # Vital "Human" pause
 
             # 2. Check for Library
             debug_print("  ⏳ Checking for library...")
@@ -2951,7 +3066,9 @@ async def get_recaptcha_v3_token() -> Optional[str]:
 
             # 3. SETUP: Initialize our global result variable
             # We use a unique name to avoid conflicts
-            await safe_page_evaluate(page, "() => { (window.wrappedJSObject || window).__token_result = 'PENDING'; }")
+            await safe_page_evaluate(
+                page, "() => { (window.wrappedJSObject || window).__token_result = 'PENDING'; }"
+            )
 
             # 4. TRIGGER: Execute reCAPTCHA and write to the variable
             # We do NOT await the result here. We just fire the process.
@@ -2982,15 +3099,17 @@ async def get_recaptcha_v3_token() -> Optional[str]:
             debug_print("  👀 Polling for result...")
             token = None
 
-            for i in range(20): # Wait up to 20 seconds
+            for i in range(20):  # Wait up to 20 seconds
                 # Read the global variable
-                result = await safe_page_evaluate(page, "() => (window.wrappedJSObject || window).__token_result", retries=2)
+                result = await safe_page_evaluate(
+                    page, "() => (window.wrappedJSObject || window).__token_result", retries=2
+                )
 
-                if result != 'PENDING':
-                    if result and result.startswith('ERROR'):
+                if result != "PENDING":
+                    if result and result.startswith("ERROR"):
                         debug_print(f"❌ JS Execution Error: {result}")
                         return None
-                    elif result and result.startswith('SYNC_ERROR'):
+                    elif result and result.startswith("SYNC_ERROR"):
                         debug_print(f"❌ JS Sync Error: {result}")
                         return None
                     else:
@@ -3013,6 +3132,7 @@ async def get_recaptcha_v3_token() -> Optional[str]:
     except Exception as e:
         debug_print(f"❌ Unexpected error: {e}")
         return None
+
 
 async def refresh_recaptcha_token(force_new: bool = False):
     """Checks if the global reCAPTCHA token is expired and refreshes it if necessary."""
@@ -3044,7 +3164,9 @@ async def refresh_recaptcha_token(force_new: bool = False):
 
     return RECAPTCHA_TOKEN
 
+
 # --- End New reCAPTCHA Functions ---
+
 
 def get_cached_recaptcha_token() -> str:
     """Return the current reCAPTCHA v3 token if it's still valid, without refreshing."""
@@ -3056,6 +3178,7 @@ def get_cached_recaptcha_token() -> str:
     if current_time > RECAPTCHA_EXPIRY - timedelta(seconds=10):
         return ""
     return str(token)
+
 
 # Custom UUIDv7 implementation (using correct Unix epoch)
 def uuid7():
@@ -3069,13 +3192,16 @@ def uuid7():
 
     uuid_int = timestamp_ms << 80
     uuid_int |= (0x7000 | rand_a) << 64
-    uuid_int |= (0x8000000000000000 | rand_b)
+    uuid_int |= 0x8000000000000000 | rand_b
 
     hex_str = f"{uuid_int:032x}"
     return f"{hex_str[0:8]}-{hex_str[8:12]}-{hex_str[12:16]}-{hex_str[16:20]}-{hex_str[20:32]}"
 
+
 # Image upload helper functions
-async def upload_image_to_lmarena(image_data: bytes, mime_type: str, filename: str) -> Optional[tuple]:
+async def upload_image_to_lmarena(
+    image_data: bytes, mime_type: str, filename: str
+) -> Optional[tuple]:
     """
     Upload an image to LMArena R2 storage and return the key and download URL.
 
@@ -3093,7 +3219,7 @@ async def upload_image_to_lmarena(image_data: bytes, mime_type: str, filename: s
             debug_print("❌ Image data is empty")
             return None
 
-        if not mime_type or not mime_type.startswith('image/'):
+        if not mime_type or not mime_type.startswith("image/"):
             debug_print(f"❌ Invalid MIME type: {mime_type}")
             return None
 
@@ -3106,17 +3232,21 @@ async def upload_image_to_lmarena(image_data: bytes, mime_type: str, filename: s
         signed_url_action_id = config.get("next_action_signed_url")
 
         if not upload_action_id or not signed_url_action_id:
-            debug_print("❌ Next-Action IDs not found in config. Please refresh tokens from dashboard.")
+            debug_print(
+                "❌ Next-Action IDs not found in config. Please refresh tokens from dashboard."
+            )
             return None
 
         # Prepare headers for Next.js Server Action
         request_headers = get_request_headers()
-        request_headers.update({
-            "Accept": "text/x-component",
-            "Content-Type": "text/plain;charset=UTF-8",
-            "Next-Action": upload_action_id,
-            "Referer": "https://arena.ai/?mode=direct",
-        })
+        request_headers.update(
+            {
+                "Accept": "text/x-component",
+                "Content-Type": "text/plain;charset=UTF-8",
+                "Next-Action": upload_action_id,
+                "Referer": "https://arena.ai/?mode=direct",
+            }
+        )
 
         async with httpx.AsyncClient() as client:
             try:
@@ -3124,7 +3254,7 @@ async def upload_image_to_lmarena(image_data: bytes, mime_type: str, filename: s
                     "https://arena.ai/?mode=direct",
                     headers=request_headers,
                     content=json.dumps([filename, mime_type]),
-                    timeout=30.0
+                    timeout=30.0,
                 )
                 response.raise_for_status()
             except httpx.TimeoutException:
@@ -3136,19 +3266,19 @@ async def upload_image_to_lmarena(image_data: bytes, mime_type: str, filename: s
 
             # Parse response - format: 0:{...}\n1:{...}\n
             try:
-                lines = response.text.strip().split('\n')
+                lines = response.text.strip().split("\n")
                 upload_data = None
                 for line in lines:
-                    if line.startswith('1:'):
+                    if line.startswith("1:"):
                         upload_data = json.loads(line[2:])
                         break
 
-                if not upload_data or not upload_data.get('success'):
+                if not upload_data or not upload_data.get("success"):
                     debug_print(f"❌ Failed to get upload URL: {response.text[:200]}")
                     return None
 
-                upload_url = upload_data['data']['uploadUrl']
-                key = upload_data['data']['key']
+                upload_url = upload_data["data"]["uploadUrl"]
+                key = upload_data["data"]["key"]
                 debug_print(f"✅ Got upload URL and key: {key}")
             except (json.JSONDecodeError, KeyError, IndexError) as e:
                 debug_print(f"❌ Failed to parse upload URL response: {e}")
@@ -3161,7 +3291,7 @@ async def upload_image_to_lmarena(image_data: bytes, mime_type: str, filename: s
                     upload_url,
                     content=image_data,
                     headers={"Content-Type": mime_type},
-                    timeout=60.0
+                    timeout=60.0,
                 )
                 response.raise_for_status()
                 debug_print("✅ Image uploaded successfully")
@@ -3182,7 +3312,7 @@ async def upload_image_to_lmarena(image_data: bytes, mime_type: str, filename: s
                     "https://arena.ai/?mode=direct",
                     headers=request_headers_step3,
                     content=json.dumps([key]),
-                    timeout=30.0
+                    timeout=30.0,
                 )
                 response.raise_for_status()
             except httpx.TimeoutException:
@@ -3194,18 +3324,18 @@ async def upload_image_to_lmarena(image_data: bytes, mime_type: str, filename: s
 
             # Parse response
             try:
-                lines = response.text.strip().split('\n')
+                lines = response.text.strip().split("\n")
                 download_data = None
                 for line in lines:
-                    if line.startswith('1:'):
+                    if line.startswith("1:"):
                         download_data = json.loads(line[2:])
                         break
 
-                if not download_data or not download_data.get('success'):
+                if not download_data or not download_data.get("success"):
                     debug_print(f"❌ Failed to get download URL: {response.text[:200]}")
                     return None
 
-                download_url = download_data['data']['url']
+                download_url = download_data["data"]["url"]
                 debug_print(f"✅ Got signed download URL: {download_url[:100]}...")
                 return (key, download_url)
             except (json.JSONDecodeError, KeyError, IndexError) as e:
@@ -3215,6 +3345,7 @@ async def upload_image_to_lmarena(image_data: bytes, mime_type: str, filename: s
     except Exception as e:
         debug_print(f"❌ Unexpected error uploading image: {type(e).__name__}: {e}")
         return None
+
 
 def _coerce_message_content_to_text(content) -> str:
     """Best-effort coercion of message content to plain text (no images)."""
@@ -3250,7 +3381,7 @@ async def process_message_content(content, model_capabilities: dict) -> tuple[st
         Tuple of (text_content, experimental_attachments)
     """
     # Check if model supports image input
-    supports_images = model_capabilities.get('inputCapabilities', {}).get('image', False)
+    supports_images = model_capabilities.get("inputCapabilities", {}).get("image", False)
 
     # If content is a string, return it as-is
     if isinstance(content, str):
@@ -3263,40 +3394,40 @@ async def process_message_content(content, model_capabilities: dict) -> tuple[st
 
         for part in content:
             if isinstance(part, dict):
-                if part.get('type') == 'text':
-                    text_parts.append(part.get('text', ''))
-                elif 'text' in part:
-                    text_parts.append(part.get('text', ''))
-                elif 'content' in part:
-                    text_parts.append(part.get('content', ''))
+                if part.get("type") == "text":
+                    text_parts.append(part.get("text", ""))
+                elif "text" in part:
+                    text_parts.append(part.get("text", ""))
+                elif "content" in part:
+                    text_parts.append(part.get("content", ""))
 
-                elif part.get('type') == 'image_url' and supports_images:
-                    image_url = part.get('image_url', {})
+                elif part.get("type") == "image_url" and supports_images:
+                    image_url = part.get("image_url", {})
                     if isinstance(image_url, dict):
-                        url = image_url.get('url', '')
+                        url = image_url.get("url", "")
                     else:
                         url = image_url
 
                     # Handle base64-encoded images
-                    if url.startswith('data:'):
+                    if url.startswith("data:"):
                         # Format: data:image/png;base64,iVBORw0KGgo...
                         try:
                             # Validate and parse data URI
-                            if ',' not in url:
+                            if "," not in url:
                                 debug_print("❌ Invalid data URI format (no comma separator)")
                                 continue
 
-                            header, data = url.split(',', 1)
+                            header, data = url.split(",", 1)
 
                             # Parse MIME type
-                            if ';' not in header or ':' not in header:
+                            if ";" not in header or ":" not in header:
                                 debug_print("❌ Invalid data URI header format")
                                 continue
 
-                            mime_type = header.split(';')[0].split(':')[1]
+                            mime_type = header.split(";")[0].split(":")[1]
 
                             # Validate MIME type
-                            if not mime_type.startswith('image/'):
+                            if not mime_type.startswith("image/"):
                                 debug_print(f"❌ Invalid MIME type: {mime_type}")
                                 continue
 
@@ -3309,49 +3440,56 @@ async def process_message_content(content, model_capabilities: dict) -> tuple[st
 
                             # Validate image size (max 10MB)
                             if len(image_data) > 10 * 1024 * 1024:
-                                debug_print(f"❌ Image too large: {len(image_data)} bytes (max 10MB)")
+                                debug_print(
+                                    f"❌ Image too large: {len(image_data)} bytes (max 10MB)"
+                                )
                                 continue
 
                             # Generate filename
-                            ext = mimetypes.guess_extension(mime_type) or '.png'
+                            ext = mimetypes.guess_extension(mime_type) or ".png"
                             filename = f"upload-{uuid.uuid4()}{ext}"
 
-                            debug_print(f"🖼️  Processing base64 image: {filename}, size: {len(image_data)} bytes")
+                            debug_print(
+                                f"🖼️  Processing base64 image: {filename}, size: {len(image_data)} bytes"
+                            )
 
                             # Upload to LMArena
-                            upload_result = await upload_image_to_lmarena(image_data, mime_type, filename)
+                            upload_result = await upload_image_to_lmarena(
+                                image_data, mime_type, filename
+                            )
 
                             if upload_result:
                                 key, download_url = upload_result
                                 # Add as attachment in LMArena format
-                                attachments.append({
-                                    "name": key,
-                                    "contentType": mime_type,
-                                    "url": download_url
-                                })
+                                attachments.append(
+                                    {"name": key, "contentType": mime_type, "url": download_url}
+                                )
                                 debug_print("✅ Image uploaded and added to attachments")
                             else:
                                 debug_print("⚠️  Failed to upload image, skipping")
                         except Exception as e:
-                            debug_print(f"❌ Unexpected error processing base64 image: {type(e).__name__}: {e}")
+                            debug_print(
+                                f"❌ Unexpected error processing base64 image: {type(e).__name__}: {e}"
+                            )
 
                     # Handle URL images (direct URLs)
-                    elif url.startswith('http://') or url.startswith('https://'):
+                    elif url.startswith("http://") or url.startswith("https://"):
                         # For external URLs, we'd need to download and re-upload
                         # For now, skip this case
                         debug_print(f"⚠️  External image URLs not yet supported: {url[:100]}")
 
-                elif part.get('type') == 'image_url' and not supports_images:
+                elif part.get("type") == "image_url" and not supports_images:
                     debug_print("⚠️  Image provided but model doesn't support images")
             elif isinstance(part, str):
                 text_parts.append(part)
 
         # Combine text parts
-        text_content = '\n'.join(text_parts).strip()
+        text_content = "\n".join(text_parts).strip()
         return text_content, attachments
 
     # Fallback
     return str(content), []
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -3360,6 +3498,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         debug_print(f"❌ Error during startup: {e}")
     yield
+
 
 app = FastAPI(lifespan=lifespan)
 
@@ -3400,6 +3539,7 @@ RECAPTCHA_EXPIRY: datetime = datetime.now(timezone.utc) - timedelta(days=365)
 
 # --- Helper Functions ---
 
+
 def get_config():
     global current_token_index, _LAST_CONFIG_FILE
     # If tests or callers swap CONFIG_FILE at runtime, reset the token round-robin index so token selection
@@ -3438,7 +3578,7 @@ def get_config():
                 if isinstance(key_entry, dict):
                     # Ensure 'key' exists as it's critical
                     if "key" not in key_entry:
-                        continue # Skip invalid entries missing the actual key
+                        continue  # Skip invalid entries missing the actual key
 
                     if "name" not in key_entry:
                         key_entry["name"] = "Unnamed Key"
@@ -3454,6 +3594,7 @@ def get_config():
 
     return config
 
+
 def load_usage_stats():
     """Load usage stats from config into memory"""
     global model_usage_stats
@@ -3463,6 +3604,7 @@ def load_usage_stats():
     except Exception as e:
         debug_print(f"⚠️  Error loading usage stats: {e}, using empty stats")
         model_usage_stats = defaultdict(int)
+
 
 def save_config(config, *, preserve_auth_tokens: bool = True):
     try:
@@ -3512,7 +3654,6 @@ def _combine_split_arena_auth_cookies(cookies: list[dict]) -> Optional[str]:
     return None
 
 
-
 def _capture_ephemeral_arena_auth_token_from_cookies(cookies: list[dict] | list) -> None:
     """
     Capture the current `arena-auth-prod-v1` cookie value into an in-memory global.
@@ -3538,7 +3679,6 @@ def _capture_ephemeral_arena_auth_token_from_cookies(cookies: list[dict] | list)
                 EPHEMERAL_ARENA_AUTH_TOKEN = combined
                 return
 
-
         for cookie in cookies or []:
             if str(cookie.get("name") or "") != "arena-auth-prod-v1":
                 continue
@@ -3562,7 +3702,10 @@ def _capture_ephemeral_arena_auth_token_from_cookies(cookies: list[dict] | list)
     except Exception:
         return None
 
-def _upsert_browser_session_into_config(config: dict, cookies: list[dict] | list, user_agent: str | None = None) -> bool:
+
+def _upsert_browser_session_into_config(
+    config: dict, cookies: list[dict] | list, user_agent: str | None = None
+) -> bool:
     """
     Persist useful browser session identity (cookies + UA) into config.json.
     This helps keep Cloudflare + LMArena auth aligned with reCAPTCHA/browser fetch flows.
@@ -3621,12 +3764,14 @@ def _upsert_browser_session_into_config(config: dict, cookies: list[dict] | list
 
     return changed
 
+
 def get_models():
     try:
         with open(MODELS_FILE, "r") as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return []
+
 
 def save_models(models):
     try:
@@ -3660,6 +3805,7 @@ def get_request_headers():
 
     return get_request_headers_with_token(token)
 
+
 def normalize_user_agent_value(user_agent: object) -> str:
     ua = str(user_agent or "").strip()
     if not ua:
@@ -3667,6 +3813,7 @@ def normalize_user_agent_value(user_agent: object) -> str:
     if ua.lower() in ("user-agent", "user agent"):
         return ""
     return ua
+
 
 def get_request_headers_with_token(token: str, recaptcha_v3_token: Optional[str] = None):
     """Get request headers with a specific auth token and optional reCAPTCHA v3 token"""
@@ -3716,6 +3863,7 @@ def get_request_headers_with_token(token: str, recaptcha_v3_token: Optional[str]
         _, recaptcha_action = get_recaptcha_settings(config)
         headers["X-Recaptcha-Action"] = recaptcha_action
     return headers
+
 
 def _decode_arena_auth_session_token(token: str) -> Optional[dict]:
     """
@@ -3808,6 +3956,7 @@ def maybe_build_arena_auth_cookie_from_signup_response_body(
     except Exception:
         return None
 
+
 def _decode_jwt_payload(token: str) -> Optional[dict]:
     token = str(token or "").strip()
     if token.count(".") < 2:
@@ -3827,6 +3976,7 @@ def _decode_jwt_payload(token: str) -> Optional[dict]:
     if isinstance(obj, dict):
         return obj
     return None
+
 
 _SUPABASE_JWT_RE = re.compile(r"eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+")
 
@@ -3881,6 +4031,7 @@ def _derive_supabase_auth_base_url_from_arena_auth_token(token: str) -> Optional
         return base
     return iss
 
+
 def get_arena_auth_token_expiry_epoch(token: str) -> Optional[int]:
     """
     Best-effort expiry detection for arena-auth tokens.
@@ -3919,6 +4070,7 @@ def get_arena_auth_token_expiry_epoch(token: str) -> Optional[int]:
             return None
     return None
 
+
 def is_arena_auth_token_expired(token: str, *, skew_seconds: int = 30) -> bool:
     """
     Return True if we can determine that a token is expired (or about to expire).
@@ -3933,6 +4085,7 @@ def is_arena_auth_token_expired(token: str, *, skew_seconds: int = 30) -> bool:
         skew = 30
     now = time.time()
     return now >= (float(exp) - float(max(0, skew)))
+
 
 def is_probably_valid_arena_auth_token(token: str) -> bool:
     """
@@ -3959,10 +4112,13 @@ def is_probably_valid_arena_auth_token(token: str) -> bool:
         return not is_arena_auth_token_expired(token)
     return False
 
+
 ARENA_AUTH_REFRESH_LOCK: asyncio.Lock = asyncio.Lock()
 
 
-async def refresh_arena_auth_token_via_lmarena_http(old_token: str, config: Optional[dict] = None) -> Optional[str]:
+async def refresh_arena_auth_token_via_lmarena_http(
+    old_token: str, config: Optional[dict] = None
+) -> Optional[str]:
     """
     Best-effort refresh for `arena-auth-prod-v1` using LMArena itself.
 
@@ -4038,13 +4194,17 @@ async def refresh_arena_auth_token_via_lmarena_http(old_token: str, config: Opti
             continue
         # Accept even if identical (some servers still refresh internal tokens while keeping value stable),
         # but prefer a clearly-valid, non-expired cookie.
-        if is_probably_valid_arena_auth_token(new_value) and not is_arena_auth_token_expired(new_value, skew_seconds=0):
+        if is_probably_valid_arena_auth_token(new_value) and not is_arena_auth_token_expired(
+            new_value, skew_seconds=0
+        ):
             return new_value
 
     return None
 
 
-async def refresh_arena_auth_token_via_supabase(old_token: str, *, anon_key: Optional[str] = None) -> Optional[str]:
+async def refresh_arena_auth_token_via_supabase(
+    old_token: str, *, anon_key: Optional[str] = None
+) -> Optional[str]:
     """
     Refresh an expired `arena-auth-prod-v1` base64 session directly via Supabase using the embedded refresh_token.
 
@@ -4144,7 +4304,9 @@ async def refresh_arena_auth_token_via_supabase(old_token: str, *, anon_key: Opt
         return None
 
 
-async def maybe_refresh_expired_auth_tokens_via_lmarena_http(exclude_tokens: Optional[set] = None) -> Optional[str]:
+async def maybe_refresh_expired_auth_tokens_via_lmarena_http(
+    exclude_tokens: Optional[set] = None,
+) -> Optional[str]:
     """
     If the on-disk auth token list only contains expired base64 sessions, try to refresh one via LMArena and return it.
 
@@ -4252,7 +4414,9 @@ async def maybe_refresh_expired_auth_tokens(exclude_tokens: Optional[set] = None
     return None
 
 
-def get_next_auth_token(exclude_tokens: set | None = None, *, allow_ephemeral_fallback: bool = True):
+def get_next_auth_token(
+    exclude_tokens: set | None = None, *, allow_ephemeral_fallback: bool = True
+):
     """Get next auth token using round-robin selection
 
     Args:
@@ -4344,7 +4508,11 @@ def get_next_auth_token(exclude_tokens: set | None = None, *, allow_ephemeral_fa
         single_token = str(config.get("auth_token") or "").strip()
         if single_token and not is_arena_auth_token_expired(single_token):
             auth_tokens = [single_token]
-    if not auth_tokens and EPHEMERAL_ARENA_AUTH_TOKEN and not is_arena_auth_token_expired(EPHEMERAL_ARENA_AUTH_TOKEN):
+    if (
+        not auth_tokens
+        and EPHEMERAL_ARENA_AUTH_TOKEN
+        and not is_arena_auth_token_expired(EPHEMERAL_ARENA_AUTH_TOKEN)
+    ):
         # Use an in-memory token captured from the browser session as a fallback (do not override configured tokens).
         auth_tokens = [EPHEMERAL_ARENA_AUTH_TOKEN]
     if not auth_tokens:
@@ -4399,6 +4567,7 @@ def get_next_auth_token(exclude_tokens: set | None = None, *, allow_ephemeral_fa
         pass
     return token
 
+
 def remove_auth_token(token: str, force: bool = False):
     """Remove an expired/invalid auth token from the list if prune is enabled or forced"""
     try:
@@ -4418,7 +4587,9 @@ def remove_auth_token(token: str, force: bool = False):
     except Exception as e:
         debug_print(f"⚠️  Error removing auth token: {e}")
 
+
 # --- Dashboard Authentication ---
+
 
 async def get_current_session(request: Request):
     session_id = request.cookies.get("session_id")
@@ -4426,7 +4597,9 @@ async def get_current_session(request: Request):
         return dashboard_sessions[session_id]
     return None
 
+
 # --- API Key Authentication & Rate Limiting ---
+
 
 async def rate_limit_api_key(key: str = Depends(API_KEY_HEADER)):
     config = get_config()
@@ -4464,14 +4637,16 @@ async def rate_limit_api_key(key: str = Depends(API_KEY_HEADER)):
         raise HTTPException(
             status_code=429,
             detail="Rate limit exceeded. Please try again later.",
-            headers={"Retry-After": str(retry_after)}
+            headers={"Retry-After": str(retry_after)},
         )
 
     api_key_usage[api_key_str].append(current_time)
 
     return key_data
 
+
 # --- Core Logic ---
+
 
 async def get_initial_data():
     debug_print("Starting initial data retrieval...")
@@ -4486,16 +4661,16 @@ async def get_initial_data():
             async def capture_js_route(route):
                 """Intercept and capture JS chunk responses"""
                 url = route.request.url
-                if '/_next/static/chunks/' in url and '.js' in url:
+                if "/_next/static/chunks/" in url and ".js" in url:
                     try:
                         # Fetch the original response
                         response = await route.fetch()
                         # Get the response body
                         body = await response.body()
-                        text = body.decode('utf-8')
+                        text = body.decode("utf-8")
 
                         # debug_print(f"    📥 Captured JS chunk: {url.split('/')[-1][:50]}...")
-                        captured_responses.append({'url': url, 'text': text})
+                        captured_responses.append({"url": url, "text": text})
 
                         # Continue with the original response (don't modify)
                         await route.fulfill(response=response, body=body)
@@ -4508,14 +4683,14 @@ async def get_initial_data():
                     await route.continue_()
 
             # Register the route interceptor
-            await page.route('**/*', capture_js_route)
+            await page.route("**/*", capture_js_route)
 
             debug_print("Navigating to arena.ai...")
             await page.goto("https://arena.ai/", wait_until="domcontentloaded")
 
             debug_print("Waiting for Cloudflare challenge to complete...")
             challenge_passed = False
-            for i in range(12): # Up to 120 seconds
+            for i in range(12):  # Up to 120 seconds
                 try:
                     title = await page.title()
                 except Exception:
@@ -4525,13 +4700,12 @@ async def get_initial_data():
                     challenge_passed = True
                     break
 
-                debug_print(f"  ⏳ Waiting for Cloudflare challenge... (attempt {i+1}/12)")
+                debug_print(f"  ⏳ Waiting for Cloudflare challenge... (attempt {i + 1}/12)")
                 await click_turnstile(page)
 
                 try:
                     await page.wait_for_function(
-                        "() => document.title.indexOf('Just a moment...') === -1",
-                        timeout=10000
+                        "() => document.title.indexOf('Just a moment...') === -1", timeout=10000
                     )
                     challenge_passed = True
                     break
@@ -4570,7 +4744,9 @@ async def get_initial_data():
                     ua_for_config = None
                     if not normalize_user_agent_value(config.get("user_agent")):
                         ua_for_config = user_agent
-                    if _upsert_browser_session_into_config(config, cookies_dict, user_agent=ua_for_config):
+                    if _upsert_browser_session_into_config(
+                        config, cookies_dict, user_agent=ua_for_config
+                    ):
                         save_config(config)
                 except Exception:
                     pass
@@ -4610,7 +4786,9 @@ async def get_initial_data():
                 save_config(config)
 
             if str(config.get("cf_clearance") or "").strip():
-                debug_print(f"✅ Saved cf_clearance token: {str(config.get('cf_clearance'))[:20]}...")
+                debug_print(
+                    f"✅ Saved cf_clearance token: {str(config.get('cf_clearance'))[:20]}..."
+                )
             else:
                 debug_print("⚠️ Could not find cf_clearance cookie.")
 
@@ -4620,9 +4798,11 @@ async def get_initial_data():
             debug_print("Extracting models from page...")
             try:
                 page_body = await page.content()
-                match = re.search(r'{\\"initialModels\\":(\[.*?\]),\\"initialModel[A-Z]Id', page_body, re.DOTALL)
+                match = re.search(
+                    r'{\\"initialModels\\":(\[.*?\]),\\"initialModel[A-Z]Id', page_body, re.DOTALL
+                )
                 if match:
-                    models_json = match.group(1).encode().decode('unicode_escape')
+                    models_json = match.group(1).encode().decode("unicode_escape")
                     models = json.loads(models_json)
                     save_models(models)
                     debug_print(f"✅ Saved {len(models)} models")
@@ -4632,7 +4812,9 @@ async def get_initial_data():
                 debug_print(f"❌ Error extracting models: {e}")
 
             # Extract Next-Action IDs from captured JavaScript responses
-            debug_print(f"\nExtracting Next-Action IDs from {len(captured_responses)} captured JS responses...")
+            debug_print(
+                f"\nExtracting Next-Action IDs from {len(captured_responses)} captured JS responses..."
+            )
             try:
                 upload_action_id = None
                 signed_url_action_id = None
@@ -4643,8 +4825,8 @@ async def get_initial_data():
                     debug_print(f"  📦 Processing {len(captured_responses)} JavaScript chunk files")
 
                     for item in captured_responses:
-                        url = item['url']
-                        text = item['text']
+                        url = item["url"]
+                        text = item["text"]
 
                         try:
                             # debug_print(f"  🔎 Checking: {url.split('/')[-1][:50]}...")
@@ -4652,23 +4834,27 @@ async def get_initial_data():
                             # Look for getSignedUrl action ID (ID captured in group 1)
                             signed_url_matches = re.findall(
                                 r'\(0,[a-zA-Z].createServerReference\)\(\"([\w\d]*?)\",[a-zA-Z_$][\w$]*\.callServer,void 0,[a-zA-Z_$][\w$]*\.findSourceMapURL,["\']getSignedUrl["\']\)',
-                                text
+                                text,
                             )
 
                             # Look for generateUploadUrl action ID (ID captured in group 1)
                             upload_matches = re.findall(
                                 r'\(0,[a-zA-Z].createServerReference\)\(\"([\w\d]*?)\",[a-zA-Z_$][\w$]*\.callServer,void 0,[a-zA-Z_$][\w$]*\.findSourceMapURL,["\']generateUploadUrl["\']\)',
-                                text
+                                text,
                             )
 
                             # Process matches
                             if signed_url_matches and not signed_url_action_id:
                                 signed_url_action_id = signed_url_matches[0]
-                                debug_print(f"    📥 Found getSignedUrl action ID: {signed_url_action_id[:20]}...")
+                                debug_print(
+                                    f"    📥 Found getSignedUrl action ID: {signed_url_action_id[:20]}..."
+                                )
 
                             if upload_matches and not upload_action_id:
                                 upload_action_id = upload_matches[0]
-                                debug_print(f"    📤 Found generateUploadUrl action ID: {upload_action_id[:20]}...")
+                                debug_print(
+                                    f"    📤 Found generateUploadUrl action ID: {upload_action_id[:20]}..."
+                                )
 
                             if upload_action_id and signed_url_action_id:
                                 debug_print("  ✅ Found both action IDs, stopping search")
@@ -4705,7 +4891,9 @@ async def get_initial_data():
                 debug_print("   This is optional - continuing without them")
 
             # Extract reCAPTCHA sitekey/action from captured JS responses (helps keep up with LMArena changes).
-            debug_print(f"\nExtracting reCAPTCHA params from {len(captured_responses)} captured JS responses...")
+            debug_print(
+                f"\nExtracting reCAPTCHA params from {len(captured_responses)} captured JS responses..."
+            )
             try:
                 discovered_sitekey: Optional[str] = None
                 discovered_action: Optional[str] = None
@@ -4777,22 +4965,24 @@ async def get_initial_data():
     except Exception as e:
         debug_print(f"❌ An error occurred during initial data retrieval: {e}")
 
+
 async def periodic_refresh_task():
     """Background task to refresh cf_clearance and models every 30 minutes"""
     while True:
         try:
             # Wait 30 minutes (1800 seconds)
             await asyncio.sleep(1800)
-            debug_print("\n" + "="*60)
+            debug_print("\n" + "=" * 60)
             debug_print("🔄 Starting scheduled 30-minute refresh...")
-            debug_print("="*60)
+            debug_print("=" * 60)
             await get_initial_data()
             debug_print("✅ Scheduled refresh completed")
-            debug_print("="*60 + "\n")
+            debug_print("=" * 60 + "\n")
         except Exception as e:
             debug_print(f"❌ Error in periodic refresh task: {e}")
             # Continue the loop even if there's an error
             continue
+
 
 async def startup_event():
     # Prevent unit tests (TestClient/ASGITransport) from clobbering the user's real config.json
@@ -4850,18 +5040,23 @@ async def startup_event():
         debug_print(f"❌ Error during startup: {e}")
         # Continue anyway - server should still start
 
+
 # --- UI Endpoints (Login/Dashboard) ---
+
 
 @app.get("/", response_class=HTMLResponse)
 async def root_redirect():
     return RedirectResponse(url="/dashboard")
+
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request, error: Optional[str] = None):
     if await get_current_session(request):
         return RedirectResponse(url="/dashboard")
 
-    error_msg = '<div class="error-message">Invalid password. Please try again.</div>' if error else ''
+    error_msg = (
+        '<div class="error-message">Invalid password. Please try again.</div>' if error else ""
+    )
 
     return f"""
         <!DOCTYPE html>
@@ -4964,6 +5159,7 @@ async def login_page(request: Request, error: Optional[str] = None):
         </html>
     """
 
+
 @app.post("/login")
 async def login_submit(response: Response, password: str = Form(...)):
     config = get_config()
@@ -4975,6 +5171,7 @@ async def login_submit(response: Response, password: str = Form(...)):
         return response
     return RedirectResponse(url="/login?error=1", status_code=status.HTTP_303_SEE_OTHER)
 
+
 @app.get("/logout")
 async def logout(request: Request, response: Response):
     session_id = request.cookies.get("session_id")
@@ -4983,6 +5180,7 @@ async def logout(request: Request, response: Response):
     response = RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
     response.delete_cookie("session_id")
     return response
+
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard(session: str = Depends(get_current_session)):
@@ -4995,13 +5193,16 @@ async def dashboard(session: str = Depends(get_current_session)):
     except Exception as e:
         debug_print(f"❌ Error loading dashboard data: {e}")
         # Return error page
-        return HTMLResponse(f"""
+        return HTMLResponse(
+            f"""
             <html><body style="font-family: sans-serif; padding: 40px; text-align: center;">
                 <h1>⚠️ Dashboard Error</h1>
                 <p>Failed to load configuration: {str(e)}</p>
                 <p><a href="/logout">Logout</a> | <a href="/dashboard">Retry</a></p>
             </body></html>
-        """, status_code=500)
+        """,
+            status_code=500,
+        )
 
     # Render API Keys
     keys_html = ""
@@ -5009,7 +5210,7 @@ async def dashboard(session: str = Depends(get_current_session)):
         key_name = key.get("name") or "Unnamed Key"
         key_value = key.get("key") or ""
         rpm_value = key.get("rpm", 60)
-        created_date = time.strftime('%Y-%m-%d %H:%M', time.localtime(key.get('created', 0)))
+        created_date = time.strftime("%Y-%m-%d %H:%M", time.localtime(key.get("created", 0)))
         keys_html += f"""
             <tr>
                 <td><strong>{key_name}</strong></td>
@@ -5026,15 +5227,17 @@ async def dashboard(session: str = Depends(get_current_session)):
         """
 
     # Render Models (limit to first 20 with text output)
-    text_models = [m for m in models if m.get('capabilities', {}).get('outputCapabilities', {}).get('text')]
+    text_models = [
+        m for m in models if m.get("capabilities", {}).get("outputCapabilities", {}).get("text")
+    ]
     models_html = ""
     for i, model in enumerate(text_models[:20]):
-        rank = model.get('rank', '?')
-        org = model.get('organization', 'Unknown')
+        rank = model.get("rank", "?")
+        org = model.get("organization", "Unknown")
         models_html += f"""
             <div class="model-card">
                 <div class="model-header">
-                    <span class="model-name">{model.get('publicName', 'Unnamed')}</span>
+                    <span class="model-name">{model.get("publicName", "Unnamed")}</span>
                     <span class="model-rank">Rank {rank}</span>
                 </div>
                 <div class="model-org">{org}</div>
@@ -5047,7 +5250,9 @@ async def dashboard(session: str = Depends(get_current_session)):
     # Render Stats
     stats_html = ""
     if model_usage_stats:
-        for model, count in sorted(model_usage_stats.items(), key=lambda x: x[1], reverse=True)[:10]:
+        for model, count in sorted(model_usage_stats.items(), key=lambda x: x[1], reverse=True)[
+            :10
+        ]:
             stats_html += f"<tr><td>{model}</td><td><strong>{count}</strong></td></tr>"
     else:
         stats_html = "<tr><td colspan='2' class='no-data'>No usage data yet</td></tr>"
@@ -5355,7 +5560,7 @@ async def dashboard(session: str = Depends(get_current_session)):
                 <!-- Stats Overview -->
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-value">{len(config['api_keys'])}</div>
+                        <div class="stat-value">{len(config["api_keys"])}</div>
                         <div class="stat-label">API Keys</div>
                     </div>
                     <div class="stat-card">
@@ -5378,7 +5583,10 @@ async def dashboard(session: str = Depends(get_current_session)):
                     <h3 style="margin-bottom: 15px; font-size: 16px;">Multiple Auth Tokens (Round-Robin)</h3>
                     <p style="color: #666; margin-bottom: 15px;">Add multiple tokens for automatic cycling. Each conversation will use a consistent token.</p>
 
-                    {''.join([f'''
+                    {
+        "".join(
+            [
+                f'''
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-radius: 6px;">
                         <code style="flex: 1; font-family: 'Courier New', monospace; font-size: 12px; word-break: break-all;">{token[:50]}...</code>
                         <form action="/delete-auth-token" method="post" style="margin: 0;" onsubmit="return confirm('Delete this token?');">
@@ -5386,9 +5594,19 @@ async def dashboard(session: str = Depends(get_current_session)):
                             <button type="submit" class="btn-delete">Delete</button>
                         </form>
                     </div>
-                    ''' for i, token in enumerate(config.get("auth_tokens", []))])}
+                    '''
+                for i, token in enumerate(config.get("auth_tokens", []))
+            ]
+        )
+    }
 
-                    {('<div class="no-data">No tokens configured. Add tokens below.</div>' if not config.get("auth_tokens") else '')}
+                    {
+        (
+            '<div class="no-data">No tokens configured. Add tokens below.</div>'
+            if not config.get("auth_tokens")
+            else ""
+        )
+    }
 
                     <h3 style="margin-top: 25px; margin-bottom: 15px; font-size: 16px;">Add New Token</h3>
                     <form action="/add-auth-token" method="post">
@@ -5432,7 +5650,11 @@ async def dashboard(session: str = Depends(get_current_session)):
                             </tr>
                         </thead>
                         <tbody>
-                            {keys_html if keys_html else '<tr><td colspan="5" class="no-data">No API keys configured</td></tr>'}
+                            {
+        keys_html
+        if keys_html
+        else '<tr><td colspan="5" class="no-data">No API keys configured</td></tr>'
+    }
                         </tbody>
                     </table>
 
@@ -5497,7 +5719,9 @@ async def dashboard(session: str = Depends(get_current_session)):
 
             <script>
                 // Prepare data for charts
-                const statsData = {json.dumps(dict(sorted(model_usage_stats.items(), key=lambda x: x[1], reverse=True)[:10]))};
+                const statsData = {
+        json.dumps(dict(sorted(model_usage_stats.items(), key=lambda x: x[1], reverse=True)[:10]))
+    };
                 const modelNames = Object.keys(statsData);
                 const modelCounts = Object.values(statsData);
 
@@ -5608,8 +5832,11 @@ async def dashboard(session: str = Depends(get_current_session)):
         </html>
     """
 
+
 @app.post("/update-auth-token")
-async def update_auth_token(session: str = Depends(get_current_session), auth_token: str = Form(...)):
+async def update_auth_token(
+    session: str = Depends(get_current_session), auth_token: str = Form(...)
+):
     if not session:
         return RedirectResponse(url="/login")
     config = get_config()
@@ -5617,8 +5844,11 @@ async def update_auth_token(session: str = Depends(get_current_session), auth_to
     save_config(config, preserve_auth_tokens=False)
     return RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
 
+
 @app.post("/create-key")
-async def create_key(session: str = Depends(get_current_session), name: str = Form(...), rpm: int = Form(...)):
+async def create_key(
+    session: str = Depends(get_current_session), name: str = Form(...), rpm: int = Form(...)
+):
     if not session:
         return RedirectResponse(url="/login")
     try:
@@ -5627,13 +5857,14 @@ async def create_key(session: str = Depends(get_current_session), name: str = Fo
             "name": name.strip(),
             "key": f"sk-lmab-{uuid.uuid4()}",
             "rpm": max(1, min(rpm, 1000)),  # Clamp between 1-1000
-            "created": int(time.time())
+            "created": int(time.time()),
         }
         config["api_keys"].append(new_key)
         save_config(config)
     except Exception as e:
         debug_print(f"❌ Error creating key: {e}")
     return RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
+
 
 @app.post("/delete-key")
 async def delete_key(session: str = Depends(get_current_session), key_id: str = Form(...)):
@@ -5647,8 +5878,11 @@ async def delete_key(session: str = Depends(get_current_session), key_id: str = 
         debug_print(f"❌ Error deleting key: {e}")
     return RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
 
+
 @app.post("/add-auth-token")
-async def add_auth_token(session: str = Depends(get_current_session), new_auth_token: str = Form(...)):
+async def add_auth_token(
+    session: str = Depends(get_current_session), new_auth_token: str = Form(...)
+):
     if not session:
         return RedirectResponse(url="/login")
     try:
@@ -5663,8 +5897,11 @@ async def add_auth_token(session: str = Depends(get_current_session), new_auth_t
         debug_print(f"❌ Error adding auth token: {e}")
     return RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
 
+
 @app.post("/delete-auth-token")
-async def delete_auth_token(session: str = Depends(get_current_session), token_index: int = Form(...)):
+async def delete_auth_token(
+    session: str = Depends(get_current_session), token_index: int = Form(...)
+):
     if not session:
         return RedirectResponse(url="/login")
     try:
@@ -5678,6 +5915,7 @@ async def delete_auth_token(session: str = Depends(get_current_session), token_i
         debug_print(f"❌ Error deleting auth token: {e}")
     return RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
 
+
 @app.post("/refresh-tokens")
 async def refresh_tokens(session: str = Depends(get_current_session)):
     if not session:
@@ -5687,6 +5925,7 @@ async def refresh_tokens(session: str = Depends(get_current_session)):
     except Exception as e:
         debug_print(f"❌ Error refreshing tokens: {e}")
     return RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
+
 
 # --- Userscript Proxy Support ---
 
@@ -5698,6 +5937,7 @@ proxy_pending_tasks: Dict[str, asyncio.Future] = {}
 proxy_task_queue: List[dict] = []
 # Timestamp of last userscript poll
 last_userscript_poll: float = 0
+
 
 @app.get("/proxy/tasks")
 async def get_proxy_tasks(api_key: dict = Depends(rate_limit_api_key)):
@@ -5714,8 +5954,11 @@ async def get_proxy_tasks(api_key: dict = Depends(rate_limit_api_key)):
     proxy_task_queue.clear()
     return current_tasks
 
+
 @app.post("/proxy/result/{task_id}")
-async def post_proxy_result(task_id: str, request: Request, api_key: dict = Depends(rate_limit_api_key)):
+async def post_proxy_result(
+    task_id: str, request: Request, api_key: dict = Depends(rate_limit_api_key)
+):
     """
     Endpoint for the Userscript to post results (chunks or full response).
     """
@@ -5729,6 +5972,7 @@ async def post_proxy_result(task_id: str, request: Request, api_key: dict = Depe
     except Exception as e:
         debug_print(f"❌ Error processing proxy result for {task_id}: {e}")
         return {"status": "error", "message": str(e)}
+
 
 @app.post("/api/v1/userscript/poll")
 async def userscript_poll(request: Request):
@@ -5852,6 +6096,7 @@ async def userscript_push(request: Request):
         await job["lines_queue"].put(None)
 
     return {"status": "ok"}
+
 
 async def push_proxy_chunk(jid, d) -> None:
     _touch_userscript_poll()
@@ -6029,7 +6274,9 @@ async def camoufox_proxy_worker():
                     browser_cm = AsyncCamoufox(headless=headless, main_world_eval=True)
 
                 try:
-                    browser = await asyncio.wait_for(browser_cm.__aenter__(), timeout=launch_timeout)
+                    browser = await asyncio.wait_for(
+                        browser_cm.__aenter__(), timeout=launch_timeout
+                    )
                 except Exception as e:
                     debug_print(f"⚠️ Camoufox launch failed ({type(e).__name__}): {e}")
                     if persistent_context_enabled:
@@ -6040,7 +6287,9 @@ async def camoufox_proxy_worker():
                             pass
                         persistent_context_enabled = False
                         browser_cm = AsyncCamoufox(headless=headless, main_world_eval=True)
-                        browser = await asyncio.wait_for(browser_cm.__aenter__(), timeout=launch_timeout)
+                        browser = await asyncio.wait_for(
+                            browser_cm.__aenter__(), timeout=launch_timeout
+                        )
                     else:
                         raise
 
@@ -6050,7 +6299,9 @@ async def camoufox_proxy_worker():
                     context = await browser.new_context(user_agent=user_agent or None)
 
                 try:
-                    await context.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined});")
+                    await context.add_init_script(
+                        "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});"
+                    )
                 except Exception:
                     pass
 
@@ -6063,21 +6314,41 @@ async def camoufox_proxy_worker():
                             continue
                         cookie_map[str(name)] = str(value)
 
-                cf_clearance = str(cfg.get("cf_clearance") or cookie_map.get("cf_clearance") or "").strip()
+                cf_clearance = str(
+                    cfg.get("cf_clearance") or cookie_map.get("cf_clearance") or ""
+                ).strip()
                 cf_bm = str(cfg.get("cf_bm") or cookie_map.get("__cf_bm") or "").strip()
                 cfuvid = str(cfg.get("cfuvid") or cookie_map.get("_cfuvid") or "").strip()
-                provisional_user_id = str(cfg.get("provisional_user_id") or cookie_map.get("provisional_user_id") or "").strip()
+                provisional_user_id = str(
+                    cfg.get("provisional_user_id") or cookie_map.get("provisional_user_id") or ""
+                ).strip()
 
                 desired_cookies: list[dict] = []
                 if cf_clearance:
-                    desired_cookies.append({"name": "cf_clearance", "value": cf_clearance, "domain": ".arena.ai", "path": "/"})
+                    desired_cookies.append(
+                        {
+                            "name": "cf_clearance",
+                            "value": cf_clearance,
+                            "domain": ".arena.ai",
+                            "path": "/",
+                        }
+                    )
                 if cf_bm:
-                    desired_cookies.append({"name": "__cf_bm", "value": cf_bm, "domain": ".arena.ai", "path": "/"})
+                    desired_cookies.append(
+                        {"name": "__cf_bm", "value": cf_bm, "domain": ".arena.ai", "path": "/"}
+                    )
                 if cfuvid:
-                    desired_cookies.append({"name": "_cfuvid", "value": cfuvid, "domain": ".arena.ai", "path": "/"})
+                    desired_cookies.append(
+                        {"name": "_cfuvid", "value": cfuvid, "domain": ".arena.ai", "path": "/"}
+                    )
                 if provisional_user_id:
                     desired_cookies.append(
-                        {"name": "provisional_user_id", "value": provisional_user_id, "domain": ".arena.ai", "path": "/"}
+                        {
+                            "name": "provisional_user_id",
+                            "value": provisional_user_id,
+                            "domain": ".arena.ai",
+                            "path": "/",
+                        }
                     )
 
                 if desired_cookies:
@@ -6123,7 +6394,9 @@ async def camoufox_proxy_worker():
                     has_fresh_existing = False
                     if existing_auth:
                         try:
-                            has_fresh_existing = not is_arena_auth_token_expired(existing_auth, skew_seconds=0)
+                            has_fresh_existing = not is_arena_auth_token_expired(
+                                existing_auth, skew_seconds=0
+                            )
                         except Exception:
                             has_fresh_existing = True
 
@@ -6147,9 +6420,9 @@ async def camoufox_proxy_worker():
                                 if not t:
                                     continue
                                 try:
-                                    if is_probably_valid_arena_auth_token(t) and not is_arena_auth_token_expired(
-                                        t, skew_seconds=0
-                                    ):
+                                    if is_probably_valid_arena_auth_token(
+                                        t
+                                    ) and not is_arena_auth_token_expired(t, skew_seconds=0):
                                         candidate = t
                                         break
                                 except Exception:
@@ -6177,8 +6450,14 @@ async def camoufox_proxy_worker():
                 )
 
                 try:
-                    debug_print("🦊 Camoufox proxy: navigating to https://arena.ai/?mode=direct ...")
-                    await page.goto("https://arena.ai/?mode=direct", wait_until="domcontentloaded", timeout=120000)
+                    debug_print(
+                        "🦊 Camoufox proxy: navigating to https://arena.ai/?mode=direct ..."
+                    )
+                    await page.goto(
+                        "https://arena.ai/?mode=direct",
+                        wait_until="domcontentloaded",
+                        timeout=120000,
+                    )
                     debug_print("🦊 Camoufox proxy: navigation complete.")
                 except Exception as e:
                     debug_print(f"⚠️ Navigation warning: {e}")
@@ -6230,7 +6509,9 @@ async def camoufox_proxy_worker():
 
                 # Capture initial cookies and persist to config.json
                 try:
-                    fresh_cookies = await _get_arena_context_cookies(context, page_url=str(getattr(page, "url", "") or ""))
+                    fresh_cookies = await _get_arena_context_cookies(
+                        context, page_url=str(getattr(page, "url", "") or "")
+                    )
                     _capture_ephemeral_arena_auth_token_from_cookies(fresh_cookies)
                     _cfg = get_config()
                     if _upsert_browser_session_into_config(_cfg, fresh_cookies):
@@ -6244,7 +6525,9 @@ async def camoufox_proxy_worker():
                 if context is None:
                     return ""
                 try:
-                    cookies = await _get_arena_context_cookies(context, page_url=str(getattr(page, "url", "") or ""))
+                    cookies = await _get_arena_context_cookies(
+                        context, page_url=str(getattr(page, "url", "") or "")
+                    )
                 except Exception:
                     return ""
                 try:
@@ -6307,7 +6590,9 @@ async def camoufox_proxy_worker():
 
                 # If the cookie is missing but an auth session is still present in localStorage, recover it now.
                 try:
-                    recovered = await _maybe_inject_arena_auth_cookie_from_localstorage(page, context)
+                    recovered = await _maybe_inject_arena_auth_cookie_from_localstorage(
+                        page, context
+                    )
                     if recovered and not is_arena_auth_token_expired(recovered, skew_seconds=0):
                         return
                 except Exception:
@@ -6358,7 +6643,11 @@ async def camoufox_proxy_worker():
                 except Exception:
                     pass
                 try:
-                    await page.goto("https://arena.ai/?mode=direct", wait_until="domcontentloaded", timeout=120000)
+                    await page.goto(
+                        "https://arena.ai/?mode=direct",
+                        wait_until="domcontentloaded",
+                        timeout=120000,
+                    )
                 except Exception:
                     pass
                 try:
@@ -6505,7 +6794,9 @@ async def camoufox_proxy_worker():
                     except Exception:
                         err = ""
                 if widget_id is None:
-                    debug_print(f"⚠️ Camoufox proxy: Turnstile render failed (stage={stage} err={err[:120]})")
+                    debug_print(
+                        f"⚠️ Camoufox proxy: Turnstile render failed (stage={stage} err={err[:120]})"
+                    )
                     return
 
                 started = time.monotonic()
@@ -6561,18 +6852,24 @@ async def camoufox_proxy_worker():
                 # Some sign-up responses return the Supabase session JSON in the body instead of setting a cookie.
                 # When that happens, encode it into the `arena-auth-prod-v1` cookie format and inject it.
                 try:
-                    body_text = str((resp or {}).get("body") or "") if isinstance(resp, dict) else ""
+                    body_text = (
+                        str((resp or {}).get("body") or "") if isinstance(resp, dict) else ""
+                    )
                 except Exception:
                     body_text = ""
                 if status >= 400 and body_text:
-                    debug_print(f"🦊 Camoufox proxy: /nextjs-api/sign-up body (trunc): {body_text[:200]}")
+                    debug_print(
+                        f"🦊 Camoufox proxy: /nextjs-api/sign-up body (trunc): {body_text[:200]}"
+                    )
                 if status == 400 and "User already exists" in body_text:
                     try:
                         await _maybe_inject_arena_auth_cookie_from_localstorage(page, context)
                     except Exception:
                         pass
                 try:
-                    derived_cookie = maybe_build_arena_auth_cookie_from_signup_response_body(body_text)
+                    derived_cookie = maybe_build_arena_auth_cookie_from_signup_response_body(
+                        body_text
+                    )
                 except Exception:
                     derived_cookie = None
                 if derived_cookie:
@@ -6587,7 +6884,9 @@ async def camoufox_proxy_worker():
                             _capture_ephemeral_arena_auth_token_from_cookies(
                                 [{"name": "arena-auth-prod-v1", "value": derived_cookie}]
                             )
-                            debug_print("🦊 Camoufox proxy: injected arena-auth cookie from sign-up response body.")
+                            debug_print(
+                                "🦊 Camoufox proxy: injected arena-auth cookie from sign-up response body."
+                            )
                     except Exception:
                         pass
 
@@ -6614,7 +6913,9 @@ async def camoufox_proxy_worker():
                     for _ in range(int(wait_loops)):
                         cur = await _get_auth_cookie_value()
                         if cur and not is_arena_auth_token_expired(cur, skew_seconds=0):
-                            debug_print("🦊 Camoufox proxy: acquired arena-auth-prod-v1 cookie (anonymous user).")
+                            debug_print(
+                                "🦊 Camoufox proxy: acquired arena-auth-prod-v1 cookie (anonymous user)."
+                            )
                             break
                         await asyncio.sleep(0.5)
                 except Exception:
@@ -6914,7 +7215,9 @@ async def camoufox_proxy_worker():
                         )
                     )
                 elif browser_auth_cookie and not use_job_token:
-                    debug_print("🦊 Camoufox proxy: using valid browser auth cookie (job token is empty or invalid).")
+                    debug_print(
+                        "🦊 Camoufox proxy: using valid browser auth cookie (job token is empty or invalid)."
+                    )
             except Exception:
                 pass
 
@@ -6928,11 +7231,15 @@ async def camoufox_proxy_worker():
                     expired = is_arena_auth_token_expired(current_cookie, skew_seconds=0)
                 except Exception:
                     expired = False
-                debug_print(f"🦊 Camoufox proxy: arena-auth cookie present (len={len(current_cookie)} expired={expired})")
+                debug_print(
+                    f"🦊 Camoufox proxy: arena-auth cookie present (len={len(current_cookie)} expired={expired})"
+                )
             else:
                 debug_print("🦊 Camoufox proxy: arena-auth cookie missing")
             try:
-                needs_signup = (not current_cookie) or is_arena_auth_token_expired(current_cookie, skew_seconds=0)
+                needs_signup = (not current_cookie) or is_arena_auth_token_expired(
+                    current_cookie, skew_seconds=0
+                )
             except Exception:
                 needs_signup = not bool(current_cookie)
             # Unit tests stub out the browser; avoid slow/interactive signup flows there.
@@ -6963,12 +7270,14 @@ async def camoufox_proxy_worker():
                             "grecaptchaPollMs": 250,
                             "timeoutMs": 180000,
                             "debug": bool(os.environ.get("LM_BRIDGE_PROXY_DEBUG")),
-                        }
+                        },
                     ),
-                    timeout=200.0
+                    timeout=200.0,
                 )
             except asyncio.TimeoutError:
-                await push_proxy_chunk(job_id, {"error": "camoufox proxy evaluate timeout", "done": True})
+                await push_proxy_chunk(
+                    job_id, {"error": "camoufox proxy evaluate timeout", "done": True}
+                )
             except Exception as e:
                 await push_proxy_chunk(job_id, {"error": str(e), "done": True})
 
@@ -6987,7 +7296,9 @@ async def camoufox_proxy_worker():
             browser = None
             page = None
 
+
 # --- OpenAI Compatible API Endpoints ---
+
 
 @app.get("/api/v1/health")
 async def health_check():
@@ -7010,15 +7321,16 @@ async def health_check():
                 "cf_clearance": has_cf_clearance,
                 "models_loaded": has_models,
                 "model_count": len(models),
-                "api_keys_configured": has_api_keys
-            }
+                "api_keys_configured": has_api_keys,
+            },
         }
     except Exception as e:
         return {
             "status": "unhealthy",
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "error": str(e)
+            "error": str(e),
         }
+
 
 @app.get("/api/v1/models")
 async def list_models(api_key: dict = Depends(rate_limit_api_key)):
@@ -7027,11 +7339,16 @@ async def list_models(api_key: dict = Depends(rate_limit_api_key)):
 
         # Filter for models with text OR search OR image output capability and an organization (exclude stealth models)
         # Always include image models - no special key needed
-        valid_models = [m for m in models
-                       if (m.get('capabilities', {}).get('outputCapabilities', {}).get('text')
-                           or m.get('capabilities', {}).get('outputCapabilities', {}).get('search')
-                           or m.get('capabilities', {}).get('outputCapabilities', {}).get('image'))
-                       and m.get('organization')]
+        valid_models = [
+            m
+            for m in models
+            if (
+                m.get("capabilities", {}).get("outputCapabilities", {}).get("text")
+                or m.get("capabilities", {}).get("outputCapabilities", {}).get("search")
+                or m.get("capabilities", {}).get("outputCapabilities", {}).get("image")
+            )
+            and m.get("organization")
+        ]
 
         return {
             "object": "list",
@@ -7040,9 +7357,11 @@ async def list_models(api_key: dict = Depends(rate_limit_api_key)):
                     "id": model.get("publicName"),
                     "object": "model",
                     "created": int(time.time()),
-                    "owned_by": model.get("organization", "lmarena")
-                } for model in valid_models if model.get("publicName")
-            ]
+                    "owned_by": model.get("organization", "lmarena"),
+                }
+                for model in valid_models
+                if model.get("publicName")
+            ],
         }
     except Exception as e:
         debug_print(f"❌ Error listing models: {e}")
@@ -7059,11 +7378,12 @@ async def debug_stream(api_key: dict = Depends(rate_limit_api_key)):  # noqa: AR
 
     return StreamingResponse(_gen(), media_type="text/event-stream")
 
+
 @app.post("/api/v1/chat/completions")
 async def api_chat_completions(request: Request, api_key: dict = Depends(rate_limit_api_key)):
-    debug_print("\n" + "="*80)
+    debug_print("\n" + "=" * 80)
     debug_print("🔵 NEW API REQUEST RECEIVED")
-    debug_print("="*80)
+    debug_print("=" * 80)
 
     try:
         # Parse request body with error handling
@@ -7111,7 +7431,7 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
             debug_print(f"❌ Failed to load models: {e}")
             raise HTTPException(
                 status_code=503,
-                detail="Failed to load model list from LMArena. Please try again later."
+                detail="Failed to load model list from LMArena. Please try again later.",
             )
 
         model_id = None
@@ -7129,7 +7449,7 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
             debug_print(f"❌ Model '{model_public_name}' not found in model list")
             raise HTTPException(
                 status_code=404,
-                detail=f"Model '{model_public_name}' not found. Use /api/v1/models to see available models."
+                detail=f"Model '{model_public_name}' not found. Use /api/v1/models to see available models.",
             )
 
         # Check if model is a stealth model (no organization)
@@ -7137,7 +7457,7 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
             debug_print(f"❌ Model '{model_public_name}' is a stealth model (no organization)")
             raise HTTPException(
                 status_code=403,
-                detail="You do not have access to stealth models. Contact cloudwaddie for more info."
+                detail="You do not have access to stealth models. Contact cloudwaddie for more info.",
             )
 
         debug_print(f"✅ Found model ID: {model_id}")
@@ -7168,14 +7488,22 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
         system_prompt = ""
         system_messages = [m for m in messages if m.get("role") == "system"]
         if system_messages:
-            system_prompt = "\n\n".join([_coerce_message_content_to_text(m.get("content", "")) for m in system_messages])
-            debug_print(f"📋 System prompt found: {system_prompt[:100]}..." if len(system_prompt) > 100 else f"📋 System prompt: {system_prompt}")
+            system_prompt = "\n\n".join(
+                [_coerce_message_content_to_text(m.get("content", "")) for m in system_messages]
+            )
+            debug_print(
+                f"📋 System prompt found: {system_prompt[:100]}..."
+                if len(system_prompt) > 100
+                else f"📋 System prompt: {system_prompt}"
+            )
 
         # Process last message content (may include images)
         try:
             last_message_content = messages[-1].get("content", "")
             try:
-                prompt, experimental_attachments = await process_message_content(last_message_content, model_capabilities)
+                prompt, experimental_attachments = await process_message_content(
+                    last_message_content, model_capabilities
+                )
             except Exception as e:
                 debug_print(f"❌ Failed to process message content: {e}")
                 raise HTTPException(status_code=400, detail=f"Invalid message content: {str(e)}")
@@ -7187,8 +7515,7 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
         except Exception as e:
             debug_print(f"❌ Failed to process message content: {e}")
             raise HTTPException(
-                status_code=400,
-                detail=f"Failed to process message content: {str(e)}"
+                status_code=400, detail=f"Failed to process message content: {str(e)}"
             )
 
         # Validate prompt
@@ -7201,7 +7528,11 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
         # Log prompt length for debugging character limit issues
         debug_print(f"📝 User prompt length: {len(prompt)} characters")
         debug_print(f"🖼️  Attachments: {len(experimental_attachments)} images")
-        debug_print(f"📝 User prompt preview: {prompt[:100]}..." if len(prompt) > 100 else f"📝 User prompt: {prompt}")
+        debug_print(
+            f"📝 User prompt preview: {prompt[:100]}..."
+            if len(prompt) > 100
+            else f"📝 User prompt: {prompt}"
+        )
 
         # Check for reasonable character limit (LMArena appears to have limits)
         # Typical limit seems to be around 32K-64K characters based on testing
@@ -7234,7 +7565,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                 if recaptcha_token:
                     debug_print("🔐 Strict model: using cached reCAPTCHA v3 token in payload.")
                 else:
-                    debug_print("🔐 Strict model: reCAPTCHA token will be minted in the Chrome fetch session.")
+                    debug_print(
+                        "🔐 Strict model: reCAPTCHA token will be minted in the Chrome fetch session."
+                    )
         else:
             # reCAPTCHA v3 tokens can behave like single-use tokens; force a fresh token for streaming requests.
             # For streaming, we defer this until inside generate_stream to avoid blocking initial headers.
@@ -7246,14 +7579,17 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                     debug_print("❌ Cannot proceed, failed to get reCAPTCHA token.")
                     raise HTTPException(
                         status_code=503,
-                        detail="Service Unavailable: Failed to acquire reCAPTCHA token. The bridge server may be blocked."
+                        detail="Service Unavailable: Failed to acquire reCAPTCHA token. The bridge server may be blocked.",
                     )
                 debug_print(f"🔑 Using reCAPTCHA v3 token: {recaptcha_token[:20]}...")
         # -----------------------------------------------
 
         # Generate conversation ID from context (API key + model + first user message)
         import hashlib
-        first_user_message = next((m.get("content", "") for m in messages if m.get("role") == "user"), "")
+
+        first_user_message = next(
+            (m.get("content", "") for m in messages if m.get("role") == "user"), ""
+        )
         if isinstance(first_user_message, list):
             # Handle array content format
             first_user_message = str(first_user_message)
@@ -7286,7 +7622,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                 if len(stored_messages) >= 2 and stored_messages[-2]["role"] == "assistant":
                     # There was a previous assistant response - we'll retry that one
                     retry_message_id = stored_messages[-2]["id"]
-                    debug_print(f"🔁 RETRY DETECTED - Regenerating assistant message {retry_message_id}")
+                    debug_print(
+                        f"🔁 RETRY DETECTED - Regenerating assistant message {retry_message_id}"
+                    )
 
         if is_retry and retry_message_id:
             debug_print("🔁 Using RETRY endpoint")
@@ -7323,10 +7661,10 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                 "userMessage": {
                     "content": prompt,
                     "experimental_attachments": experimental_attachments,
-                    "metadata": {}
+                    "metadata": {},
                 },
                 "modality": modality,
-                "recaptchaV3Token": recaptcha_token, # <--- ADD TOKEN HERE
+                "recaptchaV3Token": recaptcha_token,  # <--- ADD TOKEN HERE
             }
             url = "https://arena.ai/nextjs-api/stream/create-evaluation"
             debug_print(f"📤 Target URL: {url}")
@@ -7352,10 +7690,10 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                 "userMessage": {
                     "content": prompt,
                     "experimental_attachments": experimental_attachments,
-                    "metadata": {}
+                    "metadata": {},
                 },
                 "modality": modality,
-                "recaptchaV3Token": recaptcha_token, # <--- ADD TOKEN HERE
+                "recaptchaV3Token": recaptcha_token,  # <--- ADD TOKEN HERE
             }
             url = f"https://arena.ai/nextjs-api/stream/post-to-evaluation/{session['conversation_id']}"
             debug_print(f"📤 Target URL: {url}")
@@ -7379,7 +7717,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
             # Stream mode: when no auth token is configured, fall back to browser-backed transports
             # (Userscript proxy / Chrome/Camoufox fetch). This matches strict-model behavior and avoids a hard 500.
             if stream:
-                debug_print("⚠️ No auth token configured for streaming; enabling browser/proxy transports.")
+                debug_print(
+                    "⚠️ No auth token configured for streaming; enabling browser/proxy transports."
+                )
                 current_token = ""
                 force_browser_transports_in_stream = True
             # Non-streaming strict models can still proceed via browser fetch transports, which may have a valid
@@ -7392,7 +7732,11 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
 
         # Strict models: if round-robin picked a placeholder/invalid-looking token but there is a better token
         # available, switch to the first plausible token without mutating user config.
-        if strict_chrome_fetch_model and current_token and not is_probably_valid_arena_auth_token(current_token):
+        if (
+            strict_chrome_fetch_model
+            and current_token
+            and not is_probably_valid_arena_auth_token(current_token)
+        ):
             try:
                 cfg_now = get_config()
                 tokens_now = cfg_now.get("auth_tokens", [])
@@ -7412,7 +7756,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                 debug_print("🔑 Switching to a plausible auth token for strict model streaming.")
                 current_token = better
             else:
-                debug_print("⚠️ Selected auth token format looks unusual; continuing with it (no better token found).")
+                debug_print(
+                    "⚠️ Selected auth token format looks unusual; continuing with it (no better token found)."
+                )
 
         # If we still don't have a usable token (e.g. only expired base64 sessions remain), try to refresh one
         # in-memory only (do not rewrite the user's config.json auth tokens).
@@ -7439,16 +7785,22 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                 try:
                     async with httpx.AsyncClient() as client:
                         if http_method == "PUT":
-                            response = await client.put(url, json=payload, headers=headers, timeout=120)
+                            response = await client.put(
+                                url, json=payload, headers=headers, timeout=120
+                            )
                         else:
-                            response = await client.post(url, json=payload, headers=headers, timeout=120)
+                            response = await client.post(
+                                url, json=payload, headers=headers, timeout=120
+                            )
 
                         # Log status with human-readable message
                         log_http_status(response.status_code, "LMArena API")
 
                         # Check for retry-able errors
                         if response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
-                            debug_print(f"⏱️  Attempt {attempt + 1}/{max_retries} - Rate limit with token {current_token[:20]}...")
+                            debug_print(
+                                f"⏱️  Attempt {attempt + 1}/{max_retries} - Rate limit with token {current_token[:20]}..."
+                            )
                             retry_after = response.headers.get("Retry-After")
                             sleep_seconds = get_rate_limit_sleep_seconds(retry_after, attempt)
                             debug_print(f"  Retry-After header: {retry_after!r}")
@@ -7456,9 +7808,15 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                             if attempt < max_retries - 1:
                                 try:
                                     # Try with next token (excluding failed ones)
-                                    current_token = get_next_auth_token(exclude_tokens=failed_tokens)
-                                    headers = get_request_headers_with_token(current_token, recaptcha_token)
-                                    debug_print(f"🔄 Retrying with next token: {current_token[:20]}...")
+                                    current_token = get_next_auth_token(
+                                        exclude_tokens=failed_tokens
+                                    )
+                                    headers = get_request_headers_with_token(
+                                        current_token, recaptcha_token
+                                    )
+                                    debug_print(
+                                        f"🔄 Retrying with next token: {current_token[:20]}..."
+                                    )
                                     await asyncio.sleep(sleep_seconds)
                                     continue
                                 except HTTPException as e:
@@ -7470,7 +7828,10 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                 error_body = response.json()
                             except Exception:
                                 error_body = None
-                            if isinstance(error_body, dict) and error_body.get("error") == "recaptcha validation failed":
+                            if (
+                                isinstance(error_body, dict)
+                                and error_body.get("error") == "recaptcha validation failed"
+                            ):
                                 debug_print(
                                     f"🤖 Attempt {attempt + 1}/{max_retries} - reCAPTCHA validation failed. Refreshing token..."
                                 )
@@ -7479,12 +7840,16 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                     payload["recaptchaV3Token"] = new_token
                                     recaptcha_token = new_token
                                 if attempt < max_retries - 1:
-                                    headers = get_request_headers_with_token(current_token, recaptcha_token)
+                                    headers = get_request_headers_with_token(
+                                        current_token, recaptcha_token
+                                    )
                                     await asyncio.sleep(1)
                                     continue
 
                         elif response.status_code == HTTPStatus.UNAUTHORIZED:
-                            debug_print(f"🔒 Attempt {attempt + 1}/{max_retries} - Auth failed with token {current_token[:20]}...")
+                            debug_print(
+                                f"🔒 Attempt {attempt + 1}/{max_retries} - Auth failed with token {current_token[:20]}..."
+                            )
                             # Add current token to failed set
                             failed_tokens.add(current_token)
                             # (Pruning disabled)
@@ -7493,9 +7858,15 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                             if attempt < max_retries - 1:
                                 try:
                                     # Try with next available token (excluding failed ones)
-                                    current_token = get_next_auth_token(exclude_tokens=failed_tokens)
-                                    headers = get_request_headers_with_token(current_token, recaptcha_token)
-                                    debug_print(f"🔄 Retrying with next token: {current_token[:20]}...")
+                                    current_token = get_next_auth_token(
+                                        exclude_tokens=failed_tokens
+                                    )
+                                    headers = get_request_headers_with_token(
+                                        current_token, recaptcha_token
+                                    )
+                                    debug_print(
+                                        f"🔄 Retrying with next token: {current_token[:20]}..."
+                                    )
                                     await asyncio.sleep(1)  # Brief delay
                                     continue
                                 except HTTPException as e:
@@ -7519,12 +7890,15 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
 
         # Handle streaming mode
         if stream:
+
             async def generate_stream():
                 nonlocal current_token, headers, failed_tokens, recaptcha_token
 
                 # Safety: don't keep client sockets open forever on repeated upstream failures.
                 try:
-                    stream_total_timeout_seconds = float(get_config().get("stream_total_timeout_seconds", 600))
+                    stream_total_timeout_seconds = float(
+                        get_config().get("stream_total_timeout_seconds", 600)
+                    )
                 except Exception:
                     stream_total_timeout_seconds = 600.0
                 stream_total_timeout_seconds = max(30.0, min(stream_total_timeout_seconds, 3600.0))
@@ -7553,7 +7927,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                 # Use browser transports (Userscript proxy / Chrome/Camoufox) proactively for:
                 #   - models known to be strict with reCAPTCHA
                 #   - any streaming request when no auth token is available (browser session may be able to sign up / reuse cookies)
-                disable_userscript_proxy_env = bool(os.environ.get("LM_BRIDGE_DISABLE_USERSCRIPT_PROXY"))
+                disable_userscript_proxy_env = bool(
+                    os.environ.get("LM_BRIDGE_DISABLE_USERSCRIPT_PROXY")
+                )
                 proxy_active_at_start = False
                 if not disable_userscript_proxy_env:
                     try:
@@ -7570,11 +7946,17 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                 )
                 prefer_chrome_transport = True
                 if use_browser_transports and (model_public_name in STRICT_CHROME_FETCH_MODELS):
-                    debug_print(f"🔐 Strict model detected ({model_public_name}), enabling browser fetch transport.")
+                    debug_print(
+                        f"🔐 Strict model detected ({model_public_name}), enabling browser fetch transport."
+                    )
                 elif use_browser_transports and force_browser_transports_in_stream:
-                    debug_print("⚠️ Stream mode without auth token: preferring userscript proxy / browser fetch transports.")
+                    debug_print(
+                        "⚠️ Stream mode without auth token: preferring userscript proxy / browser fetch transports."
+                    )
                 elif use_browser_transports and proxy_active_at_start:
-                    debug_print("🦊 Userscript proxy is ACTIVE: routing stream through proxy and skipping side-channel reCAPTCHA mint.")
+                    debug_print(
+                        "🦊 Userscript proxy is ACTIVE: routing stream through proxy and skipping side-channel reCAPTCHA mint."
+                    )
 
                 # Non-strict models: mint a fresh side-channel token before the first upstream attempt so we don't
                 # send an empty `recaptchaV3Token` (which commonly yields 403 "recaptcha validation failed").
@@ -7619,7 +8001,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                         pass
 
                     # Stop retrying after a configurable deadline or too many attempts to avoid infinite hangs.
-                    if (time.monotonic() - stream_started_at) > stream_total_timeout_seconds or attempt > 20:
+                    if (
+                        time.monotonic() - stream_started_at
+                    ) > stream_total_timeout_seconds or attempt > 20:
                         error_chunk = {
                             "error": {
                                 "message": "Upstream retry timeout or max attempts exceeded while streaming from LMArena.",
@@ -7638,7 +8022,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
 
                     try:
                         async with AsyncExitStack() as stack:
-                            debug_print(f"📡 Sending {http_method} request for streaming (attempt {attempt})...")
+                            debug_print(
+                                f"📡 Sending {http_method} request for streaming (attempt {attempt})..."
+                            )
                             stream_context = None
                             transport_used = "httpx"
 
@@ -7664,7 +8050,11 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
 
                                 if not proxy_active:
                                     try:
-                                        grace_seconds = float((cfg_now or {}).get("userscript_proxy_grace_seconds", 0.5))
+                                        grace_seconds = float(
+                                            (cfg_now or {}).get(
+                                                "userscript_proxy_grace_seconds", 0.5
+                                            )
+                                        )
                                     except Exception:
                                         grace_seconds = 0.5
                                     grace_seconds = max(0.0, min(grace_seconds, 2.0))
@@ -7682,11 +8072,17 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
 
                                 if proxy_active:
                                     use_userscript = True
-                                    debug_print("🌐 Userscript Proxy is ACTIVE. Preferring Proxy over direct/Chrome fetch.")
+                                    debug_print(
+                                        "🌐 Userscript Proxy is ACTIVE. Preferring Proxy over direct/Chrome fetch."
+                                    )
                                 # Default behavior: mint in-page (higher success rate than side-channel cached tokens).
                                 # Optional: allow pre-filling a cached token for speed via config flag.
                                 try:
-                                    prefill_cached = bool((cfg_now or {}).get("userscript_proxy_prefill_cached_recaptcha", False))
+                                    prefill_cached = bool(
+                                        (cfg_now or {}).get(
+                                            "userscript_proxy_prefill_cached_recaptcha", False
+                                        )
+                                    )
                                 except Exception:
                                     prefill_cached = False
                                 if (
@@ -7700,7 +8096,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                     except Exception:
                                         cached = ""
                                     if cached:
-                                        debug_print(f"🔐 Using cached reCAPTCHA v3 token for proxy (len={len(str(cached))})")
+                                        debug_print(
+                                            f"🔐 Using cached reCAPTCHA v3 token for proxy (len={len(str(cached))})"
+                                        )
                                         payload["recaptchaV3Token"] = cached
 
                             if use_userscript:
@@ -7714,7 +8112,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                     if (
                                         proxy_auth_token
                                         and not str(proxy_auth_token).startswith("base64-")
-                                        and is_arena_auth_token_expired(proxy_auth_token, skew_seconds=0)
+                                        and is_arena_auth_token_expired(
+                                            proxy_auth_token, skew_seconds=0
+                                        )
                                     ):
                                         proxy_auth_token = ""
                                 except Exception:
@@ -7728,7 +8128,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                     auth_token=proxy_auth_token,
                                 )
                                 if stream_context is None:
-                                    debug_print("⚠️ Userscript Proxy returned None (timeout?). Falling back...")
+                                    debug_print(
+                                        "⚠️ Userscript Proxy returned None (timeout?). Falling back..."
+                                    )
                                     use_userscript = False
                                 else:
                                     transport_used = "userscript"
@@ -7745,7 +8147,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                             ):
                                 strict_token_prefill_attempted = True
                                 try:
-                                    refresh_task = asyncio.create_task(refresh_recaptcha_token(force_new=True))
+                                    refresh_task = asyncio.create_task(
+                                        refresh_recaptcha_token(force_new=True)
+                                    )
                                 except Exception:
                                     refresh_task = None
                                 if refresh_task is not None:
@@ -7764,14 +8168,19 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                             if stream_context is None and use_browser_transports:
                                 browser_fetch_attempts = 5
                                 try:
-                                    browser_fetch_attempts = int(get_config().get("chrome_fetch_recaptcha_max_attempts", 5))
+                                    browser_fetch_attempts = int(
+                                        get_config().get("chrome_fetch_recaptcha_max_attempts", 5)
+                                    )
                                 except Exception:
                                     browser_fetch_attempts = 5
 
                                 # If we have a cached side-channel reCAPTCHA token, prefer passing it into the browser
                                 # fetch transports (they will reuse it on the first attempt and only mint in-page if
                                 # needed). This helps when in-page grecaptcha is slow/flaky.
-                                if isinstance(payload, dict) and not str(payload.get("recaptchaV3Token") or "").strip():
+                                if (
+                                    isinstance(payload, dict)
+                                    and not str(payload.get("recaptchaV3Token") or "").strip()
+                                ):
                                     try:
                                         cached_token = get_cached_recaptcha_token()
                                     except Exception:
@@ -7779,7 +8188,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                     if cached_token:
                                         payload["recaptchaV3Token"] = cached_token
 
-                                async def _try_chrome_fetch() -> Optional[BrowserFetchStreamResponse]:
+                                async def _try_chrome_fetch() -> Optional[
+                                    BrowserFetchStreamResponse
+                                ]:
                                     debug_print("🌐 Using Chrome fetch transport for streaming...")
                                     try:
                                         auth_for_browser = str(current_token or "").strip()
@@ -7791,11 +8202,19 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                             try:
                                                 if (
                                                     is_probably_valid_arena_auth_token(cand)
-                                                    and not is_arena_auth_token_expired(cand, skew_seconds=0)
+                                                    and not is_arena_auth_token_expired(
+                                                        cand, skew_seconds=0
+                                                    )
                                                     and (
                                                         (not auth_for_browser)
-                                                        or (not is_probably_valid_arena_auth_token(auth_for_browser))
-                                                        or is_arena_auth_token_expired(auth_for_browser, skew_seconds=0)
+                                                        or (
+                                                            not is_probably_valid_arena_auth_token(
+                                                                auth_for_browser
+                                                            )
+                                                        )
+                                                        or is_arena_auth_token_expired(
+                                                            auth_for_browser, skew_seconds=0
+                                                        )
                                                     )
                                                 ):
                                                     auth_for_browser = cand
@@ -7803,16 +8222,24 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                                 auth_for_browser = cand
 
                                         try:
-                                            chrome_outer_timeout = float(get_config().get("chrome_fetch_outer_timeout_seconds", 120))
+                                            chrome_outer_timeout = float(
+                                                get_config().get(
+                                                    "chrome_fetch_outer_timeout_seconds", 120
+                                                )
+                                            )
                                         except Exception:
                                             chrome_outer_timeout = 120.0
-                                        chrome_outer_timeout = max(20.0, min(chrome_outer_timeout, 300.0))
+                                        chrome_outer_timeout = max(
+                                            20.0, min(chrome_outer_timeout, 300.0)
+                                        )
 
                                         return await asyncio.wait_for(
                                             fetch_lmarena_stream_via_chrome(
                                                 http_method=http_method,
                                                 url=url,
-                                                payload=payload if isinstance(payload, dict) else {},
+                                                payload=payload
+                                                if isinstance(payload, dict)
+                                                else {},
                                                 auth_token=auth_for_browser,
                                                 timeout_seconds=120,
                                                 max_recaptcha_attempts=browser_fetch_attempts,
@@ -7820,14 +8247,20 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                             timeout=chrome_outer_timeout,
                                         )
                                     except asyncio.TimeoutError:
-                                        debug_print("⚠️ Chrome fetch transport timed out (launch/nav hang).")
+                                        debug_print(
+                                            "⚠️ Chrome fetch transport timed out (launch/nav hang)."
+                                        )
                                         return None
                                     except Exception as e:
                                         debug_print(f"⚠️ Chrome fetch transport error: {e}")
                                         return None
 
-                                async def _try_camoufox_fetch() -> Optional[BrowserFetchStreamResponse]:
-                                    debug_print("🦊 Using Camoufox fetch transport for streaming...")
+                                async def _try_camoufox_fetch() -> Optional[
+                                    BrowserFetchStreamResponse
+                                ]:
+                                    debug_print(
+                                        "🦊 Using Camoufox fetch transport for streaming..."
+                                    )
                                     try:
                                         auth_for_browser = str(current_token or "").strip()
                                         try:
@@ -7838,11 +8271,19 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                             try:
                                                 if (
                                                     is_probably_valid_arena_auth_token(cand)
-                                                    and not is_arena_auth_token_expired(cand, skew_seconds=0)
+                                                    and not is_arena_auth_token_expired(
+                                                        cand, skew_seconds=0
+                                                    )
                                                     and (
                                                         (not auth_for_browser)
-                                                        or (not is_probably_valid_arena_auth_token(auth_for_browser))
-                                                        or is_arena_auth_token_expired(auth_for_browser, skew_seconds=0)
+                                                        or (
+                                                            not is_probably_valid_arena_auth_token(
+                                                                auth_for_browser
+                                                            )
+                                                        )
+                                                        or is_arena_auth_token_expired(
+                                                            auth_for_browser, skew_seconds=0
+                                                        )
                                                     )
                                                 ):
                                                     auth_for_browser = cand
@@ -7851,17 +8292,23 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
 
                                         try:
                                             camoufox_outer_timeout = float(
-                                                get_config().get("camoufox_fetch_outer_timeout_seconds", 180)
+                                                get_config().get(
+                                                    "camoufox_fetch_outer_timeout_seconds", 180
+                                                )
                                             )
                                         except Exception:
                                             camoufox_outer_timeout = 180.0
-                                        camoufox_outer_timeout = max(20.0, min(camoufox_outer_timeout, 300.0))
+                                        camoufox_outer_timeout = max(
+                                            20.0, min(camoufox_outer_timeout, 300.0)
+                                        )
 
                                         return await asyncio.wait_for(
                                             fetch_lmarena_stream_via_camoufox(
                                                 http_method=http_method,
                                                 url=url,
-                                                payload=payload if isinstance(payload, dict) else {},
+                                                payload=payload
+                                                if isinstance(payload, dict)
+                                                else {},
                                                 auth_token=auth_for_browser,
                                                 timeout_seconds=120,
                                                 max_recaptcha_attempts=browser_fetch_attempts,
@@ -7869,7 +8316,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                             timeout=camoufox_outer_timeout,
                                         )
                                     except asyncio.TimeoutError:
-                                        debug_print("⚠️ Camoufox fetch transport timed out (launch/nav hang).")
+                                        debug_print(
+                                            "⚠️ Camoufox fetch transport timed out (launch/nav hang)."
+                                        )
                                         return None
                                     except Exception as e:
                                         debug_print(f"⚠️ Camoufox fetch transport error: {e}")
@@ -7891,7 +8340,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                     if stream_context is None:
                                         camoufox_task = asyncio.create_task(_try_camoufox_fetch())
                                         while True:
-                                            done, _ = await asyncio.wait({camoufox_task}, timeout=1.0)
+                                            done, _ = await asyncio.wait(
+                                                {camoufox_task}, timeout=1.0
+                                            )
                                             if camoufox_task in done:
                                                 try:
                                                     stream_context = camoufox_task.result()
@@ -7931,9 +8382,13 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                             if stream_context is None:
                                 client = await stack.enter_async_context(httpx.AsyncClient())
                                 if http_method == "PUT":
-                                    stream_context = client.stream('PUT', url, json=payload, headers=headers, timeout=120)
+                                    stream_context = client.stream(
+                                        "PUT", url, json=payload, headers=headers, timeout=120
+                                    )
                                 else:
-                                    stream_context = client.stream('POST', url, json=payload, headers=headers, timeout=120)
+                                    stream_context = client.stream(
+                                        "POST", url, json=payload, headers=headers, timeout=120
+                                    )
                                 transport_used = "httpx"
 
                             # Userscript proxy jobs report their upstream HTTP status asynchronously.
@@ -7942,11 +8397,17 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                             if transport_used == "userscript":
                                 proxy_job_id = ""
                                 try:
-                                    proxy_job_id = str(getattr(stream_context, "job_id", "") or "").strip()
+                                    proxy_job_id = str(
+                                        getattr(stream_context, "job_id", "") or ""
+                                    ).strip()
                                 except Exception:
                                     proxy_job_id = ""
 
-                                proxy_job = _USERSCRIPT_PROXY_JOBS.get(proxy_job_id) if proxy_job_id else None
+                                proxy_job = (
+                                    _USERSCRIPT_PROXY_JOBS.get(proxy_job_id)
+                                    if proxy_job_id
+                                    else None
+                                )
                                 status_event = None
                                 done_event = None
                                 picked_up_event = None
@@ -7957,22 +8418,33 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                     picked_up_event = proxy_job.get("picked_up_event")
                                     lines_queue = proxy_job.get("lines_queue")
 
-                                if isinstance(status_event, asyncio.Event) and not status_event.is_set():
+                                if (
+                                    isinstance(status_event, asyncio.Event)
+                                    and not status_event.is_set()
+                                ):
                                     try:
                                         pickup_timeout_seconds = float(
-                                            get_config().get("userscript_proxy_pickup_timeout_seconds", 10)
+                                            get_config().get(
+                                                "userscript_proxy_pickup_timeout_seconds", 10
+                                            )
                                         )
                                     except Exception:
                                         pickup_timeout_seconds = 10.0
-                                    pickup_timeout_seconds = max(0.5, min(pickup_timeout_seconds, 15.0))
+                                    pickup_timeout_seconds = max(
+                                        0.5, min(pickup_timeout_seconds, 15.0)
+                                    )
 
                                     try:
                                         proxy_status_timeout_seconds = float(
-                                            get_config().get("userscript_proxy_status_timeout_seconds", 30)
+                                            get_config().get(
+                                                "userscript_proxy_status_timeout_seconds", 30
+                                            )
                                         )
                                     except Exception:
                                         proxy_status_timeout_seconds = 30.0
-                                    proxy_status_timeout_seconds = max(5.0, min(proxy_status_timeout_seconds, 300.0))
+                                    proxy_status_timeout_seconds = max(
+                                        5.0, min(proxy_status_timeout_seconds, 300.0)
+                                    )
 
                                     # Time between pickup and the proxy actually starting the upstream fetch. When the
                                     # Camoufox proxy needs to perform anonymous signup / Turnstile preflight, this can
@@ -7985,7 +8457,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                             )
                                         )
                                     except Exception:
-                                        proxy_preflight_timeout_seconds = proxy_status_timeout_seconds
+                                        proxy_preflight_timeout_seconds = (
+                                            proxy_status_timeout_seconds
+                                        )
                                     proxy_preflight_timeout_seconds = max(
                                         5.0, min(proxy_preflight_timeout_seconds, 600.0)
                                     )
@@ -8009,15 +8483,23 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                     while True:
                                         if status_event.is_set():
                                             break
-                                        if isinstance(done_event, asyncio.Event) and done_event.is_set():
+                                        if (
+                                            isinstance(done_event, asyncio.Event)
+                                            and done_event.is_set()
+                                        ):
                                             break
                                         # If the proxy is already streaming lines, don't stall waiting for a separate
                                         # status report.
-                                        if isinstance(lines_queue, asyncio.Queue) and not lines_queue.empty():
+                                        if (
+                                            isinstance(lines_queue, asyncio.Queue)
+                                            and not lines_queue.empty()
+                                        ):
                                             break
                                         # If an error has already been recorded, stop waiting and let downstream handle it.
                                         try:
-                                            if isinstance(proxy_job, dict) and proxy_job.get("error"):
+                                            if isinstance(proxy_job, dict) and proxy_job.get(
+                                                "error"
+                                            ):
                                                 break
                                         except Exception:
                                             pass
@@ -8027,7 +8509,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                             if await request.is_disconnected():
                                                 try:
                                                     await _finalize_userscript_proxy_job(
-                                                        proxy_job_id, error="client disconnected", remove=True
+                                                        proxy_job_id,
+                                                        error="client disconnected",
+                                                        remove=True,
                                                     )
                                                 except Exception:
                                                     pass
@@ -8052,7 +8536,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                                 pass
                                             try:
                                                 await _finalize_userscript_proxy_job(
-                                                    proxy_job_id, error="userscript proxy pickup timeout", remove=True
+                                                    proxy_job_id,
+                                                    error="userscript proxy pickup timeout",
+                                                    remove=True,
                                                 )
                                             except Exception:
                                                 pass
@@ -8080,7 +8566,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                                 upstream_fetch_started_at_mono = 0.0
 
                                             if upstream_fetch_started_at_mono > 0:
-                                                status_elapsed = now_mono - upstream_fetch_started_at_mono
+                                                status_elapsed = (
+                                                    now_mono - upstream_fetch_started_at_mono
+                                                )
                                                 if status_elapsed < 0:
                                                     status_elapsed = 0.0
                                                 if status_elapsed >= proxy_status_timeout_seconds:
@@ -8109,7 +8597,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                                 phase = str(proxy_job.get("phase") or "")
                                                 preflight_timeout = proxy_preflight_timeout_seconds
                                                 if phase == "signup":
-                                                    preflight_timeout = proxy_signup_preflight_timeout_seconds
+                                                    preflight_timeout = (
+                                                        proxy_signup_preflight_timeout_seconds
+                                                    )
                                                 preflight_started_at_mono = pickup_at_mono
                                                 if phase == "fetch":
                                                     upstream_started_at = proxy_job.get(
@@ -8126,7 +8616,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                                             upstream_started_at_mono
                                                         )
 
-                                                preflight_elapsed = now_mono - preflight_started_at_mono
+                                                preflight_elapsed = (
+                                                    now_mono - preflight_started_at_mono
+                                                )
                                                 if preflight_elapsed < 0:
                                                     preflight_elapsed = 0.0
                                                 if preflight_elapsed >= preflight_timeout:
@@ -8225,7 +8717,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                             float(retry_after.strip())
                                         except Exception:
                                             pass
-                                    sleep_seconds = get_rate_limit_sleep_seconds(retry_after, attempt)
+                                    sleep_seconds = get_rate_limit_sleep_seconds(
+                                        retry_after, attempt
+                                    )
 
                                     debug_print(
                                         f"⏱️  Stream attempt {attempt} - Upstream rate limited. Waiting {sleep_seconds}s..."
@@ -8239,15 +8733,22 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                             rotation_exclude = set(failed_tokens)
                                             rotation_exclude.add(current_token)
                                             current_token = get_next_auth_token(
-                                                exclude_tokens=rotation_exclude, allow_ephemeral_fallback=False
+                                                exclude_tokens=rotation_exclude,
+                                                allow_ephemeral_fallback=False,
                                             )
-                                            headers = get_request_headers_with_token(current_token, recaptcha_token)
+                                            headers = get_request_headers_with_token(
+                                                current_token, recaptcha_token
+                                            )
                                             token_rotated = True
-                                            debug_print(f"🔄 Retrying stream with next token: {current_token[:20]}...")
+                                            debug_print(
+                                                f"🔄 Retrying stream with next token: {current_token[:20]}..."
+                                            )
                                         except HTTPException:
                                             # Only one token (or all tokens excluded). Keep the current token and retry
                                             # after backoff instead of failing fast.
-                                            debug_print("⚠️ No alternative token available; retrying with same token after backoff.")
+                                            debug_print(
+                                                "⚠️ No alternative token available; retrying with same token after backoff."
+                                            )
 
                                     # reCAPTCHA v3 tokens can be single-use and may expire while we back off.
                                     # Clear it so the next browser fetch attempt mints a fresh token.
@@ -8256,10 +8757,14 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
 
                                     # If we rotated tokens, allow a fast retry when the backoff would exceed the remaining
                                     # stream deadline (common when one token is rate-limited but another isn't).
-                                    if token_rotated and current_token and current_token != old_token:
-                                        remaining_budget = float(stream_total_timeout_seconds) - float(
-                                            time.monotonic() - stream_started_at
-                                        )
+                                    if (
+                                        token_rotated
+                                        and current_token
+                                        and current_token != old_token
+                                    ):
+                                        remaining_budget = float(
+                                            stream_total_timeout_seconds
+                                        ) - float(time.monotonic() - stream_started_at)
                                         if float(sleep_seconds) > max(0.0, remaining_budget):
                                             sleep_seconds = min(float(sleep_seconds), 1.0)
 
@@ -8275,11 +8780,17 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                     if transport_used == "userscript":
                                         proxy_job_id = ""
                                         try:
-                                            proxy_job_id = str(getattr(stream_context, "job_id", "") or "").strip()
+                                            proxy_job_id = str(
+                                                getattr(stream_context, "job_id", "") or ""
+                                            ).strip()
                                         except Exception:
                                             proxy_job_id = ""
 
-                                        proxy_job = _USERSCRIPT_PROXY_JOBS.get(proxy_job_id) if proxy_job_id else None
+                                        proxy_job = (
+                                            _USERSCRIPT_PROXY_JOBS.get(proxy_job_id)
+                                            if proxy_job_id
+                                            else None
+                                        )
                                         proxy_done_event = None
                                         if isinstance(proxy_job, dict):
                                             proxy_done_event = proxy_job.get("done_event")
@@ -8288,7 +8799,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                         # abandon this response and queue a new job (which can lead to pickup timeouts).
                                         try:
                                             grace_seconds = float(
-                                                get_config().get("userscript_proxy_recaptcha_grace_seconds", 25)
+                                                get_config().get(
+                                                    "userscript_proxy_recaptcha_grace_seconds", 25
+                                                )
                                             )
                                         except Exception:
                                             grace_seconds = 25.0
@@ -8302,18 +8815,22 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                             # Important: do not enqueue a new proxy job while the current one is still
                                             # running. The internal Camoufox worker is single-threaded and will not pick
                                             # up new jobs until `page.evaluate()` returns.
-                                            remaining_budget = float(stream_total_timeout_seconds) - float(
-                                                time.monotonic() - stream_started_at
-                                            )
+                                            remaining_budget = float(
+                                                stream_total_timeout_seconds
+                                            ) - float(time.monotonic() - stream_started_at)
                                             remaining_budget = max(0.0, remaining_budget)
-                                            max_wait_seconds = min(max(float(grace_seconds), 200.0), remaining_budget)
+                                            max_wait_seconds = min(
+                                                max(float(grace_seconds), 200.0), remaining_budget
+                                            )
 
                                             debug_print(
                                                 f"⏳ Userscript proxy reported 403. Waiting up to {int(max_wait_seconds)}s for in-page retry..."
                                             )
                                             started = time.monotonic()
                                             warned_extended = False
-                                            while (time.monotonic() - started) < float(max_wait_seconds):
+                                            while (time.monotonic() - started) < float(
+                                                max_wait_seconds
+                                            ):
                                                 if response.status_code != HTTPStatus.FORBIDDEN:
                                                     debug_print(
                                                         f"✅ Userscript proxy recovered from 403 (status: {response.status_code})."
@@ -8323,13 +8840,15 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                                     break
                                                 # If the proxy job already has an error, don't wait the full window.
                                                 try:
-                                                    if isinstance(proxy_job, dict) and proxy_job.get("error"):
+                                                    if isinstance(
+                                                        proxy_job, dict
+                                                    ) and proxy_job.get("error"):
                                                         break
                                                 except Exception:
                                                     pass
-                                                if (not warned_extended) and (time.monotonic() - started) >= float(
-                                                    grace_seconds
-                                                ):
+                                                if (not warned_extended) and (
+                                                    time.monotonic() - started
+                                                ) >= float(grace_seconds):
                                                     warned_extended = True
                                                     debug_print(
                                                         "⏳ Still 403 after grace window; waiting for proxy job completion..."
@@ -8369,10 +8888,14 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                         try:
                                             if (
                                                 isinstance(error_body, dict)
-                                                and error_body.get("error") == "recaptcha validation failed"
+                                                and error_body.get("error")
+                                                == "recaptcha validation failed"
                                             ):
                                                 is_recaptcha_failure = True
-                                            elif "recaptcha validation failed" in str(body_text).lower():
+                                            elif (
+                                                "recaptcha validation failed"
+                                                in str(body_text).lower()
+                                            ):
                                                 is_recaptcha_failure = True
                                         except Exception:
                                             is_recaptcha_failure = False
@@ -8450,7 +8973,10 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                                 if new_token and isinstance(payload, dict):
                                                     payload["recaptchaV3Token"] = new_token
 
-                                            if recaptcha_403_consecutive >= 2 and transport_used == "chrome":
+                                            if (
+                                                recaptcha_403_consecutive >= 2
+                                                and transport_used == "chrome"
+                                            ):
                                                 debug_print(
                                                     "Switching to Camoufox-first after repeated Chrome reCAPTCHA failures."
                                                 )
@@ -8458,7 +8984,10 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                                 prefer_chrome_transport = False
                                                 recaptcha_403_consecutive = 0
                                                 recaptcha_403_last_transport = None
-                                            elif recaptcha_403_consecutive >= 2 and transport_used != "chrome":
+                                            elif (
+                                                recaptcha_403_consecutive >= 2
+                                                and transport_used != "chrome"
+                                            ):
                                                 debug_print(
                                                     "🌐 Switching to Chrome fetch transport after repeated reCAPTCHA failures."
                                                 )
@@ -8491,14 +9020,20 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                         if not isinstance(cfg_now, dict):
                                             cfg_now = {}
                                         try:
-                                            refreshed_token = await refresh_arena_auth_token_via_lmarena_http(
-                                                current_token, cfg_now
+                                            refreshed_token = (
+                                                await refresh_arena_auth_token_via_lmarena_http(
+                                                    current_token, cfg_now
+                                                )
                                             )
                                         except Exception:
                                             refreshed_token = None
                                         if not refreshed_token:
                                             try:
-                                                refreshed_token = await refresh_arena_auth_token_via_supabase(current_token)
+                                                refreshed_token = (
+                                                    await refresh_arena_auth_token_via_supabase(
+                                                        current_token
+                                                    )
+                                                )
                                             except Exception:
                                                 refreshed_token = None
 
@@ -8506,25 +9041,37 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                         global EPHEMERAL_ARENA_AUTH_TOKEN
                                         EPHEMERAL_ARENA_AUTH_TOKEN = refreshed_token
                                         current_token = refreshed_token
-                                        headers = get_request_headers_with_token(current_token, recaptcha_token)
+                                        headers = get_request_headers_with_token(
+                                            current_token, recaptcha_token
+                                        )
                                         # Ensure the next browser attempt mints a fresh token for the refreshed session.
                                         if isinstance(payload, dict):
                                             payload["recaptchaV3Token"] = ""
-                                        debug_print("🔄 Refreshed arena-auth-prod-v1 session after 401. Retrying...")
+                                        debug_print(
+                                            "🔄 Refreshed arena-auth-prod-v1 session after 401. Retrying..."
+                                        )
                                         async for ka in wait_with_keepalive(1.0):
                                             yield ka
                                         continue
 
                                     try:
                                         # Try with next available token (excluding failed ones)
-                                        current_token = get_next_auth_token(exclude_tokens=failed_tokens)
-                                        headers = get_request_headers_with_token(current_token, recaptcha_token)
-                                        debug_print(f"🔄 Retrying stream with next token: {current_token[:20]}...")
+                                        current_token = get_next_auth_token(
+                                            exclude_tokens=failed_tokens
+                                        )
+                                        headers = get_request_headers_with_token(
+                                            current_token, recaptcha_token
+                                        )
+                                        debug_print(
+                                            f"🔄 Retrying stream with next token: {current_token[:20]}..."
+                                        )
                                         async for ka in wait_with_keepalive(1.0):
                                             yield ka
                                         continue
                                     except HTTPException:
-                                        debug_print("No more tokens available for streaming request.")
+                                        debug_print(
+                                            "No more tokens available for streaming request."
+                                        )
                                         error_chunk = {
                                             "error": {
                                                 "message": (
@@ -8545,7 +9092,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                 # Wrapped iterator to yield keep-alives while waiting for upstream lines.
                                 # NOTE: Avoid asyncio.wait_for() here; cancelling __anext__ can break the iterator.
                                 async def _aiter_with_keepalive(it):
-                                    pending: Optional[asyncio.Task] = asyncio.create_task(it.__anext__())
+                                    pending: Optional[asyncio.Task] = asyncio.create_task(
+                                        it.__anext__()
+                                    )
                                     try:
                                         while True:
                                             done, _ = await asyncio.wait({pending}, timeout=1.0)
@@ -8562,7 +9111,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                         if pending is not None and not pending.done():
                                             pending.cancel()
 
-                                async for maybe_line in _aiter_with_keepalive(response.aiter_lines().__aiter__()):
+                                async for maybe_line in _aiter_with_keepalive(
+                                    response.aiter_lines().__aiter__()
+                                ):
                                     if maybe_line is None:
                                         yield ": keep-alive\n\n"
                                         continue
@@ -8587,13 +9138,15 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                                 "object": "chat.completion.chunk",
                                                 "created": int(time.time()),
                                                 "model": model_public_name,
-                                                "choices": [{
-                                                    "index": 0,
-                                                    "delta": {
-                                                        "reasoning_content": reasoning_chunk
-                                                    },
-                                                    "finish_reason": None
-                                                }]
+                                                "choices": [
+                                                    {
+                                                        "index": 0,
+                                                        "delta": {
+                                                            "reasoning_content": reasoning_chunk
+                                                        },
+                                                        "finish_reason": None,
+                                                    }
+                                                ],
                                             }
                                             yield f"data: {json.dumps(chunk_response)}\n\n"
 
@@ -8613,13 +9166,13 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                                 "object": "chat.completion.chunk",
                                                 "created": int(time.time()),
                                                 "model": model_public_name,
-                                                "choices": [{
-                                                    "index": 0,
-                                                    "delta": {
-                                                        "content": text_chunk
-                                                    },
-                                                    "finish_reason": None
-                                                }]
+                                                "choices": [
+                                                    {
+                                                        "index": 0,
+                                                        "delta": {"content": text_chunk},
+                                                        "finish_reason": None,
+                                                    }
+                                                ],
                                             }
                                             yield f"data: {json.dumps(chunk_response)}\n\n"
 
@@ -8634,10 +9187,12 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                             # OpenAI format: return URL in content
                                             if isinstance(image_list, list) and len(image_list) > 0:
                                                 image_obj = image_list[0]
-                                                if image_obj.get('type') == 'image':
-                                                    image_url = image_obj.get('image', '')
+                                                if image_obj.get("type") == "image":
+                                                    image_url = image_obj.get("image", "")
                                                     # Format as markdown for streaming
-                                                    response_text = f"![Generated Image]({image_url})"
+                                                    response_text = (
+                                                        f"![Generated Image]({image_url})"
+                                                    )
 
                                                     # Send the markdown-formatted image in a chunk
                                                     chunk_response = {
@@ -8645,13 +9200,13 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                                         "object": "chat.completion.chunk",
                                                         "created": int(time.time()),
                                                         "model": model_public_name,
-                                                        "choices": [{
-                                                            "index": 0,
-                                                            "delta": {
-                                                                "content": response_text
-                                                            },
-                                                            "finish_reason": None
-                                                        }]
+                                                        "choices": [
+                                                            {
+                                                                "index": 0,
+                                                                "delta": {"content": response_text},
+                                                                "finish_reason": None,
+                                                            }
+                                                        ],
                                                     }
                                                     yield f"data: {json.dumps(chunk_response)}\n\n"
                                         except json.JSONDecodeError:
@@ -8663,16 +9218,20 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                         try:
                                             citation_obj = json.loads(citation_data)
                                             # Extract source information from argsTextDelta
-                                            if 'argsTextDelta' in citation_obj:
-                                                args_data = json.loads(citation_obj['argsTextDelta'])
-                                                if 'source' in args_data:
-                                                    source = args_data['source']
+                                            if "argsTextDelta" in citation_obj:
+                                                args_data = json.loads(
+                                                    citation_obj["argsTextDelta"]
+                                                )
+                                                if "source" in args_data:
+                                                    source = args_data["source"]
                                                     # Can be a single source or array of sources
                                                     if isinstance(source, list):
                                                         citations.extend(source)
                                                     elif isinstance(source, dict):
                                                         citations.append(source)
-                                            debug_print(f"  🔗 Citation added: {citation_obj.get('toolCallId')}")
+                                            debug_print(
+                                                f"  🔗 Citation added: {citation_obj.get('toolCallId')}"
+                                            )
                                         except json.JSONDecodeError:
                                             pass
 
@@ -8698,11 +9257,13 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                                 "object": "chat.completion.chunk",
                                                 "created": int(time.time()),
                                                 "model": model_public_name,
-                                                "choices": [{
-                                                    "index": 0,
-                                                    "delta": {},
-                                                    "finish_reason": finish_reason
-                                                }]
+                                                "choices": [
+                                                    {
+                                                        "index": 0,
+                                                        "delta": {},
+                                                        "finish_reason": finish_reason,
+                                                    }
+                                                ],
                                             }
                                             yield f"data: {json.dumps(final_chunk)}\n\n"
                                         except json.JSONDecodeError:
@@ -8713,7 +9274,11 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                         try:
                                             chunk_obj = json.loads(line)
                                             # If it looks like an OpenAI chunk, extract the delta content
-                                            if "choices" in chunk_obj and isinstance(chunk_obj["choices"], list) and len(chunk_obj["choices"]) > 0:
+                                            if (
+                                                "choices" in chunk_obj
+                                                and isinstance(chunk_obj["choices"], list)
+                                                and len(chunk_obj["choices"]) > 0
+                                            ):
                                                 delta = chunk_obj["choices"][0].get("delta", {})
 
                                                 # Handle thinking/reasoning
@@ -8721,8 +9286,19 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                                     r_chunk = str(delta["reasoning_content"] or "")
                                                     reasoning_text += r_chunk
                                                     chunk_response = {
-                                                        "id": chunk_id, "object": "chat.completion.chunk", "created": int(time.time()), "model": model_public_name,
-                                                        "choices": [{"index": 0, "delta": {"reasoning_content": r_chunk}, "finish_reason": None}]
+                                                        "id": chunk_id,
+                                                        "object": "chat.completion.chunk",
+                                                        "created": int(time.time()),
+                                                        "model": model_public_name,
+                                                        "choices": [
+                                                            {
+                                                                "index": 0,
+                                                                "delta": {
+                                                                    "reasoning_content": r_chunk
+                                                                },
+                                                                "finish_reason": None,
+                                                            }
+                                                        ],
                                                     }
                                                     yield f"data: {json.dumps(chunk_response)}\n\n"
 
@@ -8731,8 +9307,17 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                                     c_chunk = str(delta["content"] or "")
                                                     response_text += c_chunk
                                                     chunk_response = {
-                                                        "id": chunk_id, "object": "chat.completion.chunk", "created": int(time.time()), "model": model_public_name,
-                                                        "choices": [{"index": 0, "delta": {"content": c_chunk}, "finish_reason": None}]
+                                                        "id": chunk_id,
+                                                        "object": "chat.completion.chunk",
+                                                        "created": int(time.time()),
+                                                        "model": model_public_name,
+                                                        "choices": [
+                                                            {
+                                                                "index": 0,
+                                                                "delta": {"content": c_chunk},
+                                                                "finish_reason": None,
+                                                            }
+                                                        ],
                                                     }
                                                     yield f"data: {json.dumps(chunk_response)}\n\n"
                                         except Exception:
@@ -8745,13 +9330,19 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                         continue
 
                             # If we got no usable deltas, treat it as an upstream failure and retry.
-                            if (not response_text.strip()) and (not reasoning_text.strip()) and (not citations):
+                            if (
+                                (not response_text.strip())
+                                and (not reasoning_text.strip())
+                                and (not citations)
+                            ):
                                 upstream_hint: Optional[str] = None
                                 proxy_status: Optional[int] = None
                                 proxy_headers: Optional[dict] = None
                                 if transport_used == "userscript":
                                     try:
-                                        proxy_job_id = str(getattr(stream_context, "job_id", "") or "").strip()
+                                        proxy_job_id = str(
+                                            getattr(stream_context, "job_id", "") or ""
+                                        ).strip()
                                         proxy_job = _USERSCRIPT_PROXY_JOBS.get(proxy_job_id)
                                         if isinstance(proxy_job, dict):
                                             if proxy_job.get("error"):
@@ -8762,7 +9353,10 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                                 proxy_headers = headers
                                             if isinstance(status, int) and int(status) >= 400:
                                                 proxy_status = int(status)
-                                                upstream_hint = upstream_hint or f"Userscript proxy upstream HTTP {int(status)}"
+                                                upstream_hint = (
+                                                    upstream_hint
+                                                    or f"Userscript proxy upstream HTTP {int(status)}"
+                                                )
                                     except Exception:
                                         pass
 
@@ -8771,20 +9365,26 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                     try:
                                         obj = json.loads(unhandled_preview[0])
                                         if isinstance(obj, dict):
-                                            upstream_hint = str(obj.get("error") or obj.get("message") or "")
+                                            upstream_hint = str(
+                                                obj.get("error") or obj.get("message") or ""
+                                            )
                                     except Exception:
                                         pass
 
                                     if not upstream_hint:
                                         upstream_hint = unhandled_preview[0][:500]
 
-                                debug_print(f"⚠️ Stream produced no content deltas (transport={transport_used}, attempt {attempt}). Retrying...")
+                                debug_print(
+                                    f"⚠️ Stream produced no content deltas (transport={transport_used}, attempt {attempt}). Retrying..."
+                                )
                                 if upstream_hint:
                                     debug_print(f"   Upstream hint: {upstream_hint[:200]}")
                                     if "recaptcha" in upstream_hint.lower():
                                         recaptcha_403_failures += 1
                                         if recaptcha_403_failures >= 5:
-                                            debug_print("❌ Too many reCAPTCHA failures (detected in body). Failing fast.")
+                                            debug_print(
+                                                "❌ Too many reCAPTCHA failures (detected in body). Failing fast."
+                                            )
                                             error_chunk = {
                                                 "error": {
                                                     "message": f"Forbidden: reCAPTCHA validation failed. Upstream hint: {upstream_hint[:200]}",
@@ -8796,11 +9396,15 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                             yield "data: [DONE]\n\n"
                                             return
                                 elif unhandled_preview:
-                                    debug_print(f"   Upstream preview: {unhandled_preview[0][:200]}")
+                                    debug_print(
+                                        f"   Upstream preview: {unhandled_preview[0][:200]}"
+                                    )
 
                                 no_delta_failures += 1
                                 if no_delta_failures >= 10:
-                                    debug_print("❌ Too many attempts with no content produced. Failing fast.")
+                                    debug_print(
+                                        "❌ Too many attempts with no content produced. Failing fast."
+                                    )
                                     error_chunk = {
                                         "error": {
                                             "message": f"Upstream failure: The request produced no content after multiple retries. Last hint: {upstream_hint[:200] if upstream_hint else 'None'}",
@@ -8821,13 +9425,19 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                     # Mirror the regular 401/403 handling, but based on the proxy job status instead
                                     # of `response.status_code` (which can be stale for userscript jobs).
                                     if proxy_status == HTTPStatus.UNAUTHORIZED:
-                                        debug_print("🔒 Userscript proxy upstream 401. Rotating auth token...")
+                                        debug_print(
+                                            "🔒 Userscript proxy upstream 401. Rotating auth token..."
+                                        )
                                         failed_tokens.add(current_token)
                                         # (Pruning disabled)
 
                                         try:
-                                            current_token = get_next_auth_token(exclude_tokens=failed_tokens)
-                                            headers = get_request_headers_with_token(current_token, recaptcha_token)
+                                            current_token = get_next_auth_token(
+                                                exclude_tokens=failed_tokens
+                                            )
+                                            headers = get_request_headers_with_token(
+                                                current_token, recaptcha_token
+                                            )
                                         except HTTPException:
                                             error_chunk = {
                                                 "error": {
@@ -8846,7 +9456,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                     if proxy_status == HTTPStatus.FORBIDDEN:
                                         recaptcha_403_failures += 1
                                         if recaptcha_403_failures >= 5:
-                                            debug_print("❌ Too many reCAPTCHA failures in userscript proxy. Failing fast.")
+                                            debug_print(
+                                                "❌ Too many reCAPTCHA failures in userscript proxy. Failing fast."
+                                            )
                                             error_chunk = {
                                                 "error": {
                                                     "message": "Forbidden: reCAPTCHA validation failed repeatedly in userscript proxy.",
@@ -8861,7 +9473,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                         # Common case: the proxy session gets flagged (reCAPTCHA). Retry with a fresh
                                         # in-page token mint rather than switching to buffered browser fetch fallbacks.
                                         force_proxy_recaptcha_mint = True
-                                        debug_print("🚫 Userscript proxy upstream 403: retrying userscript (fresh reCAPTCHA).")
+                                        debug_print(
+                                            "🚫 Userscript proxy upstream 403: retrying userscript (fresh reCAPTCHA)."
+                                        )
                                         if isinstance(payload, dict):
                                             payload["recaptchaV3Token"] = ""
                                             payload.pop("recaptchaV2Token", None)
@@ -8870,17 +9484,26 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                     continue
 
                                 # If the proxy upstream is rate-limited, respect Retry-After/backoff.
-                                if transport_used == "userscript" and proxy_status == HTTPStatus.TOO_MANY_REQUESTS:
+                                if (
+                                    transport_used == "userscript"
+                                    and proxy_status == HTTPStatus.TOO_MANY_REQUESTS
+                                ):
                                     retry_after = None
                                     if isinstance(proxy_headers, dict):
-                                        retry_after = proxy_headers.get("retry-after") or proxy_headers.get("Retry-After")
+                                        retry_after = proxy_headers.get(
+                                            "retry-after"
+                                        ) or proxy_headers.get("Retry-After")
                                     if isinstance(retry_after, str):
                                         try:
                                             float(retry_after.strip())
                                         except Exception:
                                             pass
-                                    sleep_seconds = get_rate_limit_sleep_seconds(retry_after, attempt)
-                                    debug_print(f"⏱️  Userscript proxy upstream 429. Waiting {sleep_seconds}s...")
+                                    sleep_seconds = get_rate_limit_sleep_seconds(
+                                        retry_after, attempt
+                                    )
+                                    debug_print(
+                                        f"⏱️  Userscript proxy upstream 429. Waiting {sleep_seconds}s..."
+                                    )
 
                                     # Rotate token on userscript rate limit too.
                                     old_token = current_token
@@ -8890,11 +9513,16 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                         if current_token:
                                             rotation_exclude.add(current_token)
                                         current_token = get_next_auth_token(
-                                            exclude_tokens=rotation_exclude, allow_ephemeral_fallback=False
+                                            exclude_tokens=rotation_exclude,
+                                            allow_ephemeral_fallback=False,
                                         )
-                                        headers = get_request_headers_with_token(current_token, recaptcha_token)
+                                        headers = get_request_headers_with_token(
+                                            current_token, recaptcha_token
+                                        )
                                         token_rotated = True
-                                        debug_print(f"🔄 Retrying stream with next token (after proxy 429): {current_token[:20]}...")
+                                        debug_print(
+                                            f"🔄 Retrying stream with next token (after proxy 429): {current_token[:20]}..."
+                                        )
                                     except HTTPException:
                                         # Only one token (or all tokens excluded). Keep the current token and retry
                                         # after backoff instead of failing fast.
@@ -8909,16 +9537,22 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
 
                                     # If we rotated tokens, allow a fast retry when waiting would blow past the remaining
                                     # stream deadline (common when one token is rate-limited but another isn't).
-                                    if token_rotated and current_token and current_token != old_token:
-                                        remaining_budget = float(stream_total_timeout_seconds) - float(
-                                            time.monotonic() - stream_started_at
-                                        )
+                                    if (
+                                        token_rotated
+                                        and current_token
+                                        and current_token != old_token
+                                    ):
+                                        remaining_budget = float(
+                                            stream_total_timeout_seconds
+                                        ) - float(time.monotonic() - stream_started_at)
                                         if float(sleep_seconds) > max(0.0, remaining_budget):
                                             sleep_seconds = min(float(sleep_seconds), 1.0)
 
                                     # If we still can't wait within the remaining deadline, fail now instead of sending
                                     # keep-alives indefinitely.
-                                    if (time.monotonic() - stream_started_at + float(sleep_seconds)) > stream_total_timeout_seconds:
+                                    if (
+                                        time.monotonic() - stream_started_at + float(sleep_seconds)
+                                    ) > stream_total_timeout_seconds:
                                         error_chunk = {
                                             "error": {
                                                 "message": f"Upstream rate limit (429) would exceed stream deadline ({int(sleep_seconds)}s backoff).",
@@ -8941,7 +9575,7 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                             assistant_message = {
                                 "id": model_msg_id,
                                 "role": "assistant",
-                                "content": response_text.strip()
+                                "content": response_text.strip(),
                             }
                             if reasoning_text:
                                 assistant_message["reasoning_content"] = reasoning_text.strip()
@@ -8950,7 +9584,7 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                 unique_citations = []
                                 seen_urls = set()
                                 for citation in citations:
-                                    citation_url = citation.get('url')
+                                    citation_url = citation.get("url")
                                     if citation_url and citation_url not in seen_urls:
                                         seen_urls.add(citation_url)
                                         unique_citations.append(citation)
@@ -8962,10 +9596,12 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                     "model": model_public_name,
                                     "messages": [
                                         {"id": user_msg_id, "role": "user", "content": prompt},
-                                        assistant_message
-                                    ]
+                                        assistant_message,
+                                    ],
                                 }
-                                debug_print(f"💾 Saved new session for conversation {conversation_id}")
+                                debug_print(
+                                    f"💾 Saved new session for conversation {conversation_id}"
+                                )
                             else:
                                 # Append new messages to history
                                 chat_sessions[api_key_str][conversation_id]["messages"].append(
@@ -8974,7 +9610,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                 chat_sessions[api_key_str][conversation_id]["messages"].append(
                                     assistant_message
                                 )
-                                debug_print(f"💾 Updated existing session for conversation {conversation_id}")
+                                debug_print(
+                                    f"💾 Updated existing session for conversation {conversation_id}"
+                                )
 
                             yield "data: [DONE]\n\n"
                             debug_print(f"✅ Stream completed - {len(response_text)} chars sent")
@@ -8987,7 +9625,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                             if transport_used == "userscript":
                                 jid = str(getattr(stream_context, "job_id", "") or "").strip()
                                 if jid:
-                                    await _finalize_userscript_proxy_job(jid, error="client disconnected", remove=True)
+                                    await _finalize_userscript_proxy_job(
+                                        jid, error="client disconnected", remove=True
+                                    )
                         except Exception:
                             pass
                         return
@@ -9019,7 +9659,7 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                             )
                             async for ka in wait_with_keepalive(sleep_seconds):
                                 yield ka
-                            continue # Continue to the next iteration of the while True loop
+                            continue  # Continue to the next iteration of the while True loop
                         elif e.response.status_code == 403:
                             current_retry_attempt += 1
                             if current_retry_attempt > max_retries:
@@ -9043,7 +9683,7 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                             sleep_seconds = get_general_backoff_seconds(current_retry_attempt)
                             async for ka in wait_with_keepalive(sleep_seconds):
                                 yield ka
-                            continue # Continue to the next iteration of the while True loop
+                            continue  # Continue to the next iteration of the while True loop
                         elif e.response.status_code == 401:
                             # Existing 401 handling (token rotation) will implicitly use the retry loop.
                             # We need to ensure max_retries applies here too.
@@ -9081,7 +9721,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                 body_text = str(body_text or "").strip()
                                 if body_text:
                                     preview = body_text[:800]
-                                    error_msg = f"LMArena API error {e.response.status_code}: {preview}"
+                                    error_msg = (
+                                        f"LMArena API error {e.response.status_code}: {preview}"
+                                    )
                                 else:
                                     error_msg = f"LMArena API error: {e.response.status_code}"
                             except Exception:
@@ -9094,7 +9736,7 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                 "error": {
                                     "message": error_msg,
                                     "type": error_type,
-                                    "code": e.response.status_code
+                                    "code": e.response.status_code,
                                 }
                             }
                             yield f"data: {json.dumps(error_chunk)}\n\n"
@@ -9108,15 +9750,11 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                         # But legitimate internal errors should probably surface.
                         # Let's retry on network-like errors if we can distinguish them.
                         # For now, yield error.
-                        error_chunk = {
-                            "error": {
-                                "message": str(e),
-                                "type": "internal_error"
-                            }
-                        }
+                        error_chunk = {"error": {"message": str(e), "type": "internal_error"}}
                         yield f"data: {json.dumps(error_chunk)}\n\n"
                         yield "data: [DONE]\n\n"
                         return
+
             return StreamingResponse(generate_stream(), media_type="text/event-stream")
 
         # Handle non-streaming mode with retry
@@ -9139,7 +9777,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
 
             if response is None:
                 if use_chrome_fetch_for_model:
-                    debug_print(f"🌐 Using Chrome fetch transport for non-streaming strict model ({model_public_name})...")
+                    debug_print(
+                        f"🌐 Using Chrome fetch transport for non-streaming strict model ({model_public_name})..."
+                    )
                     # Chrome fetch transport has its own internal reCAPTCHA retries,
                     # but we add an outer loop here to handle token rotation (401) and rate limits (429).
                     max_chrome_retries = 3
@@ -9153,7 +9793,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                         )
 
                         if response is None:
-                            debug_print(f"⚠️ Chrome fetch transport failed (attempt {chrome_attempt+1}). Trying Camoufox...")
+                            debug_print(
+                                f"⚠️ Chrome fetch transport failed (attempt {chrome_attempt + 1}). Trying Camoufox..."
+                            )
                             response = await fetch_lmarena_stream_via_camoufox(
                                 http_method=http_method,
                                 url=url,
@@ -9162,23 +9804,33 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                                 timeout_seconds=120,
                             )
                             if response is None:
-                                break # Critical error
+                                break  # Critical error
 
                         if response.status_code == HTTPStatus.UNAUTHORIZED:
-                            debug_print(f"🔒 Token {current_token[:20]}... expired in Chrome fetch (attempt {chrome_attempt+1})")
+                            debug_print(
+                                f"🔒 Token {current_token[:20]}... expired in Chrome fetch (attempt {chrome_attempt + 1})"
+                            )
                             failed_tokens.add(current_token)
                             # (Pruning disabled)
                             if chrome_attempt < max_chrome_retries - 1:
                                 try:
-                                    current_token = get_next_auth_token(exclude_tokens=failed_tokens)
-                                    debug_print(f"🔄 Rotating to next token: {current_token[:20]}...")
+                                    current_token = get_next_auth_token(
+                                        exclude_tokens=failed_tokens
+                                    )
+                                    debug_print(
+                                        f"🔄 Rotating to next token: {current_token[:20]}..."
+                                    )
                                     continue
                                 except HTTPException:
                                     break
                         elif response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
-                            debug_print(f"⏱️  Rate limit in Chrome fetch (attempt {chrome_attempt+1})")
+                            debug_print(
+                                f"⏱️  Rate limit in Chrome fetch (attempt {chrome_attempt + 1})"
+                            )
                             if chrome_attempt < max_chrome_retries - 1:
-                                sleep_seconds = get_rate_limit_sleep_seconds(response.headers.get("Retry-After"), chrome_attempt)
+                                sleep_seconds = get_rate_limit_sleep_seconds(
+                                    response.headers.get("Retry-After"), chrome_attempt
+                                )
                                 await asyncio.sleep(sleep_seconds)
                                 continue
 
@@ -9241,9 +9893,13 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                         reasoning_chunk = json.loads(chunk_data)
                         reasoning_text += reasoning_chunk
                         if reasoning_chunks_found <= 3:  # Log first 3 reasoning chunks
-                            debug_print(f"  🧠 Reasoning chunk {reasoning_chunks_found}: {repr(reasoning_chunk[:50])}")
+                            debug_print(
+                                f"  🧠 Reasoning chunk {reasoning_chunks_found}: {repr(reasoning_chunk[:50])}"
+                            )
                     except json.JSONDecodeError as e:
-                        debug_print(f"  ⚠️ Failed to parse reasoning chunk on line {line_count}: {chunk_data[:100]} - {e}")
+                        debug_print(
+                            f"  ⚠️ Failed to parse reasoning chunk on line {line_count}: {chunk_data[:100]} - {e}"
+                        )
                         continue
 
                 # Parse text chunks: a0:"Hello "
@@ -9257,7 +9913,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                         if text_chunks_found <= 3:  # Log first 3 chunks
                             debug_print(f"  ✅ Chunk {text_chunks_found}: {repr(text_chunk[:50])}")
                     except json.JSONDecodeError as e:
-                        debug_print(f"  ⚠️ Failed to parse text chunk on line {line_count}: {chunk_data[:100]} - {e}")
+                        debug_print(
+                            f"  ⚠️ Failed to parse text chunk on line {line_count}: {chunk_data[:100]} - {e}"
+                        )
                         continue
 
                 # Parse image generation: a2:[{...}] (for image models)
@@ -9268,12 +9926,14 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                         # OpenAI format expects URL in content
                         if isinstance(image_list, list) and len(image_list) > 0:
                             image_obj = image_list[0]
-                            if image_obj.get('type') == 'image':
-                                image_url = image_obj.get('image', '')
+                            if image_obj.get("type") == "image":
+                                image_url = image_obj.get("image", "")
                                 # Format as markdown
                                 response_text = f"![Generated Image]({image_url})"
                     except json.JSONDecodeError as e:
-                        debug_print(f"  ⚠️ Failed to parse image data on line {line_count}: {image_data[:100]} - {e}")
+                        debug_print(
+                            f"  ⚠️ Failed to parse image data on line {line_count}: {image_data[:100]} - {e}"
+                        )
                         continue
 
                 # Parse citations/tool calls: ac:{...} (for search models)
@@ -9283,19 +9943,23 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                     try:
                         citation_obj = json.loads(citation_data)
                         # Extract source information from argsTextDelta
-                        if 'argsTextDelta' in citation_obj:
-                            args_data = json.loads(citation_obj['argsTextDelta'])
-                            if 'source' in args_data:
-                                source = args_data['source']
+                        if "argsTextDelta" in citation_obj:
+                            args_data = json.loads(citation_obj["argsTextDelta"])
+                            if "source" in args_data:
+                                source = args_data["source"]
                                 # Can be a single source or array of sources
                                 if isinstance(source, list):
                                     citations.extend(source)
                                 elif isinstance(source, dict):
                                     citations.append(source)
                         if citation_chunks_found <= 3:  # Log first 3 citations
-                            debug_print(f"  🔗 Citation chunk {citation_chunks_found}: {citation_obj.get('toolCallId')}")
+                            debug_print(
+                                f"  🔗 Citation chunk {citation_chunks_found}: {citation_obj.get('toolCallId')}"
+                            )
                     except json.JSONDecodeError as e:
-                        debug_print(f"  ⚠️ Failed to parse citation chunk on line {line_count}: {citation_data[:100]} - {e}")
+                        debug_print(
+                            f"  ⚠️ Failed to parse citation chunk on line {line_count}: {citation_data[:100]} - {e}"
+                        )
                         continue
 
                 # Parse error messages: a3:"An error occurred"
@@ -9305,7 +9969,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                         error_message = json.loads(error_data)
                         debug_print(f"  ❌ Error message received: {error_message}")
                     except json.JSONDecodeError as e:
-                        debug_print(f"  ⚠️ Failed to parse error message on line {line_count}: {error_data[:100]} - {e}")
+                        debug_print(
+                            f"  ⚠️ Failed to parse error message on line {line_count}: {error_data[:100]} - {e}"
+                        )
                         error_message = error_data
 
                 # Parse metadata: ad:{"finishReason":"stop"}
@@ -9317,7 +9983,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                         finish_reason = metadata.get("finishReason")
                         debug_print(f"  📋 Metadata found: finishReason={finish_reason}")
                     except json.JSONDecodeError as e:
-                        debug_print(f"  ⚠️ Failed to parse metadata on line {line_count}: {metadata_data[:100]} - {e}")
+                        debug_print(
+                            f"  ⚠️ Failed to parse metadata on line {line_count}: {metadata_data[:100]} - {e}"
+                        )
                         continue
                 elif line.strip():  # Non-empty line that doesn't match expected format
                     if line_count <= 5:  # Log first 5 unexpected lines
@@ -9345,7 +10013,7 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                         "error": {
                             "message": error_detail,
                             "type": "upstream_error",
-                            "code": "lmarena_error"
+                            "code": "lmarena_error",
                         }
                     }
                 else:
@@ -9356,7 +10024,7 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                         "error": {
                             "message": error_detail,
                             "type": "upstream_error",
-                            "code": "empty_response"
+                            "code": "empty_response",
                         }
                     }
             else:
@@ -9366,7 +10034,7 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
             assistant_message = {
                 "id": model_msg_id,
                 "role": "assistant",
-                "content": response_text.strip()
+                "content": response_text.strip(),
             }
             if reasoning_text:
                 assistant_message["reasoning_content"] = reasoning_text.strip()
@@ -9375,7 +10043,7 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                 unique_citations = []
                 seen_urls = set()
                 for citation in citations:
-                    citation_url = citation.get('url')
+                    citation_url = citation.get("url")
                     if citation_url and citation_url not in seen_urls:
                         seen_urls.add(citation_url)
                         unique_citations.append(citation)
@@ -9387,8 +10055,8 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                     "model": model_public_name,
                     "messages": [
                         {"id": user_msg_id, "role": "user", "content": prompt},
-                        assistant_message
-                    ]
+                        assistant_message,
+                    ],
                 }
                 debug_print(f"💾 Saved new session for conversation {conversation_id}")
             else:
@@ -9396,9 +10064,7 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                 chat_sessions[api_key_str][conversation_id]["messages"].append(
                     {"id": user_msg_id, "role": "user", "content": prompt}
                 )
-                chat_sessions[api_key_str][conversation_id]["messages"].append(
-                    assistant_message
-                )
+                chat_sessions[api_key_str][conversation_id]["messages"].append(assistant_message)
                 debug_print(f"💾 Updated existing session for conversation {conversation_id}")
 
             # Build message object with reasoning and citations if present
@@ -9413,7 +10079,7 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                 unique_citations = []
                 seen_urls = set()
                 for citation in citations:
-                    citation_url = citation.get('url')
+                    citation_url = citation.get("url")
                     if citation_url and citation_url not in seen_urls:
                         seen_urls.add(citation_url)
                         unique_citations.append(citation)
@@ -9423,8 +10089,8 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                 if unique_citations:
                     footnotes = "\n\n---\n\n**Sources:**\n\n"
                     for i, citation in enumerate(unique_citations, 1):
-                        title = citation.get('title', 'Untitled')
-                        url = citation.get('url', '')
+                        title = citation.get("title", "Untitled")
+                        url = citation.get("url", "")
                         footnotes += f"{i}. [{title}]({url})\n"
                     message_obj["content"] = response_text.strip() + footnotes
 
@@ -9441,7 +10107,7 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
             usage_obj = {
                 "prompt_tokens": prompt_tokens,
                 "completion_tokens": completion_tokens,
-                "total_tokens": total_tokens
+                "total_tokens": total_tokens,
             }
             if reasoning_tokens > 0:
                 usage_obj["reasoning_tokens"] = reasoning_tokens
@@ -9452,16 +10118,12 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
                 "created": int(time.time()),
                 "model": model_public_name,
                 "conversation_id": conversation_id,
-                "choices": [{
-                    "index": 0,
-                    "message": message_obj,
-                    "finish_reason": "stop"
-                }],
-                "usage": usage_obj
+                "choices": [{"index": 0, "message": message_obj, "finish_reason": "stop"}],
+                "usage": usage_obj,
             }
 
             debug_print("\n✅ REQUEST COMPLETED SUCCESSFULLY")
-            debug_print("="*80 + "\n")
+            debug_print("=" * 80 + "\n")
 
             return final_response
 
@@ -9511,14 +10173,14 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
             print(f"📤 Request URL: {url}")
             debug_print(f"📤 Request payload (truncated): {json.dumps(payload, indent=2)[:500]}")
             debug_print(f"📥 Response text: {e.response.text[:500]}")
-            print("="*80 + "\n")
+            print("=" * 80 + "\n")
 
             # Return OpenAI-compatible error response
             return {
                 "error": {
                     "message": error_detail,
                     "type": error_type,
-                    "code": f"http_{e.response.status_code}"
+                    "code": f"http_{e.response.status_code}",
                 }
             }
 
@@ -9526,13 +10188,13 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
             print("\n⏱️  TIMEOUT ERROR")
             print("📛 Request timed out after 120 seconds")
             print(f"📤 Request URL: {url}")
-            print("="*80 + "\n")
+            print("=" * 80 + "\n")
             # Return OpenAI-compatible error response
             return {
                 "error": {
                     "message": "Request to LMArena API timed out after 120 seconds",
                     "type": "timeout_error",
-                    "code": "request_timeout"
+                    "code": "request_timeout",
                 }
             }
 
@@ -9541,13 +10203,13 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
             print(f"📛 Error type: {type(e).__name__}")
             print(f"📛 Error message: {str(e)}")
             print(f"📤 Request URL: {url}")
-            print("="*80 + "\n")
+            print("=" * 80 + "\n")
             # Return OpenAI-compatible error response
             return {
                 "error": {
                     "message": f"Unexpected error: {str(e)}",
                     "type": "internal_error",
-                    "code": type(e).__name__.lower()
+                    "code": type(e).__name__.lower(),
                 }
             }
 
@@ -9557,8 +10219,9 @@ async def api_chat_completions(request: Request, api_key: dict = Depends(rate_li
         print("\n❌ TOP-LEVEL EXCEPTION")
         print(f"📛 Error type: {type(e).__name__}")
         print(f"📛 Error message: {str(e)}")
-        print("="*80 + "\n")
+        print("=" * 80 + "\n")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 
 if __name__ == "__main__":
     # Avoid crashes on Windows consoles with non-UTF8 code pages (e.g., GBK) when printing emojis.

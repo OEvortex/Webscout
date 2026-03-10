@@ -15,7 +15,6 @@ from webscout.Provider.Openai_comp.base import (
     Tool,
     ToolDefinition,
 )
-from webscout.Provider.Openai_comp.blackbox import Blackbox
 from webscout.Provider.Openai_comp.cerebras import Cerebras
 from webscout.Provider.Openai_comp.chatgpt import ChatGPT, ChatGPTReversed
 
@@ -26,7 +25,6 @@ from webscout.Provider.Openai_comp.e2b import E2B
 from webscout.Provider.Openai_comp.elmo import Elmo
 from webscout.Provider.Openai_comp.exaai import ExaAI
 from webscout.Provider.Openai_comp.freeassist import FreeAssist
-from webscout.Provider.Openai_comp.gradient import Gradient
 from webscout.Provider.Openai_comp.groq import Groq
 from webscout.Provider.Openai_comp.heckai import HeckAI
 from webscout.Provider.Openai_comp.huggingface import HuggingFace
@@ -45,7 +43,6 @@ from webscout.Provider.Openai_comp.textpollinations import TextPollinations
 from webscout.Provider.Openai_comp.TogetherAI import TogetherAI
 from webscout.Provider.Openai_comp.toolbaz import Toolbaz
 from webscout.Provider.Openai_comp.TwoAI import TwoAI
-from webscout.Provider.Openai_comp.typefully import TypefullyAI
 from webscout.Provider.Openai_comp.typliai import TypliAI
 from webscout.Provider.Openai_comp.upstage import Upstage
 from webscout.Provider.Openai_comp.utils import (
@@ -105,7 +102,6 @@ __all__ = [
     "TwoAI",
     "AI4Chat",
     "AkashGPT",
-    "Blackbox",
     "Cerebras",
     "ChatGPT",
     "ChatGPTReversed",
@@ -128,13 +124,11 @@ __all__ = [
     "SonusAI",
     "TextPollinations",
     "Toolbaz",
-    "TypefullyAI",
     "Upstage",
     "WiseCat",
     "Writecream",
     "YEPCHAT",
     "Zenmux",
-    "Gradient",
     "Sambanova",
     "Meta",
     "TypliAI",
