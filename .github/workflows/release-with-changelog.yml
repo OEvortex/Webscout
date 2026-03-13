@@ -2,6 +2,7 @@ name: Create Release with Changelog
 
 # This workflow automatically creates GitHub releases with changelogs
 # extracted from changelog.md or generated from git commits.
+# Supports both beta (daily) and stable (weekly) releases.
 
 on:
   workflow_run:
@@ -11,9 +12,14 @@ on:
   workflow_dispatch:  # Allows manual trigger
     inputs:
       version:
-        description: 'Version to create release for (e.g., 2025.10.15)'
+        description: 'Version to create release for (e.g., 2025.10.15 or 2025.10.15.beta.1)'
         required: false
         type: string
+      prerelease:
+        description: 'Mark as pre-release (beta)'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   create-release:
@@ -29,7 +35,7 @@ jobs:
         with:
           fetch-depth: 0  # Get full history for changelog generation
 
-      - name: Get version
+      - name: Get version and determine release type
         id: get_version
         run: |
           if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ inputs.version }}" ]; then
@@ -46,6 +52,15 @@ jobs:
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Version: $VERSION"
+          
+          # Determine if this is a beta release
+          if [[ "$VERSION" == *".beta"* ]] || [ "${{ inputs.prerelease }}" == "true" ]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+            echo "Release type: BETA"
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+            echo "Release type: STABLE"
+          fi
 
       - name: Check if tag exists
         id: check_tag
@@ -148,7 +163,15 @@ jobs:
             echo "Warning: Could not find changelog entry for v$VERSION"
             echo "Generating basic changelog from git commits..."
             TIMESTAMP=$(date -u +%Y-%m-%d)
-            echo "## [$VERSION] - $TIMESTAMP" > RELEASE_NOTES.md
+            IS_PRERELEASE="${{ steps.get_version.outputs.is_prerelease }}"
+            
+            if [ "$IS_PRERELEASE" == "true" ]; then
+              echo "## [$VERSION] - $TIMESTAMP (BETA)" > RELEASE_NOTES.md
+              echo "" >> RELEASE_NOTES.md
+              echo "⚠️ **This is a beta release. Use with caution.**" >> RELEASE_NOTES.md
+            else
+              echo "## [$VERSION] - $TIMESTAMP (STABLE)" > RELEASE_NOTES.md
+            fi
             echo "" >> RELEASE_NOTES.md
 
             if [ -z "$PREVIOUS_TAG" ]; then
@@ -185,10 +208,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.get_version.outputs.version }}
-          name: Release v${{ steps.get_version.outputs.version }}
+          name: ${{ steps.get_version.outputs.is_prerelease == 'true' && format('Beta Release v{0}', steps.get_version.outputs.version) || format('Release v{0}', steps.get_version.outputs.version) }}
           body: ${{ steps.changelog.outputs.changelog }}
           draft: false
-          prerelease: false
+          prerelease: ${{ steps.get_version.outputs.is_prerelease == 'true' }}
           generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
