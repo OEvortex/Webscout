@@ -8,6 +8,39 @@ from webscout.Provider.Openai_comp.pydantic_imports import BaseModel, Field, Str
 # --- OpenAI Response Structure Mimics ---
 # Moved here for reusability across different OpenAI-compatible providers
 
+
+class DictLikeMixin:
+    """
+    Mixin class that provides dict-like access methods for Pydantic models.
+    This allows models to be accessed like dictionaries while maintaining
+    type safety and IDE autocomplete support.
+    """
+    
+    def __getitem__(self, key):
+        """Allow dict-like access."""
+        return getattr(self, key)
+
+    def __setitem__(self, key, value):
+        """Allow dict-like assignment."""
+        setattr(self, key, value)
+
+    def keys(self):
+        """Return dict-like keys."""
+        return self.__dict__.keys()
+
+    def values(self):
+        """Return dict-like values."""
+        return self.__dict__.values()
+
+    def items(self):
+        """Return dict-like items."""
+        return self.__dict__.items()
+
+    def get(self, key, default=None):
+        """Dict-like get method with default value."""
+        return getattr(self, key, default)
+
+
 class ToolCallType(str, Enum):
     """Type of tool call."""
     FUNCTION = "function"
@@ -35,8 +68,8 @@ class CompletionUsage(BaseModel):
     total_tokens: StrictInt
     prompt_tokens_details: Optional[Dict[str, Any]] = None
 
-class ChoiceDelta(BaseModel):
-    """Delta content in streaming response."""
+class ChoiceDelta(BaseModel, DictLikeMixin):
+    """Delta content in streaming response - OpenAI SDK compatible."""
     content: Optional[StrictStr] = None
     function_call: Optional[FunctionCall] = None
     role: Optional[StrictStr] = None
@@ -44,7 +77,8 @@ class ChoiceDelta(BaseModel):
     reasoning_content: Optional[StrictStr] = None  # For reasoning models
     reasoning: Optional[StrictStr] = None  # For reasoning models
 
-class ChatCompletionMessage(BaseModel):
+
+class ChatCompletionMessage(BaseModel, DictLikeMixin):
     """Chat message in completion response."""
     role: StrictStr
     content: Optional[StrictStr] = None
@@ -53,33 +87,15 @@ class ChatCompletionMessage(BaseModel):
     reasoning_content: Optional[StrictStr] = None  # For reasoning models (OpenAI o1 style)
     reasoning: Optional[StrictStr] = None  # For reasoning models (alternative field)
 
-    def __getitem__(self, key):
-        """Allow dict-like access."""
-        return getattr(self, key)
 
-    def __setitem__(self, key, value):
-        """Allow dict-like assignment."""
-        setattr(self, key, value)
-
-    def keys(self):
-        """Return dict-like keys."""
-        return self.__dict__.keys()
-
-    def values(self):
-        """Return dict-like values."""
-        return self.__dict__.values()
-
-    def items(self):
-        """Return dict-like items."""
-        return self.__dict__.items()
-
-class Choice(BaseModel):
-    """Choice in completion response."""
+class Choice(BaseModel, DictLikeMixin):
+    """Choice in completion response - OpenAI SDK compatible."""
     index: StrictInt
     message: Optional[ChatCompletionMessage] = None
     delta: Optional[ChoiceDelta] = None
     finish_reason: Optional[StrictStr] = None
     logprobs: Optional[Dict[str, Any]] = None
+
 
 class ModelData(BaseModel):
     """OpenAI model info response."""
@@ -174,7 +190,7 @@ class ModelList(BaseModel):
 #     created: int = int(time.time())
 
 class ChatCompletion(BaseModel):
-    """Chat completion response."""
+    """Chat completion response - OpenAI SDK compatible."""
     model: StrictStr
     choices: List[Choice]
     id: StrictStr = Field(default_factory=lambda: f"chatcmpl-{str(uuid.uuid4())}")
@@ -183,8 +199,33 @@ class ChatCompletion(BaseModel):
     system_fingerprint: Optional[StrictStr] = None
     usage: Optional[CompletionUsage] = None
 
+    def __getitem__(self, key):
+        """Allow dict-like access."""
+        return getattr(self, key)
+
+    def __setitem__(self, key, value):
+        """Allow dict-like assignment."""
+        setattr(self, key, value)
+
+    def keys(self):
+        """Return dict-like keys."""
+        return self.__dict__.keys()
+
+    def values(self):
+        """Return dict-like values."""
+        return self.__dict__.values()
+
+    def items(self):
+        """Return dict-like items."""
+        return self.__dict__.items()
+
+    def get(self, key, default=None):
+        """Dict-like get method with default value."""
+        return getattr(self, key, default)
+
+
 class ChatCompletionChunk(BaseModel):
-    """Streaming chat completion response chunk."""
+    """Streaming chat completion response chunk - OpenAI SDK compatible."""
     model: StrictStr
     choices: List[Choice]
     id: StrictStr = Field(default_factory=lambda: f"chatcmpl-{str(uuid.uuid4())}")
@@ -192,6 +233,30 @@ class ChatCompletionChunk(BaseModel):
     object: StrictStr = "chat.completion.chunk"
     system_fingerprint: Optional[StrictStr] = None
     usage: Optional[Dict[str, Any]] = None  # Add usage field for streaming chunks
+
+    def __getitem__(self, key):
+        """Allow dict-like access."""
+        return getattr(self, key)
+
+    def __setitem__(self, key, value):
+        """Allow dict-like assignment."""
+        setattr(self, key, value)
+
+    def keys(self):
+        """Return dict-like keys."""
+        return self.__dict__.keys()
+
+    def values(self):
+        """Return dict-like values."""
+        return self.__dict__.values()
+
+    def items(self):
+        """Return dict-like items."""
+        return self.__dict__.items()
+
+    def get(self, key, default=None):
+        """Dict-like get method with default value."""
+        return getattr(self, key, default)
 
 
 # --- Helper Functions ---

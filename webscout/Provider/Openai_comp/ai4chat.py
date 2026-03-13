@@ -627,8 +627,9 @@ if __name__ == "__main__":
         stream=True,
     )
     for chunk in stream_response:
-        if isinstance(chunk, ChatCompletionChunk) and chunk.choices:
-            delta = chunk.choices[0].delta
-            if delta and delta.content:
-                print(delta.content, end="", flush=True)
+        if isinstance(chunk, ChatCompletionChunk):
+            if chunk.choices and len(chunk.choices) > 0:
+                delta = chunk.choices[0].delta
+                if delta is not None and delta.content is not None:
+                    print(delta.content, end="", flush=True)
     print("\n")
