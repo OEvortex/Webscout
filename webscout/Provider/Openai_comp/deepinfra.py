@@ -219,8 +219,20 @@ class Chat(BaseChat):
 
 
 class DeepInfra(OpenAICompatibleProvider):
-    required_auth = False
+    """
+    DeepInfra OpenAI-compatible provider.
+    
+    DeepInfra provides OpenAI-compatible API for LLM models.
+    API Documentation: https://deepinfra.com/docs/openai_api
+    """
+    
+    required_auth = True
     AVAILABLE_MODELS = [
+        "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+        "meta-llama/Meta-Llama-3-8B-Instruct",
+        "nvidia/NVIDIA-Nemotron-3-Super-120B-A12B",
+        "deepseek-ai/DeepSeek-V3.1",
+        "Qwen/Qwen2.5-72B-Instruct",
     ]
 
     @classmethod
@@ -228,22 +240,24 @@ class DeepInfra(OpenAICompatibleProvider):
         """Fetch available models from DeepInfra API.
 
         Args:
-            api_key (str, optional): DeepInfra API key. Optional for fetching.
+            api_key (str, optional): DeepInfra API key.
 
         Returns:
-            list: List of available model IDs that have complete metadata
+            list: List of available model IDs
         """
+        if not api_key:
+            return cls.AVAILABLE_MODELS
+            
         try:
             # Use a temporary curl_cffi session for this class method
             temp_session = Session()
             headers = {
                 "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}",
             }
-            if api_key:
-                headers["Authorization"] = f"Bearer {api_key}"
 
             response = temp_session.get(
-                "https://api.deepinfra.com/v1/models",
+                "https://api.deepinfra.com/v1/openai/models",
                 headers=headers,
                 impersonate="chrome110",
             )
@@ -251,18 +265,7 @@ class DeepInfra(OpenAICompatibleProvider):
             if response.status_code == 200:
                 data = response.json()
                 if "data" in data and isinstance(data["data"], list):
-                    models = []
-                    for model in data["data"]:
-                        # Only include models with metadata containing context_length
-                        # and max_tokens
-                        metadata = model.get("metadata", {})
-                        if isinstance(metadata, dict):
-                            context_length = metadata.get("context_length")
-                            max_tokens = metadata.get("max_tokens")
-                            if context_length and max_tokens:
-                                models.append(model["id"])
-                    if models:
-                        return models
+                    return [model["id"] for model in data["data"] if "id" in model]
 
         except (CurlError, Exception):
             pass
@@ -281,7 +284,13 @@ class DeepInfra(OpenAICompatibleProvider):
             # Fallback to default models list if fetching fails
             pass
 
-    def __init__(self, browser: str = "chrome", api_key: Optional[str] = None):
+    def __init__(self, api_key: str, browser: str = "chrome"):
+        """Initialize DeepInfra client.
+        
+        Args:
+            api_key (str): DeepInfra API key (required).
+            browser (str, optional): Browser type for fingerprint. Defaults to "chrome".
+        """
         # Non-blocking background fetch of available models from API
         # Models will be cached after fetch completes
         self._start_background_model_fetch(api_key=api_key)
@@ -289,30 +298,18 @@ class DeepInfra(OpenAICompatibleProvider):
         self.timeout = None
         self.base_url = "https://api.deepinfra.com/v1/openai/chat/completions"
         self.session = Session()
+        
+        # Initialize LitAgent for browser fingerprint
         agent = LitAgent()
         fingerprint = agent.generate_fingerprint(browser)
+        
+        # Minimal headers for DeepInfra API
         self.headers = {
-            "Accept": fingerprint["accept"],
-            "Accept-Encoding": "gzip, deflate",
-            "Accept-Language": fingerprint["accept_language"],
             "Content-Type": "application/json",
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "Origin": "https://deepinfra.com",
-            "Pragma": "no-cache",
-            "Referer": "https://deepinfra.com/",
-            "Sec-Fetch-Dest": "empty",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-site",
-            "X-Deepinfra-Source": "web-embed",
-            "Sec-CH-UA": fingerprint["sec_ch_ua"]
-            or '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
-            "Sec-CH-UA-Mobile": "?0",
-            "Sec-CH-UA-Platform": f'"{fingerprint["platform"]}"',
+            "Authorization": f"Bearer {api_key}",
             "User-Agent": fingerprint["user_agent"],
         }
-        if api_key is not None:
-            self.headers["Authorization"] = f"Bearer {api_key}"
+        
         self.session.headers.update(self.headers)
         self.chat = Chat(self)
 
@@ -322,11 +319,13 @@ class DeepInfra(OpenAICompatibleProvider):
 
 
 if __name__ == "__main__":
-    client = DeepInfra()
+    import os
+    api_key = os.environ.get("DEEPINFRA_API_KEY", "your-api-key-here")
+    client = DeepInfra(api_key=api_key)
     response = client.chat.completions.create(
-        model="deepseek-ai/DeepSeek-R1-0528",
+        model="meta-llama/Llama-3.3-70B-Instruct-Turbo",
         messages=[{"role": "user", "content": "Hello, how are you?"}],
-        max_tokens=10000,
+        max_tokens=1000,
         stream=False,
     )
     if isinstance(response, ChatCompletion):

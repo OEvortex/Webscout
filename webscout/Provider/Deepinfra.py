@@ -14,11 +14,19 @@ from webscout.model_fetcher import BackgroundModelFetcher
 class DeepInfra(Provider):
     """
     A class to interact with the DeepInfra API with LitAgent user-agent.
+    
+    DeepInfra provides OpenAI-compatible API for LLM models.
+    API Documentation: https://deepinfra.com/docs/openai_api
     """
 
-    required_auth = False
+    required_auth = True
     # Default models list (will be updated dynamically)
     AVAILABLE_MODELS = [
+        "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+        "meta-llama/Meta-Llama-3-8B-Instruct",
+        "nvidia/NVIDIA-Nemotron-3-Super-120B-A12B",
+        "deepseek-ai/DeepSeek-V3.1",
+        "Qwen/Qwen2.5-72B-Instruct",
     ]
     # Background model fetcher
     _model_fetcher = BackgroundModelFetcher()
@@ -28,41 +36,32 @@ class DeepInfra(Provider):
         """Fetch available models from DeepInfra API.
 
         Args:
-            api_key (str, optional): DeepInfra API key. Optional for fetching.
+            api_key (str, optional): DeepInfra API key.
 
         Returns:
-            list: List of available model IDs that have complete metadata
+            list: List of available model IDs
         """
+        if not api_key:
+            return cls.AVAILABLE_MODELS
+            
         try:
             # Use a temporary curl_cffi session for this class method
             temp_session = Session()
             headers = {
                 "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}",
             }
-            if api_key:
-                headers["Authorization"] = f"Bearer {api_key}"
 
             response = temp_session.get(
-                "https://api.deepinfra.com/v1/models",
+                "https://api.deepinfra.com/v1/openai/models",
                 headers=headers,
-                impersonate="chrome110",  # Use impersonate for fetching
+                impersonate="chrome110",
             )
 
             if response.status_code == 200:
                 data = response.json()
                 if "data" in data and isinstance(data["data"], list):
-                    models = []
-                    for model in data["data"]:
-                        # Only include models with metadata containing context_length
-                        # and max_tokens
-                        metadata = model.get("metadata", {})
-                        if isinstance(metadata, dict):
-                            context_length = metadata.get("context_length")
-                            max_tokens = metadata.get("max_tokens")
-                            if context_length and max_tokens:
-                                models.append(model["id"])
-                    if models:
-                        return models
+                    return [model["id"] for model in data["data"] if "id" in model]
 
         except (CurlError, Exception):
             pass
@@ -92,9 +91,13 @@ class DeepInfra(Provider):
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
+        api_key: str,
         is_conversation: bool = True,
         max_tokens: int = 2049,
+        temperature: float = 1,
+        presence_penalty: int = 0,
+        frequency_penalty: int = 0,
+        top_p: float = 1,
         timeout: int = 30,
         intro: Optional[str] = None,
         filepath: Optional[str] = None,
@@ -106,53 +109,63 @@ class DeepInfra(Provider):
         system_prompt: str = "You are a helpful assistant.",
         browser: str = "chrome",
     ):
-        """Initializes the DeepInfra API client."""
+        """Initializes the DeepInfra API client.
+        
+        Args:
+            api_key (str): DeepInfra API key (required).
+            is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
+            max_tokens (int, optional): Maximum number of tokens to generate. Defaults to 2049.
+            temperature (float, optional): Sampling temperature. Defaults to 1.
+            presence_penalty (int, optional): Presence penalty. Defaults to 0.
+            frequency_penalty (int, optional): Frequency penalty. Defaults to 0.
+            top_p (float, optional): Top-p sampling. Defaults to 1.
+            timeout (int, optional): Request timeout in seconds. Defaults to 30.
+            intro (str, optional): Conversation introductory prompt. Defaults to None.
+            filepath (str, optional): Path to file containing conversation history. Defaults to None.
+            update_file (bool, optional): Add new prompts and responses to the file. Defaults to True.
+            proxies (dict, optional): Http request proxies. Defaults to {}.
+            history_offset (int, optional): Limit conversation history. Defaults to 10250.
+            act (str|int, optional): Awesome prompt key or index. Defaults to None.
+            model (str, optional): Model name. Defaults to "meta-llama/Llama-3.3-70B-Instruct-Turbo".
+            system_prompt (str, optional): System prompt. Defaults to "You are a helpful assistant.".
+            browser (str, optional): Browser type for fingerprint. Defaults to "chrome".
+        """
         # Start background model fetch (non-blocking)
         self._model_fetcher.fetch_async(
             provider_name='DeepInfra',
-            fetch_func=self.get_models,
+            fetch_func=lambda: self.get_models(api_key),
             fallback_models=self.AVAILABLE_MODELS,
             timeout=10
         )
 
+        # DeepInfra OpenAI-compatible endpoint
         self.url = "https://api.deepinfra.com/v1/openai/chat/completions"
+        self.api_key = api_key
 
+        # Initialize LitAgent for browser fingerprint
         self.agent = LitAgent()
         self.fingerprint = self.agent.generate_fingerprint(browser)
-        self.api = api_key
+        
+        # Minimal headers for DeepInfra API
         self.headers = {
-            "Accept": self.fingerprint["accept"],
-            "Accept-Language": self.fingerprint["accept_language"],
             "Content-Type": "application/json",
-            "Cache-Control": "no-cache",
-            "Origin": "https://deepinfra.com",
-            "Pragma": "no-cache",
-            "Referer": "https://deepinfra.com/",
-            "Sec-Fetch-Dest": "empty",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-site",
-            "X-Deepinfra-Source": "web-embed",
+            "Authorization": f"Bearer {self.api_key}",
             "User-Agent": self.fingerprint.get("user_agent", ""),
-            "Sec-CH-UA": self.fingerprint.get("sec_ch_ua", ""),
-            "Sec-CH-UA-Mobile": "?0",
-            "Sec-CH-UA-Platform": f'"{self.fingerprint.get("platform", "")}"',
-            "X-Forwarded-For": self.fingerprint.get("x-forwarded-for", ""),
-            "X-Real-IP": self.fingerprint.get("x-real-ip", ""),
-            "X-Client-IP": self.fingerprint.get("x-client-ip", ""),
-            "Forwarded": self.fingerprint.get("forwarded", ""),
-            "X-Forwarded-Proto": self.fingerprint.get("x-forwarded-proto", ""),
-            "X-Request-Id": self.fingerprint.get("x-request-id", ""),
         }
-        if self.api is not None:
-            self.headers["Authorization"] = f"Bearer {self.api}"
 
+        # Initialize curl_cffi Session
         self.session = Session()
         self.session.headers.update(self.headers)
         if proxies:
             self.session.proxies.update(proxies)
+            
         self.system_prompt = system_prompt
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
+        self.temperature = temperature
+        self.presence_penalty = presence_penalty
+        self.frequency_penalty = frequency_penalty
+        self.top_p = top_p
         self.timeout = timeout
         self.last_response = {}
         self.model = model
@@ -168,7 +181,8 @@ class DeepInfra(Provider):
         self.conversation.history_offset = history_offset
 
         if act:
-            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
+            self.conversation.intro = AwesomePrompts().get_act(
+                cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
             ) or self.conversation.intro
         elif intro:
             self.conversation.intro = intro
@@ -251,6 +265,11 @@ class DeepInfra(Provider):
                 {"role": "user", "content": conversation_prompt},
             ],
             "stream": stream,
+            "max_tokens": self.max_tokens_to_sample,
+            "temperature": self.temperature,
+            "presence_penalty": self.presence_penalty,
+            "frequency_penalty": self.frequency_penalty,
+            "top_p": self.top_p,
         }
 
         def for_stream():
@@ -394,7 +413,9 @@ class DeepInfra(Provider):
 
 
 if __name__ == "__main__":
-    ai = DeepInfra()
+    import os
+    api_key = os.environ.get("DEEPINFRA_API_KEY", "your-api-key-here")
+    ai = DeepInfra(api_key=api_key)
     response = ai.chat("Hello", raw=False, stream=True)
     if hasattr(response, "__iter__") and not isinstance(response, (str, bytes)):
         for chunk in response:
