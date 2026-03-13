@@ -71,8 +71,7 @@ These providers are only available in the standard implementation format.
 
 | # | Provider Name | Path |
 |---|---------------|------|
-| 1 | **Andi** | `webscout/Provider/Andi.py` |
-| 2 | **Apriel** | `webscout/Provider/Apriel.py` |
+| 1 | **Apriel** | `webscout/Provider/Apriel.py` |
 | 3 | **ClaudeOnline** | `webscout/Provider/ClaudeOnline.py` |
 | 4 | **Cohere** | `webscout/Provider/Cohere.py` |
 | 5 | **EssentialAI** | `webscout/Provider/EssentialAI.py` |
@@ -90,7 +89,7 @@ These providers are only available in the standard implementation format.
 | 19 | **Upstage** | `webscout/Provider/Upstage.py` |
 | 20 | **WrDoChat** | `webscout/Provider/WrDoChat.py` |
 
-**Total: 19 providers with only normal implementation**
+**Total: 18 providers with only normal implementation**
 
 ---
 

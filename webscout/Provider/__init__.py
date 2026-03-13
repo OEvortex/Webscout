@@ -2,7 +2,6 @@
 # Static imports for all Provider modules
 from webscout.Provider.ai4chat import AI4Chat
 from webscout.Provider.akashgpt import AkashGPT
-from webscout.Provider.Andi import AndiSearch
 from webscout.Provider.Apriel import Apriel
 from webscout.Provider.Ayle import Ayle
 from webscout.Provider.cerebras import Cerebras
@@ -55,7 +54,6 @@ __all__ = [
     "TypliAI",
     "AI4Chat",
     "AkashGPT",
-    "AndiSearch",
     "Apriel",
     "Cerebras",
     "ClaudeOnline",

@@ -145,7 +145,7 @@ Webscout supports **90+ AI providers**, including:
 
 | Category | Providers |
 |----------|-----------|
-| **Free** | Meta, Andi, Apriel, and 20+ others |
+| **Free** | Meta, Apriel, and 20+ others |
 | **Popular Paid** | OpenAI, Google Gemini, Anthropic Claude, GROQ |
 | **Open Source** | Hugging Face, Together AI, Mistral |
 | **Specialized** | Cohere, Sambanova, Gradient, and many more |

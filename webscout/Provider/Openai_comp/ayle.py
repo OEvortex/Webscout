@@ -33,14 +33,13 @@ MODEL_CONFIGS = {
         "endpoint": "https://ayle.chat/api/chat",
         "models": [
             "gemini-2.5-flash",
-            "llama-3.3-70b-versatile",
+            "gpt-oss-120b",
             "llama-3.3-70b",
-            "tngtech/deepseek-r1t2-chimera:free",
-            "openai/gpt-oss-120b",
-            "qwen-3-235b-a22b-instruct-2507",
-            "llama3.1-8b",
-            "llama-4-scout-17b-16e-instruct",
+            "llama-3.1-8b",
+            "qwen-3-235b",
             "qwen-3-32b",
+            "zai-glm-4.6",
+            "gpt-oss-20b",
         ],
     }
 }
@@ -242,14 +241,13 @@ class Ayle(OpenAICompatibleProvider):
     required_auth = False
     AVAILABLE_MODELS = [
         "gemini-2.5-flash",
-        "llama-3.3-70b-versatile",
+        "gpt-oss-120b",
         "llama-3.3-70b",
-        "tngtech/deepseek-r1t2-chimera:free",
-        "openai/gpt-oss-120b",
-        "qwen-3-235b-a22b-instruct-2507",
-        "llama3.1-8b",
-        "llama-4-scout-17b-16e-instruct",
+        "llama-3.1-8b",
+        "qwen-3-235b",
         "qwen-3-32b",
+        "zai-glm-4.6",
+        "gpt-oss-20b",
     ]
 
     def __init__(self, timeout: int = 30, temperature: float = 0.5, top_p: float = 1.0):

@@ -21,22 +21,14 @@ MODEL_CONFIGS: Dict[str, Dict[str, Any]] = {
     "ayle": {
         "endpoint": "https://ayle.chat/api/chat",
         "models": [
-            # Google Generative AI
             "gemini-2.5-flash",
-            # Groq
-            "openai/gpt-oss-20b",
-            "openai/gpt-oss-120b",
-            "llama-3.1-8b-instant",
-            "llama-3.3-70b-versatile",
-            # OpenRouter
-            "mistralai/devstral-2512:free",
-            "z-ai/glm-4.5-air:free",
-            # Inception AI
-            "mercury",
-            "mercury-coder",
-            # Perplexity
-            "sonar",
-            "sonar-pro",
+            "gpt-oss-120b",
+            "llama-3.3-70b",
+            "llama-3.1-8b",
+            "qwen-3-235b",
+            "qwen-3-32b",
+            "zai-glm-4.6",
+            "gpt-oss-20b",
         ],
     },
 }
@@ -49,22 +41,14 @@ class Ayle(Provider):
 
     required_auth = False
     AVAILABLE_MODELS = [
-        # Google Generative AI
         "gemini-2.5-flash",
-        # Groq
-        "openai/gpt-oss-20b",
-        "openai/gpt-oss-120b",
-        "llama-3.1-8b-instant",
-        "llama-3.3-70b-versatile",
-        # OpenRouter
-        "mistralai/devstral-2512:free",
-        "z-ai/glm-4.5-air:free",
-        # Inception AI
-        "mercury",
-        "mercury-coder",
-        # Perplexity
-        "sonar",
-        "sonar-pro",
+        "gpt-oss-120b",
+        "llama-3.3-70b",
+        "llama-3.1-8b",
+        "qwen-3-235b",
+        "qwen-3-32b",
+        "zai-glm-4.6",
+        "gpt-oss-20b",
     ]
 
     def __init__(

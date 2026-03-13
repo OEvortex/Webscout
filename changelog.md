@@ -152,7 +152,7 @@ All notable changes to this project will be documented in this file.
   - Implemented `cast(Dict[str, Any], response)` pattern after `isinstance(response, dict)` checks to satisfy type checker
   - Fixed dictionary subscript errors in 17 provider files:
     - webscout/Provider/AISEARCH/ayesoul_search.py
-    - webscout/Provider/Andi.py, Cohere.py, ExaAI.py, Gemini.py, HeckAI.py
+    - webscout/Provider/Cohere.py, ExaAI.py, Gemini.py, HeckAI.py
     - webscout/Provider/IBM.py, Netwrck.py, Sambanova.py, TextPollinationsAI.py
     - webscout/Provider/ai4chat.py, cleeai.py, julius.py, llama3mitril.py, meta.py
     - webscout/Provider/Openai_comp/ibm.py, llmchat.py
