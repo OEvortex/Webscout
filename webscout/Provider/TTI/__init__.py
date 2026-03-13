@@ -8,7 +8,6 @@ from webscout.Provider.TTI.base import (
 )
 
 # Provider implementations
-from webscout.Provider.TTI.claudeonline import ClaudeOnlineTTI
 from webscout.Provider.TTI.magicstudio import MagicStudioAI
 from webscout.Provider.TTI.miragic import MiragicAI
 from webscout.Provider.TTI.pollinations import PollinationsAI
@@ -29,7 +28,6 @@ __all__ = [
     "ImageData",
     "ImageResponse",
     # Providers
-    "ClaudeOnlineTTI",
     "MagicStudioAI",
     "PollinationsAI",
     "TogetherImage",

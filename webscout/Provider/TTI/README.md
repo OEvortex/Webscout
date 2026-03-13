@@ -18,7 +18,6 @@ These providers allow you to easily generate AI‑created art from text prompts 
 | ---------------- | ----------------------------------------- | --------- |
 | `PollinationsAI` | `flux`, `flux-pro`, `turbo`, `gptimage`   | Working   |
 | `MagicStudioAI`  | `magicstudio`                             | Working   |
-| `ClaudeOnlineTTI`| `claude-imagine`                          | Working   |
 | `TogetherImage`  | `flux.1-schnell`, `flux.1-pro`            | Working*  |
 
 \* Requires authentication (API keys).
@@ -61,7 +60,6 @@ response = client.images.create(
 
 - **PollinationsAI** – Allows setting a custom seed for reproducible results.
 - **MagicStudioAI** – Generates images through MagicStudio's public endpoint.
-- **ClaudeOnlineTTI** – Uses Pollinations.ai backend to provide image generation capabilities.
 - **TogetherImage** – High-quality image generation via Together.xyz API (Requires API Key).
 
 ## 🤝 Contributing

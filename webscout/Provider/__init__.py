@@ -5,7 +5,6 @@ from webscout.Provider.akashgpt import AkashGPT
 from webscout.Provider.Apriel import Apriel
 from webscout.Provider.Ayle import Ayle
 from webscout.Provider.cerebras import Cerebras
-from webscout.Provider.ClaudeOnline import ClaudeOnline
 from webscout.Provider.Cohere import Cohere
 from webscout.Provider.DeepAI import DeepAI
 from webscout.Provider.Deepinfra import DeepInfra
@@ -56,7 +55,6 @@ __all__ = [
     "AkashGPT",
     "Apriel",
     "Cerebras",
-    "ClaudeOnline",
     "Cohere",
     "DeepAI",
     "DeepInfra",

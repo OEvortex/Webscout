@@ -524,13 +524,12 @@ prompt_manager.show_acts(search="developer")
 ### With Webscout Providers
 
 ```python
-from webscout.Provider import ChatGPT, ClaudeOnline
+from webscout.Provider import ChatGPT
 from webscout.prompt_manager import AwesomePrompts
 
 # Initialize components
 prompt_manager = AwesomePrompts()
 chatgpt = ChatGPT()
-claude = ClaudeOnline()
 
 # Use prompts with different providers
 def ask_with_prompt(provider, prompt_name, question):
