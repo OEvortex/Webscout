@@ -19,33 +19,33 @@ class DeepAI(Provider):
     """
     required_auth = True
     AVAILABLE_MODELS = [
+        # Standard Models
         "standard",
         "genius",
-        "online",
-        "supergenius",
-        "onlinegenius",
+        "super-genius",
+        # More Models - Free
         "deepseek-v3.2",
         "gemini-2.5-flash-lite",
-        "qwen3-30b-a3b",
-        "gpt-5-nano",
+        "gpt-4.1-nano",
         "gpt-oss-120b",
-        "gpt-5-chat-latest",
-        "claude-opus-4-1",
-        "llama-4-scout",
-        "claude-4.5-sonnet",
-        "deepseek-v3.1-terminus",
+        "gemma-3-12b",
+        "qwen3-30b",
+        "gpt-5-nano",
         "llama-3.3-70b-instruct",
-        "grok-4",
-        "claude-sonnet-4",
-        "qwen3-coder",
-        "gpt-5",
-        "kimi-k2-0905",
-        "claude-opus-4",
-        "gpt-5-mini",
-        "gemini-2.5-pro",
-        "grok-code-fast-1",
+        "llama-3.1-8b-instant",
+        "llama-4-scout",
+        "gemma2-9b",
+        # More Models - Pro
+        "gpt-4o-mini",
         "gpt-4.1",
-
+        "o4-mini",
+        "o3",
+        "gemini-3-pro",
+        "claude-4.5-opus",
+        "grok-4",
+        "gpt-5-chat-latest",
+        "gpt-5.2",
+        "chatgpt-4o-latest",
     ]
 
     def __init__(

@@ -244,7 +244,35 @@ class DeepAI(OpenAICompatibleProvider):
     """
 
     required_auth = True
-    AVAILABLE_MODELS = []
+    AVAILABLE_MODELS = [
+        # Standard Models
+        "standard",
+        "genius",
+        "super-genius",
+        # More Models - Free
+        "deepseek-v3.2",
+        "gemini-2.5-flash-lite",
+        "gpt-4.1-nano",
+        "gpt-oss-120b",
+        "gemma-3-12b",
+        "qwen3-30b",
+        "gpt-5-nano",
+        "llama-3.3-70b-instruct",
+        "llama-3.1-8b-instant",
+        "llama-4-scout",
+        "gemma2-9b",
+        # More Models - Pro
+        "gpt-4o-mini",
+        "gpt-4.1",
+        "o4-mini",
+        "o3",
+        "gemini-3-pro",
+        "claude-4.5-opus",
+        "grok-4",
+        "gpt-5-chat-latest",
+        "gpt-5.2",
+        "chatgpt-4o-latest",
+    ]
 
     def __init__(
         self,
