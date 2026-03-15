@@ -8,6 +8,7 @@ from webscout.Provider.cerebras import Cerebras
 from webscout.Provider.Cohere import Cohere
 from webscout.Provider.DeepAI import DeepAI
 from webscout.Provider.Deepinfra import DeepInfra
+from webscout.Provider.AvaSupernova import AvaSupernova
 from webscout.Provider.elmo import Elmo
 from webscout.Provider.EssentialAI import EssentialAI
 from webscout.Provider.ExaAI import ExaAI
@@ -58,6 +59,7 @@ __all__ = [
     "Cohere",
     "DeepAI",
     "DeepInfra",
+    "AvaSupernova",
     "Falcon",
     "Elmo",
     "EssentialAI",
