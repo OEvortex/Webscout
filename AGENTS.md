@@ -79,11 +79,14 @@ If the subagent tool is available, the main Copilot agent acts strictly as an or
 
 ## Code Quality Tools
 
-### Approved
+### Required Skills
+- **modern-python** — ALWAYS load and use this skill when writing or editing Python code in this project. It provides guidance on modern Python best practices, tooling, and conventions.
+
+### Approved Tools
 - **Ruff** — `uvx ruff check .` — Linting & formatting
 - **Ty** — `uvx ty check .` — Type checking
 
-### Disallowed
+### Disallowed Tools
 - mypy
 - pyright
 - pylint

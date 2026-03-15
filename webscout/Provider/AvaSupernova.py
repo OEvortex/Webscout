@@ -285,8 +285,7 @@ class AvaSupernova(Provider):
     def get_message(self, response: Response) -> str:
         if not isinstance(response, dict):
             return str(response)
-        text = response.get("text")
-        return cast(str, text) if text else ""
+        return cast(Dict[str, Any], response).get("text", "")
 
 
 if __name__ == "__main__":

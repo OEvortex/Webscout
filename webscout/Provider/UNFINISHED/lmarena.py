@@ -1,4 +1,4 @@
-# ty: ignore[all]
+# ty: ignore
 import asyncio
 import base64
 import builtins as _builtins
@@ -15,7 +15,9 @@ from collections import defaultdict
 from contextlib import AsyncExitStack, asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, cast
+from typing import Any, Dict, List, Optional, Sequence, cast
+
+from playwright._impl._api_structures import SetCookieParam
 from urllib.parse import urlsplit
 
 import httpx
@@ -1085,14 +1087,14 @@ async def get_recaptcha_v3_token_with_chrome(config: dict) -> Optional[str]:
                     except Exception:
                         existing_names = set()
 
-                    cookies_to_add: list[dict] = []
+                    cookies_to_add: List[SetCookieParam] = []
                     for c in cookies:
                         name = str(c.get("name") or "")
                         if not name:
                             continue
                         # Always ensure the auth cookie matches the selected upstream token.
                         if name == "arena-auth-prod-v1":
-                            cookies_to_add.append(c)
+                            cookies_to_add.append(cast(SetCookieParam, c))
                             continue
 
                         # Do NOT overwrite/inject Cloudflare or reCAPTCHA cookies in the persistent profile.
@@ -1103,10 +1105,10 @@ async def get_recaptcha_v3_token_with_chrome(config: dict) -> Optional[str]:
                         # Avoid overwriting existing Cloudflare/session cookies in the persistent profile.
                         if name in existing_names:
                             continue
-                        cookies_to_add.append(c)
+                        cookies_to_add.append(cast(SetCookieParam, c))
 
                     if cookies_to_add:
-                        await context.add_cookies(cookies_to_add)
+                        await context.add_cookies(cast(Sequence[SetCookieParam], cookies_to_add))
                 except Exception:
                     pass
 
@@ -2270,7 +2272,8 @@ async def fetch_lmarena_stream_via_chrome(
                 elif meta:
                     result = meta
 
-                status_code = int(result.get("status") or 0)  # ty:ignore[invalid-argument-type]
+                result_dict: Dict[str, Any] = cast(Dict[str, Any], result) if isinstance(result, dict) else {}
+                status_code = int(result_dict.get("status") or 0)  # ty:ignore[invalid-argument-type]
 
                 # If upstream rate limits us, wait and retry inside the same browser session to avoid hammering.
                 if (
@@ -2297,18 +2300,11 @@ async def fetch_lmarena_stream_via_chrome(
                     if status_code < 400:
                         # If the in-page script returned a buffered body (e.g. in unit tests/mocks where
                         # `reportChunk` isn't exercised), fall back to a plain buffered response.
-                        try:
-                            candidate_body = (
-                                result.get("text") if isinstance(result, dict) else None
-                            )
-                        except Exception:
-                            candidate_body = None
+                        candidate_body = result_dict.get("text")
                         if isinstance(candidate_body, str) and candidate_body:
                             return BrowserFetchStreamResponse(
                                 status_code=status_code,
-                                headers=result.get("headers", {})
-                                if isinstance(result, dict)
-                                else {},
+                                headers=cast(Dict[str, Any], result_dict.get("headers", {})),
                                 text=candidate_body,
                                 method=http_method,
                                 url=url,
@@ -2328,34 +2324,12 @@ async def fetch_lmarena_stream_via_chrome(
 
                         return BrowserFetchStreamResponse(
                             status_code=status_code,
-                            headers=result.get("headers", {}),
+                            headers=cast(Dict[str, Any], result_dict.get("headers", {})),
                             method=http_method,
                             url=url,
                             lines_queue=lines_queue,
                             done_event=done_event,
                         )
-                    await _cancel_background_task(fetch_task)
-                    break
-
-                await _cancel_background_task(fetch_task)
-                if attempt < max_recaptcha_attempts - 1:
-                    # ... retry logic ...
-                    if isinstance(payload, dict) and not bool(payload.get("recaptchaV2Token")):
-                        try:
-                            v2_token = await _mint_recaptcha_v2_token()
-                        except Exception:
-                            v2_token = None
-                        if v2_token:
-                            payload["recaptchaV2Token"] = v2_token
-                            payload.pop("recaptchaV3Token", None)
-                            await asyncio.sleep(0.5)
-                            continue
-
-                    try:
-                        await click_turnstile(page)
-                    except Exception:
-                        pass
-
                     try:
                         await page.mouse.move(120 + (attempt * 10), 120 + (attempt * 10))
                         await page.mouse.wheel(0, 250)
@@ -2782,7 +2756,8 @@ async def fetch_lmarena_stream_via_camoufox(
                 elif meta:
                     result = meta
 
-                status_code = int(result.get("status") or 0)
+                result_dict: Dict[str, Any] = cast(Dict[str, Any], result) if isinstance(result, dict) else {}
+                status_code = int(result_dict.get("status") or 0)
 
                 if (
                     status_code == HTTPStatus.TOO_MANY_REQUESTS

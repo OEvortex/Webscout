@@ -311,7 +311,8 @@ if __name__ == "__main__":
     )
     if hasattr(response, "__iter__") and not isinstance(response, (str, bytes)):
         for chunk in response:
-            if chunk.choices and chunk.choices[0].delta:
-                print(chunk.choices[0].delta.content, end="")
+            if isinstance(chunk, ChatCompletionChunk):
+                if chunk.choices and chunk.choices[0].delta:
+                    print(chunk.choices[0].delta.content, end="")
     else:
         print(response)
