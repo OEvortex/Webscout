@@ -5,6 +5,7 @@ from unittest.mock import patch
 from tests.providers.utils import FakeResp
 from webscout.Provider.AvaSupernova import AvaSupernova
 from webscout.Provider.Openai_comp.avasupernova import AvaSupernova as OpenAIAvaSupernova
+from webscout.Provider.Openai_comp.utils import ChatCompletion
 
 
 class TestAvaSupernova(unittest.TestCase):
@@ -45,6 +46,9 @@ class TestOpenAIAvaSupernova(unittest.TestCase):
                 model="glm-4.5-flash", messages=[{"role": "user", "content": "Hi"}], stream=False
             )
 
+        # Cast to ChatCompletion to help type checker understand this is not a generator
+        completion = cast(ChatCompletion, completion)
+        assert completion.choices[0].message is not None
         self.assertEqual(completion.choices[0].message.content, "Hello from OpenAI-compatible Ava Supernova!")
 
 

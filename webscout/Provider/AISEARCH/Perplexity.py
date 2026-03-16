@@ -249,7 +249,9 @@ class Perplexity(AISearch):
                     processed_chunks = sanitize_stream(
                         data=resp.iter_content(chunk_size=1024),
                         to_json=True,
-                        extract_regexes=[r"data:\s*({.*})"],
+                        # We already parse the raw data and extract the relevant answer text in
+                        # `extract_perplexity_content`, so we do not need additional regex extraction.
+                        extract_regexes=None,
                         content_extractor=lambda chunk: extract_perplexity_content(chunk),
                         yield_raw_on_error=False,
                         encoding='utf-8',

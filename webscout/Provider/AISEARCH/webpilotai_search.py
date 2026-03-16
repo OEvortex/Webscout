@@ -221,8 +221,8 @@ class webpilotai(AISearch):
 
                     full_response = ""
                     for content_chunk in processed_chunks:
-                        if content_chunk is not None and isinstance(content_chunk, str):
-                            full_response += content_chunk
+                        if content_chunk is not None:
+                            full_response += str(content_chunk)
 
                     formatted_response = self.format_SearchResponse(full_response)
                     self.last_response = SearchResponse(formatted_response)
