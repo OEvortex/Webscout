@@ -119,34 +119,34 @@ class Monica(AISearch):
                 # Set cookies for the session
                 self.session.cookies.set("monica_home_theme", "auto")
 
-                with self.session.post(
+                response = self.session.post(
                     self.api_endpoint,
                     json=payload,
                     stream=True,
                     timeout=self.timeout,
                     proxies=self.proxies,
-                ) as response:
-                    if not response.ok:
-                        raise exceptions.APIConnectionError(
-                            f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
-                        )
-
-                    processed_chunks = sanitize_stream(
-                        data=response.iter_content(chunk_size=None),
-                        to_json=True,
-                        content_extractor=lambda chunk: chunk.get("text")
-                        if isinstance(chunk, dict) and chunk.get("text") is not None
-                        else None,
-                        yield_raw_on_error=False,
-                        encoding="utf-8",
-                        encoding_errors="replace",
-                        raw=raw,
-                        output_formatter=None
-                        if raw
-                        else lambda x: SearchResponse(x) if isinstance(x, str) else x,
+                )
+                if not response.ok:
+                    raise exceptions.APIConnectionError(
+                        f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                     )
 
-                    yield from processed_chunks
+                processed_chunks = sanitize_stream(
+                    data=response.iter_content(chunk_size=None),
+                    to_json=True,
+                    content_extractor=lambda chunk: chunk.get("text")
+                    if isinstance(chunk, dict) and chunk.get("text") is not None
+                    else None,
+                    yield_raw_on_error=False,
+                    encoding="utf-8",
+                    encoding_errors="replace",
+                    raw=raw,
+                    output_formatter=None
+                    if raw
+                    else lambda x: SearchResponse(x) if isinstance(x, str) else x,
+                )
+
+                yield from processed_chunks
 
             except RequestException as e:
                 raise exceptions.APIConnectionError(f"Request failed: {e}")
@@ -156,47 +156,47 @@ class Monica(AISearch):
                 # Set cookies for the session
                 self.session.cookies.set("monica_home_theme", "auto")
 
-                with self.session.post(
+                response = self.session.post(
                     self.api_endpoint,
                     json=payload,
                     stream=False,
                     timeout=self.timeout,
                     proxies=self.proxies,
-                ) as response:
-                    if not response.ok:
-                        raise exceptions.APIConnectionError(
-                            f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
-                        )
+                )
+                if not response.ok:
+                    raise exceptions.APIConnectionError(
+                        f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
+                    )
 
-                    if raw:
-                        # Return raw response text when raw=True
-                        return response.text
-                    else:
-                        # Process response similar to streaming when raw=False
-                        processed_chunks = sanitize_stream(
-                            data=response.content,
-                            intro_value="",
-                            to_json=True,
-                            skip_markers=[],
-                            strip_chars=None,
-                            start_marker=None,
-                            end_marker=None,
-                            content_extractor=lambda chunk: chunk.get("text")
-                            if isinstance(chunk, dict) and chunk.get("text") is not None
-                            else None,
-                            yield_raw_on_error=False,
-                            encoding="utf-8",
-                            encoding_errors="replace",
-                            buffer_size=8192,
-                        )
+                if raw:
+                    # Return raw response text when raw=True
+                    return response.text
+                else:
+                    # Process response similar to streaming when raw=False
+                    processed_chunks = sanitize_stream(
+                        data=response.content,
+                        intro_value="",
+                        to_json=True,
+                        skip_markers=[],
+                        strip_chars=None,
+                        start_marker=None,
+                        end_marker=None,
+                        content_extractor=lambda chunk: chunk.get("text")
+                        if isinstance(chunk, dict) and chunk.get("text") is not None
+                        else None,
+                        yield_raw_on_error=False,
+                        encoding="utf-8",
+                        encoding_errors="replace",
+                        buffer_size=8192,
+                    )
 
-                        full_response = ""
-                        for content_chunk in processed_chunks:
-                            if content_chunk is not None and isinstance(content_chunk, str):
-                                full_response += content_chunk
+                    full_response = ""
+                    for content_chunk in processed_chunks:
+                        if content_chunk is not None and isinstance(content_chunk, str):
+                            full_response += content_chunk
 
-                        self.last_response = SearchResponse(full_response)
-                        return self.last_response
+                    self.last_response = SearchResponse(full_response)
+                    return self.last_response
 
             except RequestException as e:
                 raise exceptions.APIConnectionError(f"Request failed: {e}")
