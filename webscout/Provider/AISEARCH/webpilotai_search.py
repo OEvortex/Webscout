@@ -117,52 +117,52 @@ class webpilotai(AISearch):
 
         def for_stream():
             try:
-                with self.session.post(
+                response = self.session.post(
                     self.api_endpoint,
                     json=payload,
                     stream=True,
                     timeout=self.timeout,
                     proxies=self.proxies,
-                ) as response:
-                    if not response.ok:
-                        raise exceptions.APIConnectionError(
-                            f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
-                        )
-
-                    processed_chunks = sanitize_stream(
-                        data=response.iter_content(chunk_size=1024),
-                        to_json=True,
-                        # Extract content from parsed JSON payload similar to Monica
-                        content_extractor=lambda chunk: (
-                            (
-                                (chunk.get("data") or {}).get("content")
-                                if isinstance(chunk, dict)
-                                else None
-                            )
-                            or (
-                                (chunk.get("data") or {}).get("text")
-                                if isinstance(chunk, dict)
-                                else None
-                            )
-                            or (
-                                (chunk.get("data") or {}).get("delta", {}).get("content")
-                                if isinstance(chunk, dict)
-                                else None
-                            )
-                        ),
-                        skip_markers=["event:message"],
-                        yield_raw_on_error=False,
-                        encoding="utf-8",
-                        encoding_errors="replace",
-                        line_delimiter="\n",
-                        raw=raw,
-                        output_formatter=None
-                        if raw
-                        else lambda x: SearchResponse(x) if isinstance(x, str) else x,
+                )
+                if not response.ok:
+                    raise exceptions.APIConnectionError(
+                        f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                     )
 
-                    for chunk in processed_chunks:
-                        yield chunk
+                processed_chunks = sanitize_stream(
+                    data=response.iter_content(chunk_size=1024),
+                    to_json=True,
+                    # Extract content from parsed JSON payload similar to Monica
+                    content_extractor=lambda chunk: (
+                        (
+                            (chunk.get("data") or {}).get("content")
+                            if isinstance(chunk, dict)
+                            else None
+                        )
+                        or (
+                            (chunk.get("data") or {}).get("text")
+                            if isinstance(chunk, dict)
+                            else None
+                        )
+                        or (
+                            (chunk.get("data") or {}).get("delta", {}).get("content")
+                            if isinstance(chunk, dict)
+                            else None
+                        )
+                    ),
+                    skip_markers=["event:message"],
+                    yield_raw_on_error=False,
+                    encoding="utf-8",
+                    encoding_errors="replace",
+                    line_delimiter="\n",
+                    raw=raw,
+                    output_formatter=None
+                    if raw
+                    else lambda x: SearchResponse(x) if isinstance(x, str) else x,
+                )
+
+                for chunk in processed_chunks:
+                    yield chunk
 
             except Timeout:
                 raise exceptions.APIConnectionError("Request timed out")
@@ -171,62 +171,62 @@ class webpilotai(AISearch):
 
         def for_non_stream():
             try:
-                with self.session.post(
+                response = self.session.post(
                     self.api_endpoint,
                     json=payload,
                     stream=False,
                     timeout=self.timeout,
                     proxies=self.proxies,
-                ) as response:
-                    if not response.ok:
-                        raise exceptions.APIConnectionError(
-                            f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
-                        )
-
-                    if raw:
-                        return response.text
-
-                    # Process full response payload using sanitize_stream similar to streaming path
-                    processed_chunks = sanitize_stream(
-                        data=response.content,
-                        intro_value="",
-                        to_json=True,
-                        strip_chars=None,
-                        start_marker=None,
-                        end_marker=None,
-                        content_extractor=lambda chunk: (
-                            (
-                                (chunk.get("data") or {}).get("content")
-                                if isinstance(chunk, dict)
-                                else None
-                            )
-                            or (
-                                (chunk.get("data") or {}).get("text")
-                                if isinstance(chunk, dict)
-                                else None
-                            )
-                            or (
-                                (chunk.get("data") or {}).get("delta", {}).get("content")
-                                if isinstance(chunk, dict)
-                                else None
-                            )
-                        ),
-                        skip_markers=["event:message"],
-                        yield_raw_on_error=False,
-                        encoding="utf-8",
-                        encoding_errors="replace",
-                        buffer_size=8192,
-                        output_formatter=lambda x: SearchResponse(x) if isinstance(x, str) else x,
+                )
+                if not response.ok:
+                    raise exceptions.APIConnectionError(
+                        f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                     )
 
-                    full_response = ""
-                    for content_chunk in processed_chunks:
-                        if content_chunk is not None:
-                            full_response += str(content_chunk)
+                if raw:
+                    return response.text
 
-                    formatted_response = self.format_SearchResponse(full_response)
-                    self.last_response = SearchResponse(formatted_response)
-                    return self.last_response
+                # Process full response payload using sanitize_stream similar to streaming path
+                processed_chunks = sanitize_stream(
+                    data=response.content,
+                    intro_value="",
+                    to_json=True,
+                    strip_chars=None,
+                    start_marker=None,
+                    end_marker=None,
+                    content_extractor=lambda chunk: (
+                        (
+                            (chunk.get("data") or {}).get("content")
+                            if isinstance(chunk, dict)
+                            else None
+                        )
+                        or (
+                            (chunk.get("data") or {}).get("text")
+                            if isinstance(chunk, dict)
+                            else None
+                        )
+                        or (
+                            (chunk.get("data") or {}).get("delta", {}).get("content")
+                            if isinstance(chunk, dict)
+                            else None
+                        )
+                    ),
+                    skip_markers=["event:message"],
+                    yield_raw_on_error=False,
+                    encoding="utf-8",
+                    encoding_errors="replace",
+                    buffer_size=8192,
+                    output_formatter=lambda x: SearchResponse(x) if isinstance(x, str) else x,
+                )
+
+                full_response = ""
+                for content_chunk in processed_chunks:
+                    if content_chunk is not None:
+                        full_response += str(content_chunk)
+
+                formatted_response = self.format_SearchResponse(full_response)
+                self.last_response = SearchResponse(formatted_response)
+                return self.last_response
 
             except RequestException as e:
                 raise exceptions.APIConnectionError(f"Request failed: {e}")
