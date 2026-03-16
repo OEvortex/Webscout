@@ -77,7 +77,17 @@ jobs:
         id: previous_tag
         if: steps.check_tag.outputs.exists == 'false'
         run: |
-          PREVIOUS_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          # Use the most recent stable tag for stable releases so changelog includes
+          # all changes since last stable (including any beta releases).
+          if [ "${{ steps.get_version.outputs.is_prerelease }}" == "true" ]; then
+            PREVIOUS_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          else
+            PREVIOUS_TAG=$(git tag --sort=-creatordate | grep -vE '\.beta|-beta' | head -n1)
+            if [ -z "$PREVIOUS_TAG" ]; then
+              PREVIOUS_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+            fi
+          fi
+
           if [ -z "$PREVIOUS_TAG" ]; then
             echo "previous_tag=" >> $GITHUB_OUTPUT
             echo "No previous tag found"
