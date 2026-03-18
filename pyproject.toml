@@ -92,6 +92,11 @@ parser = [
     "lxml>=5.2.2",  # Optional: faster HTML/XML parsing with lxml
 ]
 
+[tool.pytest.ini_options]
+markers = [
+    "live: network-dependent search engine tests",
+]
+
 [tool.setuptools]
 package-dir = {"" = "."}
 include-package-data = true

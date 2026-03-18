@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, cast
 
 from curl_cffi.requests import Session
 
@@ -19,7 +19,7 @@ class BraveBase:
         verify: bool = True,
         lang: str = "en-US",
         sleep_interval: float = 0.0,
-        impersonate: str = "chrome110",
+        impersonate: str = "safari15_5",
     ):
         """Initialize Brave base client.
 
@@ -29,7 +29,7 @@ class BraveBase:
             verify: SSL verification flag.
             lang: Language setting.
             sleep_interval: Sleep interval between requests.
-            impersonate: Browser to impersonate.
+            impersonate: Browser to impersonate (deprecated, kept for compatibility).
         """
         self.timeout = timeout
         self.proxies = proxies
@@ -37,7 +37,7 @@ class BraveBase:
         self.lang = lang
         self.sleep_interval = sleep_interval
         self.base_url = "https://search.brave.com"
-        from typing import cast
+
         self.session = Session(
             proxies=cast(Any, proxies),
             verify=verify,

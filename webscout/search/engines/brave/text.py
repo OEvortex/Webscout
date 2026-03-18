@@ -44,25 +44,55 @@ class BraveTextSearch(BraveBase):
 
         def fetch_html(params: dict) -> str:
             url = f"{self.base_url}/search"
-            # Merge session headers to include fingerprint (User-Agent, etc.)
-            headers = dict(self.session.headers) if getattr(self, "session", None) else {}
-            headers.update(
-                {
-                    "Referer": "https://search.brave.com/",
-                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                    "Accept-Language": "en-US,en;q=0.9",
-                }
-            )
+            # Keep the Brave request headers minimal; curl_cffi streaming works reliably
+            # with a clean browser-like header set.
+            headers = {
+                "User-Agent": self.session.headers.get(
+                    "User-Agent",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+                ),
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Referer": "https://search.brave.com/",
+            }
             attempts = 3
             backoff = 1.0
             last_exc: Exception | None = None
             for attempt in range(attempts):
                 try:
                     resp = self.session.get(
-                        url, params=params, headers=headers, timeout=self.timeout
+                        url,
+                        params=params,
+                        headers=headers,
+                        timeout=self.timeout,
+                        stream=True,
                     )
                     resp.raise_for_status()
-                    return resp.text
+
+                    # Unit tests use a lightweight fake response without streaming APIs.
+                    if not hasattr(resp, "iter_content"):
+                        return getattr(resp, "text", "") or ""
+
+                    chunks: list[bytes] = []
+                    total = 0
+                    try:
+                        for chunk in resp.iter_content():
+                            if not chunk:
+                                continue
+                            chunks.append(chunk)
+                            total += len(chunk)
+                            # We only need enough HTML for the result containers.
+                            if total >= 256_000:
+                                break
+                    except Exception:
+                        # curl_cffi may report a stream error after enough body data has
+                        # already been received. Keep the partial HTML if we have it.
+                        if not chunks:
+                            raise
+
+                    body = b"".join(chunks)
+                    encoding = getattr(resp, "encoding", None) or "utf-8"
+                    return body.decode(encoding, errors="replace")
                 except Exception as exc:  # network or HTTP errors
                     last_exc = exc
                     # If it's a 429 / transient server error, back off and retry
@@ -74,31 +104,7 @@ class BraveTextSearch(BraveBase):
                         sleep(backoff)
                         backoff *= 2
                         continue
-                    # As a last attempt, try a simple GET without params appended (fallback)
-                    try:
-                        fallback_resp = self.session.get(
-                            url + "?" + "&".join(f"{k}={v}" for k, v in params.items()),
-                            headers=headers,
-                            timeout=self.timeout,
-                        )
-                        fallback_resp.raise_for_status()
-                        return fallback_resp.text
-                    except Exception:
-                        # Final fallback: try using the curl_cffi library
-                        try:
-                            from curl_cffi import requests as curl_requests
-
-                            r = curl_requests.get(
-                                url,
-                                params=params,
-                                headers=headers,
-                                timeout=self.timeout,
-                                verify=getattr(self, "verify", True),
-                            )
-                            r.raise_for_status()
-                            return r.text
-                        except Exception:
-                            raise Exception(f"Failed to GET {url} with {params}: {exc}") from exc
+                    raise Exception(f"Failed to GET {url} with {params}: {exc}") from exc
             raise Exception(f"Failed to GET {url} after retries: {last_exc}") from last_exc
 
         # Pagination: offset param is a 0-based page index
@@ -107,7 +113,7 @@ class BraveTextSearch(BraveBase):
             if safesearch_value:
                 params["safesearch"] = safesearch_value
 
-                html = fetch_html(params)
+            html = fetch_html(params)
             # Parse and extract results using helper
             page_results = self._parse_results_from_html(html)
 

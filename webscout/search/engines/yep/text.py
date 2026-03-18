@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import List, Optional
 from urllib.parse import urlencode
 
@@ -38,7 +39,9 @@ class YepSearch(YepBase):
         try:
             response = self.session.get(url)
             response.raise_for_status()
-            raw_results = response.json()
+            # Handle gzip-compressed response from Yep API
+            raw_text = self._decompress_response(response.content)
+            raw_results = json.loads(raw_text)
 
             formatted_results = self.format_results(raw_results)
 
