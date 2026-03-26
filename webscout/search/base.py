@@ -143,13 +143,34 @@ class BaseSearchEngine(ABC, Generic[T]):
         **kwargs: Any,
     ) -> list[T] | None:
         """Search the engine."""
+        request_headers = kwargs.pop("headers", None)
+        request_cookies = kwargs.pop("cookies", None)
+        request_timeout = kwargs.pop("timeout", None)
+
         payload = self.build_payload(
             query=query, region=region, safesearch=safesearch, timelimit=timelimit, page=page, **kwargs
         )
+        headers = dict(self.search_headers)
+        if isinstance(request_headers, Mapping):
+            headers.update(request_headers)
         if self.search_method == "GET":
-            html_text = self.request(self.search_method, self.search_url, params=payload, headers=self.search_headers)
+            html_text = self.request(
+                self.search_method,
+                self.search_url,
+                params=payload,
+                headers=headers,
+                cookies=request_cookies,
+                timeout=request_timeout,
+            )
         else:
-            html_text = self.request(self.search_method, self.search_url, data=payload, headers=self.search_headers)
+            html_text = self.request(
+                self.search_method,
+                self.search_url,
+                data=payload,
+                headers=headers,
+                cookies=request_cookies,
+                timeout=request_timeout,
+            )
         if not html_text:
             return None
         results = self.extract_results(html_text)

@@ -7,6 +7,7 @@ from .duckduckgo_main import DuckDuckGoSearch
 
 # Import new search engines
 from .engines.mojeek import Mojeek
+from .engines.dogpile import Dogpile
 from .engines.wikipedia import Wikipedia
 from .engines.yandex import Yandex
 
@@ -35,6 +36,7 @@ __all__ = [
 
     # Individual engines
     "Mojeek",
+    "Dogpile",
     "Yandex",
     "Wikipedia",
 

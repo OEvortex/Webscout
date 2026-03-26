@@ -58,7 +58,9 @@ dependencies = [
     "aiohttp",
     "litprinter",
     "lxml>=5.2.2",
-    "pydantic"
+    "pydantic",
+    "cloudscraper>=1.2.71",
+    "browser-cookie3>=0.20.1",
 ]
 
 [project.scripts]
