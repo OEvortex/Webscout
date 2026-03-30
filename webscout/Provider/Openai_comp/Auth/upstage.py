@@ -1,19 +1,19 @@
+"""Upstage Solar API Provider - OpenAI Compatible.
+
+This module provides an OpenAI-compatible interface for Upstage's Solar models.
+"""
+
 import json
 import time
 import uuid
 from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi import CurlError
-
-# Import curl_cffi for improved request handling
 from curl_cffi.requests import Session
 
-# Attempt to import LitAgent, fallback if not available
-from ...litagent import LitAgent
-
-# Import base classes and utility structures
-from .base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
-from .utils import (
+from ....litagent import LitAgent
+from ..base import BaseChat, BaseCompletions, OpenAICompatibleProvider, SimpleModelList
+from ..utils import (
     ChatCompletion,
     ChatCompletionChunk,
     ChatCompletionMessage,
@@ -22,10 +22,11 @@ from .utils import (
     CompletionUsage,
 )
 
-# --- Groq Client ---
 
 class Completions(BaseCompletions):
-    def __init__(self, client: 'Groq'):
+    """Completions handler for Upstage API."""
+
+    def __init__(self, client: 'Upstage'):
         self._client = client
 
     def create(
@@ -33,7 +34,7 @@ class Completions(BaseCompletions):
         *,
         model: str,
         messages: List[Dict[str, str]],
-        max_tokens: Optional[int] = 2049,
+        max_tokens: Optional[int] = 4096,
         stream: bool = False,
         temperature: Optional[float] = None,
         top_p: Optional[float] = None,
@@ -54,16 +55,7 @@ class Completions(BaseCompletions):
         if top_p is not None:
             payload["top_p"] = top_p
 
-        # Add frequency_penalty and presence_penalty if provided
-        if "frequency_penalty" in kwargs:
-            payload["frequency_penalty"] = kwargs.pop("frequency_penalty")
-        if "presence_penalty" in kwargs:
-            payload["presence_penalty"] = kwargs.pop("presence_penalty")
-
-        # Add any tools if provided
-        if "tools" in kwargs and kwargs["tools"]:
-            payload["tools"] = kwargs.pop("tools")
-
+        # Add any additional parameters
         payload.update(kwargs)
 
         request_id = f"chatcmpl-{uuid.uuid4()}"
@@ -77,17 +69,20 @@ class Completions(BaseCompletions):
     def _create_stream(
         self, request_id: str, created_time: int, model: str, payload: Dict[str, Any]
     ) -> Generator[ChatCompletionChunk, None, None]:
+        """Handle streaming response from Upstage API."""
         try:
             response = self._client.session.post(
                 self._client.base_url,
                 json=payload,
                 stream=True,
                 timeout=self._client.timeout,
-                impersonate="chrome110"  # Use impersonate for better compatibility
+                impersonate="chrome110"
             )
 
             if response.status_code != 200:
-                raise IOError(f"Groq request failed with status code {response.status_code}: {response.text}")
+                raise IOError(
+                    f"Upstage request failed with status code {response.status_code}: {response.text}"
+                )
 
             # Track token usage across chunks
             prompt_tokens = 0
@@ -150,8 +145,12 @@ class Completions(BaseCompletions):
                             # Add usage information to match OpenAI format
                             usage_dict = {
                                 "prompt_tokens": prompt_tokens or 10,
-                                "completion_tokens": completion_tokens or (len(delta_data.get('content', '')) if delta_data.get('content') else 0),
-                                "total_tokens": total_tokens or (10 + (len(delta_data.get('content', '')) if delta_data.get('content') else 0)),
+                                "completion_tokens": completion_tokens or (
+                                    len(delta_data.get('content', '')) if delta_data.get('content') else 0
+                                ),
+                                "total_tokens": total_tokens or (
+                                    10 + (len(delta_data.get('content', '')) if delta_data.get('content') else 0)
+                                ),
                                 "estimated_cost": None
                             }
 
@@ -169,25 +168,28 @@ class Completions(BaseCompletions):
                             print(f"Warning: Could not decode JSON line: {json_str}")
                             continue
         except CurlError as e:
-            print(f"Error during Groq stream request: {e}")
-            raise IOError(f"Groq request failed: {e}") from e
+            print(f"Error during Upstage stream request: {e}")
+            raise IOError(f"Upstage request failed: {e}") from e
         except Exception as e:
-            print(f"Error processing Groq stream: {e}")
+            print(f"Error processing Upstage stream: {e}")
             raise
 
     def _create_non_stream(
         self, request_id: str, created_time: int, model: str, payload: Dict[str, Any]
     ) -> ChatCompletion:
+        """Handle non-streaming response from Upstage API."""
         try:
             response = self._client.session.post(
                 self._client.base_url,
                 json=payload,
                 timeout=self._client.timeout,
-                impersonate="chrome110"  # Use impersonate for better compatibility
+                impersonate="chrome110"
             )
 
             if response.status_code != 200:
-                raise IOError(f"Groq request failed with status code {response.status_code}: {response.text}")
+                raise IOError(
+                    f"Upstage request failed with status code {response.status_code}: {response.text}"
+                )
 
             data = response.json()
 
@@ -229,49 +231,96 @@ class Completions(BaseCompletions):
             return completion
 
         except CurlError as e:
-            print(f"Error during Groq non-stream request: {e}")
-            raise IOError(f"Groq request failed: {e}") from e
+            print(f"Error during Upstage non-stream request: {e}")
+            raise IOError(f"Upstage request failed: {e}") from e
         except Exception as e:
-            print(f"Error processing Groq response: {e}")
+            print(f"Error processing Upstage response: {e}")
             raise
 
+
 class Chat(BaseChat):
-    def __init__(self, client: 'Groq'):
+    """Chat interface for Upstage API."""
+
+    def __init__(self, client: 'Upstage'):
         self.completions = Completions(client)
 
-class Groq(OpenAICompatibleProvider):
+
+class Upstage(OpenAICompatibleProvider):
+    """Upstage Solar API Provider - OpenAI Compatible.
+
+    A provider for interacting with Upstage Solar models using an OpenAI-compatible
+    interface. Supports Solar 1 Pro, Solar Pro 2, and Solar Pro 3 models.
+
+    Required API Key:
+        - Get from https://console.upstage.ai/api-keys
+        - Set via api_key parameter or UPSTAGE_API_KEY environment variable
+
+    Attributes:
+        api_key (str): Your Upstage API key
+        timeout (int): Request timeout in seconds (default: 30)
+        base_url (str): API endpoint URL
+
+    Available Models:
+        - solar-1-pro: Upstage Solar 1 Pro
+        - solar-pro-2: Upstage Solar Pro 2
+        - solar-pro-3: Upstage Solar Pro 3 (default)
+
+    Examples:
+        >>> from webscout.Provider.Openai_comp import Upstage
+        >>> client = Upstage(api_key="YOUR_API_KEY")
+        >>> response = client.chat.completions.create(
+        ...     model="solar-pro-3",
+        ...     messages=[{"role": "user", "content": "Hello!"}]
+        ... )
+        >>> print(response.choices[0].message.content)
+
+        >>> # Streaming
+        >>> for chunk in client.chat.completions.create(
+        ...     model="solar-pro-3",
+        ...     messages=[{"role": "user", "content": "Tell me a joke"}],
+        ...     stream=True
+        ... ):
+        ...     print(chunk.choices[0].delta.content, end="", flush=True)
+    """
+
     required_auth = True
     AVAILABLE_MODELS = [
-        "distil-whisper-large-v3-en",
-        "gemma2-9b-it",
-        "llama-3.3-70b-versatile",
-        "llama-3.1-8b-instant",
-        "llama-guard-3-8b",
-        "llama3-70b-8192",
-        "llama3-8b-8192",
-        "whisper-large-v3",
-        "whisper-large-v3-turbo",
-        "meta-llama/llama-4-scout-17b-16e-instruct",
-        "meta-llama/llama-4-maverick-17b-128e-instruct",
-        "playai-tts",
-        "playai-tts-arabic",
-        "qwen-qwq-32b",
-        "mistral-saba-24b",
-        "qwen-2.5-coder-32b",
-        "qwen-2.5-32b",
-        "deepseek-r1-distill-qwen-32b",
-        "deepseek-r1-distill-llama-70b",
-        "llama-3.3-70b-specdec",
-        "llama-3.2-1b-preview",
-        "llama-3.2-3b-preview",
-        "llama-3.2-11b-vision-preview",
-        "llama-3.2-90b-vision-preview",
-        "mixtral-8x7b-32768"
+        "solar-1-pro",
+        "solar-pro-2",
+        "solar-pro-3",
     ]
 
-    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 30, browser: str = "chrome"):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        timeout: Optional[int] = 30,
+        browser: str = "chrome"
+    ):
+        """
+        Initialize the Upstage API client.
+
+        Args:
+            api_key: Upstage API key. If None, uses UPSTAGE_API_KEY env var.
+            timeout: Request timeout in seconds (default: 30).
+            browser: Browser type for fingerprinting (default: "chrome").
+
+        Raises:
+            ValueError: If API key is not provided and not found in environment.
+        """
         self.timeout = timeout
-        self.base_url = "https://api.groq.com/openai/v1/chat/completions"
+        self.base_url = "https://api.upstage.ai/v1/chat/completions"
+
+        # Get API key from parameter or environment
+        if not api_key:
+            import os
+            api_key = os.getenv("UPSTAGE_API_KEY")
+
+        if not api_key:
+            raise ValueError(
+                "Upstage API key is required. "
+                "Set via api_key parameter or UPSTAGE_API_KEY env var."
+            )
+
         self.api_key = api_key
 
         # Defer model fetch to background to avoid blocking initialization
@@ -280,13 +329,11 @@ class Groq(OpenAICompatibleProvider):
         # Initialize curl_cffi Session
         self.session = Session()
 
-        # Set up headers with API key if provided
+        # Set up headers with API key
         self.headers = {
             "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}",
         }
-
-        if api_key:
-            self.headers["Authorization"] = f"Bearer {api_key}"
 
         # Try to use LitAgent for browser fingerprinting
         try:
@@ -299,9 +346,9 @@ class Groq(OpenAICompatibleProvider):
                 "Accept-Language": fingerprint["accept_language"],
                 "Cache-Control": "no-cache",
                 "Connection": "keep-alive",
-                "Origin": "https://console.groq.com",
+                "Origin": "https://console.upstage.ai",
                 "Pragma": "no-cache",
-                "Referer": "https://console.groq.com/",
+                "Referer": "https://console.upstage.ai/",
                 "Sec-Fetch-Dest": "empty",
                 "Sec-Fetch-Mode": "cors",
                 "Sec-Fetch-Site": "same-site",
@@ -326,11 +373,11 @@ class Groq(OpenAICompatibleProvider):
         self.chat = Chat(self)
 
     @classmethod
-    def get_models(cls, api_key: Optional[str] = None):
-        """Fetch available models from Groq API.
+    def get_models(cls, api_key: Optional[str] = None) -> List[str]:
+        """Fetch available models from Upstage API.
 
         Args:
-            api_key (str, optional): Groq API key. If not provided, returns default models.
+            api_key (str, optional): Upstage API key. If not provided, returns default models.
 
         Returns:
             list: List of available model IDs
@@ -347,9 +394,9 @@ class Groq(OpenAICompatibleProvider):
             }
 
             response = temp_session.get(
-                "https://api.groq.com/openai/v1/models",
+                "https://api.upstage.ai/v1/models",
                 headers=headers,
-                impersonate="chrome110"  # Use impersonate for fetching
+                impersonate="chrome110"
             )
 
             if response.status_code != 200:
@@ -365,8 +412,8 @@ class Groq(OpenAICompatibleProvider):
             return cls.AVAILABLE_MODELS
 
     @classmethod
-    def update_available_models(cls, api_key: Optional[str] = None):
-        """Update the available models list from Groq API"""
+    def update_available_models(cls, api_key: Optional[str] = None) -> None:
+        """Update the available models list from Upstage API."""
         try:
             models = cls.get_models(api_key)
             if models and len(models) > 0:
@@ -377,4 +424,44 @@ class Groq(OpenAICompatibleProvider):
 
     @property
     def models(self) -> SimpleModelList:
+        """Return the list of available models."""
         return SimpleModelList(type(self).AVAILABLE_MODELS)
+
+
+if __name__ == "__main__":
+    from rich import print
+
+    # Example usage
+    try:
+        client = Upstage(api_key="YOUR_API_KEY_HERE")
+
+        # Non-streaming example
+        print("[cyan]Non-Streaming Response:[/cyan]")
+        response = client.chat.completions.create(
+            model="solar-pro-3",
+            messages=[{
+                "role": "user",
+                "content": "What are the limitations of current AI models?"
+            }],
+            stream=False
+        )
+        print(response.choices[0].message.content) # type: ignore
+
+        print("\n[cyan]Streaming Response:[/cyan]")
+        # Streaming example
+        for chunk in client.chat.completions.create(
+            model="solar-pro-3",
+            messages=[{
+                "role": "user",
+                "content": "Write a short poem about machine learning"
+            }],
+            stream=True
+        ):
+            if chunk.choices[0].delta.content: # type: ignore
+                print(chunk.choices[0].delta.content, end="", flush=True) # type: ignore
+        print()
+
+    except ValueError as e:
+        print(f"[red]Error: {e}[/red]")
+    except IOError as e:
+        print(f"[red]Request Error: {e}[/red]")

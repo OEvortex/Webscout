@@ -3,7 +3,7 @@ import time
 import uuid
 from typing import Any, Dict, Generator, List, Optional, Union, cast
 
-from curl_cffi import requests
+from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout.Provider.Openai_comp.base import (
@@ -19,14 +19,13 @@ from webscout.Provider.Openai_comp.utils import (
     Choice,
     ChoiceDelta,
     CompletionUsage,
-    count_tokens,
 )
 
-from ...litagent import LitAgent
+from ....litagent import LitAgent
 
 
 class Completions(BaseCompletions):
-    def __init__(self, client: "HuggingFace"):
+    def __init__(self, client: "Cerebras"):
         self._client = client
 
     def create(
@@ -34,10 +33,10 @@ class Completions(BaseCompletions):
         *,
         model: str,
         messages: List[Dict[str, str]],
-        max_tokens: Optional[int] = 2048,
+        max_tokens: Optional[int] = 40000,
         stream: bool = False,
         temperature: Optional[float] = 0.7,
-        top_p: Optional[float] = 0.9,
+        top_p: Optional[float] = 0.8,
         timeout: Optional[int] = None,
         proxies: Optional[Dict[str, str]] = None,
         **kwargs: Any,
@@ -53,10 +52,8 @@ class Completions(BaseCompletions):
         if top_p is not None:
             payload["top_p"] = top_p
         payload.update(kwargs)
-
         request_id = f"chatcmpl-{uuid.uuid4()}"
         created_time = int(time.time())
-
         if stream:
             return self._create_stream(request_id, created_time, model, payload, timeout, proxies)
         else:
@@ -73,26 +70,21 @@ class Completions(BaseCompletions):
         timeout: Optional[int] = None,
         proxies: Optional[Dict[str, str]] = None,
     ) -> Generator[ChatCompletionChunk, None, None]:
-        import requests as requests_lib
-
+        if proxies is not None:
+            self._client.session.proxies.update(cast(Any, proxies))
         try:
-            # Use curl_cffi for streaming
-            response = requests.post(
+            response = self._client.session.post(
                 self._client.base_url,
                 headers=self._client.headers,
                 json=payload,
                 stream=True,
                 timeout=timeout or self._client.timeout,
-                proxies=proxies,
+                impersonate="chrome120",
             )
             response.raise_for_status()
-
-            prompt_tokens = count_tokens(
-                [msg.get("content", "") for msg in payload.get("messages", [])]
-            )
+            prompt_tokens = 0
             completion_tokens = 0
             total_tokens = 0
-
             for line in response.iter_lines(decode_unicode=True):
                 if line:
                     if line.startswith("data: "):
@@ -107,13 +99,6 @@ class Completions(BaseCompletions):
                             choice_data = choices[0] if choices else {}
                             delta_data = choice_data.get("delta", {})
                             finish_reason = choice_data.get("finish_reason")
-
-                            # Extract reasoning or regular content
-                            content = delta_data.get("content") or delta_data.get(
-                                "reasoning_content"
-                            )
-
-                            # Update usage if available
                             usage_data = data.get("usage", {})
                             if usage_data:
                                 prompt_tokens = usage_data.get("prompt_tokens", prompt_tokens)
@@ -121,13 +106,11 @@ class Completions(BaseCompletions):
                                     "completion_tokens", completion_tokens
                                 )
                                 total_tokens = usage_data.get("total_tokens", total_tokens)
-
-                            if content:
-                                completion_tokens += count_tokens(content)
+                            if delta_data.get("content"):
+                                completion_tokens += 1
                                 total_tokens = prompt_tokens + completion_tokens
-
                             delta = ChoiceDelta(
-                                content=content,
+                                content=delta_data.get("content"),
                                 role=delta_data.get("role"),
                                 tool_calls=delta_data.get("tool_calls"),
                             )
@@ -153,7 +136,6 @@ class Completions(BaseCompletions):
                             yield chunk
                         except json.JSONDecodeError:
                             continue
-
             # Final chunk with finish_reason="stop"
             delta = ChoiceDelta(content=None, role=None, tool_calls=None)
             choice = Choice(index=0, delta=delta, finish_reason="stop", logprobs=None)
@@ -171,9 +153,9 @@ class Completions(BaseCompletions):
                 "estimated_cost": None,
             }
             yield chunk
-
         except Exception as e:
-            raise IOError(f"HuggingFace stream request failed: {e}") from e
+            print(f"Error during Cerebras stream request: {e}")
+            raise IOError(f"Cerebras request failed: {e}") from e
 
     def _create_non_stream(
         self,
@@ -184,24 +166,31 @@ class Completions(BaseCompletions):
         timeout: Optional[int] = None,
         proxies: Optional[Dict[str, str]] = None,
     ) -> ChatCompletion:
+        if proxies is not None:
+            self._client.session.proxies.update(cast(Any, proxies))
         try:
             response = self._client.session.post(
                 self._client.base_url,
                 headers=self._client.headers,
                 json=payload,
                 timeout=timeout or self._client.timeout,
-                proxies=proxies,
                 impersonate="chrome120",
             )
             response.raise_for_status()
             data = response.json()
-
             choices_data = data.get("choices", [])
             usage_data = data.get("usage", {})
-
             choices = []
             for choice_d in choices_data:
-                message_d = choice_d.get("message", {})
+                message_d = choice_d.get("message")
+                if not message_d and "delta" in choice_d:
+                    delta = choice_d["delta"]
+                    message_d = {
+                        "role": delta.get("role", "assistant"),
+                        "content": delta.get("content", ""),
+                    }
+                if not message_d:
+                    message_d = {"role": "assistant", "content": ""}
                 message = ChatCompletionMessage(
                     role=message_d.get("role", "assistant"), content=message_d.get("content", "")
                 )
@@ -211,96 +200,82 @@ class Completions(BaseCompletions):
                     finish_reason=choice_d.get("finish_reason", "stop"),
                 )
                 choices.append(choice)
-
             usage = CompletionUsage(
                 prompt_tokens=usage_data.get("prompt_tokens", 0),
                 completion_tokens=usage_data.get("completion_tokens", 0),
                 total_tokens=usage_data.get("total_tokens", 0),
             )
-
             completion = ChatCompletion(
-                id=data.get("id", request_id),
+                id=request_id,
                 choices=choices,
-                created=data.get("created", created_time),
+                created=created_time,
                 model=data.get("model", model),
                 usage=usage,
             )
             return completion
         except Exception as e:
-            raise IOError(f"HuggingFace non-stream request failed: {e}") from e
+            print(f"Error during Cerebras non-stream request: {e}")
+            raise IOError(f"Cerebras request failed: {e}") from e
 
 
 class Chat(BaseChat):
-    def __init__(self, client: "HuggingFace"):
+    def __init__(self, client: "Cerebras"):
         self.completions = Completions(client)
 
 
-class HuggingFace(OpenAICompatibleProvider):
-    """
-    OpenAI-compatible client for Hugging Face Inference API.
-
-    Requires an API key from https://huggingface.co/settings/tokens
-    """
-
+class Cerebras(OpenAICompatibleProvider):
     required_auth = True
     AVAILABLE_MODELS = []
 
     @classmethod
-    def get_models(cls, api_key: Optional[str] = None) -> List[str]:
-        """Fetch available text-generation models from Hugging Face."""
-        url = "https://router.huggingface.co/v1/models"
+    def get_models(cls, api_key: Optional[str] = None):
+        """Fetch available models from Cerebras API."""
+        if not api_key:
+            raise Exception("API key required to fetch models")
+
         try:
             # Use a temporary curl_cffi session for this class method
             temp_session = Session()
-            headers = {}
-            if api_key:
-                headers["Authorization"] = f"Bearer {api_key}"
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}",
+            }
 
-            response = temp_session.get(url, headers=headers, timeout=10)
-            if response.status_code == 200:
-                data = response.json()
-                if isinstance(data, dict) and "data" in data:
-                    return [model["id"] for model in data["data"] if "id" in model]
-                return [model["id"] for model in data if "id" in model]
-            return cls.AVAILABLE_MODELS
-        except Exception:
-            return cls.AVAILABLE_MODELS
+            response = temp_session.get(
+                "https://api.cerebras.ai/v1/models", headers=headers, impersonate="chrome120"
+            )
 
-    @classmethod
-    def update_available_models(cls, api_key: Optional[str] = None):
-        """Update the available models list from Hugging Face API dynamically."""
-        try:
-            models = cls.get_models(api_key)
-            if models and len(models) > 0:
-                cls.AVAILABLE_MODELS = models
-        except Exception:
-            # Fallback to default models list if fetching fails
-            pass
+            if response.status_code != 200:
+                raise Exception(f"Failed to fetch models: HTTP {response.status_code}")
 
-    def __init__(self, api_key: str, browser: str = "chrome", timeout: int = 30):
+            data = response.json()
+            if "data" in data and isinstance(data["data"], list):
+                return [model["id"] for model in data["data"]]
+            raise Exception("Invalid response format from API")
+
+        except (CurlError, Exception) as e:
+            raise Exception(f"Failed to fetch models: {str(e)}")
+
+    def __init__(self, browser: str = "chrome", api_key: Optional[str] = None):
         if not api_key:
-            raise ValueError("API key is required for HuggingFace")
-
-        # Start background model fetch (non-blocking)
-        self._start_background_model_fetch(api_key)
-
-        self.api_key = api_key
-        self.timeout = timeout
-        self.base_url = "https://router.huggingface.co/v1/chat/completions"
+            raise ValueError("API key is required for Cerebras")
+        # Defer model fetch to background to avoid blocking initialization
+        # The API requires api_key for fetching models, passed via background worker
+        self._start_background_model_fetch(api_key=api_key)
+        self.timeout = None
+        self.base_url = "https://api.cerebras.ai/v1/chat/completions"
         self.session = Session()
-
         agent = LitAgent()
         fingerprint = agent.generate_fingerprint(browser)
-
         self.headers = {
             "Accept": fingerprint["accept"],
             "Accept-Language": fingerprint["accept_language"],
             "Content-Type": "application/json",
             "User-Agent": fingerprint.get("user_agent", ""),
-            "Authorization": f"Bearer {api_key}",
             "Sec-CH-UA": fingerprint.get("sec_ch_ua", ""),
             "Sec-CH-UA-Mobile": "?0",
             "Sec-CH-UA-Platform": f'"{fingerprint.get("platform", "")}"',
+            "Authorization": f"Bearer {api_key}",
         }
         self.session.headers.update(self.headers)
         self.chat = Chat(self)
@@ -311,12 +286,14 @@ class HuggingFace(OpenAICompatibleProvider):
 
 
 if __name__ == "__main__":
-    # Example usage:
-    # client = HuggingFace(api_key="hf_...")
-    # response = client.chat.completions.create(
-    #     model="meta-llama/Llama-3.3-70B-Instruct",
-    #     messages=[{"role": "user", "content": "Hello!"}]
-    # )
-    # if not isinstance(response, Generator):
-    #     print(response.choices[0].message.content)
-    pass
+    # Requires API key
+    client = Cerebras(api_key="csk-***************************")
+    response = client.chat.completions.create(
+        model="qwen-3-235b-a22b-instruct-2507",
+        messages=[{"role": "user", "content": "Hello, how are you?"}],
+        max_tokens=1000,
+        stream=False,
+    )
+    if isinstance(response, ChatCompletion):
+        if response.choices[0].message and response.choices[0].message.content:
+            print(response.choices[0].message.content)

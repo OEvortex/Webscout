@@ -3,6 +3,7 @@ import time
 import uuid
 from typing import Any, Dict, Generator, List, Optional, Union, cast
 
+from curl_cffi import requests
 from curl_cffi.requests import Session
 
 from webscout.Provider.Openai_comp.base import (
@@ -21,11 +22,11 @@ from webscout.Provider.Openai_comp.utils import (
     count_tokens,
 )
 
-from ...litagent import LitAgent
+from ....litagent import LitAgent
 
 
 class Completions(BaseCompletions):
-    def __init__(self, client: "Nvidia"):
+    def __init__(self, client: "OpenRouter"):
         self._client = client
 
     def create(
@@ -39,6 +40,8 @@ class Completions(BaseCompletions):
         top_p: Optional[float] = 0.9,
         timeout: Optional[int] = None,
         proxies: Optional[Dict[str, str]] = None,
+        tools: Optional[List[Union[Dict[str, Any], Any]]] = None,
+        tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
         **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
         payload = {
@@ -51,6 +54,10 @@ class Completions(BaseCompletions):
             payload["temperature"] = temperature
         if top_p is not None:
             payload["top_p"] = top_p
+        if tools:
+            payload["tools"] = self.format_tool_calls(tools)
+        if tool_choice:
+            payload["tool_choice"] = tool_choice
         payload.update(kwargs)
 
         request_id = f"chatcmpl-{uuid.uuid4()}"
@@ -72,15 +79,17 @@ class Completions(BaseCompletions):
         timeout: Optional[int] = None,
         proxies: Optional[Dict[str, str]] = None,
     ) -> Generator[ChatCompletionChunk, None, None]:
+        import requests as requests_lib
+
         try:
-            response = self._client.session.post(
+            # Use curl_cffi for streaming
+            response = requests.post(
                 self._client.base_url,
                 headers=self._client.headers,
                 json=payload,
                 stream=True,
                 timeout=timeout or self._client.timeout,
                 proxies=proxies,
-                impersonate="chrome120",
             )
             response.raise_for_status()
 
@@ -90,7 +99,6 @@ class Completions(BaseCompletions):
             completion_tokens = 0
             total_tokens = 0
 
-            # Manual parsing similar to DeepInfra/Groq OpenAI compatible providers
             for line in response.iter_lines(decode_unicode=True):
                 if line:
                     if line.startswith("data: "):
@@ -106,6 +114,11 @@ class Completions(BaseCompletions):
                             delta_data = choice_data.get("delta", {})
                             finish_reason = choice_data.get("finish_reason")
 
+                            # Extract reasoning or regular content
+                            content = delta_data.get("content") or delta_data.get(
+                                "reasoning_content"
+                            )
+
                             # Update usage if available
                             usage_data = data.get("usage", {})
                             if usage_data:
@@ -115,7 +128,6 @@ class Completions(BaseCompletions):
                                 )
                                 total_tokens = usage_data.get("total_tokens", total_tokens)
 
-                            content = delta_data.get("content")
                             if content:
                                 completion_tokens += count_tokens(content)
                                 total_tokens = prompt_tokens + completion_tokens
@@ -167,7 +179,7 @@ class Completions(BaseCompletions):
             yield chunk
 
         except Exception as e:
-            raise IOError(f"Nvidia stream request failed: {e}") from e
+            raise IOError(f"OpenRouter stream request failed: {e}") from e
 
     def _create_non_stream(
         self,
@@ -221,45 +233,49 @@ class Completions(BaseCompletions):
             )
             return completion
         except Exception as e:
-            raise IOError(f"Nvidia non-stream request failed: {e}") from e
+            raise IOError(f"OpenRouter non-stream request failed: {e}") from e
 
 
 class Chat(BaseChat):
-    def __init__(self, client: "Nvidia"):
+    def __init__(self, client: "OpenRouter"):
         self.completions = Completions(client)
 
 
-class Nvidia(OpenAICompatibleProvider):
+class OpenRouter(OpenAICompatibleProvider):
     """
-    OpenAI-compatible client for Nvidia NIM API.
+    OpenAI-compatible client for OpenRouter API.
+
+    Requires an API key from https://openrouter.ai/keys
     """
 
     required_auth = True
     AVAILABLE_MODELS = []
+    supports_tools = True
+    supports_tool_choice = True
 
     @classmethod
     def get_models(cls, api_key: Optional[str] = None) -> List[str]:
-        """Fetch available models from Nvidia API."""
-        url = "https://integrate.api.nvidia.com/v1/models"
+        """Fetch available models from OpenRouter."""
+        url = "https://openrouter.ai/api/v1/models"
         try:
             # Use a temporary curl_cffi session for this class method
             temp_session = Session()
-            headers = {}
-            if api_key:
-                headers["Authorization"] = f"Bearer {api_key}"
+            headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+            headers["Content-Type"] = "application/json"
 
             response = temp_session.get(url, headers=headers, timeout=10)
             if response.status_code == 200:
                 data = response.json()
                 if isinstance(data, dict) and "data" in data:
                     return [model["id"] for model in data["data"] if "id" in model]
+                return [model["id"] for model in data if "id" in model]
             return cls.AVAILABLE_MODELS
         except Exception:
             return cls.AVAILABLE_MODELS
 
     @classmethod
     def update_available_models(cls, api_key: Optional[str] = None):
-        """Update the available models list from Nvidia API dynamically."""
+        """Update the available models list from OpenRouter API dynamically."""
         try:
             models = cls.get_models(api_key)
             if models and len(models) > 0:
@@ -270,31 +286,28 @@ class Nvidia(OpenAICompatibleProvider):
 
     def __init__(self, api_key: str, browser: str = "chrome", timeout: int = 30):
         if not api_key:
-            raise ValueError("API key is required for Nvidia")
+            raise ValueError("API key is required for OpenRouter")
 
-        # Start background model fetch (non-blocking)
-        self._start_background_model_fetch(api_key)
+        # Defer model fetch to background to avoid blocking initialization
+        self._start_background_model_fetch(api_key=api_key)
 
         self.api_key = api_key
         self.timeout = timeout
-        self.base_url = "https://integrate.api.nvidia.com/v1/chat/completions"
+        self.base_url = "https://openrouter.ai/api/v1/chat/completions"
         self.session = Session()
 
-        if LitAgent:
-            agent = LitAgent()
-            fingerprint = agent.generate_fingerprint(browser)
-        else:
-            fingerprint = {
-                "accept_language": "en-US,en;q=0.9",
-                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            }
+        agent = LitAgent()
+        fingerprint = agent.generate_fingerprint(browser)
 
         self.headers = {
-            "Accept": "application/json",
+            "Accept": fingerprint["accept"],
             "Accept-Language": fingerprint["accept_language"],
             "Content-Type": "application/json",
             "User-Agent": fingerprint.get("user_agent", ""),
             "Authorization": f"Bearer {api_key}",
+            "Sec-CH-UA": fingerprint.get("sec_ch_ua", ""),
+            "Sec-CH-UA-Mobile": "?0",
+            "Sec-CH-UA-Platform": f'"{fingerprint.get("platform", "")}"',
         }
         self.session.headers.update(self.headers)
         self.chat = Chat(self)
@@ -306,12 +319,11 @@ class Nvidia(OpenAICompatibleProvider):
 
 if __name__ == "__main__":
     # Example usage:
-    # client = Nvidia(api_key="nvapi-...")
+    # client = OpenRouter(api_key="sk-or-v1-...")
     # response = client.chat.completions.create(
-    #     model="meta/llama-3.3-70b-instruct",
+    #     model="openai/gpt-4o-mini",
     #     messages=[{"role": "user", "content": "Hello!"}]
     # )
-    # if isinstance(response, ChatCompletion):
-    #     if response.choices[0].message and response.choices[0].message.content:
-    #         print(response.choices[0].message.content)
+    # if not isinstance(response, Generator):
+    #     print(response.choices[0].message.content)
     pass

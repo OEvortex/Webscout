@@ -1,9 +1,14 @@
+"""
+Sambanova OpenAI-compatible provider.
+https://api.sambanova.ai/v1/chat/completions
+"""
+
 import json
 import time
 import uuid
 from typing import Any, Dict, Generator, List, Optional, Union, cast
 
-from curl_cffi import requests
+from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout.Provider.Openai_comp.base import (
@@ -19,14 +24,16 @@ from webscout.Provider.Openai_comp.utils import (
     Choice,
     ChoiceDelta,
     CompletionUsage,
-    count_tokens,
 )
 
-from ...litagent import LitAgent
+try:
+    from ....litagent import LitAgent
+except ImportError:
+    LitAgent = None
 
 
 class Completions(BaseCompletions):
-    def __init__(self, client: "OpenRouter"):
+    def __init__(self, client: "Sambanova"):
         self._client = client
 
     def create(
@@ -34,16 +41,18 @@ class Completions(BaseCompletions):
         *,
         model: str,
         messages: List[Dict[str, str]],
-        max_tokens: Optional[int] = 2048,
+        max_tokens: Optional[int] = 4096,
         stream: bool = False,
         temperature: Optional[float] = 0.7,
         top_p: Optional[float] = 0.9,
         timeout: Optional[int] = None,
         proxies: Optional[Dict[str, str]] = None,
-        tools: Optional[List[Union[Dict[str, Any], Any]]] = None,
-        tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
         **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
+        """
+        Creates a model response for the given chat conversation.
+        Mimics openai.chat.completions.create
+        """
         payload = {
             "model": model,
             "messages": messages,
@@ -54,10 +63,6 @@ class Completions(BaseCompletions):
             payload["temperature"] = temperature
         if top_p is not None:
             payload["top_p"] = top_p
-        if tools:
-            payload["tools"] = self.format_tool_calls(tools)
-        if tool_choice:
-            payload["tool_choice"] = tool_choice
         payload.update(kwargs)
 
         request_id = f"chatcmpl-{uuid.uuid4()}"
@@ -79,23 +84,20 @@ class Completions(BaseCompletions):
         timeout: Optional[int] = None,
         proxies: Optional[Dict[str, str]] = None,
     ) -> Generator[ChatCompletionChunk, None, None]:
-        import requests as requests_lib
-
+        """Implementation for streaming chat completions."""
         try:
-            # Use curl_cffi for streaming
-            response = requests.post(
+            response = self._client.session.post(
                 self._client.base_url,
                 headers=self._client.headers,
                 json=payload,
                 stream=True,
                 timeout=timeout or self._client.timeout,
                 proxies=proxies,
+                impersonate="chrome120",
             )
             response.raise_for_status()
 
-            prompt_tokens = count_tokens(
-                [msg.get("content", "") for msg in payload.get("messages", [])]
-            )
+            prompt_tokens = 0
             completion_tokens = 0
             total_tokens = 0
 
@@ -114,11 +116,6 @@ class Completions(BaseCompletions):
                             delta_data = choice_data.get("delta", {})
                             finish_reason = choice_data.get("finish_reason")
 
-                            # Extract reasoning or regular content
-                            content = delta_data.get("content") or delta_data.get(
-                                "reasoning_content"
-                            )
-
                             # Update usage if available
                             usage_data = data.get("usage", {})
                             if usage_data:
@@ -128,12 +125,12 @@ class Completions(BaseCompletions):
                                 )
                                 total_tokens = usage_data.get("total_tokens", total_tokens)
 
-                            if content:
-                                completion_tokens += count_tokens(content)
+                            if delta_data.get("content"):
+                                completion_tokens += 1
                                 total_tokens = prompt_tokens + completion_tokens
 
                             delta = ChoiceDelta(
-                                content=content,
+                                content=delta_data.get("content"),
                                 role=delta_data.get("role"),
                                 tool_calls=delta_data.get("tool_calls"),
                             )
@@ -157,6 +154,7 @@ class Completions(BaseCompletions):
                                 "estimated_cost": None,
                             }
                             yield chunk
+
                         except json.JSONDecodeError:
                             continue
 
@@ -178,8 +176,10 @@ class Completions(BaseCompletions):
             }
             yield chunk
 
+        except CurlError as e:
+            raise IOError(f"Sambanova stream request failed (CurlError): {e}") from e
         except Exception as e:
-            raise IOError(f"OpenRouter stream request failed: {e}") from e
+            raise IOError(f"Sambanova stream request failed: {e}") from e
 
     def _create_non_stream(
         self,
@@ -190,6 +190,7 @@ class Completions(BaseCompletions):
         timeout: Optional[int] = None,
         proxies: Optional[Dict[str, str]] = None,
     ) -> ChatCompletion:
+        """Implementation for non-streaming chat completions."""
         try:
             response = self._client.session.post(
                 self._client.base_url,
@@ -207,7 +208,17 @@ class Completions(BaseCompletions):
 
             choices = []
             for choice_d in choices_data:
-                message_d = choice_d.get("message", {})
+                message_d = choice_d.get("message")
+                if not message_d and "delta" in choice_d:
+                    # Handle streaming-style response in non-stream mode
+                    delta = choice_d["delta"]
+                    message_d = {
+                        "role": delta.get("role", "assistant"),
+                        "content": delta.get("content", ""),
+                    }
+                if not message_d:
+                    message_d = {"role": "assistant", "content": ""}
+
                 message = ChatCompletionMessage(
                     role=message_d.get("role", "assistant"), content=message_d.get("content", "")
                 )
@@ -225,92 +236,117 @@ class Completions(BaseCompletions):
             )
 
             completion = ChatCompletion(
-                id=data.get("id", request_id),
+                id=request_id,
                 choices=choices,
-                created=data.get("created", created_time),
+                created=created_time,
                 model=data.get("model", model),
                 usage=usage,
             )
             return completion
+
+        except CurlError as e:
+            raise IOError(f"Sambanova non-stream request failed (CurlError): {e}") from e
         except Exception as e:
-            raise IOError(f"OpenRouter non-stream request failed: {e}") from e
+            raise IOError(f"Sambanova non-stream request failed: {e}") from e
 
 
 class Chat(BaseChat):
-    def __init__(self, client: "OpenRouter"):
+    def __init__(self, client: "Sambanova"):
         self.completions = Completions(client)
 
 
-class OpenRouter(OpenAICompatibleProvider):
+class Sambanova(OpenAICompatibleProvider):
     """
-    OpenAI-compatible client for OpenRouter API.
-
-    Requires an API key from https://openrouter.ai/keys
+    OpenAI-compatible client for Sambanova API.
+    Requires API key from https://cloud.sambanova.ai/
     """
 
     required_auth = True
+
     AVAILABLE_MODELS = []
-    supports_tools = True
-    supports_tool_choice = True
 
     @classmethod
     def get_models(cls, api_key: Optional[str] = None) -> List[str]:
-        """Fetch available models from OpenRouter."""
-        url = "https://openrouter.ai/api/v1/models"
-        try:
-            # Use a temporary curl_cffi session for this class method
-            temp_session = Session()
-            headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
-            headers["Content-Type"] = "application/json"
+        """Fetch available models from Sambanova API."""
+        if not api_key:
+            raise ValueError("API key is required to fetch models.")
 
-            response = temp_session.get(url, headers=headers, timeout=10)
+        try:
+            temp_session = Session()
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}",
+            }
+
+            response = temp_session.get(
+                "https://api.sambanova.ai/v1/models", headers=headers, impersonate="chrome120"
+            )
+
             if response.status_code == 200:
                 data = response.json()
-                if isinstance(data, dict) and "data" in data:
+                if "data" in data and isinstance(data["data"], list):
                     return [model["id"] for model in data["data"] if "id" in model]
-                return [model["id"] for model in data if "id" in model]
+
             return cls.AVAILABLE_MODELS
+
         except Exception:
             return cls.AVAILABLE_MODELS
 
-    @classmethod
-    def update_available_models(cls, api_key: Optional[str] = None):
-        """Update the available models list from OpenRouter API dynamically."""
-        try:
-            models = cls.get_models(api_key)
-            if models and len(models) > 0:
-                cls.AVAILABLE_MODELS = models
-        except Exception:
-            # Fallback to default models list if fetching fails
-            pass
+    def __init__(self, api_key: str, timeout: int = 60, browser: str = "chrome"):
+        """
+        Initialize the Sambanova OpenAI-compatible client.
 
-    def __init__(self, api_key: str, browser: str = "chrome", timeout: int = 30):
+        Args:
+            api_key: Your Sambanova API key (required)
+            timeout: Request timeout in seconds
+            browser: Browser type for fingerprinting
+        """
         if not api_key:
-            raise ValueError("API key is required for OpenRouter")
-
-        # Defer model fetch to background to avoid blocking initialization
-        self._start_background_model_fetch(api_key=api_key)
+            raise ValueError("API key is required for Sambanova")
 
         self.api_key = api_key
         self.timeout = timeout
-        self.base_url = "https://openrouter.ai/api/v1/chat/completions"
+        self.base_url = "https://api.sambanova.ai/v1/chat/completions"
+
         self.session = Session()
 
-        agent = LitAgent()
-        fingerprint = agent.generate_fingerprint(browser)
+        # Generate browser fingerprint
+        if LitAgent:
+            agent = LitAgent()
+            fingerprint = agent.generate_fingerprint(browser)
+            self.headers = {
+                "Accept": fingerprint.get("accept", "*/*"),
+                "Accept-Language": fingerprint.get("accept_language", "en-US,en;q=0.9"),
+                "Content-Type": "application/json",
+                "User-Agent": fingerprint.get("user_agent", ""),
+                "Sec-CH-UA": fingerprint.get("sec_ch_ua", ""),
+                "Sec-CH-UA-Mobile": "?0",
+                "Sec-CH-UA-Platform": f'"{fingerprint.get("platform", "Windows")}"',
+                "Authorization": f"Bearer {api_key}",
+            }
+        else:
+            self.headers = {
+                "Accept": "*/*",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}",
+            }
 
-        self.headers = {
-            "Accept": fingerprint["accept"],
-            "Accept-Language": fingerprint["accept_language"],
-            "Content-Type": "application/json",
-            "User-Agent": fingerprint.get("user_agent", ""),
-            "Authorization": f"Bearer {api_key}",
-            "Sec-CH-UA": fingerprint.get("sec_ch_ua", ""),
-            "Sec-CH-UA-Mobile": "?0",
-            "Sec-CH-UA-Platform": f'"{fingerprint.get("platform", "")}"',
-        }
         self.session.headers.update(self.headers)
+
+        # Update models list dynamically
+        self.update_available_models(api_key)
+
+        # Initialize chat interface
         self.chat = Chat(self)
+
+    @classmethod
+    def update_available_models(cls, api_key: Optional[str] = None):
+        """Update the available models list from Sambanova API."""
+        if api_key:
+            models = cls.get_models(api_key)
+            if models:
+                cls.AVAILABLE_MODELS = models
 
     @property
     def models(self) -> SimpleModelList:
@@ -318,12 +354,44 @@ class OpenRouter(OpenAICompatibleProvider):
 
 
 if __name__ == "__main__":
-    # Example usage:
-    # client = OpenRouter(api_key="sk-or-v1-...")
-    # response = client.chat.completions.create(
-    #     model="openai/gpt-4o-mini",
-    #     messages=[{"role": "user", "content": "Hello!"}]
-    # )
-    # if not isinstance(response, Generator):
-    #     print(response.choices[0].message.content)
-    pass
+    # Example usage - requires API key
+    import os
+
+    api_key = os.environ.get("SAMBANOVA_API_KEY", "")
+    if not api_key:
+        print("Set SAMBANOVA_API_KEY environment variable to test")
+    else:
+        client = Sambanova(api_key=api_key)
+        print(f"Available models: {client.models.list()}")
+
+        # Test non-streaming
+        response = client.chat.completions.create(
+            model="Meta-Llama-3.1-8B-Instruct",
+            messages=[{"role": "user", "content": "Hello!"}],
+            max_tokens=100,
+            stream=False,
+        )
+        if isinstance(response, ChatCompletion):
+            message = response.choices[0].message if response.choices else None
+            print(f"Response: {message.content if message else ''}")
+        else:
+            print(f"Response: {response}")
+
+        # Test streaming
+        print("\nStreaming response:")
+        stream_resp = client.chat.completions.create(
+            model="Meta-Llama-3.1-8B-Instruct",
+            messages=[{"role": "user", "content": "Say hello briefly"}],
+            max_tokens=100,
+            stream=True,
+        )
+        if hasattr(stream_resp, "__iter__") and not isinstance(
+            stream_resp, (str, bytes, ChatCompletion)
+        ):
+            for chunk in stream_resp:
+                delta = chunk.choices[0].delta if chunk.choices else None
+                if delta and delta.content:
+                    print(delta.content, end="", flush=True)
+        else:
+            print(stream_resp)
+        print()

@@ -3,11 +3,11 @@ from json import dumps
 from os import path
 from typing import Any, Dict, Generator, Optional, Union, cast
 
-from ..AIbase import Provider, Response
+from ...AIbase import Provider, Response
 
 # Import internal modules and dependencies
-from ..AIutel import Conversation, Optimizers
-from ..Bard import Chatbot, Model
+from ...AIutel import Conversation, Optimizers
+from ...Bard import Chatbot, Model
 
 warnings.simplefilter("ignore", category=UserWarning)
 

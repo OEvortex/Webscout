@@ -3,14 +3,15 @@ A class to interact with the Apriel Gradio chat API (servicenow-ai-apriel-chat.h
 
 This provider integrates the Apriel chat model into the Webscout framework.
 """
+
 import time
-from typing import Any, Dict, Generator, Optional, Union, cast
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider, Response
+from webscout.AIbase import Provider, Response, Tool
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers
 from webscout.litagent import LitAgent
 from webscout.sanitize import sanitize_stream
@@ -18,7 +19,9 @@ from webscout.sanitize import sanitize_stream
 
 class Apriel(Provider):
     """
-    A class to interact with the Apriel Gradio chat API.
+    A class to interact with the Apriel Gradio API.
+
+    Supports optional tool/function calling via prompt injection.
 
     Attributes:
         system_prompt (str): The system prompt to define the assistant's role.
@@ -28,8 +31,20 @@ class Apriel(Provider):
         >>> ai = Apriel()
         >>> response = ai.chat("What's the weather today?")
         >>> print(response)
-        'The weather today is sunny with a high of 75°F.'
+        'The weather today is sunny with a high of 75F.'
+
+        >>> # With tools
+        >>> from webscout.AIbase import Tool
+        >>> tool = Tool(
+        ...     name="get_weather",
+        ...     description="Get weather for a city",
+        ...     parameters={"city": {"type": "string", "description": "City name"}},
+        ...     implementation=lambda city: f"Sunny in {city}",
+        ... )
+        >>> ai = Apriel(tools=[tool])
+        >>> result = ai.chat("What's the weather in London?", auto_execute_tools=True)
     """
+
     required_auth = False
     AVAILABLE_MODELS = ["UNKNOWN"]
 
@@ -45,22 +60,24 @@ class Apriel(Provider):
         history_offset: int = 10250,
         act: Optional[str] = None,
         system_prompt: str = "You are a helpful assistant.",
-        model: str = "UNKNOWN"
+        model: str = "UNKNOWN",
+        tools: Optional[List[Tool]] = None,
     ):
         """
         Initializes the Apriel API with given parameters.
 
         Args:
-            is_conversation (bool): Whether the provider is in conversation mode.
-            max_tokens (int): Maximum number of tokens to sample.
-            timeout (int): Timeout for API requests.
-            intro (str): Introduction message for the conversation.
-            filepath (str): Filepath for storing conversation history.
-            update_file (bool): Whether to update the conversation history file.
-            proxies (dict): Proxies for the API requests.
-            history_offset (int): Offset for conversation history.
-            act (str): Act for the conversation.
-            system_prompt (str): The system prompt to define the assistant's role.
+            is_conversation: Whether the provider is in conversation mode.
+            max_tokens: Maximum number of tokens to sample.
+            timeout: Timeout for API requests.
+            intro: Introduction message for the conversation.
+            filepath: Filepath for storing conversation history.
+            update_file: Whether to update the conversation history file.
+            proxies: Proxies for the API requests.
+            history_offset: Offset for conversation history.
+            act: Act for the conversation.
+            system_prompt: The system prompt to define the assistant's role.
+            tools: Optional list of Tool objects for function calling.
         """
         self.session = Session()
         self.is_conversation = is_conversation
@@ -95,10 +112,20 @@ class Apriel(Provider):
         self.conversation.history_offset = history_offset
 
         if act:
-            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
-            ) or self.conversation.intro
+            self.conversation.intro = (
+                AwesomePrompts().get_act(
+                    cast(Union[str, int], act),
+                    default=self.conversation.intro,
+                    case_insensitive=True,
+                )
+                or self.conversation.intro
+            )
         elif intro:
             self.conversation.intro = intro
+
+        # Register tools if provided
+        if tools:
+            self.register_tools(tools)
 
     def _get_session_hash(self) -> str:
         """Generate or get a session hash for the Gradio API."""
@@ -110,7 +137,9 @@ class Apriel(Provider):
         except Exception:
             return str(int(time.time()))
 
-    def _join_queue(self, session_hash: str, message: str, fn_index: int = 1, trigger_id: int = 16) -> Optional[str]:
+    def _join_queue(
+        self, session_hash: str, message: str, fn_index: int = 1, trigger_id: int = 16
+    ) -> Optional[str]:
         """Send the user message to /gradio_api/queue/join and return event_id if available."""
         url = f"{self.api_endpoint}/gradio_api/queue/join"
         payload = {
@@ -135,7 +164,7 @@ class Apriel(Provider):
             "event_data": None,
             "fn_index": fn_index,
             "trigger_id": trigger_id,
-            "session_hash": session_hash
+            "session_hash": session_hash,
         }
         response = self.session.post(url, json=payload, timeout=self.timeout)
         response.raise_for_status()
@@ -162,31 +191,51 @@ class Apriel(Provider):
         raw: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
+        tools: Optional[List[Tool]] = None,
+        tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
+        auto_execute_tools: bool = False,
         **kwargs: Any,
     ) -> Response:
         """
         Sends a prompt to the Apriel Gradio API and returns the response.
 
+        When tools are provided, tool definitions are injected into the prompt
+        so the model can respond with tool calls. If auto_execute_tools is True,
+        detected tool calls are executed and results fed back automatically.
+
         Args:
-            prompt (str): The prompt to send to the API.
-            stream (bool): Whether to stream the response.
-            raw (bool): Whether to return the raw response.
-            optimizer (str): Optimizer to use for the prompt.
-            conversationally (bool): Whether to generate the prompt conversationally.
+            prompt: The prompt to send to the API.
+            stream: Whether to stream the response.
+            raw: Whether to return the raw response.
+            optimizer: Optimizer to use for the prompt.
+            conversationally: Whether to generate the prompt conversationally.
+            tools: Optional list of Tool objects for this request.
+            tool_choice: Optional tool choice hint (unused by this provider).
+            auto_execute_tools: If True, automatically execute detected tool calls.
 
         Returns:
             Dict[str, Any]: The API response.
         """
-        conversation_prompt = self.conversation.gen_complete_prompt(prompt)
+        # Merge tools: instance-level + per-request
+        effective_tools = list(self.available_tools.values())
+        if tools:
+            effective_tools.extend(tools)
+            self.register_tools(tools)
+
+        tool_defs_text = ""
+        if effective_tools:
+            tool_defs_text = self.format_tools_for_prompt(effective_tools)
+
+        conversation_prompt = self.conversation.gen_complete_prompt(
+            prompt, tool_definitions=tool_defs_text or None
+        )
         if optimizer:
             if optimizer in self.__available_optimizers:
                 conversation_prompt = getattr(Optimizers, optimizer)(
                     conversation_prompt if conversationally else prompt
                 )
             else:
-                raise Exception(
-                    f"Optimizer is not one of {self.__available_optimizers}"
-                )
+                raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
 
         session_hash = self._get_session_hash()
         self._join_queue(session_hash, conversation_prompt)
@@ -197,10 +246,7 @@ class Apriel(Provider):
             try:
                 url = f"{self.api_endpoint}/gradio_api/queue/data?session_hash={session_hash}"
                 response = self.session.get(
-                    url,
-                    stream=True,
-                    timeout=self.timeout,
-                    impersonate="chrome110"
+                    url, stream=True, timeout=self.timeout, impersonate="chrome110"
                 )
                 if not response.ok:
                     raise exceptions.FailedToGenerateResponseError(
@@ -214,7 +260,7 @@ class Apriel(Provider):
                     to_json=True,
                     content_extractor=self._apriel_extractor,
                     yield_raw_on_error=False,
-                    raw=raw
+                    raw=raw,
                 )
 
                 for content_chunk in processed_stream:
@@ -229,11 +275,23 @@ class Apriel(Provider):
             except CurlError as e:
                 raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {e}")
             except Exception as e:
-                raise exceptions.FailedToGenerateResponseError(f"An unexpected error occurred ({type(e).__name__}): {e}")
+                raise exceptions.FailedToGenerateResponseError(
+                    f"An unexpected error occurred ({type(e).__name__}): {e}"
+                )
             finally:
                 if streaming_text:
                     self.last_response = {"text": streaming_text}
                     self.conversation.update_chat_history(prompt, streaming_text)
+
+                    # Auto-execute tool calls if enabled
+                    if auto_execute_tools and effective_tools:
+                        tool_calls = self.extract_tool_calls(streaming_text)
+                        if tool_calls:
+                            results = self.process_tool_calls(tool_calls)
+                            for r in results:
+                                self.conversation.add_tool_call_result(
+                                    r["tool_name"], r["arguments"], r["result"]
+                                )
 
         def for_non_stream():
             for _ in for_stream():
@@ -248,25 +306,38 @@ class Apriel(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
+        tools: Optional[List[Tool]] = None,
+        tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
         **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """
         Generates a response from the Apriel API.
 
         Args:
-            prompt (str): The prompt to send to the API.
-            stream (bool): Whether to stream the response.
-            optimizer (str): Optimizer to use for the prompt.
-            conversationally (bool): Whether to generate the prompt conversationally.
-            **kwargs: Additional parameters including raw.
+            prompt: The prompt to send to the API.
+            stream: Whether to stream the response.
+            optimizer: Optimizer to use for the prompt.
+            conversationally: Whether to generate the prompt conversationally.
+            tools: Optional list of Tool objects for this request.
+            tool_choice: Optional tool choice hint.
+            **kwargs: Additional parameters including raw and auto_execute_tools.
 
         Returns:
             str: The API response.
         """
         raw = kwargs.get("raw", False)
+        auto_execute_tools = kwargs.get("auto_execute_tools", False)
+
         def for_stream():
             for response in self.ask(
-                prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
+                prompt,
+                True,
+                raw=raw,
+                optimizer=optimizer,
+                conversationally=conversationally,
+                tools=tools,
+                tool_choice=tool_choice,
+                auto_execute_tools=auto_execute_tools,
             ):
                 if raw:
                     yield response
@@ -280,6 +351,9 @@ class Apriel(Provider):
                 raw=raw,
                 optimizer=optimizer,
                 conversationally=conversationally,
+                tools=tools,
+                tool_choice=tool_choice,
+                auto_execute_tools=auto_execute_tools,
             )
             if raw:
                 return cast(str, result)
@@ -302,8 +376,10 @@ class Apriel(Provider):
             return str(response)
         return cast(Dict[str, Any], response).get("text", "")
 
+
 if __name__ == "__main__":
     from rich import print
+
     ai = Apriel(timeout=60)
     response = ai.chat("write a poem about AI", stream=True, raw=False)
     if hasattr(response, "__iter__") and not isinstance(response, (str, bytes)):

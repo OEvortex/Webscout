@@ -20,7 +20,7 @@ from webscout.Provider.Openai_comp.utils import (
     CompletionUsage,
 )
 
-from ...litagent import LitAgent
+from ....litagent import LitAgent
 
 
 class Completions(BaseCompletions):
@@ -290,7 +290,7 @@ class Zenmux(OpenAICompatibleProvider):
                 CurlSession = None  # type: ignore
                 curl_available = False
             try:
-                from ...litagent import LitAgent
+                from ....litagent import LitAgent
 
                 agent = LitAgent()
                 fingerprint = agent.generate_fingerprint("chrome")

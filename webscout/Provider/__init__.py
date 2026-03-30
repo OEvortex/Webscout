@@ -1,52 +1,53 @@
 # This file marks the directory as a Python package.
 # Static imports for all Provider modules
+from webscout.Provider.Auth import (
+    AkashGPT,
+    Cerebras,
+    Cohere,
+    DeepAI,
+    DeepInfra,
+    Falcon,
+    GEMINI,
+    GEMINIAPI,
+    GithubChat,
+    GROQ,
+    HuggingFace,
+    Julius,
+    Nvidia,
+    OpenAI,
+    OpenRouter,
+    QwenLM,
+    Sambanova,
+    TogetherAI,
+    TwoAI,
+    Upstage,
+    WrDoChat,
+)
 from webscout.Provider.ai4chat import AI4Chat
-from webscout.Provider.akashgpt import AkashGPT
 from webscout.Provider.Apriel import Apriel
 from webscout.Provider.Ayle import Ayle
-from webscout.Provider.cerebras import Cerebras
-from webscout.Provider.Cohere import Cohere
-from webscout.Provider.DeepAI import DeepAI
-from webscout.Provider.Deepinfra import DeepInfra
 from webscout.Provider.AvaSupernova import AvaSupernova
 from webscout.Provider.elmo import Elmo
 from webscout.Provider.EssentialAI import EssentialAI
 from webscout.Provider.ExaAI import ExaAI
-from webscout.Provider.Falcon import Falcon
-from webscout.Provider.Gemini import GEMINI
-from webscout.Provider.geminiapi import GEMINIAPI
-from webscout.Provider.GithubChat import GithubChat
-
-from webscout.Provider.Groq import GROQ
 from webscout.Provider.HeckAI import HeckAI
-from webscout.Provider.HuggingFace import HuggingFace
 from webscout.Provider.IBM import IBM
 from webscout.Provider.Jadve import JadveOpenAI
-from webscout.Provider.julius import Julius
 from webscout.Provider.k2think import K2Think
 
 from webscout.Provider.llmchat import LLMChat
 from webscout.Provider.llmchatco import LLMChatCo
 from webscout.Provider.meta import Meta
 from webscout.Provider.Netwrck import Netwrck
-from webscout.Provider.Nvidia import Nvidia
-from webscout.Provider.OpenRouter import OpenRouter
 from webscout.Provider.PI import PiAI
-from webscout.Provider.QwenLM import QwenLM
-from webscout.Provider.Sambanova import Sambanova
 from webscout.Provider.searchchat import SearchChatAI
 from webscout.Provider.sonus import SonusAI
 from webscout.Provider.TextPollinationsAI import TextPollinationsAI
-from webscout.Provider.TogetherAI import TogetherAI
 from webscout.Provider.toolbaz import Toolbaz
 from webscout.Provider.turboseek import TurboSeek
-from webscout.Provider.TwoAI import TwoAI
 from webscout.Provider.TypliAI import TypliAI
-from webscout.Provider.Upstage import Upstage
 from webscout.Provider.WiseCat import WiseCat
-from webscout.Provider.WrDoChat import WrDoChat
 
-from .Openai import OpenAI
 
 # List of all exported names
 __all__ = [
