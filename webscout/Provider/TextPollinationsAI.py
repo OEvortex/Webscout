@@ -4,7 +4,7 @@ from typing import Any, Dict, Generator, List, Optional, Union, cast
 from curl_cffi import requests
 
 from webscout import exceptions
-from webscout.AIbase import Provider, Response
+from webscout.AIbase import Provider, Response, Tool
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 from webscout.litagent import LitAgent as Lit
 from webscout.model_fetcher import BackgroundModelFetcher
@@ -54,6 +54,7 @@ class TextPollinationsAI(Provider):
         act: Optional[str] = None,
         model: str = "openai",
         system_prompt: str = "You are a helpful AI assistant.",
+        tools: Optional[list[Tool]] = None,
     ):
         """Initializes the TextPollinationsAI API client."""
         # Start background model fetch (non-blocking)
@@ -111,6 +112,9 @@ class TextPollinationsAI(Provider):
             )
         elif intro:
             self.conversation.intro = intro
+
+        if tools:
+            self.register_tools(tools)
 
     @classmethod
     def get_models(cls):

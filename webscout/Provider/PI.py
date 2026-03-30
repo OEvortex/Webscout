@@ -7,7 +7,7 @@ from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider, Response
+from webscout.AIbase import Provider, Response, Tool
 from webscout.AIutel import (  # Import sanitize_stream
     AwesomePrompts,
     Conversation,
@@ -55,6 +55,7 @@ class PiAI(Provider):
         voice_name: str = "voice3",
         output_file: str = "PiAI.mp3",
         model: str = "inflection_3_pi",  # Note: model is not used by this API
+        tools: Optional[list[Tool]] = None,
     ):
         """
         Initializes PiAI with voice support.
@@ -136,6 +137,9 @@ class PiAI(Provider):
 
         if self.is_conversation:
             self.start_conversation()
+
+        if tools:
+            self.register_tools(tools)
 
     @staticmethod
     def _pi_extractor(chunk: Union[str, Dict[str, Any]]) -> Optional[str]:

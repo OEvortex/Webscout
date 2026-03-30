@@ -5,7 +5,7 @@ from uuid import uuid4
 from curl_cffi import requests
 
 from webscout import exceptions
-from webscout.AIbase import Provider, Response
+from webscout.AIbase import Provider, Response, Tool
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 from webscout.litagent import LitAgent
 
@@ -41,6 +41,7 @@ class ExaAI(Provider):
         act: Optional[str] = None,
         # system_prompt: str = "You are a helpful assistant.",
         model: str = "O3-Mini",  # >>> THIS FLAG IS NOT USED <<<
+        tools: Optional[list[Tool]] = None,
     ):
         """
         Initializes the ExaAI API with given parameters.
@@ -117,6 +118,9 @@ class ExaAI(Provider):
             self.conversation.intro = intro
         if proxies:
             self.session.proxies.update(proxies)
+
+        if tools:
+            self.register_tools(tools)
 
     def ask(
         self,

@@ -5,7 +5,7 @@ from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider, Response
+from webscout.AIbase import Provider, Response, Tool
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 from webscout.litagent import LitAgent
 from webscout.model_fetcher import BackgroundModelFetcher
@@ -60,6 +60,7 @@ class AvaSupernova(Provider):
         model: str = "glm-4.7-flash",
         system_prompt: str = "You are a helpful coding assistant.",
         browser: str = "chrome",
+        tools: Optional[list[Tool]] = None,
     ):
         """Initializes the Ava Supernova client."""
 
@@ -118,6 +119,9 @@ class AvaSupernova(Provider):
             )
         elif intro:
             self.conversation.intro = intro
+
+        if tools:
+            self.register_tools(tools)
 
     def ask(
         self,

@@ -5,7 +5,7 @@ from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider, Response
+from webscout.AIbase import Provider, Response, Tool
 from webscout.AIutel import (  # Import sanitize_stream
     AwesomePrompts,
     Conversation,
@@ -49,6 +49,7 @@ class LLMChatCo(Provider):
         act: Optional[str] = None,
         model: str = "gemini-flash-2.0",
         system_prompt: str = "You are a helpful assistant.",
+        tools: Optional[list[Tool]] = None,
     ):
         """
         Initializes the LLMChat.co API with given parameters.
@@ -113,6 +114,9 @@ class LLMChatCo(Provider):
         self.system_prompt = system_prompt
         # Store message history for conversation context
         self.last_assistant_response = ""
+
+        if tools:
+            self.register_tools(tools)
 
     @staticmethod
     def _llmchatco_extractor(chunk: Union[str, Dict[str, Any]]) -> Optional[str]:

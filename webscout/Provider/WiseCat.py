@@ -4,7 +4,7 @@ from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider, Response
+from webscout.AIbase import Provider, Response, Tool
 from webscout.AIutel import (  # Import sanitize_stream
     AwesomePrompts,
     Conversation,
@@ -39,6 +39,7 @@ class WiseCat(Provider):
         act: Optional[str] = None,
         model: str = "chat-model-small",
         system_prompt: str = "You are a helpful AI assistant.",
+        tools: Optional[list[Tool]] = None,
     ):
         """Initializes the WiseCat API client."""
 
@@ -86,6 +87,9 @@ class WiseCat(Provider):
             )
         elif intro:
             self.conversation.intro = intro
+
+        if tools:
+            self.register_tools(tools)
 
     def ask(
         self,

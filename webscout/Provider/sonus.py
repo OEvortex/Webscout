@@ -5,7 +5,7 @@ from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider, Response
+from webscout.AIbase import Provider, Response, Tool
 from webscout.AIutel import (
     AwesomePrompts,
     Conversation,
@@ -34,6 +34,7 @@ class SonusAI(Provider):
         history_offset: int = 10250,
         act: Optional[str] = None,
         model: str = "pro",
+        tools: Optional[list[Tool]] = None,
     ):
         """Initializes the Sonus AI API client."""
         if model not in self.AVAILABLE_MODELS:
@@ -78,6 +79,9 @@ class SonusAI(Provider):
         if act_prompt:
             self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
+
+        if tools:
+            self.register_tools(tools)
 
     @staticmethod
     def _sonus_extractor(chunk: Union[str, Dict[str, Any]]) -> Optional[str]:

@@ -3,7 +3,7 @@ from typing import Any, Dict, Generator, Optional, Union, cast
 
 from curl_cffi.requests import RequestsError, Session
 
-from webscout.AIbase import Provider, Response
+from webscout.AIbase import Provider, Response, Tool
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers
 
 # Available models for AI4Chat
@@ -243,6 +243,7 @@ class AI4Chat(Provider):
         country: str = "Asia",
         user_id: str = "usersmjb2oaz7y",
         model: str = default_model,
+        tools: Optional[list[Tool]] = None,
     ) -> None:
         from typing import cast
 
@@ -301,6 +302,9 @@ class AI4Chat(Provider):
             self.conversation.intro = intro
 
         self.system_prompt = system_prompt
+
+        if tools:
+            self.register_tools(tools)
 
     def ask(
         self,

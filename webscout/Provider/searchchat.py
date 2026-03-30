@@ -5,7 +5,7 @@ from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider, Response
+from webscout.AIbase import Provider, Response, Tool
 from webscout.AIutel import (  # Import sanitize_stream
     AwesomePrompts,
     Conversation,
@@ -34,6 +34,7 @@ class SearchChatAI(Provider):
         proxies: dict = {},
         history_offset: int = 10250,
         act: Optional[str] = None,
+        tools: Optional[list[Tool]] = None,
     ):
         """Initializes the SearchChatAI API client."""
         self.url = "https://search-chat.ai/api/chat-test-stop.php"
@@ -90,6 +91,9 @@ class SearchChatAI(Provider):
         if act_prompt:
             self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
+
+        if tools:
+            self.register_tools(tools)
 
     def refresh_identity(self, browser: Optional[str] = None):
         """

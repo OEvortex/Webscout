@@ -6,7 +6,7 @@ from typing import Any, Dict, Generator, Optional, Union, cast
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider, Response
+from webscout.AIbase import Provider, Response, Tool
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers
 from webscout.litagent import LitAgent
 
@@ -35,6 +35,7 @@ class EssentialAI(Provider):
         model: str = "rnj-1-instruct",
         temperature: float = 0.2,
         top_p: float = 0.95,
+        tools: Optional[list[Tool]] = None,
     ):
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
@@ -94,6 +95,9 @@ class EssentialAI(Provider):
             )
         elif intro:
             self.conversation.intro = intro
+
+        if tools:
+            self.register_tools(tools)
 
     def _get_session_hash(self) -> str:
         import random

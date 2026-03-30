@@ -6,7 +6,7 @@ from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider, Response
+from webscout.AIbase import Provider, Response, Tool
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 from webscout.litagent import LitAgent
 
@@ -62,6 +62,7 @@ class HeckAI(Provider):
         act: Optional[str] = None,
         model: str = "google/gemini-2.5-flash-preview",
         language: str = "English",
+        tools: Optional[list[Tool]] = None,
     ):
         """
         Initializes the HeckAI API client.
@@ -133,6 +134,9 @@ class HeckAI(Provider):
             )
         elif intro:
             self.conversation.intro = intro
+
+        if tools:
+            self.register_tools(tools)
 
     def ask(
         self,

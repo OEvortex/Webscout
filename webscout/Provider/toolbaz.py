@@ -12,7 +12,7 @@ from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider, Response
+from webscout.AIbase import Provider, Response, Tool
 from webscout.AIutel import (
     AwesomePrompts,
     Conversation,
@@ -69,6 +69,7 @@ class Toolbaz(Provider):
         act: Optional[str] = None,
         model: str = "gemini-2.0-flash",
         system_prompt: str = "You are a helpful AI assistant.",
+        tools: Optional[list[Tool]] = None,
     ):
         """
         Initializes the Toolbaz API with given parameters.
@@ -123,6 +124,9 @@ class Toolbaz(Provider):
         if act_prompt:
             self.conversation.intro = act_prompt
         self.conversation.history_offset = history_offset
+
+        if tools:
+            self.register_tools(tools)
 
     def random_string(self, length: int) -> str:
         return "".join(random.choices(string.ascii_letters + string.digits, k=length))

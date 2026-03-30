@@ -4,7 +4,7 @@ from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider, Response
+from webscout.AIbase import Provider, Response, Tool
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 
 
@@ -77,6 +77,7 @@ class LLMChat(Provider):
         act: Optional[str] = None,
         model: str = "@cf/meta/llama-3.1-70b-instruct",
         system_prompt: str = "You are a helpful assistant.",
+        tools: Optional[list[Tool]] = None,
     ):
         """
         Initializes the LLMChat API with given parameters.
@@ -128,6 +129,9 @@ class LLMChat(Provider):
         if proxies:
             self.session.proxies.update(proxies)
         self.system_prompt = system_prompt
+
+        if tools:
+            self.register_tools(tools)
 
     def ask(
         self,

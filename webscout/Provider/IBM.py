@@ -7,7 +7,7 @@ from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider, Response
+from webscout.AIbase import Provider, Response, Tool
 from webscout.AIutel import (  # Import sanitize_stream
     AwesomePrompts,
     Conversation,
@@ -72,6 +72,7 @@ class IBM(Provider):
         model: str = "granite-chat",
         system_prompt: str = "You are a helpful assistant.",
         browser: str = "chrome",  # Note: browser fingerprinting might be less effective with impersonate
+        tools: Optional[list[Tool]] = None,
     ):
         """Initializes the IBM Granite API client."""
         if model not in self.AVAILABLE_MODELS:
@@ -134,6 +135,9 @@ class IBM(Provider):
             )
         elif intro:
             self.conversation.intro = intro
+
+        if tools:
+            self.register_tools(tools)
 
     def refresh_identity(self, browser: Optional[str] = None):
         """

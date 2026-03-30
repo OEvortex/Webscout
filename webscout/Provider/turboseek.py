@@ -5,7 +5,7 @@ from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider, Response
+from webscout.AIbase import Provider, Response, Tool
 from webscout.AIutel import (  # Import sanitize_stream
     AwesomePrompts,
     Conversation,
@@ -35,6 +35,7 @@ class TurboSeek(Provider):
         history_offset: int = 10250,
         act: Optional[str] = None,
         model: str = "Llama 3.1 70B",  # Note: model parameter is not used by the API endpoint
+        tools: Optional[list[Tool]] = None,
     ):
         """Instantiates TurboSeek
 
@@ -101,6 +102,9 @@ class TurboSeek(Provider):
             )
         elif intro:
             self.conversation.intro = intro
+
+        if tools:
+            self.register_tools(tools)
 
     @staticmethod
     def _html_to_markdown(text: str) -> str:

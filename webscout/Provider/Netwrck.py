@@ -6,7 +6,7 @@ from curl_cffi import CurlError  # Import CurlError
 from curl_cffi.requests import Session  # Import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider, Response
+from webscout.AIbase import Provider, Response, Tool
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers  # Import sanitize_stream
 from webscout.litagent import LitAgent
 
@@ -43,6 +43,7 @@ class Netwrck(Provider):
         system_prompt: str = "You are a helpful assistant.",
         temperature: float = 0.7,  # Note: temperature is not used by this API
         top_p: float = 0.8,  # Note: top_p is not used by this API
+        tools: Optional[list[Tool]] = None,
     ):
         """Initializes the Netwrck API client."""
         if model not in self.AVAILABLE_MODELS:
@@ -97,6 +98,9 @@ class Netwrck(Provider):
             for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
+
+        if tools:
+            self.register_tools(tools)
 
     @staticmethod
     def _netwrck_extractor(chunk: Union[str, Dict[str, Any]]) -> Optional[str]:

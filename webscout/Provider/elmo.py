@@ -5,7 +5,7 @@ from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider, Response
+from webscout.AIbase import Provider, Response, Tool
 from webscout.AIutel import (  # Import sanitize_stream
     AwesomePrompts,
     Conversation,
@@ -33,6 +33,7 @@ class Elmo(Provider):
         history_offset: int = 10250,
         act: Optional[str] = None,
         system_prompt: str = "You are a helpful AI assistant. Provide clear, concise, and well-structured information. Organize your responses into paragraphs for better readability.",
+        tools: Optional[list[Tool]] = None,
     ) -> None:
         """Instantiates Elmo
 
@@ -94,6 +95,9 @@ class Elmo(Provider):
             )
         elif intro:
             self.conversation.intro = intro
+
+        if tools:
+            self.register_tools(tools)
 
     @staticmethod
     def _elmo_extractor(chunk: Union[str, Dict[str, Any]]) -> Optional[str]:

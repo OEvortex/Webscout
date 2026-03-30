@@ -6,7 +6,7 @@ from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider, Response
+from webscout.AIbase import Provider, Response, Tool
 from webscout.AIutel import (  # Import sanitize_stream
     AwesomePrompts,
     Conversation,
@@ -36,6 +36,7 @@ class JadveOpenAI(Provider):
         act: Optional[str] = None,
         model: str = "gpt-5-mini",
         system_prompt: str = "You are a helpful AI assistant.",  # Note: system_prompt is not used by this API
+        tools: Optional[list[Tool]] = None,
     ):
         """
         Initializes the JadveOpenAI client.
@@ -114,6 +115,9 @@ class JadveOpenAI(Provider):
             )
         elif intro:
             self.conversation.intro = intro
+
+        if tools:
+            self.register_tools(tools)
 
     @staticmethod
     def _jadve_extractor(chunk: Union[str, Dict[str, Any]]) -> Optional[str]:

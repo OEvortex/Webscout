@@ -7,7 +7,7 @@ from curl_cffi import CurlError
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider, Response
+from webscout.AIbase import Provider, Response, Tool
 
 #
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
@@ -65,6 +65,7 @@ class TypliAI(Provider):
         act: Optional[str] = None,
         system_prompt: str = "You are a helpful assistant.",
         model: str = "openai/gpt-4o-mini",
+        tools: Optional[list[Tool]] = None,
     ):
         """
         Initializes the TypliAI API with given parameters.
@@ -141,6 +142,9 @@ class TypliAI(Provider):
             )
         elif intro:
             self.conversation.intro = intro
+
+        if tools:
+            self.register_tools(tools)
 
     def _init_session(self) -> None:
         """Initialize session by visiting the page to get CSRF token and cookies."""

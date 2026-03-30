@@ -10,7 +10,7 @@ from curl_cffi.requests import Session
 from litprinter import ic
 
 from webscout import exceptions
-from webscout.AIbase import Provider, Response
+from webscout.AIbase import Provider, Response, Tool
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, retry
 from webscout.litagent import LitAgent as Lit
 from webscout.scout import Scout
@@ -324,6 +324,7 @@ class Meta(Provider):
         history_offset: int = 10250,
         act: Optional[str] = None,
         skip_init: bool = False,
+        tools: Optional[list[Tool]] = None,
     ):
         """
         Initializes the Meta AI API with given parameters.
@@ -421,6 +422,9 @@ class Meta(Provider):
             ic(
                 "Meta initialized in skip_init mode: cookies not fetched. Some operations will fail until cookies are obtained."
             )
+
+        if tools:
+            self.register_tools(tools)
 
     def check_proxy(self, test_url: str = "https://api.ipify.org/?format=json") -> bool:
         """

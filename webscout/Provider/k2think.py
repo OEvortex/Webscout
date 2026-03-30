@@ -4,7 +4,7 @@ from typing import Any, Dict, Generator, Optional, Union, cast
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider, Response
+from webscout.AIbase import Provider, Response, Tool
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers, sanitize_stream
 from webscout.litagent import LitAgent
 
@@ -49,6 +49,7 @@ class K2Think(Provider):
         model: str = "MBZUAI-IFM/K2-Think-v2",
         system_prompt: str = "You are a helpful assistant.",
         browser: str = "chrome",
+        tools: Optional[list[Tool]] = None,
     ):
         """Initializes the K2Think API client."""
 
@@ -111,6 +112,9 @@ class K2Think(Provider):
             )
         elif intro:
             self.conversation.intro = intro
+
+        if tools:
+            self.register_tools(tools)
 
     def refresh_identity(self, browser: Optional[str] = None):
         """

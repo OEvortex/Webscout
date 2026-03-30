@@ -7,7 +7,7 @@ from curl_cffi.requests import Response as CurlResponse  # Import Response
 from curl_cffi.requests import Session
 
 from webscout import exceptions
-from webscout.AIbase import Provider, Response
+from webscout.AIbase import Provider, Response, Tool
 from webscout.AIutel import (  # Import sanitize_stream
     AwesomePrompts,
     Conversation,
@@ -68,6 +68,7 @@ class Ayle(Provider):
         presence_penalty: int = 0,
         frequency_penalty: int = 0,
         top_p: float = 1,
+        tools: Optional[list[Tool]] = None,
     ):
         """Initializes the Ayle client."""
         if model not in self.AVAILABLE_MODELS:
@@ -127,6 +128,9 @@ class Ayle(Provider):
 
         self.provider = self._get_provider_from_model(self.model)
         self.model_name = self.model
+
+        if tools:
+            self.register_tools(tools)
 
     def _get_endpoint(self) -> str:
         """Get the API endpoint for the current provider."""
