@@ -14,6 +14,11 @@ class TextResult:
     href: str = ""
     body: str = ""
 
+    _KEY_ALIASES = {"link": "href", "snippet": "body", "url": "href"}
+
+    def __getitem__(self, key: str) -> Any:
+        return getattr(self, self._KEY_ALIASES.get(key, key))
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -34,6 +39,9 @@ class ImagesResult:
     height: int = 0
     width: int = 0
     source: str = ""
+
+    def __getitem__(self, key: str) -> Any:
+        return getattr(self, key)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
@@ -68,6 +76,9 @@ class VideosResult:
     url: str = ""
     thumbnail: str = ""
 
+    def __getitem__(self, key: str) -> Any:
+        return getattr(self, key)
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -100,6 +111,9 @@ class NewsResult:
     image: str = ""
     source: str = ""
 
+    def __getitem__(self, key: str) -> Any:
+        return getattr(self, key)
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -125,6 +139,9 @@ class BooksResult:
     language: str = ""
     filesize: str = ""
     extension: str = ""
+
+    def __getitem__(self, key: str) -> Any:
+        return getattr(self, key)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""

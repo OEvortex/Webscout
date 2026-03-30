@@ -23,7 +23,7 @@ Learn how to use Webscout for AI chat interactions:
 
 Integrate web search into your applications:
 
-- **[Search Queries](search-queries.md)** — DuckDuckGo, Bing, Yahoo, and other search engines
+- **[Search](../search.md)** — DuckDuckGo, Bing, Brave, Yahoo, and other search engines
 - **[Search Integration](search-integration.md)** — Combine search results with AI analysis
 
 ### Media Generation
@@ -108,7 +108,7 @@ for chunk in client.chat("Write a haiku", stream=True):
 
 1. **[Basic Chat](basic-chat.md)** — Learn the fundamentals
 2. **[Streaming Responses](streaming-responses.md)** — Handle long responses
-3. **[Search Queries](search-queries.md)** — Add web search capability
+3. **[Search](../search.md)** — Add web search capability
 4. **[Failover Patterns](failover-patterns.md)** — Make it production-ready
 5. **[FastAPI Integration](fastapi-integration.md)** — Build a web app
 
@@ -122,7 +122,7 @@ for chunk in client.chat("Write a haiku", stream=True):
 |------|---------|
 | Ask simple questions | [Basic Chat](basic-chat.md) |
 | Generate long text | [Streaming Responses](streaming-responses.md) |
-| Search the web | [Search Queries](search-queries.md) |
+| Search the web | [Search](../search.md) |
 | Create images | [Text-to-Image](text-to-image.md) |
 | Generate audio | [Text-to-Speech](text-to-speech.md) |
 | Handle errors | [Failover Patterns](failover-patterns.md) |
@@ -288,7 +288,7 @@ for question in questions:
 - Single provider
 - Synchronous code
 
-**Files:** basic-chat.md, search-queries.md
+**Files:** basic-chat.md, [search.md](../search.md)
 
 ### Level 2: Intermediate
 

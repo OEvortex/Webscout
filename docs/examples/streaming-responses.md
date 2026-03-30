@@ -551,4 +551,4 @@ except Exception as e:
 - [API Reference](../api-reference.md)
 - [Troubleshooting](../troubleshooting.md)
 
-Next: Learn about [Search Queries](search-queries.md)
+Next: Learn about [Search](../search.md)

@@ -174,7 +174,7 @@ results = search.text("best practices for API design", max_results=5)
 
 for result in results:
     print(f"Title: {result['title']}")
-    print(f"URL: {result['link']}")
+    print(f"URL: {result['href']}")
     print(f"Snippet: {result['body']}\n")
 ```
 

@@ -2,13 +2,13 @@
   <a href="https://github.com/OEvortex/Webscout">
     <img src="https://img.shields.io/badge/WebScout-Ultimate%20Toolkit-blue?style=for-the-badge&logo=python&logoColor=white" alt="WebScout Logo">
   </a>
- 
+
   <h1>Webscout</h1>
 
   <p><strong>Your All-in-One Python Toolkit for Web Search, AI Interaction, Digital Utilities, and More</strong></p>
 
   <p>
-    Access diverse search engines, cutting-edge AI models, temporary communication tools, media utilities, developer helpers, and powerful CLI interfaces – all through one unified library.
+    Access diverse search engines, cutting-edge AI models, temporary communication tools, media utilities, developer helpers, and powerful CLI interfaces -- all through one unified library.
   </p>
 
   <!-- Badges -->
@@ -23,547 +23,469 @@
 
 <hr/>
 
-## 📋 Table of Contents
+## Table of Contents
 
-- [🌟 Key Features](#-features)
-- [⚙️ Installation](#️-installation)
-- [🖥️ Command Line Interface](#️-command-line-interface)
-- [📚 Documentation Hub](docs/README.md)
-- [🔄 OpenAI-Compatible API Server](docs/openai-api-server.md)
-- [🕸️ Scout: HTML Parser & Web Crawler](docs/scout.md)
-- [🎭 Awesome Prompts Manager](docs/awesome-prompts.md)
-- [🔗 GitAPI: GitHub Data Extraction](docs/gitapi.md)
-- [🤖 AI Models and Voices](#-ai-models-and-voices)
-- [💬 AI Chat Providers](#-ai-chat-providers)
-- [👨‍💻 Advanced AI Interfaces](#-advanced-ai-interfaces)
-- [🤝 Contributing](#-contributing)
-- [🙏 Acknowledgments](#-acknowledgments)
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [CLI](#command-line-interface)
+- [AI Chat Providers](#ai-chat-providers)
+- [Search Engines](#search-engines)
+- [Text-to-Image](#text-to-image)
+- [Text-to-Speech](#text-to-speech)
+- [OpenAI-Compatible API Server](#openai-compatible-api-server)
+- [Python Client](#python-client)
+- [Tool Calling](#tool-calling)
+- [Model Registry](#model-registry)
+- [Developer Tools](#developer-tools)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
 
 <hr/>
 
 > [!IMPORTANT]
-> **Webscout supports three types of compatibility:**
+> Webscout supports three types of compatibility:
 >
-> - **Native Compatibility:** Webscout's own native API for maximum flexibility
-> - **OpenAI Compatibility:** Use providers with OpenAI-compatible interfaces
-> - **Local LLM Compatibility:** Run local models with OpenAI-compatible servers
->
-> Choose the approach that best fits your needs! For OpenAI compatibility, check the [OpenAI Providers README](webscout/Provider/OPENAI/README.md) or see the [OpenAI-Compatible API Server](#-openai-compatible-api-server) section below.
+> - **Native:** Webscout's own native API for maximum flexibility
+> - **OpenAI-Compatible:** Use providers with OpenAI-compatible interfaces
+> - **Local LLMs:** Run local models with OpenAI-compatible servers via [Inferno](docs/inferno.md)
 
 > [!NOTE]
-> Webscout supports over 90 AI providers including: LLAMA, C4ai, Copilot, HuggingFaceChat, PerplexityLabs, DeepSeek, WiseCat, GROQ, OPENAI, GEMINI, DeepInfra, Meta, YEPCHAT, TypeGPT, ChatGPTClone, ExaAI, Claude, Anthropic, Cloudflare, AI21, Cerebras, and many more. All providers follow similar usage patterns with consistent interfaces.
+> Webscout supports 90+ AI providers including: OpenAI, GROQ, Gemini, Meta, DeepInfra, Cohere, Cerebras, HuggingFace, OpenRouter, Nvidia, Sambanova, PerplexityLabs, and many more. See the full [Provider Matrix](Provider.md).
 
 <div align="center">
-  <!-- Social/Support Links -->
   <p>
     <a href="https://t.me/OEvortexAI"><img alt="Telegram Group" src="https://img.shields.io/badge/Telegram%20Group-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white"></a>
-    <a href="https://t.me/ANONYMOUS_56788"><img alt="Developer Telegram" src="https://img.shields.io/badge/Developer%20Contact-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white"></a>
     <a href="https://youtube.com/@OEvortex"><img alt="YouTube" src="https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white"></a>
-    <a href="https://www.linkedin.com/in/oe-vortex-29a407265/"><img alt="LinkedIn" src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white"></a>
-    <a href="https://www.instagram.com/oevortex/"><img alt="Instagram" src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white"></a>
     <a href="https://buymeacoffee.com/oevortex"><img alt="Buy Me A Coffee" src="https://img.shields.io/badge/Buy%20Me%20A%20Coffee-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=black"></a>
   </p>
 </div>
 
 <hr/>
 
-## 🚀 Features
+## Features
 
-<details open>
-<summary><b>Search & AI</b></summary>
-<p>
+### Search & AI
 
-- **Comprehensive Search:** Access multiple search engines including DuckDuckGo, Yep, Bing, Brave, Yahoo, Yandex, Mojeek, and Wikipedia for diverse search results ([Search Documentation](docs/search.md))
-- **AI Powerhouse:** Access and interact with various AI models through three compatibility options:
-  - **Native API:** Use Webscout's native interfaces for providers like OpenAI, Cohere, Gemini, and many more
-  - **[OpenAI-Compatible Providers](webscout/Provider/OPENAI/README.md):** Seamlessly integrate with various AI providers using standardized OpenAI-compatible interfaces
-  - **Local LLMs:** Run local models with OpenAI-compatible servers (see [Inferno documentation](docs/inferno.md))
-- **[AI Search](webscout/Provider/AISEARCH/README.md):** AI-powered search engines with advanced capabilities
-- **[OpenAI-Compatible API Server](docs/openai-api-server.md):** Run a local API server that serves any Webscout provider through OpenAI-compatible endpoints
-- **[Python Client API](docs/client.md):** Use Webscout providers directly in Python with OpenAI-compatible format
-</p>
-</details>
+- **Multi-Engine Search** -- DuckDuckGo, Bing, Brave, Yahoo, Yep, Yandex, Mojeek, Wikipedia. ([Search Docs](docs/search.md))
+- **90+ AI Providers** -- Native, OpenAI-compatible, and local LLM interfaces. ([Architecture](docs/architecture.md))
+- **AI-Powered Search** -- Perplexity, IAsk, Monica, AyeSoul, WebPilotAI. ([Provider Matrix](Provider.md))
+- **OpenAI-Compatible API Server** -- Serve any Webscout provider via OpenAI endpoints. ([Server Docs](docs/openai-api-server.md))
+- **Unified Python Client** -- Auto-failover chat and image generation. ([Client Docs](docs/client.md))
 
-<details open>
-<summary><b>Media & Content Tools</b></summary>
-<p>
+### Media & Content
 
-- **[YouTube Toolkit](webscout/Extra/YTToolkit/README.md):** Advanced YouTube video and transcript management with multi-language support
-- **[Text-to-Speech (TTS)](webscout/Provider/TTS/README.md):** Convert text into natural-sounding speech using multiple AI-powered providers
-- **[Text-to-Image](webscout/Provider/TTI/README.md):** Generate high-quality images using a wide range of AI art providers
-- **[Weather Tools](docs/weather.md):** Retrieve detailed weather information for any location
-</p>
-</details>
+- **Text-to-Image** -- PollinationsAI, Together, Miragic, MagicStudio. ([TTI Docs](docs/getting-started.md#image-generation))
+- **Text-to-Speech** -- ElevenLabs, Deepgram, OpenAI FM, Parler, Qwen, MurfAI, and more. ([Model Registry](docs/models.md))
+- **Speech-to-Text** -- ElevenLabs STT. ([Provider Matrix](Provider.md))
+- **YouTube Toolkit** -- Video downloads, transcription, API access. ([Docs](docs/gitapi.md))
+- **Weather Tools** -- Detailed weather info with ASCII display. ([Weather Docs](docs/weather.md))
 
-<details open>
-<summary><b>Developer Tools</b></summary>
-<p>
+### Developer Tools
 
-- **[GitAPI](docs/gitapi.md):** Powerful GitHub data extraction toolkit without authentication requirements for public data
-- **[SwiftCLI](docs/swiftcli.md):** A powerful and elegant CLI framework for beautiful command-line interfaces
-- **[LitPrinter](docs/litprinter.md):** Styled console output with rich formatting and colors
-- **[LitAgent](docs/litagent.md):** Modern user agent generator that keeps your requests undetectable
-- **[Scout](docs/scout.md):** Advanced web parsing and crawling library with intelligent HTML/XML parsing
-- **[GGUF Conversion](webscout/Extra/gguf.md):** Convert and quantize Hugging Face models to GGUF format
-- **[Utility Decorators](docs/decorators.md):** Easily measure function execution time (`timeIt`) and add retry logic (`retry`) to any function
-- **[Stream Sanitization Utilities](docs/sanitize.md):** Advanced tools for cleaning, decoding, and processing data streams
-- **[Command Line Interface](docs/cli.md):** Comprehensive CLI for all search engines and utilities
-</p>
-</details>
+- **SwiftCLI** -- Elegant CLI framework. ([SwiftCLI Docs](docs/swiftcli.md))
+- **Scout** -- HTML parser and web crawler. ([Scout Docs](docs/scout.md))
+- **LitPrinter** -- Styled console output. ([LitPrinter Docs](docs/litprinter.md))
+- **LitAgent** -- User-agent rotation and IP toolkit. ([LitAgent Docs](docs/litagent.md))
+- **GitAPI** -- GitHub data extraction without auth. ([GitAPI Docs](docs/gitapi.md))
+- **GGUF Conversion** -- Quantize HuggingFace models to GGUF. ([GGUF Docs](docs/gguf.md))
+- **ZeroArt** -- Zero-dependency ASCII art generator. ([ZeroArt Docs](docs/zeroart.md))
+- **Utility Decorators** -- `@timeIt` and `@retry` helpers. ([Decorator Docs](docs/decorators.md))
+- **Stream Sanitization** -- SSE/HTTP stream processing. ([Sanitize Docs](docs/sanitize.md))
 
-<details open>
-<summary><b>Privacy & Utilities</b></summary>
-<p>
+### Privacy & Utilities
 
-- **[Tempmail](webscout/Extra/tempmail/README.md) & Temp Number:** Generate temporary email addresses and phone numbers
-- **[Awesome Prompts Manager](docs/awesome-prompts.md):** Curated collection of system prompts for specialized AI personas with comprehensive management capabilities
-</p>
-</details>
+- **Temp Mail** -- Disposable email via Emailnator, MailTM, TempMailIO.
+- **Proxy Manager** -- Automatic proxy rotation. ([Architecture](docs/architecture.md))
+- **Awesome Prompts** -- Curated system prompts for AI personas. ([Prompts Docs](docs/awesome-prompts.md))
 
 <hr/>
 
-## ⚙️ Installation
+## Installation
 
-Webscout supports multiple installation methods to fit your workflow:
-
-### 📦 Standard Installation
+### pip (Standard)
 
 ```bash
-# Install from PyPI
 pip install -U webscout
 
-# Install with API server dependencies
+# With API server support
 pip install -U "webscout[api]"
 
-# Install with development dependencies
+# With development tools
 pip install -U "webscout[dev]"
 ```
 
-### ⚡ UV Package Manager (Recommended)
-
-[UV](https://github.com/astral-sh/uv) is a fast Python package manager. Webscout has full UV support:
+### uv (Recommended)
 
 ```bash
-# Install UV first (if not already installed)
-pip install uv
-
-# Install Webscout with UV
 uv add webscout
 
-# Install with API dependencies
-uv add "webscout[api]"
-
-# Run Webscout directly with UV (no installation needed)
+# Run without installing
 uv run webscout --help
 
-# Run with API dependencies
-uv run webscout --extra api webscout-server
-
-# Install as a UV tool for global access
+# Install as global tool
 uv tool install webscout
-
-# Use UV tool commands
-webscout --help
-webscout-server
 ```
 
-### 🔧 Development Installation
+### Docker
 
 ```bash
-# Clone the repository
-git clone https://github.com/OEvortex/Webscout.git
-cd Webscout
-
-# Install in development mode with UV
-uv sync --extra dev --extra api
-
-# Or with pip
-pip install -e ".[dev,api]"
-
-#  Or with uv pip
-uv pip install -e ".[dev,api]"
-```
-
-### 🐳 Docker Installation
-
-```bash
-# Pull and run the Docker image
 docker pull OEvortex/webscout:latest
 docker run -it OEvortex/webscout:latest
 ```
 
-### 📱 Quick Start Commands
-
-After installation, you can immediately start using Webscout:
-
-```bash
-# Check version
-webscout version
-
-# Search the web
-webscout text -k "python programming"
-
-# Start API server
-webscout-server
-
-# Get help
-webscout --help
-```
+See [docs/DOCKER.md](docs/DOCKER.md) for full Docker deployment options including compose profiles.
 
 <hr/>
 
-## 🖥️ Command Line Interface
+## Quick Start
 
-Webscout provides a comprehensive command-line interface with support for multiple search engines and utilities. You can use it in multiple ways:
-
-### 🚀 Direct Commands (Recommended)
-
-After installing with `uv tool install webscout` or `pip install webscout`:
-
-```bash
-# Get help and list all commands
-webscout --help
-
-# Show version
-webscout version
-
-# Start API server
-webscout-server
-
-# Web search commands
-webscout text -k "python programming"              # DuckDuckGo text search
-webscout images -k "mountain landscape"            # DuckDuckGo image search
-webscout news -k "AI breakthrough" -t w            # News from last week
-webscout weather -l "New York"                     # Weather information
-webscout translate -k "Hello" -to es               # Translation
-
-# Alternative search engines
-webscout yahoo_text -k "machine learning" -r us    # Yahoo search
-webscout bing_text -k "climate change"             # Bing search
-webscout yep_text -k "latest news"                 # Yep search
-
-# Search with advanced options
-webscout images -k "cat" --size large --type-image photo --license-image any
-webscout maps -k "coffee shop" --city "New York" --radius 5
-```
-
-### 🔧 UV Run Commands (No Installation Required)
-
-```bash
-# Run directly with UV (downloads and runs automatically)
-uv run webscout --help
-uv run webscout text -k "latest news"
-uv run --extra api webscout-server
-```
-
-### 📦 Python Module Commands
-
-```bash
-# Traditional Python module execution
-python -m webscout --help
-python -m webscout text -k "search query"
-python -m webscout-server
-```
-
-### 🌐 Supported Search Providers
-
-Webscout CLI supports multiple search backends:
-- **DuckDuckGo** (default): `text`, `images`, `videos`, `news`, `answers`, `maps`, `translate`, `suggestions`, `weather`
-- **Yahoo**: `yahoo_text`, `yahoo_images`, `yahoo_videos`, `yahoo_news`, `yahoo_answers`, `yahoo_maps`, `yahoo_translate`, `yahoo_suggestions`, `yahoo_weather`
-- **Bing**: `bing_text`, `bing_images`, `bing_news`, `bing_suggestions`
-- **Yep**: `yep_text`, `yep_images`, `yep_suggestions`
-
-For detailed command reference and all available options, see [CLI Documentation](docs/cli.md).
-
-<hr/>
-
-## 🤖 AI Models and Voices
-
-Webscout provides easy access to a wide range of AI models and voice options.
-
-<details open>
-<summary><b>LLM Models</b></summary>
-<p>
-
-Access and manage Large Language Models with Webscout's model utilities.
-
-```python
-from webscout import model
-from rich import print
-
-# List all available LLM models
-all_models = model.llm.list()
-print(f"Total available models: {len(all_models)}")
-
-# Get a summary of models by provider
-summary = model.llm.summary()
-print("Models by provider:")
-for provider, count in summary.items():
-    print(f"  {provider}: {count} models")
-
-# Get models for a specific provider
-provider_name = "PerplexityLabs"
-available_models = model.llm.get(provider_name)
-print(f"\n{provider_name} models:")
-if isinstance(available_models, list):
-    for i, model_name in enumerate(available_models, 1):
-        print(f"  {i}. {model_name}")
-else:
-    print(f"  {available_models}")
-```
-
-</p>
-</details>
-
-<details open>
-<summary><b>TTS Voices</b></summary>
-<p>
-
-Access and manage Text-to-Speech voices across multiple providers.
-
-```python
-from webscout import model
-from rich import print
-
-# List all available TTS voices
-all_voices = model.tts.list()
-print(f"Total available voices: {len(all_voices)}")
-
-# Get a summary of voices by provider
-summary = model.tts.summary()
-print("\nVoices by provider:")
-for provider, count in summary.items():
-    print(f"  {provider}: {count} voices")
-
-# Get voices for a specific provider
-provider_name = "ElevenlabsTTS"
-available_voices = model.tts.get(provider_name)
-print(f"\n{provider_name} voices:")
-if isinstance(available_voices, dict):
-    for voice_name, voice_id in list(available_voices.items())[:5]:  # Show first 5 voices
-        print(f"  - {voice_name}: {voice_id}")
-    if len(available_voices) > 5:
-        print(f"  ... and {len(available_voices) - 5} more")
-```
-
-</p>
-</details>
-
-<hr/>
-
-## 💬 AI Chat Providers
-
-Webscout offers a comprehensive collection of AI chat providers, giving you access to various language models through a consistent interface.
-
-### Popular AI Providers
-
-<div class="provider-table">
-
-| Provider         | Description              | Key Features                       |
-| ---------------- | ------------------------ | ---------------------------------- |
-| `OPENAI`         | OpenAI's models          | GPT-3.5, GPT-4, tool calling       |
-| `GEMINI`         | Google's Gemini models   | Web search capabilities            |
-| `Meta`           | Meta's AI assistant      | Image generation, web search       |
-| `GROQ`           | Fast inference platform  | High-speed inference, tool calling |
-| `LLAMA`          | Meta's Llama models      | Open weights models                |
-| `DeepInfra`      | Various open models      | Multiple model options             |
-| `Cohere`         | Cohere's language models | Command models                     |
-| `PerplexityLabs` | Perplexity AI            | Web search integration             |
-| `YEPCHAT`        | Yep.com's AI             | Streaming responses                |
-| `ChatGPTClone`   | ChatGPT-like interface   | Multiple model options             |
-| `TypeGPT`        | TypeChat models          | Multiple model options             |
-
-</div>
-
-<details>
-<summary><b>Example: Using Meta AI</b></summary>
-<p>
+### AI Chat (No API Key)
 
 ```python
 from webscout import Meta
 
-# For basic usage (no authentication required)
-meta_ai = Meta()
-
-# Simple text prompt
-response = meta_ai.chat("What is the capital of France?")
+ai = Meta()
+response = ai.chat("Explain quantum computing in simple terms")
 print(response)
-
-# For authenticated usage with web search and image generation
-meta_ai = Meta(fb_email="your_email@example.com", fb_password="your_password")
-
-# Text prompt with web search
-response = meta_ai.ask("What are the latest developments in quantum computing?")
-print(response["message"])
-print("Sources:", response["sources"])
-
-# Image generation
-response = meta_ai.ask("Create an image of a futuristic city")
-for media in response.get("media", []):
-    print(media["url"])
 ```
 
-</p>
-</details>
-
-<details>
-<summary><b>Example: GROQ with Tool Calling</b></summary>
-<p>
+### Web Search
 
 ```python
-from webscout import GROQ, DuckDuckGoSearch
-import json
+from webscout import DuckDuckGoSearch
 
-# Initialize GROQ client
-client = GROQ(api_key="your_api_key")
-
-# Define helper functions
-def calculate(expression):
-    """Evaluate a mathematical expression"""
-    try:
-        result = eval(expression)
-        return json.dumps({"result": result})
-    except Exception as e:
-        return json.dumps({"error": str(e)})
-
-def search(query):
-    """Perform a web search"""
-    try:
-        ddg = DuckDuckGoSearch()
-        results = ddg.text(query, max_results=3)
-        return json.dumps({"results": results})
-    except Exception as e:
-        return json.dumps({"error": str(e)})
-
-# Register functions with GROQ
-client.add_function("calculate", calculate)
-client.add_function("search", search)
-
-# Define tool specifications
-tools = [
-    {
-        "type": "function",
-        "function": {
-            "name": "calculate",
-            "description": "Evaluate a mathematical expression",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "expression": {
-                        "type": "string",
-                        "description": "The mathematical expression to evaluate"
-                    }
-                },
-                "required": ["expression"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "search",
-            "description": "Perform a web search",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "The search query"
-                    }
-                },
-                "required": ["query"]
-            }
-        }
-    }
-]
-
-# Use the tools
-response = client.chat("What is 25 * 4 + 10?", tools=tools)
-print(response)
-
-response = client.chat("Find information about quantum computing", tools=tools)
-print(response)
+search = DuckDuckGoSearch()
+results = search.text("best practices for API design", max_results=5)
+for result in results:
+    print(f"{result['title']}: {result['href']}")
 ```
 
-</p>
-</details>
-
-<details open>
-<summary><b>GGUF Model Conversion</b></summary>
-<p>
-
-Webscout provides tools to convert and quantize Hugging Face models into the GGUF format for offline use.
-
-> **Note (2026.01.01)**: GGUF conversion now uses lazy imports for `huggingface_hub`. The library can be imported without requiring `huggingface_hub`, and it's only loaded when GGUF features are actually used. Install it with `pip install huggingface_hub` if you need GGUF conversion.
+### Image Generation
 
 ```python
-from webscout.Extra.gguf import ModelConverter
+from webscout.Provider.TTI import PollinationsAI
 
-# Create a converter instance
-converter = ModelConverter(
-    model_id="mistralai/Mistral-7B-Instruct-v0.2",  # Hugging Face model ID
-    quantization_methods="q4_k_m"                  # Quantization method
-)
-
-# Run the conversion
-converter.convert()
+gen = PollinationsAI()
+path = gen.generate_image(prompt="A serene mountain landscape at sunset")
+print(f"Saved to: {path}")
 ```
 
-#### Available Quantization Methods
+See [docs/getting-started.md](docs/getting-started.md) for the full quick-start guide.
 
-| Method   | Description                                                   |
-| -------- | ------------------------------------------------------------- |
-| `fp16`   | 16-bit floating point - maximum accuracy, largest size        |
-| `q2_k`   | 2-bit quantization (smallest size, lowest accuracy)           |
-| `q3_k_l` | 3-bit quantization (large) - balanced for size/accuracy       |
-| `q3_k_m` | 3-bit quantization (medium) - good balance for most use cases |
-| `q3_k_s` | 3-bit quantization (small) - optimized for speed              |
-| `q4_0`   | 4-bit quantization (version 0) - standard 4-bit compression   |
-| `q4_1`   | 4-bit quantization (version 1) - improved accuracy over q4_0  |
-| `q4_k_m` | 4-bit quantization (medium) - balanced for most models        |
-| `q4_k_s` | 4-bit quantization (small) - optimized for speed              |
-| `q5_0`   | 5-bit quantization (version 0) - high accuracy, larger size   |
-| `q5_1`   | 5-bit quantization (version 1) - improved accuracy over q5_0  |
-| `q5_k_m` | 5-bit quantization (medium) - best balance for quality/size   |
-| `q5_k_s` | 5-bit quantization (small) - optimized for speed              |
-| `q6_k`   | 6-bit quantization - highest accuracy, largest size           |
-| `q8_0`   | 8-bit quantization - maximum accuracy, largest size           |
+<hr/>
 
-#### Command Line Usage
+## Command Line Interface
+
+Webscout provides a rich CLI powered by [Rich](https://github.com/Textualize/rich) with multi-engine support.
 
 ```bash
-python -m webscout.Extra.gguf convert -m "mistralai/Mistral-7B-Instruct-v0.2" -q "q4_k_m"
+webscout --help                       # List all commands
+webscout version                      # Show version
+webscout text -k "python programming" # DuckDuckGo search (default)
+webscout images -k "mountains"        # Image search
+webscout news -k "AI breakthrough" -t w  # News from last week
+webscout weather -l "New York"        # Weather info
+webscout translate -k "Hola" --to en  # Translation
 ```
 
-</p>
-</details>
+### Supported Engines
 
-<div align="center">
-  <p>
-    <a href="https://youtube.com/@OEvortex">▶️ Vortex's YouTube Channel</a> |
-    <a href="https://t.me/ANONYMOUS_56788">📢 Anonymous Coder's Telegram</a>
-  </p>
-</div>
+| Category     | Engines                                                        |
+| ------------ | -------------------------------------------------------------- |
+| `text`       | `ddg`, `bing`, `brave`, `yahoo`, `yep`, `mojeek`, `dogpile`, `wikipedia`, `yandex` |
+| `images`     | `ddg`, `bing`, `brave`, `yahoo`, `yep`                        |
+| `videos`     | `ddg`, `brave`, `yahoo`                                        |
+| `news`       | `ddg`, `bing`, `brave`, `yahoo`                                |
+| `suggestions`| `ddg`, `bing`, `brave`, `yahoo`, `yep`                         |
+| `weather`    | `ddg`, `yahoo`                                                 |
+| `answers`    | `ddg`                                                          |
+| `translate`  | `ddg`                                                          |
+| `maps`       | `ddg`                                                          |
+
+```bash
+# Use a specific engine
+webscout text -k "climate change" -e bing
+webscout text -k "quantum physics" -e wikipedia
+```
+
+Full CLI reference: [docs/cli.md](docs/cli.md)
 
 <hr/>
 
-## 🤝 Contributing
+## AI Chat Providers
 
-Contributions are welcome! If you'd like to contribute to Webscout, please follow these steps:
+### Native Providers (No Auth Required)
+
+```python
+from webscout import Meta, Toolbaz, LLMChat, SonusAI, Netwrck, PiAI
+
+ai = Meta()
+print(ai.chat("What is the capital of France?"))
+```
+
+### Authenticated Providers
+
+```python
+from webscout import OpenAI, GROQ, GEMINI, Cohere, DeepInfra
+
+groq = GROQ(api_key="your-key")
+response = groq.chat("Write a Python function to sort a list")
+```
+
+### OpenAI-Compatible Providers
+
+```python
+from webscout.Provider.OPENAI import ChatGPT, Groq, DeepInfra
+
+chatgpt = ChatGPT()  # No auth required
+response = chatgpt.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": "Hello!"}]
+)
+```
+
+See [Provider.md](Provider.md) for the complete provider matrix with file locations.
+
+<hr/>
+
+## Search Engines
+
+```python
+from webscout import DuckDuckGoSearch, BingSearch, YepSearch, YahooSearch, BraveSearch
+
+# DuckDuckGo
+ddg = DuckDuckGoSearch()
+results = ddg.text("python frameworks", max_results=5)
+
+# Bing
+bing = BingSearch()
+results = bing.text("climate change solutions")
+
+# Brave
+brave = BraveSearch()
+results = bravesearch.text("machine learning tutorials")
+```
+
+Search docs: [docs/search.md](docs/search.md)
+
+<hr/>
+
+## Text-to-Image
+
+```python
+from webscout.Provider.TTI import PollinationsAI, TogetherImage
+
+# PollinationsAI
+poll = PollinationsAI()
+poll.generate_image(prompt="A cyberpunk city at night")
+
+# Together AI
+together = TogetherImage()
+together.generate_image(prompt="A robot playing chess")
+```
+
+TTI docs: [docs/getting-started.md#image-generation](docs/getting-started.md#image-generation)
+
+<hr/>
+
+## Text-to-Speech
+
+```python
+from webscout.Provider.TTS import ElevenlabsTTS, FreeTTS, ParlerTTS
+
+tts = FreeTTS()
+tts.text_to_speech("Hello, world!", voice="en-US")
+```
+
+TTS model registry: [docs/models.md](docs/models.md)
+
+<hr/>
+
+## OpenAI-Compatible API Server
+
+Run a local FastAPI server that serves any Webscout provider through standard OpenAI endpoints.
+
+```bash
+# Start the server
+webscout-server
+
+# Custom config
+webscout-server --port 8080 --host 0.0.0.0 --debug
+```
+
+### Use with the OpenAI Python Client
+
+```python
+from openai import OpenAI
+
+client = OpenAI(api_key="dummy", base_url="http://localhost:8000/v1")
+
+response = client.chat.completions.create(
+    model="ChatGPT/gpt-4o",
+    messages=[{"role": "user", "content": "Hello!"}]
+)
+print(response.choices[0].message.content)
+```
+
+### Docker Deployment
+
+```bash
+docker-compose up webscout-api
+docker-compose -f docker-compose.yml -f docker-compose.no-auth.yml up webscout-api
+```
+
+Full server docs: [docs/openai-api-server.md](docs/openai-api-server.md) | Docker: [docs/DOCKER.md](docs/DOCKER.md)
+
+<hr/>
+
+## Python Client
+
+The unified `Client` class provides auto-failover across providers with smart model resolution.
+
+```python
+from webscout.client import Client
+
+client = Client(print_provider_info=True)
+
+# Auto provider + model selection
+resp = client.chat.completions.create(
+    model="auto",
+    messages=[{"role": "user", "content": "Summarize Webscout."}]
+)
+print(resp.choices[0].message.content)
+
+# Streaming
+stream = client.chat.completions.create(
+    model="ChatGPT/gpt-4o-mini",
+    messages=[{"role": "user", "content": "Write a limerick about Python."}],
+    stream=True,
+)
+for chunk in stream:
+    delta = chunk.choices[0].delta.content
+    if delta:
+        print(delta, end="", flush=True)
+
+# Image generation
+img = client.images.generate(prompt="A neon owl", model="auto", size="1024x1024")
+print(img.data[0].url)
+```
+
+Client docs: [docs/client.md](docs/client.md)
+
+<hr/>
+
+## Tool Calling
+
+Webscout has a built-in tool calling system that works with any provider.
+
+```python
+from webscout.Provider.Apriel import Apriel
+from webscout.AIbase import Tool
+
+def get_weather(city: str) -> str:
+    return f"Weather in {city}: Sunny, 25C"
+
+weather_tool = Tool(
+    name="get_weather",
+    description="Get current weather for a city.",
+    parameters={"city": {"type": "string", "description": "City name."}},
+    implementation=get_weather,
+)
+
+ai = Apriel(tools=[weather_tool])
+print(ai.chat("What is the weather in London?"))
+```
+
+Tool calling docs: [docs/tool-calling.md](docs/tool-calling.md)
+
+<hr/>
+
+## Model Registry
+
+Enumerate available models across all providers.
+
+```python
+from webscout import model
+
+# All LLM models
+all_models = model.llm.list()
+print(f"Total: {len(all_models)}")
+
+# Models by provider
+summary = model.llm.summary()
+for provider, count in summary.items():
+    print(f"  {provider}: {count}")
+
+# TTS voices
+voices = model.tts.list()
+print(f"Total voices: {len(voices)}")
+```
+
+Model registry docs: [docs/models.md](docs/models.md)
+
+<hr/>
+
+## Developer Tools
+
+| Tool | Description | Docs |
+|------|-------------|------|
+| [SwiftCLI](docs/swiftcli.md) | CLI framework with decorators | [docs/swiftcli.md](docs/swiftcli.md) |
+| [Scout](docs/scout.md) | HTML parser & web crawler | [docs/scout.md](docs/scout.md) |
+| [LitPrinter](docs/litprinter.md) | Styled debug printing | [docs/litprinter.md](docs/litprinter.md) |
+| [LitAgent](docs/litagent.md) | User-agent rotation | [docs/litagent.md](docs/litagent.md) |
+| [GitAPI](docs/gitapi.md) | GitHub data extraction | [docs/gitapi.md](docs/gitapi.md) |
+| [GGUF](docs/gguf.md) | Model conversion & quantization | [docs/gguf.md](docs/gguf.md) |
+| [ZeroArt](docs/zeroart.md) | ASCII art generator | [docs/zeroart.md](docs/zeroart.md) |
+| [Weather](docs/weather.md) | Weather toolkit | [docs/weather.md](docs/weather.md) |
+| [Decorators](docs/decorators.md) | `@timeIt` and `@retry` | [docs/decorators.md](docs/decorators.md) |
+| [Sanitize](docs/sanitize.md) | Stream sanitization | [docs/sanitize.md](docs/sanitize.md) |
+| [Prompts](docs/awesome-prompts.md) | System prompt manager | [docs/awesome-prompts.md](docs/awesome-prompts.md) |
+
+<hr/>
+
+## Documentation
+
+| Resource | Description |
+|----------|-------------|
+| [Getting Started](docs/getting-started.md) | Installation, first chat, web search, image generation |
+| [Architecture](docs/architecture.md) | System design, layers, and data flows |
+| [CLI Reference](docs/cli.md) | All CLI commands and options |
+| [Python Client](docs/client.md) | Unified client with auto-failover |
+| [API Server](docs/openai-api-server.md) | OpenAI-compatible FastAPI server |
+| [Model Registry](docs/models.md) | Enumerate LLM, TTS, TTI models |
+| [Tool Calling](docs/tool-calling.md) | Function calling with any provider |
+| [Search Docs](docs/search.md) | Multi-engine search API |
+| [Scout](docs/scout.md) | HTML parser and crawler |
+| [Provider Development](docs/provider-development.md) | Create custom providers |
+| [Deployment](docs/deployment.md) | Production deployment guide |
+| [Docker](docs/DOCKER.md) | Docker setup and compose profiles |
+| [Inferno](docs/inferno.md) | Local LLM server |
+| [Troubleshooting](docs/troubleshooting.md) | Common issues and solutions |
+| [Contributing](docs/contributing.md) | How to contribute |
+| [Provider Matrix](Provider.md) | Complete provider listing |
+| [Docs Hub](docs/README.md) | Full documentation index |
+
+<hr/>
+
+## Contributing
+
+See [docs/contributing.md](docs/contributing.md) for guidelines.
 
 1. Fork the repository
-2. Create a new branch for your feature or bug fix
-3. Make your changes and commit them with descriptive messages
-4. Push your branch to your forked repository
-5. Submit a pull request to the main repository
+2. Create a feature branch
+3. Make changes with descriptive commits
+4. Submit a pull request
 
-## 🙏 Acknowledgments
+<hr/>
 
-- All the amazing developers who have contributed to the project
-- The open-source community for their support and inspiration
+## License
+
+Apache-2.0. See [LICENSE.md](LICENSE.md).
 
 <hr/>
 
 <div align="center">
-  <p>Made with ❤️ by the Webscout team</p>
+  <p>Made with by the Webscout team</p>
 </div>

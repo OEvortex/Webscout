@@ -164,7 +164,7 @@ Quick Start
     ↓
 examples/basic-chat.md
     ↓
-examples/search-queries.md
+[Search Module](search.md)
 ```
 **Result:** Ready to build a prototype
 
