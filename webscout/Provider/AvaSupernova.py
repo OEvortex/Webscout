@@ -108,11 +108,14 @@ class AvaSupernova(Provider):
         self.conversation.history_offset = history_offset
 
         if act:
-            self.conversation.intro = AwesomePrompts().get_act(
-                cast(Union[str, int], act),
-                default=self.conversation.intro,
-                case_insensitive=True,
-            ) or self.conversation.intro
+            self.conversation.intro = (
+                AwesomePrompts().get_act(
+                    cast(Union[str, int], act),
+                    default=self.conversation.intro,
+                    case_insensitive=True,
+                )
+                or self.conversation.intro
+            )
         elif intro:
             self.conversation.intro = intro
 
@@ -246,41 +249,6 @@ class AvaSupernova(Provider):
                 ) from e
 
         return for_stream() if stream else for_non_stream()
-
-    def chat(
-        self,
-        prompt: str,
-        stream: bool = False,
-        optimizer: Optional[str] = None,
-        conversationally: bool = False,
-        **kwargs: Any,
-    ) -> Union[str, Generator[str, None, None]]:
-        raw = kwargs.get("raw", False)
-        if stream:
-            def for_stream_chat():
-                gen = self.ask(
-                    prompt, stream=True, raw=raw, optimizer=optimizer, conversationally=conversationally
-                )
-                if hasattr(gen, "__iter__"):
-                    for response in gen:
-                        if raw:
-                            yield cast(str, response)
-                        else:
-                            yield self.get_message(response)
-
-            return for_stream_chat()
-        else:
-            result = self.ask(
-                prompt,
-                stream=False,
-                raw=raw,
-                optimizer=optimizer,
-                conversationally=conversationally,
-            )
-            if raw:
-                return cast(str, result)
-            else:
-                return self.get_message(result)
 
     def get_message(self, response: Response) -> str:
         if not isinstance(response, dict):

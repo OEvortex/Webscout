@@ -3,14 +3,14 @@ from typing import Any, Dict, cast
 from unittest.mock import MagicMock, patch
 
 from tests.providers.utils import FakeResp
-from webscout.Provider.Groq import GROQ
+from webscout.Provider.Auth.Groq import GROQ
 
 
 class TestGROQ(unittest.TestCase):
     def setUp(self):
         self.api_key = "test_key"
         # Patch BackgroundModelFetcher to avoid async calls during init
-        with patch('webscout.Provider.Groq.BackgroundModelFetcher'):
+        with patch('webscout.Provider.Auth.Groq.BackgroundModelFetcher'):
             self.provider = GROQ(api_key=self.api_key)
 
     @patch('curl_cffi.requests.Session.post')

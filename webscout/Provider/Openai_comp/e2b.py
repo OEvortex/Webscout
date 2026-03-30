@@ -27,11 +27,8 @@ from webscout.Provider.Openai_comp.utils import (
     count_tokens,
 )
 
-# Attempt to import LitAgent, fallback if not available
-try:
-    from webscout.litagent import LitAgent
-except ImportError:
-    LitAgent = None  # type: ignore
+from webscout.litagent import LitAgent
+
 # ANSI escape codes for formatting
 
 

@@ -15,6 +15,7 @@ class Netwrck(Provider):
     """
     A class to interact with the Netwrck.com API. Supports streaming.
     """
+
     greeting = """Hello! I'm a helpful assistant. How can I help you today?"""
     required_auth = False
     AVAILABLE_MODELS = [
@@ -31,7 +32,7 @@ class Netwrck(Provider):
         self,
         model: str = "deepseek/deepseek-r1",
         is_conversation: bool = True,
-        max_tokens: int = 4096, # Note: max_tokens is not used by this API
+        max_tokens: int = 4096,  # Note: max_tokens is not used by this API
         timeout: int = 30,
         intro: Optional[str] = None,
         filepath: Optional[str] = None,
@@ -40,8 +41,8 @@ class Netwrck(Provider):
         history_offset: int = 0,
         act: Optional[str] = None,
         system_prompt: str = "You are a helpful assistant.",
-        temperature: float = 0.7, # Note: temperature is not used by this API
-        top_p: float = 0.8 # Note: top_p is not used by this API
+        temperature: float = 0.7,  # Note: temperature is not used by this API
+        top_p: float = 0.8,  # Note: top_p is not used by this API
     ):
         """Initializes the Netwrck API client."""
         if model not in self.AVAILABLE_MODELS:
@@ -59,15 +60,15 @@ class Netwrck(Provider):
         self.temperature = temperature
         self.top_p = top_p
 
-        self.agent = LitAgent() # Keep for potential future use or other headers
+        self.agent = LitAgent()  # Keep for potential future use or other headers
         self.headers = {
-            'authority': 'netwrck.com',
-            'accept': '*/*',
-            'accept-language': 'en-US,en;q=0.9',
-            'content-type': 'application/json',
-            'origin': 'https://netwrck.com',
-            'referer': 'https://netwrck.com/',
-            'user-agent': self.agent.random()
+            "authority": "netwrck.com",
+            "accept": "*/*",
+            "accept-language": "en-US,en;q=0.9",
+            "content-type": "application/json",
+            "origin": "https://netwrck.com",
+            "referer": "https://netwrck.com/",
+            "user-agent": self.agent.random(),
             # Add sec-ch-ua headers if needed for impersonation consistency
         }
 
@@ -81,11 +82,19 @@ class Netwrck(Provider):
         self.conversation.history_offset = history_offset
 
         if act:
-            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True) or self.conversation.intro
+            self.conversation.intro = (
+                AwesomePrompts().get_act(
+                    cast(Union[str, int], act),
+                    default=self.conversation.intro,
+                    case_insensitive=True,
+                )
+                or self.conversation.intro
+            )
         elif intro:
             self.conversation.intro = intro
         self.__available_optimizers = (
-            method for method in dir(Optimizers)
+            method
+            for method in dir(Optimizers)
             if callable(getattr(Optimizers, method)) and not method.startswith("__")
         )
 
@@ -98,18 +107,21 @@ class Netwrck(Provider):
             # text = text.encode().decode('unicode_escape') # Uncomment if needed
             return text
         return None
+
     def ask(
         self,
         prompt: str,
         stream: bool = False,
-        raw: bool = False, # Keep raw param for interface consistency
+        raw: bool = False,  # Keep raw param for interface consistency
         optimizer: Optional[str] = None,
         conversationally: bool = False,
         **kwargs: Any,
     ) -> Response:
         """Sends a prompt to the Netwrck API and returns the response."""
         if optimizer and optimizer not in self.__available_optimizers:
-            raise exceptions.FailedToGenerateResponseError(f"Optimizer is not one of {self.__available_optimizers}")
+            raise exceptions.FailedToGenerateResponseError(
+                f"Optimizer is not one of {self.__available_optimizers}"
+            )
 
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)
         if optimizer:
@@ -122,7 +134,7 @@ class Netwrck(Provider):
             "context": self.system_prompt,
             "examples": [],
             "model_name": self.model_name,
-            "greeting": self.greeting
+            "greeting": self.greeting,
         }
 
         def for_stream():
@@ -132,7 +144,7 @@ class Netwrck(Provider):
                     json=payload,
                     timeout=self.timeout,
                     stream=True,
-                    impersonate="chrome110"
+                    impersonate="chrome110",
                 )
                 response.raise_for_status()
                 buffer = ""
@@ -161,11 +173,13 @@ class Netwrck(Provider):
                 raise exceptions.APIConnectionError(f"Network error (CurlError): {str(e)}") from e
             except Exception as e:
                 err_text = ""
-                if hasattr(e, 'response'):
-                    response_obj = getattr(e, 'response')
-                    if hasattr(response_obj, 'text'):
-                        err_text = getattr(response_obj, 'text')
-                raise exceptions.APIConnectionError(f"Unexpected error ({type(e).__name__}): {str(e)} - {err_text}") from e
+                if hasattr(e, "response"):
+                    response_obj = getattr(e, "response")
+                    if hasattr(response_obj, "text"):
+                        err_text = getattr(response_obj, "text")
+                raise exceptions.APIConnectionError(
+                    f"Unexpected error ({type(e).__name__}): {str(e)} - {err_text}"
+                ) from e
 
         def for_non_stream():
             try:
@@ -173,7 +187,7 @@ class Netwrck(Provider):
                     "https://netwrck.com/api/chatpred_or",
                     json=payload,
                     timeout=self.timeout,
-                    impersonate="chrome110"
+                    impersonate="chrome110",
                 )
                 response.raise_for_status()
                 response_text_raw = response.text
@@ -181,64 +195,28 @@ class Netwrck(Provider):
                 self.conversation.update_chat_history(prompt, response_text_raw)
                 return response_text_raw if raw else self.last_response
             except CurlError as e:
-                raise exceptions.FailedToGenerateResponseError(f"Network error (CurlError): {str(e)}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Network error (CurlError): {str(e)}"
+                ) from e
             except Exception as e:
                 err_text = ""
-                if hasattr(e, 'response'):
-                    response_obj = getattr(e, 'response')
-                    if hasattr(response_obj, 'text'):
-                        err_text = getattr(response_obj, 'text')
-                raise exceptions.FailedToGenerateResponseError(f"Unexpected error ({type(e).__name__}): {str(e)} - {err_text}") from e
+                if hasattr(e, "response"):
+                    response_obj = getattr(e, "response")
+                    if hasattr(response_obj, "text"):
+                        err_text = getattr(response_obj, "text")
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Unexpected error ({type(e).__name__}): {str(e)} - {err_text}"
+                ) from e
 
         return for_stream() if stream else for_non_stream()
-
-    def chat(
-        self,
-        prompt: str,
-        stream: bool = False,
-        optimizer: Optional[str] = None,
-        conversationally: bool = False,
-        **kwargs: Any,
-    ) -> Union[str, Generator[str, None, None]]:
-        """Generates a response from the Netwrck API."""
-        raw = kwargs.get("raw", False)
-        def for_stream_chat():
-            # ask() yields dicts or strings when streaming
-            gen = self.ask(
-                prompt,
-                stream=True,
-                raw=raw, # Ensure ask yields dicts for get_message if not raw
-                optimizer=optimizer,
-                conversationally=conversationally
-            )
-            for response_dict in gen:
-                if raw:
-                    yield cast(str, response_dict)
-                else:
-                    yield self.get_message(cast(Dict[str, Any], response_dict)) # get_message expects dict
-
-        def for_non_stream_chat():
-            # ask() returns dict or str when not streaming
-            response_data = self.ask(
-                prompt,
-                stream=False,
-                raw=raw, # Ensure ask returns dict for get_message if not raw
-                optimizer=optimizer,
-                conversationally=conversationally,
-            )
-            if raw:
-                return cast(str, response_data)
-            else:
-                return self.get_message(cast(Dict[str, Any], response_data)) # get_message expects dict
-
-        return for_stream_chat() if stream else for_non_stream_chat()
 
     def get_message(self, response: Response) -> str:
         """Retrieves message only from response"""
         if not isinstance(response, dict):
             return str(response)
         resp_dict = cast(Dict[str, Any], response)
-        return cast(str, resp_dict["text"]).replace('\\n', '\n').replace('\\n\\n', '\n\n')
+        return cast(str, resp_dict["text"]).replace("\\n", "\n").replace("\\n\\n", "\n\n")
+
 
 if __name__ == "__main__":
     # Ensure curl_cffi is installed
@@ -265,7 +243,11 @@ if __name__ == "__main__":
             if response_text and len(response_text.strip()) > 0:
                 status = "✓"
                 # Truncate response if too long
-                display_text = response_text.strip()[:50] + "..." if len(response_text.strip()) > 50 else response_text.strip()
+                display_text = (
+                    response_text.strip()[:50] + "..."
+                    if len(response_text.strip()) > 50
+                    else response_text.strip()
+                )
             else:
                 status = "✗"
                 display_text = "Empty or invalid response"

@@ -243,50 +243,6 @@ class TurboSeek(Provider):
 
         return for_stream() if stream else for_non_stream()
 
-    def chat(
-        self,
-        prompt: str,
-        stream: bool = False,
-        optimizer: Optional[str] = None,
-        conversationally: bool = False,
-        **kwargs: Any,
-    ) -> Union[str, Generator[str, None, None]]:
-        """Generate response `str`
-        Args:
-            prompt (str): Prompt to be send.
-            stream (bool, optional): Flag for streaming response. Defaults to False.
-            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-            **kwargs: Additional parameters including raw.
-        Returns:
-            str: Response generated
-        """
-        raw = kwargs.get("raw", False)
-
-        def for_stream():
-            for response in self.ask(
-                prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
-            ):
-                if raw:
-                    yield cast(str, response)
-                else:
-                    yield self.get_message(cast(Response, response))
-
-        def for_non_stream():
-            result = self.ask(
-                prompt,
-                False,
-                raw=raw,
-                optimizer=optimizer,
-                conversationally=conversationally,
-            )
-            if raw:
-                return cast(str, result)
-            else:
-                return self.get_message(result)
-
-        return for_stream() if stream else for_non_stream()
-
     def get_message(self, response: Response) -> str:
         """Retrieves message only from response
 

@@ -284,41 +284,6 @@ class Toolbaz(Provider):
 
         return for_stream() if stream else for_non_stream()
 
-    def chat(
-        self,
-        prompt: str,
-        stream: bool = False,
-        optimizer: Optional[str] = None,
-        conversationally: bool = False,
-        **kwargs: Any,
-    ) -> Union[str, Generator[str, None, None]]:
-        """Generates a response from the Toolbaz API."""
-        raw = kwargs.get("raw", False)
-
-        def for_stream_chat():
-            for response in self.ask(
-                prompt, stream=True, raw=raw, optimizer=optimizer, conversationally=conversationally
-            ):
-                if raw:
-                    yield cast(str, response)
-                else:
-                    yield self.get_message(cast(Response, response))
-
-        def for_non_stream_chat():
-            response_dict = self.ask(
-                prompt,
-                stream=False,
-                raw=raw,
-                optimizer=optimizer,
-                conversationally=conversationally,
-            )
-            if raw:
-                return cast(str, response_dict)
-            else:
-                return self.get_message(response_dict)
-
-        return for_stream_chat() if stream else for_non_stream_chat()
-
     def get_message(self, response: Response) -> str:
         if not isinstance(response, dict):
             return str(response)

@@ -16,6 +16,7 @@ class EssentialAI(Provider):
     A class to interact with the EssentialAI rnj-1-instruct Space Gradio API.
     Implemented using curl_cffi.
     """
+
     required_auth = False
     AVAILABLE_MODELS = ["rnj-1-instruct"]
 
@@ -46,7 +47,9 @@ class EssentialAI(Provider):
 
         # Initialize LitAgent for user agent generation
         self.agent = LitAgent()
-        self.zerogpu_uuid = "".join(random.choices(string.ascii_letters + string.digits + "_", k=21))
+        self.zerogpu_uuid = "".join(
+            random.choices(string.ascii_letters + string.digits + "_", k=21)
+        )
 
         self.headers = {
             "Content-Type": "application/json",
@@ -54,7 +57,7 @@ class EssentialAI(Provider):
             "Accept": "text/event-stream",
             "x-zerogpu-uuid": self.zerogpu_uuid,
             "X-Gradio-Expand-Data": "true",
-            "X-Gradio-Target": "chat"
+            "X-Gradio-Target": "chat",
         }
 
         # Initialize curl_cffi Session
@@ -81,14 +84,21 @@ class EssentialAI(Provider):
         self.conversation.history_offset = history_offset
 
         if act:
-            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
-            ) or self.conversation.intro
+            self.conversation.intro = (
+                AwesomePrompts().get_act(
+                    cast(Union[str, int], act),
+                    default=self.conversation.intro,
+                    case_insensitive=True,
+                )
+                or self.conversation.intro
+            )
         elif intro:
             self.conversation.intro = intro
 
     def _get_session_hash(self) -> str:
         import random
         import string
+
         return "".join(random.choices(string.ascii_lowercase + string.digits, k=11))
 
     def ask(
@@ -115,11 +125,11 @@ class EssentialAI(Provider):
         payload = {
             "data": [
                 conversation_prompt,
-                [], # history
+                [],  # history
                 self.system_prompt,
                 float(self.max_tokens_to_sample),
                 float(self.temperature),
-                float(self.top_p)
+                float(self.top_p),
             ]
         }
 
@@ -138,19 +148,18 @@ class EssentialAI(Provider):
                 # 2. GET /call/chat/{event_id}
                 url = f"{self.api_endpoint}/gradio_api/call/chat/{event_id}"
                 response = self.session.get(
-                    url,
-                    stream=True,
-                    timeout=self.timeout,
-                    impersonate="chrome110"
+                    url, stream=True, timeout=self.timeout, impersonate="chrome110"
                 )
                 if not response.ok:
-                    raise exceptions.FailedToGenerateResponseError(f"Stream failed: {response.status_code}")
+                    raise exceptions.FailedToGenerateResponseError(
+                        f"Stream failed: {response.status_code}"
+                    )
 
                 last_full_text = ""
                 for line in response.iter_lines():
                     if not line:
                         continue
-                    line_str = line.decode('utf-8')
+                    line_str = line.decode("utf-8")
                     if line_str.startswith("data: "):
                         try:
                             data = json.loads(line_str[6:])
@@ -158,7 +167,7 @@ class EssentialAI(Provider):
                                 current_full_text = data[0]
                                 if isinstance(current_full_text, str):
                                     if current_full_text.startswith(last_full_text):
-                                        delta = current_full_text[len(last_full_text):]
+                                        delta = current_full_text[len(last_full_text) :]
                                     else:
                                         delta = current_full_text
                                     last_full_text = current_full_text
@@ -185,27 +194,11 @@ class EssentialAI(Provider):
 
         return for_stream() if stream else for_non_stream()
 
-    def chat(
-        self,
-        prompt: str,
-        stream: bool = False,
-        optimizer: Optional[str] = None,
-        conversationally: bool = False,
-        **kwargs: Any,
-    ) -> Union[str, Generator[str, None, None]]:
-        raw = kwargs.get("raw", False)
-        def for_stream():
-            for response in self.ask(prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally):
-                yield self.get_message(response) if not raw else cast(str, response)
-        def for_non_stream():
-            result = self.ask(prompt, False, raw=raw, optimizer=optimizer, conversationally=conversationally)
-            return self.get_message(result) if not raw else cast(str, result)
-        return for_stream() if stream else for_non_stream()
-
     def get_message(self, response: Response) -> str:
         if not isinstance(response, dict):
             return str(response)
         return cast(Dict[str, Any], response).get("text", "")
+
 
 if __name__ == "__main__":
     ai = EssentialAI()

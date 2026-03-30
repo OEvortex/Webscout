@@ -28,10 +28,7 @@ from webscout.Provider.Openai_comp.utils import (
     format_prompt,
 )
 
-try:
-    from ...litagent import LitAgent
-except ImportError:
-    LitAgent = None  # type: ignore
+from ...litagent import LitAgent
 
 
 def generate_random_id(length=16):

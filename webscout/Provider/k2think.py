@@ -101,8 +101,14 @@ class K2Think(Provider):
         self.conversation.history_offset = history_offset
 
         if act:
-            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
-            ) or self.conversation.intro
+            self.conversation.intro = (
+                AwesomePrompts().get_act(
+                    cast(Union[str, int], act),
+                    default=self.conversation.intro,
+                    case_insensitive=True,
+                )
+                or self.conversation.intro
+            )
         elif intro:
             self.conversation.intro = intro
 
@@ -126,6 +132,7 @@ class K2Think(Provider):
         self.session.headers.update(self.headers)
 
         return self.fingerprint
+
     def ask(
         self,
         prompt: str,
@@ -183,8 +190,7 @@ class K2Think(Provider):
                 )
                 if not response.status_code == 200:
                     raise exceptions.FailedToGenerateResponseError(
-                        f"Failed to generate response - ({response.status_code}) - "
-                        f"{response.text}"
+                        f"Failed to generate response - ({response.status_code}) - {response.text}"
                     )
 
                 streaming_text = ""
@@ -228,8 +234,7 @@ class K2Think(Provider):
                 )
                 if not response.status_code == 200:
                     raise exceptions.FailedToGenerateResponseError(
-                        f"Failed to generate response - ({response.status_code}) - "
-                        f"{response.text}"
+                        f"Failed to generate response - ({response.status_code}) - {response.text}"
                     )
 
                 # Use sanitize_stream to parse the non-streaming JSON response
@@ -256,59 +261,6 @@ class K2Think(Provider):
 
         return for_stream() if stream else for_non_stream()
 
-    def chat(
-        self,
-        prompt: str,
-        stream: bool = False,
-        optimizer: Optional[str] = None,
-        conversationally: bool = False,
-        **kwargs: Any,
-    ) -> Union[str, Generator[str, None, None]]:
-        """Generate response `str`
-
-        Args:
-            prompt (str): Prompt to be sent.
-            stream (bool, optional): Flag for streaming response. Defaults to False.
-            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-            **kwargs: Additional parameters.
-
-        Returns:
-            str or Generator[str]: Response generated
-        """
-        raw = kwargs.get("raw", False)
-        if stream:
-
-            def for_stream():
-                gen = self.ask(
-                    prompt,
-                    True,
-                    raw=raw,
-                    optimizer=optimizer,
-                    conversationally=conversationally,
-                    **{k: v for k, v in kwargs.items() if k != "raw"},
-                )
-                if hasattr(gen, "__iter__"):
-                    for response in gen:
-                        if raw:
-                            yield cast(str, response)
-                        else:
-                            yield self.get_message(response)
-
-            return for_stream()
-        else:
-            result = self.ask(
-                prompt,
-                False,
-                raw=raw,
-                optimizer=optimizer,
-                conversationally=conversationally,
-                **{k: v for k, v in kwargs.items() if k != "raw"},
-            )
-            if raw:
-                return cast(str, result)
-            return self.get_message(result)
-
     def get_message(self, response: Response) -> str:
         """Retrieves message only from response.
 
@@ -323,6 +275,7 @@ class K2Think(Provider):
 
         resp_dict = cast(Dict[str, Any], response)
         return resp_dict.get("text", "")
+
 
 if __name__ == "__main__":
     ai = K2Think()

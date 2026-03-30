@@ -254,39 +254,6 @@ class Ayle(Provider):
         self.conversation.update_chat_history(prompt, full_response)
         return self.last_response if not raw else full_response
 
-    def chat(
-        self,
-        prompt: str,
-        stream: bool = False,
-        optimizer: Optional[str] = None,
-        conversationally: bool = False,
-        **kwargs: Any,
-    ) -> Union[str, Generator[str, None, None]]:
-        raw = kwargs.get("raw", False)
-
-        def for_stream() -> Generator[str, None, None]:
-            for response in self.ask(
-                prompt, stream=True, raw=raw, optimizer=optimizer, conversationally=conversationally
-            ):
-                if raw:
-                    yield response
-                else:
-                    yield self.get_message(response)
-
-        def for_non_stream() -> str:
-            result = self.ask(
-                prompt,
-                stream=False,
-                raw=raw,
-                optimizer=optimizer,
-                conversationally=conversationally,
-            )
-            if raw:
-                return result if isinstance(result, str) else str(result)
-            return self.get_message(result)
-
-        return for_stream() if stream else for_non_stream()
-
     def get_message(self, response: Response) -> str:
         if isinstance(response, dict):
             text = cast(Dict[str, Any], response).get("text", "")

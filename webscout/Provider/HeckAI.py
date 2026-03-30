@@ -305,55 +305,6 @@ class HeckAI(Provider):
                 return text.replace("\\\\", "\\").replace('\\"', '"')  # Handle escaped backslashes
         return text
 
-    def chat(
-        self,
-        prompt: str,
-        stream: bool = False,
-        optimizer: Optional[str] = None,
-        conversationally: bool = False,
-        **kwargs: Any,
-    ) -> Union[str, Generator[str, None, None]]:
-        """
-        Sends a prompt to the HeckAI API and returns only the message text.
-
-        Args:
-            prompt (str): The prompt or question to send to the API.
-            stream (bool): If True, yields streaming response text.
-            optimizer (str, optional): Name of the optimizer to apply to the prompt.
-            conversationally (bool): If True, optimizer is applied to the full conversation prompt.
-            **kwargs: Additional parameters including raw.
-
-        Returns:
-            Union[str, Generator[str, None, None]]: The response text, or a generator yielding text chunks.
-        """
-        raw = kwargs.get("raw", False)
-
-        def for_stream_chat():
-            # ask() yields dicts or strings when streaming
-            gen = self.ask(
-                prompt, stream=True, raw=raw, optimizer=optimizer, conversationally=conversationally
-            )
-            for response in gen:
-                if raw:
-                    yield cast(str, response)
-                else:
-                    yield self.get_message(cast(Response, response))
-
-        def for_non_stream_chat():
-            # ask() returns dict or str when not streaming
-            response_data = self.ask(
-                prompt,
-                stream=False,
-                raw=raw,
-                optimizer=optimizer,
-                conversationally=conversationally,
-            )
-            if raw:
-                return response_data if isinstance(response_data, str) else str(response_data)
-            return self.get_message(response_data)  # get_message expects dict
-
-        return for_stream_chat() if stream else for_non_stream_chat()
-
     def get_message(self, response: Response) -> str:
         """
         Extracts the message text from the API response.

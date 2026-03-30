@@ -26,10 +26,7 @@ from webscout.Provider.Openai_comp.utils import (
     CompletionUsage,
 )
 
-try:
-    from ....litagent import LitAgent
-except ImportError:
-    LitAgent = None
+from ....litagent import LitAgent
 
 
 class Completions(BaseCompletions):

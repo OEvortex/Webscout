@@ -174,40 +174,6 @@ class WiseCat(Provider):
 
         return for_stream() if stream else for_non_stream()
 
-    def chat(
-        self,
-        prompt: str,
-        stream: bool = False,
-        optimizer: Optional[str] = None,
-        conversationally: bool = False,
-        **kwargs: Any,
-    ) -> Union[str, Generator[str, None, None]]:
-        raw = kwargs.get("raw", False)
-
-        def for_stream():
-            for response in self.ask(
-                prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
-            ):
-                if raw:
-                    yield cast(str, response)
-                else:
-                    yield self.get_message(cast(Dict[str, Any], response))
-
-        def for_non_stream():
-            result = self.ask(
-                prompt,
-                False,
-                raw=raw,
-                optimizer=optimizer,
-                conversationally=conversationally,
-            )
-            if raw:
-                return cast(str, result)
-            else:
-                return self.get_message(cast(Dict[str, Any], result))
-
-        return for_stream() if stream else for_non_stream()
-
     def get_message(self, response: Response) -> str:
         """Retrieves message only from response"""
         if not isinstance(response, dict):

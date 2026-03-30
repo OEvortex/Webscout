@@ -27,10 +27,7 @@ from webscout.Provider.Openai_comp.utils import (
     CompletionUsage,
 )
 
-try:
-    from ...litagent import LitAgent
-except ImportError:
-    LitAgent = None  # type: ignore
+from ...litagent import LitAgent
 
 
 def generate_offline_threading_id() -> str:

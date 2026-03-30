@@ -436,6 +436,9 @@ class AUTO(Provider):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
+        tools: Optional[list[Any]] = None,
+        tool_choice: Optional[str | Dict[str, Any]] = None,
+        max_tool_rounds: int = 5,
         **kwargs: Any,
     ) -> Union[str, Generator[str, None, None]]:
         """
@@ -451,6 +454,8 @@ class AUTO(Provider):
             Union[str, Generator[str, None, None]]: The response string or a generator yielding
                                                      response chunks.
         """
+        del tools, tool_choice, max_tool_rounds
+
         if stream:
             return self._chat_stream(prompt, optimizer, conversationally)
         else:

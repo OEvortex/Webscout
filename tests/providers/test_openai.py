@@ -3,14 +3,14 @@ from typing import Any, Dict, cast
 from unittest.mock import MagicMock, patch
 
 from tests.providers.utils import FakeResp
-from webscout.Provider.Openai import OpenAI
+from webscout.Provider.Auth.Openai import OpenAI
 
 
 class TestOpenAI(unittest.TestCase):
     def setUp(self):
         self.api_key = "test_key"
         # Patch BackgroundModelFetcher to avoid async calls during init
-        with patch('webscout.Provider.Openai.BackgroundModelFetcher'):
+        with patch('webscout.Provider.Auth.Openai.BackgroundModelFetcher'):
             self.provider = OpenAI(api_key=self.api_key)
 
     @patch('curl_cffi.requests.Session.post')

@@ -248,56 +248,6 @@ class SearchChatAI(Provider):
 
         return for_stream() if stream else for_non_stream()
 
-    def chat(
-        self,
-        prompt: str,
-        stream: bool = False,
-        optimizer: Optional[str] = None,
-        conversationally: bool = False,
-        raw: bool = False,  # Added raw parameter
-        **kwargs: Any,
-    ) -> Union[str, Generator[str, None, None]]:
-        """
-        Chat with the API.
-
-        Args:
-            prompt: The message to send
-            stream: Whether to stream the response
-            optimizer: The optimizer to use
-            conversationally: Whether to use conversation history
-
-        Returns:
-            Either a string response or a generator for streaming
-        """
-
-        def for_stream_chat():
-            for response in self.ask(
-                prompt, stream=True, raw=raw, optimizer=optimizer, conversationally=conversationally
-            ):
-                if raw:
-                    yield response
-                else:
-                    yield self.get_message(response)
-
-        def for_non_stream_chat():
-            response_data = self.ask(
-                prompt,
-                stream=False,
-                raw=raw,
-                optimizer=optimizer,
-                conversationally=conversationally,
-            )
-            if raw:
-                return (
-                    response_data
-                    if isinstance(response_data, str)
-                    else self.get_message(response_data)
-                )
-            else:
-                return self.get_message(response_data)
-
-        return for_stream_chat() if stream else for_non_stream_chat()
-
     def get_message(self, response: Response) -> str:
         """Extract the message from the response."""
         if not isinstance(response, dict):

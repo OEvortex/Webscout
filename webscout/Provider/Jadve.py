@@ -245,52 +245,6 @@ class JadveOpenAI(Provider):
 
         return for_stream() if stream else for_non_stream()
 
-    def chat(
-        self,
-        prompt: str,
-        stream: bool = False,
-        optimizer: Optional[str] = None,
-        conversationally: bool = False,
-        **kwargs: Any,
-    ) -> Union[str, Generator[str, None, None]]:
-        """
-        Generate a chat response (string).
-
-        Args:
-            prompt (str): Prompt to be sent.
-            stream (bool, optional): Flag for streaming response. Defaults to False.
-            optimizer (str, optional): Prompt optimizer name. Defaults to None.
-            conversationally (bool, optional): Flag for conversational optimization. Defaults to False.
-            **kwargs: Additional parameters including raw.
-        Returns:
-            str or generator: Generated response string or generator yielding response chunks.
-        """
-        raw = kwargs.get("raw", False)
-
-        def for_stream_chat():
-            gen = self.ask(
-                prompt, stream=True, raw=raw, optimizer=optimizer, conversationally=conversationally
-            )
-            for response in gen:
-                if raw:
-                    yield response
-                else:
-                    yield self.get_message(response)
-
-        def for_non_stream_chat():
-            response_data = self.ask(
-                prompt,
-                stream=False,
-                raw=raw,
-                optimizer=optimizer,
-                conversationally=conversationally,
-            )
-            if raw:
-                return response_data if isinstance(response_data, str) else str(response_data)
-            return self.get_message(response_data)
-
-        return for_stream_chat() if stream else for_non_stream_chat()
-
     def get_message(self, response: Response) -> str:
         """
         Retrieves message from the response.

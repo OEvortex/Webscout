@@ -1,4 +1,6 @@
 import json
+import re
+import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -7,44 +9,19 @@ from typing import Any, Callable, Dict, Generator, List, Optional, Union
 from litprinter import ic
 from typing_extensions import TypeAlias
 
-# from webscout.Extra.proxy_manager import ProxyManager
-
-# # Type aliases for better readability
 Response: TypeAlias = Union[Dict[str, Any], Generator[Any, None, None], str]
 
 
-# class ProviderMeta(ABC.__class__):
-#     """Metaclass for Provider that automatically applies proxy patching."""
-
-#     def __new__(mcs, name: str, bases: tuple, namespace: dict):
-#         cls = super().__new__(mcs, name, bases, namespace)
-
-#         # Apply proxy patch to the class if it's a concrete Provider
-#         if name != 'Provider' and hasattr(cls, '__init__'):
-#             try:
-#                 pm = ProxyManager(auto_fetch=True, debug=True)
-#                 pm.patch()
-#             except Exception:
-#                 pass  # Silently fail if proxy manager fails
-
-#         return cls
+# ──────────────────────────────────────────────────────────────────────
+#  Response wrapper
+# ──────────────────────────────────────────────────────────────────────
 
 
 class SearchResponse:
-    """A wrapper class for search API responses.
-
-    This class automatically converts response objects to their text representation
-    when printed or converted to string.
+    """Wrapper class for search API responses.
 
     Attributes:
-        text (str): The text content of the response
-
-    Example:
-        >>> response = SearchResponse("Hello, world!")
-        >>> print(response)
-        Hello, world!
-        >>> str(response)
-        'Hello, world!'
+        text: The text content of the response.
     """
 
     def __init__(self, text: str):
@@ -61,10 +38,15 @@ class AIProviderError(Exception):
     pass
 
 
+# ──────────────────────────────────────────────────────────────────────
+#  Model list helpers
+# ──────────────────────────────────────────────────────────────────────
+
+
 class ModelList(ABC):
     @abstractmethod
     def list(self) -> List[str]:
-        """Return a list of available models"""
+        """Return a list of available models."""
         raise NotImplementedError
 
 
@@ -76,18 +58,24 @@ class SimpleModelList(ModelList):
         return self._models
 
 
+# ──────────────────────────────────────────────────────────────────────
+#  Tool definition
+# ──────────────────────────────────────────────────────────────────────
+
+
 @dataclass
 class Tool:
-    """Tool definition for function calling support in providers.
+    """Tool definition for function calling.
 
     Attributes:
         name: The tool/function name.
         description: What the tool does.
-        parameters: Parameter definitions as {name: {type, description, ...}}.
-        required_params: List of required parameter names. Defaults to all parameters.
+        parameters: Parameter definitions as ``{name: {type, description, ...}}``.
+        required_params: Required parameter names.  Defaults to all parameters.
         implementation: Optional callable that executes the tool.
 
-    Example:
+    Example::
+
         >>> def get_weather(city: str) -> str:
         ...     return f"Weather in {city}: Sunny, 75F"
         >>> tool = Tool(
@@ -106,6 +94,8 @@ class Tool:
     required_params: Optional[List[str]] = None
     implementation: Optional[Callable[..., Any]] = None
 
+    # -- serialisation -------------------------------------------------- #
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to OpenAI-compatible tool definition format."""
         return {
@@ -121,6 +111,8 @@ class Tool:
             },
         }
 
+    # -- execution ------------------------------------------------------ #
+
     def execute(self, arguments: Dict[str, Any]) -> Any:
         """Execute the tool with the given arguments."""
         if not self.implementation:
@@ -131,15 +123,35 @@ class Tool:
             return f"Error executing tool '{self.name}': {e}"
 
 
+# ──────────────────────────────────────────────────────────────────────
+#  Provider base class
+# ──────────────────────────────────────────────────────────────────────
+
+
 class Provider(ABC):
+    """Base class for all normal (non-OpenAI-compatible) Webscout providers.
+
+    Subclasses must implement :meth:`ask` and :meth:`get_message`.
+
+    The :meth:`chat` method is **not** abstract — it provides an automatic
+    tool-calling loop out of the box.  When *tools* are supplied it:
+
+    1. Injects tool definitions into the prompt (XML format).
+    2. Calls :meth:`ask` to get the raw response.
+    3. Extracts ``<invoke>`` blocks from the response.
+    4. Executes matching tools and feeds ``<tool_result>`` back.
+    5. Repeats until the model returns plain text (up to *max_tool_rounds*).
+    """
+
     required_auth: bool = False
     conversation: Any
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any):
         self._last_response: Dict[str, Any] = {}
-        self.conversation = None
+        self.conversation: Any = None
         self.available_tools: Dict[str, Tool] = {}
-        self.supports_tools: bool = False
+
+    # -- last_response property ----------------------------------------- #
 
     @property
     def last_response(self) -> Dict[str, Any]:
@@ -149,159 +161,305 @@ class Provider(ABC):
     def last_response(self, value: Dict[str, Any]):
         self._last_response = value
 
-    # --- Tool support methods ---
+    # ══════════════════════════════════════════════════════════════════ #
+    #  Tool helpers  (used by chat() and can be used directly)
+    # ══════════════════════════════════════════════════════════════════ #
 
     def register_tools(self, tools: List[Tool]) -> None:
-        """Register tools available for function calling.
-
-        Args:
-            tools: List of Tool objects to make available.
-        """
+        """Register tools available for function calling."""
         for tool in tools:
             self.available_tools[tool.name] = tool
 
+    # ── XML prompt formatting ────────────────────────────────────────── #
+
+    _TOOL_INVOKE_RE = re.compile(
+        r"<invoke>\s*<tool_name>(.*?)</tool_name>\s*<parameters>(.*?)</parameters>\s*</invoke>",
+        re.DOTALL,
+    )
+
     def format_tools_for_prompt(self, tools: Optional[List[Tool]] = None) -> str:
-        """Format tool definitions as text for injection into prompts.
+        """Format tool definitions as an XML instruction block for the prompt.
 
-        This converts tool schemas into a text representation that can be
-        prepended to prompts for providers that don't support native
-        structured tool calling.
-
-        Args:
-            tools: Tools to format. Uses registered tools if not provided.
-
-        Returns:
-            Formatted tool descriptions string, or empty string if no tools.
+        This tells the model *how* to call tools using the ``<invoke>`` XML
+        format.  The model is instructed to output one or more ``<invoke>``
+        blocks when it wants to use a tool, and to respond normally otherwise.
         """
         tool_list = tools or list(self.available_tools.values())
         if not tool_list:
             return ""
 
-        lines = [
-            "You have access to the following tools. To use a tool, respond with"
-            " EXACTLY this format and nothing else:",
+        parts = [
+            "# Tools",
             "",
-            "```json",
-            '{"tool_call": {"name": "<tool_name>", "arguments": {<args>}}}',
-            "```",
+            "You may call one or more functions to assist with the user query.",
             "",
-            "Available tools:",
+            "For each function call, output EXACTLY the following XML block:",
+            "",
+            "<invoke>",
+            "  <tool_name>$TOOL_NAME</tool_name>",
+            "  <parameters>$JSON_ARGUMENTS</parameters>",
+            "</invoke>",
+            "",
+            "Where `$JSON_ARGUMENTS` is a valid JSON object of arguments.",
+            "Output one `<invoke>...</invoke>` block per tool call.",
+            "If no tool is needed, respond normally without any `<invoke>` blocks.",
+            "",
+            "Here are the available tools:",
+            "",
         ]
+
         for tool in tool_list:
-            lines.append(f"\n## {tool.name}")
-            lines.append(f"Description: {tool.description}")
-            lines.append("Parameters:")
+            parts.append(f"## {tool.name}")
+            parts.append(f"Description: {tool.description}")
+            parts.append("Parameters:")
             if tool.parameters:
-                for param_name, param_info in tool.parameters.items():
-                    param_type = param_info.get("type", "any")
-                    param_desc = param_info.get("description", "")
-                    required = tool.required_params is None or param_name in (
-                        tool.required_params or []
-                    )
-                    req_tag = " (required)" if required else " (optional)"
-                    lines.append(f"  - {param_name} ({param_type}){req_tag}: {param_desc}")
+                for pname, pinfo in tool.parameters.items():
+                    ptype = pinfo.get("type", "any")
+                    pdesc = pinfo.get("description", "")
+                    req = tool.required_params is None or pname in (tool.required_params or [])
+                    tag = " (required)" if req else " (optional)"
+                    parts.append(f"  - {pname} ({ptype}){tag}: {pdesc}")
             else:
-                lines.append("  (none)")
+                parts.append("  (none)")
+            parts.append("")
 
-        lines.append("")
-        lines.append("If no tool is needed, respond normally without using the tool format.")
-        return "\n".join(lines)
+        return "\n".join(parts)
 
-    def process_tool_calls(self, tool_calls: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Execute tool calls and return results.
+    # ── XML parsing ──────────────────────────────────────────────────── #
 
-        Args:
-            tool_calls: List of dicts with 'name' and 'arguments' keys.
+    def extract_tool_calls(self, text: str) -> Optional[List[Dict[str, Any]]]:
+        """Parse ``<invoke>`` blocks from LLM response text.
 
         Returns:
-            List of result dicts with 'tool_name', 'arguments', and 'result' keys.
+            A list of ``{"name": ..., "arguments": ...}`` dicts, or ``None``
+            when the response contains no tool calls.
         """
-        results = []
+        calls: List[Dict[str, Any]] = []
+        for match in self._TOOL_INVOKE_RE.finditer(text):
+            name = match.group(1).strip()
+            raw_args = match.group(2).strip()
+            try:
+                args = json.loads(raw_args) if raw_args else {}
+            except json.JSONDecodeError:
+                args = {}
+            calls.append({"name": name, "arguments": args})
+        return calls or None
+
+    # ── Execution ────────────────────────────────────────────────────── #
+
+    def process_tool_calls(self, tool_calls: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Execute tool calls and return result dicts.
+
+        Each result dict has keys: ``tool_name``, ``arguments``, ``result``.
+        """
+        results: List[Dict[str, Any]] = []
         for call in tool_calls:
-            tool_name = call.get("name")
-            arguments = call.get("arguments", {})
-            if isinstance(arguments, str):
+            name = call.get("name")
+            args = call.get("arguments", {})
+            if isinstance(args, str):
                 try:
-                    arguments = json.loads(arguments)
+                    args = json.loads(args)
                 except json.JSONDecodeError:
                     results.append(
                         {
-                            "tool_name": tool_name,
-                            "arguments": arguments,
-                            "result": f"Error: Could not parse arguments: {arguments}",
+                            "tool_name": name,
+                            "arguments": args,
+                            "result": f"Error: could not parse arguments: {args}",
                         }
                     )
                     continue
-            if tool_name in self.available_tools:
-                result = self.available_tools[tool_name].execute(arguments)
-                results.append(
-                    {
-                        "tool_name": tool_name,
-                        "arguments": arguments,
-                        "result": str(result),
-                    }
-                )
+            if name in self.available_tools:
+                result = self.available_tools[name].execute(args)
             else:
-                results.append(
-                    {
-                        "tool_name": tool_name,
-                        "arguments": arguments,
-                        "result": f"Error: Tool '{tool_name}' not found.",
-                    }
-                )
+                result = f"Error: tool '{name}' not found."
+            results.append(
+                {
+                    "tool_name": name,
+                    "arguments": args,
+                    "result": str(result),
+                }
+            )
         return results
 
-    def format_tool_response(self, tool_results: List[Dict[str, Any]]) -> str:
-        """Format tool execution results as text for inclusion in conversation.
+    @staticmethod
+    def format_tool_results_xml(results: List[Dict[str, Any]]) -> str:
+        """Format tool results as ``<tool_result>`` XML blocks.
 
-        Args:
-            tool_results: Results from process_tool_calls().
-
-        Returns:
-            Formatted string of tool results.
+        This is the text you would append to the conversation so the model
+        can see tool outputs and continue.
         """
-        if not tool_results:
-            return ""
-        lines = []
-        for result in tool_results:
-            lines.append(f"[Tool: {result['tool_name']}] {result['result']}")
-        return "\n".join(lines)
+        parts: List[str] = []
+        for r in results:
+            parts.append(
+                f"<tool_result>\n"
+                f"  <tool_name>{r['tool_name']}</tool_name>\n"
+                f"  <result>{r['result']}</result>\n"
+                f"</tool_result>"
+            )
+        return "\n".join(parts)
 
-    def extract_tool_calls(self, response_text: str) -> Optional[List[Dict[str, Any]]]:
-        """Parse tool calls from LLM response text.
+    # ══════════════════════════════════════════════════════════════════ #
+    #  The auto tool-calling loop  (used inside chat)
+    # ══════════════════════════════════════════════════════════════════ #
 
-        Looks for JSON blocks matching the format produced by
-        format_tools_for_prompt().
+    def run_tool_loop(
+        self,
+        prompt: str,
+        *,
+        tools: Optional[List[Tool]] = None,
+        max_rounds: int = 5,
+        stream: bool = False,
+        raw: bool = False,
+        optimizer: Optional[str] = None,
+        conversationally: bool = False,
+        **ask_kwargs: Any,
+    ) -> Any:
+        """Run the full tool-calling loop and return the final text response.
 
-        Args:
-            response_text: Raw text response from the LLM.
+        This is the method :meth:`chat` delegates to when *tools* are present.
 
-        Returns:
-            List of tool call dicts, or None if no tool calls found.
+        Flow (mirrors the OpenAI Response API)::
+
+            1. Inject tool definitions into the prompt
+            2. Call ``ask()``  →  get raw response
+            3. Parse ``<invoke>`` blocks from the response
+            4. If none found →  return the text as final answer
+            5. Execute tools →  format ``<tool_result>`` blocks
+            6. Append results to prompt →  go to step 2
+            7. Repeat up to *max_rounds*
         """
-        import re
+        # Merge per-request tools with instance tools
+        if tools:
+            self.register_tools(tools)
 
-        json_pattern = r"```json\s*(.*?)\s*```"
-        matches = re.findall(json_pattern, response_text, re.DOTALL)
+        tool_list = list(self.available_tools.values())
+        tool_block = self.format_tools_for_prompt(tool_list)
 
-        tool_calls = []
-        for match in matches:
-            try:
-                parsed = json.loads(match)
-                if "tool_call" in parsed:
-                    tc = parsed["tool_call"]
-                    tool_calls.append(
-                        {
-                            "name": tc.get("name"),
-                            "arguments": tc.get("arguments", {}),
-                        }
+        # Streaming + tools is not supported in the auto-loop because we
+        # need to inspect the full response before continuing.
+        if stream:
+            ic("stream=True is ignored when tools are present (auto-loop)")
+            stream = False
+
+        conversation_prompt = (
+            self.conversation.gen_complete_prompt(prompt) if self.conversation else prompt
+        )
+        if tool_block:
+            conversation_prompt = tool_block + "\n\n" + conversation_prompt
+
+        response: Any = None
+        for _ in range(max_rounds):
+            response = self.ask(
+                conversation_prompt,
+                stream=False,
+                raw=raw,
+                optimizer=optimizer,
+                conversationally=conversationally,
+                **ask_kwargs,
+            )
+            text = self.get_message(response)
+            calls = self.extract_tool_calls(text)
+
+            if not calls:
+                # No tool calls — this is the final answer
+                return response
+
+            # Execute tools
+            results = self.process_tool_calls(calls)
+
+            # Feed results back
+            result_xml = self.format_tool_results_xml(results)
+            conversation_prompt += f"\n\n{text}\n\n{result_xml}"
+
+            # Track in structured conversation history
+            if self.conversation and hasattr(self.conversation, "add_tool_call_result"):
+                for r in results:
+                    self.conversation.add_tool_call_result(
+                        r["tool_name"], r["arguments"], r["result"]
                     )
-            except json.JSONDecodeError:
-                continue
 
-        return tool_calls if tool_calls else None
+        # Exhausted max_rounds — return last response
+        return response if response is not None else ""
 
-    # --- Abstract methods ---
+    # ══════════════════════════════════════════════════════════════════ #
+    #  Public chat interface
+    # ══════════════════════════════════════════════════════════════════ #
+
+    def chat(
+        self,
+        prompt: str,
+        stream: bool = False,
+        optimizer: Optional[str] = None,
+        conversationally: bool = False,
+        tools: Optional[List[Tool]] = None,
+        tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
+        max_tool_rounds: int = 5,
+        **kwargs: Any,
+    ) -> Any:
+        """Generate a response, automatically handling tool calls.
+
+        When *tools* are supplied the method runs an internal loop:
+        call model → parse ``<invoke>`` → execute tools → feed
+        ``<tool_result>`` back → repeat until the model returns plain text.
+
+        When *tools* is ``None`` it falls back to a simple ``ask()`` +
+        ``get_message()`` call (the legacy behaviour).
+
+        Args:
+            prompt: User prompt.
+            stream: Stream the response (disabled when tools are present).
+            optimizer: Prompt optimizer name.
+            conversationally: Use optimizer conversationally.
+            tools: Tools the model can call.
+            tool_choice: Reserved for future use.
+            max_tool_rounds: Maximum tool-calling iterations.
+            **kwargs: Forwarded to ``ask()`` (e.g. ``raw``).
+        """
+        raw = kwargs.pop("raw", False)
+
+        if tools or self.available_tools:
+            # --- auto tool-calling path -------------------------------- #
+            result = self.run_tool_loop(
+                prompt,
+                tools=tools,
+                max_rounds=max_tool_rounds,
+                stream=False,
+                raw=raw,
+                optimizer=optimizer,
+                conversationally=conversationally,
+                **kwargs,
+            )
+            return result if raw else self.get_message(result)
+
+        # --- legacy (no tools) path ------------------------------------ #
+        if stream:
+
+            def _stream() -> Generator[Any, None, None]:
+                for chunk in self.ask(
+                    prompt,
+                    stream=True,
+                    raw=raw,
+                    optimizer=optimizer,
+                    conversationally=conversationally,
+                    **kwargs,
+                ):
+                    yield chunk if raw else self.get_message(chunk)
+
+            return _stream()
+
+        result = self.ask(
+            prompt,
+            stream=False,
+            raw=raw,
+            optimizer=optimizer,
+            conversationally=conversationally,
+            **kwargs,
+        )
+        return result if raw else self.get_message(result)
+
+    # ══════════════════════════════════════════════════════════════════ #
+    #  Abstract methods  (subclasses must implement)
+    # ══════════════════════════════════════════════════════════════════ #
 
     @abstractmethod
     def ask(
@@ -311,97 +469,55 @@ class Provider(ABC):
         raw: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        tools: Optional[List[Tool]] = None,
-        tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
         **kwargs: Any,
     ) -> Response:
-        raise NotImplementedError("Method needs to be implemented in subclass")
-
-    @abstractmethod
-    def chat(
-        self,
-        prompt: str,
-        stream: bool = False,
-        optimizer: Optional[str] = None,
-        conversationally: bool = False,
-        tools: Optional[List[Tool]] = None,
-        tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
-        **kwargs: Any,
-    ) -> Union[str, Generator[str, None, None]]:
-        raise NotImplementedError("Method needs to be implemented in subclass")
+        """Make a raw API call and return the provider-specific response."""
+        raise NotImplementedError
 
     @abstractmethod
     def get_message(self, response: Response) -> str:
-        raise NotImplementedError("Method needs to be implemented in subclass")
+        """Extract the text message from a raw response."""
+        raise NotImplementedError
 
-    @abstractmethod
-    def chat(
-        self,
-        prompt: str,
-        stream: bool = False,
-        optimizer: Optional[str] = None,
-        conversationally: bool = False,
-        **kwargs: Any,
-    ) -> Union[str, Generator[str, None, None]]:
-        raise NotImplementedError("Method needs to be implemented in subclass")
 
-    @abstractmethod
-    def get_message(self, response: Response) -> str:
-        raise NotImplementedError("Method needs to be implemented in subclass")
+# ──────────────────────────────────────────────────────────────────────
+#  TTS / STT / Search base classes  (unchanged)
+# ──────────────────────────────────────────────────────────────────────
 
 
 class TTSProvider(ABC):
     @abstractmethod
-    def tts(self, text: str, voice: Optional[str] = None, verbose: bool = False, **kwargs) -> str:
+    def tts(
+        self, text: str, voice: Optional[str] = None, verbose: bool = False, **kwargs: Any
+    ) -> str:
         """Convert text to speech and save to a temporary file.
 
-        Args:
-            text (str): The text to convert to speech
-            voice (str, optional): The voice to use. Defaults to provider's default voice.
-            verbose (bool, optional): Whether to print debug information. Defaults to False.
-
         Returns:
-            str: Path to the generated audio file
+            Path to the generated audio file.
         """
-        raise NotImplementedError("Method needs to be implemented in subclass")
+        raise NotImplementedError
 
     def save_audio(
         self, audio_file: str, destination: Optional[str] = None, verbose: bool = False
     ) -> str:
-        """Save audio to a specific destination.
-
-        Args:
-            audio_file (str): Path to the source audio file
-            destination (str, optional): Destination path. Defaults to current directory with timestamp.
-            verbose (bool, optional): Whether to print debug information. Defaults to False.
-
-        Returns:
-            str: Path to the saved audio file
-        """
+        """Save audio to a specific destination."""
         import os
         import shutil
         import time
-        from pathlib import Path
 
         source_path = Path(audio_file)
-
         if not source_path.exists():
             raise FileNotFoundError(f"Audio file not found: {audio_file}")
 
         if destination is None:
-            # Create a default destination with timestamp in current directory
             timestamp = int(time.time())
             destination = os.path.join(os.getcwd(), f"tts_audio_{timestamp}{source_path.suffix}")
 
-        # Ensure the destination directory exists
         os.makedirs(os.path.dirname(os.path.abspath(destination)), exist_ok=True)
-
-        # Copy the file
         shutil.copy2(source_path, destination)
 
         if verbose:
             print(f"[debug] Audio saved to {destination}")
-
         return destination
 
     def stream_audio(
@@ -414,24 +530,8 @@ class TTSProvider(ABC):
         chunk_size: int = 1024,
         verbose: bool = False,
     ) -> Generator[bytes, None, None]:
-        """Stream audio in chunks.
-
-        Args:
-            text (str): The text to convert to speech
-            model (str, optional): The model to use.
-            voice (str, optional): The voice to use. Defaults to provider's default voice.
-            response_format (str, optional): The audio format.
-            instructions (str, optional): Voice instructions.
-            chunk_size (int, optional): Size of audio chunks to yield. Defaults to 1024.
-            verbose (bool, optional): Whether to print debug information. Defaults to False.
-
-        Yields:
-            Generator[bytes, None, None]: Audio data chunks
-        """
-        # Generate the audio file
+        """Stream audio in chunks."""
         audio_file = self.tts(text, voice=voice, verbose=verbose)
-
-        # Stream the file in chunks
         with open(audio_file, "rb") as f:
             while chunk := f.read(chunk_size):
                 yield chunk
@@ -441,41 +541,18 @@ class STTProvider(ABC):
     """Abstract base class for Speech-to-Text providers."""
 
     @abstractmethod
-    def transcribe(self, audio_path: Union[str, Path], **kwargs) -> Dict[str, Any]:
-        """Transcribe audio file to text.
-
-        Args:
-            audio_path (Union[str, Path]): Path to the audio file
-            **kwargs: Additional provider-specific parameters
-
-        Returns:
-            Dict[str, Any]: Transcription result in OpenAI Whisper format
-        """
-        raise NotImplementedError("Method needs to be implemented in subclass")
+    def transcribe(self, audio_path: Union[str, Path], **kwargs: Any) -> Dict[str, Any]:
+        """Transcribe audio file to text."""
+        raise NotImplementedError
 
     @abstractmethod
-    def transcribe_from_url(self, audio_url: str, **kwargs) -> Dict[str, Any]:
-        """Transcribe audio from URL to text.
-
-        Args:
-            audio_url (str): URL of the audio file
-            **kwargs: Additional provider-specific parameters
-
-        Returns:
-            Dict[str, Any]: Transcription result in OpenAI Whisper format
-        """
-        raise NotImplementedError("Method needs to be implemented in subclass")
+    def transcribe_from_url(self, audio_url: str, **kwargs: Any) -> Dict[str, Any]:
+        """Transcribe audio from URL to text."""
+        raise NotImplementedError
 
 
 class AISearch(ABC):
-    """Abstract base class for AI-powered search providers.
-
-    This class defines the interface for AI search providers that can perform
-    web searches and return AI-generated responses based on search results.
-
-    All search providers should inherit from this class and implement the
-    required methods.
-    """
+    """Abstract base class for AI-powered search providers."""
 
     @abstractmethod
     def search(
@@ -491,25 +568,5 @@ class AISearch(ABC):
         Dict[str, Any],
         str,
     ]:
-        """Search using the provider's API and get AI-generated responses.
-
-        This method sends a search query to the provider and returns the AI-generated response.
-        It supports both streaming and non-streaming modes, as well as raw response format.
-
-        Args:
-            prompt (str): The search query or prompt to send to the API.
-            stream (bool, optional): If True, yields response chunks as they arrive.
-                                   If False, returns complete response. Defaults to False.
-            raw (bool, optional): If True, returns raw response dictionaries.
-                                If False, returns SearchResponse objects that convert to text automatically.
-                                Defaults to False.
-
-        Returns:
-            Union[SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None]]:
-                - If stream=False: Returns complete response as SearchResponse object
-                - If stream=True: Yields response chunks as either Dict or SearchResponse objects
-
-        Raises:
-            APIConnectionError: If the API request fails
-        """
-        raise NotImplementedError("Method needs to be implemented in subclass")
+        """Search using the provider's API and get AI-generated responses."""
+        raise NotImplementedError

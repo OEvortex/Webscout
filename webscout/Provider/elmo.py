@@ -18,7 +18,9 @@ class Elmo(Provider):
     """
     A class to interact with the Elmo.chat API.
     """
+
     required_auth = False
+
     def __init__(
         self,
         is_conversation: bool = True,
@@ -82,8 +84,14 @@ class Elmo(Provider):
         self.conversation.history_offset = history_offset
 
         if act:
-            self.conversation.intro = AwesomePrompts().get_act(cast(Union[str, int], act), default=self.conversation.intro, case_insensitive=True
-            ) or self.conversation.intro
+            self.conversation.intro = (
+                AwesomePrompts().get_act(
+                    cast(Union[str, int], act),
+                    default=self.conversation.intro,
+                    case_insensitive=True,
+                )
+                or self.conversation.intro
+            )
         elif intro:
             self.conversation.intro = intro
 
@@ -91,11 +99,13 @@ class Elmo(Provider):
     def _elmo_extractor(chunk: Union[str, Dict[str, Any]]) -> Optional[str]:
         """Extracts content from the Elmo stream format '0:"..."'."""
         if isinstance(chunk, str):
-            match = re.search(r'0:"(.*?)"(?=,|$)', chunk) # Look for 0:"...", possibly followed by comma or end of string
+            match = re.search(
+                r'0:"(.*?)"(?=,|$)', chunk
+            )  # Look for 0:"...", possibly followed by comma or end of string
             if match:
                 # Decode potential unicode escapes like \u00e9 and handle escaped quotes/backslashes
-                content = match.group(1).encode().decode('unicode_escape')
-                return content.replace('\\\\', '\\').replace('\\"', '"')
+                content = match.group(1).encode().decode("unicode_escape")
+                return content.replace("\\\\", "\\").replace('\\"', '"')
         return None
 
     def ask(
@@ -130,9 +140,7 @@ class Elmo(Provider):
                     conversation_prompt if conversationally else prompt
                 )
             else:
-                raise Exception(
-                    f"Optimizer is not one of {self.__available_optimizers}"
-                )
+                raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
 
         payload = {
             "metadata": {
@@ -159,7 +167,7 @@ class Elmo(Provider):
         }
 
         def for_stream():
-            streaming_text = "" # Initialize outside try block
+            streaming_text = ""  # Initialize outside try block
             try:
                 # Use curl_cffi session post with impersonate
                 # Note: The API expects 'text/plain' but we send JSON.
@@ -170,18 +178,18 @@ class Elmo(Provider):
                     json=payload,  # Sending as JSON
                     stream=True,
                     timeout=self.timeout,
-                    impersonate="chrome110"  # Use a common impersonation profile
+                    impersonate="chrome110",  # Use a common impersonation profile
                 )
                 response.raise_for_status()  # Check for HTTP errors
 
                 # Use sanitize_stream
                 processed_stream = sanitize_stream(
-                    data=response.iter_content(chunk_size=None), # Pass byte iterator
-                    intro_value=None, # No simple prefix
-                    to_json=False,    # Content is text after extraction
-                    content_extractor=self._elmo_extractor, # Use the specific extractor
+                    data=response.iter_content(chunk_size=None),  # Pass byte iterator
+                    intro_value=None,  # No simple prefix
+                    to_json=False,  # Content is text after extraction
+                    content_extractor=self._elmo_extractor,  # Use the specific extractor
                     yield_raw_on_error=True,
-                    raw=raw
+                    raw=raw,
                 )
 
                 for content_chunk in processed_stream:
@@ -194,20 +202,22 @@ class Elmo(Provider):
                         yield resp if not raw else content_chunk
 
             except CurlError as e:  # Catch CurlError
-                raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {e}") from e
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed (CurlError): {e}"
+                ) from e
             except Exception as e:  # Catch other potential exceptions (like HTTPError)
                 err_text = ""
-                if hasattr(e, 'response'):
-                    response_obj = getattr(e, 'response')
-                    if hasattr(response_obj, 'text'):
-                        err_text = getattr(response_obj, 'text')
-                raise exceptions.FailedToGenerateResponseError(f"Failed to generate response ({type(e).__name__}): {e} - {err_text}") from e
+                if hasattr(e, "response"):
+                    response_obj = getattr(e, "response")
+                    if hasattr(response_obj, "text"):
+                        err_text = getattr(response_obj, "text")
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Failed to generate response ({type(e).__name__}): {e} - {err_text}"
+                ) from e
             finally:
                 # Update history after stream finishes
                 self.last_response = dict(text=streaming_text)
-                self.conversation.update_chat_history(
-                    prompt, streaming_text
-                )
+                self.conversation.update_chat_history(prompt, streaming_text)
 
         def for_non_stream():
             # Aggregate the stream using the updated for_stream logic
@@ -219,11 +229,13 @@ class Elmo(Provider):
                         collected_text += chunk_data["text"]
                     # Handle raw string case if raw=True was passed
                     elif raw and isinstance(chunk_data, str):
-                         collected_text += chunk_data
+                        collected_text += chunk_data
             except Exception as e:
-                 # If aggregation fails but some text was received, use it. Otherwise, re-raise.
-                 if not collected_text:
-                     raise exceptions.FailedToGenerateResponseError(f"Failed to get non-stream response: {str(e)}") from e
+                # If aggregation fails but some text was received, use it. Otherwise, re-raise.
+                if not collected_text:
+                    raise exceptions.FailedToGenerateResponseError(
+                        f"Failed to get non-stream response: {str(e)}"
+                    ) from e
 
             # Update last_response and history *after* aggregation for non-stream
             self.last_response = {"text": collected_text}
@@ -233,55 +245,16 @@ class Elmo(Provider):
 
         return for_stream() if stream else for_non_stream()
 
-    def chat(
-        self,
-        prompt: str,
-        stream: bool = False,
-        optimizer: Optional[str] = None,
-        conversationally: bool = False,
-        **kwargs: Any,
-    ) -> Union[str, Generator[str, None, None]]:
-        """Generate response `str`
-        Args:
-            prompt (str): Prompt to be send.
-            stream (bool, optional): Flag for streaming response. Defaults to False.
-            optimizer (str, optional): Prompt optimizer name - `[code, shell_command]`. Defaults to None.
-            conversationally (bool, optional): Chat conversationally when using optimizer. Defaults to False.
-        Returns:
-            str: Response generated
-        """
-
-        def for_stream_chat():  # Renamed inner function
-            # ask() yields dicts or strings when streaming
-            gen = self.ask(
-                prompt, stream=True, raw=False,  # Ensure ask yields dicts
-                optimizer=optimizer, conversationally=conversationally
-            )
-            for response_dict in gen:
-                yield self.get_message(response_dict)  # get_message expects dict
-
-        def for_non_stream_chat():  # Renamed inner function
-            # ask() returns dict or str when not streaming
-            response_data = self.ask(
-                prompt,
-                stream=False,
-                raw=False,  # Ensure ask returns dict
-                optimizer=optimizer,
-                conversationally=conversationally,
-            )
-            return self.get_message(response_data)  # get_message expects dict
-
-        return for_stream_chat() if stream else for_non_stream_chat()  # Use renamed functions
-
     def get_message(self, response: Response) -> str:
         if not isinstance(response, dict):
             return str(response)
-        return cast(Dict[str, Any], response).get("text", "") # Use .get for safety
+        return cast(Dict[str, Any], response).get("text", "")  # Use .get for safety
 
 
 if __name__ == "__main__":
     # Ensure curl_cffi is installed
     from rich import print
+
     ai = Elmo()
     response = ai.chat("write a poem about AI", stream=True)
     if hasattr(response, "__iter__") and not isinstance(response, (str, bytes)):

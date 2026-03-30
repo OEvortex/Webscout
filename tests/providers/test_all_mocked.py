@@ -36,10 +36,10 @@ class TestAllProvidersMocked(unittest.TestCase):
 
             with self.subTest(provider=name):
                 # Mock initialization dependencies
-                with patch('webscout.Provider.Openai.BackgroundModelFetcher'), \
-                     patch('webscout.Provider.Groq.BackgroundModelFetcher'), \
-                     patch('webscout.Provider.HuggingFace.BackgroundModelFetcher'), \
-                     patch('webscout.Provider.Gemini.Chatbot'), \
+                with patch('webscout.Provider.Auth.Openai.BackgroundModelFetcher'), \
+                     patch('webscout.Provider.Auth.Groq.BackgroundModelFetcher'), \
+                     patch('webscout.Provider.Auth.HuggingFace.BackgroundModelFetcher'), \
+                     patch('webscout.Provider.Auth.Gemini.Chatbot'), \
                      patch('webscout.litagent.LitAgent'):
 
                     # Prepare init args
