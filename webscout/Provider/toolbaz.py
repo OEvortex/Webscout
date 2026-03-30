@@ -28,30 +28,30 @@ class Toolbaz(Provider):
 
     required_auth = False
     AVAILABLE_MODELS = [
+        # Google
         "gemini-3-flash",
         "gemini-3.1-flash-lite",
         "gemini-2.5-flash",
         "gemini-2.5-pro",
         "gemini-2.0-flash-thinking",
         "gemini-2.0-flash",
+        # Anthropic
         "claude-sonnet-4",
+        # OpenAI
         "gpt-5",
         "gpt-5.2",
         "gpt-oss-120b",
         "o3-mini",
-        "gpt-4o-latest",
+        "gpt-4o",
+        # xAI
         "grok-4-fast",
-        "grok-4.1-fast",
+        # ToolBaz
         "toolbaz-v4.5-fast",
         "toolbaz_v4",
-        "toolbaz_v3.5_pro",
-        "deepseek-r1",
+        # DeepSeek
         "deepseek-v3.1",
         "deepseek-v3",
-        "Llama-4-Maverick",
-        "Llama-3.3-70B",
-        "mixtral_8x22b",
-        "L3-70B-Euryale-v2.1",
+        # Unfiltered
         "midnight-rose",
         "unfiltered_x",
     ]
@@ -312,7 +312,10 @@ if __name__ == "__main__":
                 response_stream, (str, bytes)
             ):
                 for chunk in response_stream:
-                    response_text += chunk
+                    if isinstance(chunk, dict):
+                        response_text += chunk.get("text", "")
+                    elif isinstance(chunk, str):
+                        response_text += chunk
             else:
                 response_text = str(response_stream)
 
@@ -325,6 +328,9 @@ if __name__ == "__main__":
                 display_text = "Empty or invalid stream response"
 
             print(f"\r{model:<50} {status:<10} {display_text}")
+
+            # Small delay to avoid rate limiting
+            time.sleep(1)
 
         except Exception as e:
             print(f"\r{model:<50} {'✗':<10} Error: {str(e)}")

@@ -252,30 +252,30 @@ class Toolbaz(OpenAICompatibleProvider):
 
     required_auth = False
     AVAILABLE_MODELS = [
+        # Google
         "gemini-3-flash",
         "gemini-3.1-flash-lite",
         "gemini-2.5-flash",
         "gemini-2.5-pro",
         "gemini-2.0-flash-thinking",
         "gemini-2.0-flash",
+        # Anthropic
         "claude-sonnet-4",
+        # OpenAI
         "gpt-5",
         "gpt-5.2",
         "gpt-oss-120b",
         "o3-mini",
-        "gpt-4o-latest",
+        "gpt-4o",
+        # xAI
         "grok-4-fast",
-        "grok-4.1-fast",
+        # ToolBaz
         "toolbaz-v4.5-fast",
         "toolbaz_v4",
-        "toolbaz_v3.5_pro",
-        "deepseek-r1",
+        # DeepSeek (streaming may fail)
         "deepseek-v3.1",
         "deepseek-v3",
-        "Llama-4-Maverick",
-        "Llama-3.3-70B",
-        "mixtral_8x22b",
-        "L3-70B-Euryale-v2.1",
+        # Unfiltered (streaming may fail)
         "midnight-rose",
         "unfiltered_x",
     ]
@@ -376,17 +376,17 @@ if __name__ == "__main__":
     try:
         from webscout.Provider.Openai_comp.utils import ChatCompletion
     except ImportError:
-        ChatCompletion = None  # ty:ignore[invalid-assignment]
+        ChatCompletion = None  # type: ignore
 
-if ChatCompletion and isinstance(response, ChatCompletion):
-    message = response.choices[0].message  # type: ignore[possibly-missing-attribute]
-    if message:
-        print(message.content)
-else:
-    # Streaming generator
-    for chunk in response:
-        if hasattr(chunk, "choices") and chunk.choices:
-            delta = getattr(chunk.choices[0], "delta", None)  # ty:ignore[not-subscriptable]
-            if delta and getattr(delta, "content", None):
-                print(delta.content, end="", flush=True)
+    if ChatCompletion and isinstance(response, ChatCompletion):
+        message = response.choices[0].message  # type: ignore
+        if message:
+            print(message.content)
+    else:
+        # Streaming generator
+        for chunk in response:
+            if hasattr(chunk, "choices") and chunk.choices:
+                delta = getattr(chunk.choices[0], "delta", None)  # type: ignore
+                if delta and getattr(delta, "content", None):
+                    print(delta.content, end="", flush=True)
     print()
