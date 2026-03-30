@@ -1,8 +1,10 @@
+import inspect
 import json
 import re
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from functools import wraps
 from pathlib import Path
 from typing import Any, Callable, Dict, Generator, List, Optional, Union
 
@@ -146,10 +148,48 @@ class Provider(ABC):
     required_auth: bool = False
     conversation: Any
 
+    def __init_subclass__(cls, **kwargs: Any):
+        super().__init_subclass__(**kwargs)
+
+        chat = cls.__dict__.get("chat")
+        if chat is None:
+            return
+
+        wrapped_params = ("tools", "tool_choice", "max_tool_rounds")
+        try:
+            chat_params = set(inspect.signature(chat).parameters)
+        except (TypeError, ValueError):
+            chat_params = set()
+
+        if chat_params.intersection(wrapped_params):
+            return
+
+        @wraps(chat)
+        def wrapped_chat(self, *args: Any, **kwargs: Any) -> Any:
+            tools = kwargs.get("tools")
+            tool_choice = kwargs.get("tool_choice")
+            if tools or tool_choice is not None or self.available_tools:
+                return Provider.chat(self, *args, **kwargs)
+            return chat(self, *args, **kwargs)
+
+        setattr(cls, "chat", wrapped_chat)
+
     def __init__(self, *args: Any, **kwargs: Any):
         self._last_response: Dict[str, Any] = {}
         self.conversation: Any = None
-        self.available_tools: Dict[str, Tool] = {}
+        self.available_tools = {}
+
+    @property
+    def available_tools(self) -> Dict[str, Tool]:
+        tools = self.__dict__.get("_available_tools")
+        if tools is None:
+            tools = {}
+            self.__dict__["_available_tools"] = tools
+        return tools
+
+    @available_tools.setter
+    def available_tools(self, value: Dict[str, Tool]) -> None:
+        self.__dict__["_available_tools"] = value
 
     # -- last_response property ----------------------------------------- #
 
@@ -341,9 +381,8 @@ class Provider(ABC):
             ic("stream=True is ignored when tools are present (auto-loop)")
             stream = False
 
-        conversation_prompt = (
-            self.conversation.gen_complete_prompt(prompt) if self.conversation else prompt
-        )
+        conversation = getattr(self, "conversation", None)
+        conversation_prompt = conversation.gen_complete_prompt(prompt) if conversation else prompt
         if tool_block:
             conversation_prompt = tool_block + "\n\n" + conversation_prompt
 
@@ -372,9 +411,9 @@ class Provider(ABC):
             conversation_prompt += f"\n\n{text}\n\n{result_xml}"
 
             # Track in structured conversation history
-            if self.conversation and hasattr(self.conversation, "add_tool_call_result"):
+            if conversation and hasattr(conversation, "add_tool_call_result"):
                 for r in results:
-                    self.conversation.add_tool_call_result(
+                    conversation.add_tool_call_result(
                         r["tool_name"], r["arguments"], r["result"]
                     )
 
@@ -391,9 +430,6 @@ class Provider(ABC):
         stream: bool = False,
         optimizer: Optional[str] = None,
         conversationally: bool = False,
-        tools: Optional[List[Tool]] = None,
-        tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
-        max_tool_rounds: int = 5,
         **kwargs: Any,
     ) -> Any:
         """Generate a response, automatically handling tool calls.
@@ -416,6 +452,9 @@ class Provider(ABC):
             **kwargs: Forwarded to ``ask()`` (e.g. ``raw``).
         """
         raw = kwargs.pop("raw", False)
+        tools = kwargs.pop("tools", None)
+        kwargs.pop("tool_choice", None)
+        max_tool_rounds = kwargs.pop("max_tool_rounds", 5)
 
         if tools or self.available_tools:
             # --- auto tool-calling path -------------------------------- #
