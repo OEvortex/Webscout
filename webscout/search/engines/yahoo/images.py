@@ -30,19 +30,19 @@ class YahooImages(YahooSearchEngine[ImagesResult]):
     search_url = "https://images.search.yahoo.com/search/images"
     search_method = "GET"
     search_headers = {
-        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
     }
 
     # XPath selectors
-    items_xpath = "//li[contains(@class, 'ld')]"
+    items_xpath = "//li[contains(@class, 'ld') or contains(@class, 'algo') or contains(@class, 'dd')] | //div[contains(@class, 'img')]"
     elements_xpath: Mapping[str, str] = {
-        "title": "@data",
-        "image": "@data",
-        "thumbnail": "@data",
-        "url": "@data",
-        "source": "@data",
-        "width": "@data",
-        "height": "@data",
+        "title": ".//@alt | .//@title | .//h3//text()",
+        "image": ".//@src | .//@data-src",
+        "thumbnail": ".//@src",
+        "url": ".//a/@href",
+        "source": ".//span[contains(@class, 'source')]//text() | .//cite//text()",
+        "width": "",
+        "height": "",
     }
 
     # Filter mappings

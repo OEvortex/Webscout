@@ -68,9 +68,10 @@ class YahooSearch(BaseSearch):
             keywords=keywords, region=region, safesearch=safesearch, max_results=max_results
         )
 
-    def suggestions(self, keywords: str, region: str = "us") -> List[str]:
+    def suggestions(self, keywords: str, region: str = "us") -> List[dict]:
         search = YahooSuggestions()
-        return search.run(keywords, region)
+        results = search.run(keywords, region)
+        return [{"suggestion": s} for s in results]
 
     def answers(self, keywords: str) -> List[dict]:
         search = YahooAnswers()
