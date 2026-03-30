@@ -48,7 +48,7 @@ from webscout.search import (
 
 ## Result Types
 
-All main interfaces (`DuckDuckGoSearch`, `BingSearch`, `BraveSearch`) return typed dataclasses. `YahooSearch` and `YepSearch` return `dict` objects. Low-level engines (`Mojeek`, `Dogpile`, `Wikipedia`, `Yandex`) return `TextResult`.
+All main interfaces (`DuckDuckGoSearch`, `BingSearch`, `BraveSearch`, `YahooSearch`) return typed dataclasses. `YepSearch` returns `dict` objects. Low-level engines (`Mojeek`, `Dogpile`, `Wikipedia`, `Yandex`) return `TextResult`.
 
 ```python
 from webscout.search.results import TextResult, ImagesResult, VideosResult, NewsResult
@@ -735,14 +735,14 @@ results = engine.run("test query", max_results=5)
 
 ### YahooSearch
 
-| Method        | Signature                                            | Returns          |
-| ------------- | ---------------------------------------------------- | ---------------- |
-| `text`        | `(keywords, region="us", safesearch="moderate", max_results=None)` | `List[Dict]`    |
-| `images`      | `(keywords, region="us", safesearch="moderate", max_results=None)` | `List[Dict]`    |
-| `videos`      | `(keywords, region="us", safesearch="moderate", max_results=None)` | `List[Dict]`    |
-| `news`        | `(keywords, region="us", safesearch="moderate", max_results=None)` | `List[Dict]`    |
-| `suggestions` | `(keywords, region="us")`                            | `List[str]`      |
-| `weather`     | `(keywords)`                                         | `List[Dict]`     |
+| Method        | Signature                                            | Returns               |
+| ------------- | ---------------------------------------------------- | --------------------- |
+| `text`        | `(keywords, region="us", safesearch="moderate", max_results=None)` | `List[TextResult]`   |
+| `images`      | `(keywords, region="us", safesearch="moderate", max_results=None)` | `List[ImagesResult]` |
+| `videos`      | `(keywords, region="us", safesearch="moderate", max_results=None)` | `List[VideosResult]` |
+| `news`        | `(keywords, region="us", safesearch="moderate", max_results=None)` | `List[NewsResult]`   |
+| `suggestions` | `(keywords, region="us")`                            | `List[str]`           |
+| `weather`     | `(keywords)`                                         | `List[dict]`          |
 
 ### YepSearch
 

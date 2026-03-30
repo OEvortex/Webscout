@@ -41,9 +41,9 @@ class YahooVideos(YahooSearchEngine[VideosResult]):
 
     # Filter mappings
     LENGTH_FILTERS = {
-        "short": "short",    # < 4 minutes
+        "short": "short",  # < 4 minutes
         "medium": "medium",  # 4-20 minutes
-        "long": "long",      # > 20 minutes
+        "long": "long",  # > 20 minutes
         "all": "",
     }
 
@@ -161,6 +161,7 @@ class YahooVideos(YahooSearchEngine[VideosResult]):
                     if end == -1:
                         end = len(href)
                     from urllib.parse import unquote
+
                     return unquote(href[start:end])
                 else:
                     query_params = parse_qs(parsed.query)
@@ -234,7 +235,7 @@ class YahooVideos(YahooSearchEngine[VideosResult]):
                 safesearch=safesearch,
                 timelimit=timelimit,
                 page=current_page,
-                **kwargs
+                **kwargs,
             )
 
             html_text = self.request(self.search_method, self.search_url, params=payload)
@@ -271,8 +272,8 @@ class YahooVideos(YahooSearchEngine[VideosResult]):
         duration: str | None = None,
         license_videos: str | None = None,
         max_results: int | None = None,
-    ) -> list[dict[str, str]]:
-        """Run video search and return results as dictionaries.
+    ) -> list[VideosResult]:
+        """Run video search.
 
         Args:
             keywords: Search query.
@@ -285,7 +286,7 @@ class YahooVideos(YahooSearchEngine[VideosResult]):
             max_results: Maximum number of results.
 
         Returns:
-            List of video result dictionaries.
+            List of VideosResult objects.
         """
         results = self.search(
             query=keywords,
@@ -297,6 +298,4 @@ class YahooVideos(YahooSearchEngine[VideosResult]):
             license_videos=license_videos,
             max_results=max_results,
         )
-        if results is None:
-            return []
-        return [result.to_dict() for result in results]
+        return results or []

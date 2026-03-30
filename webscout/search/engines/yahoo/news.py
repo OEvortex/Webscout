@@ -114,9 +114,9 @@ class YahooNews(YahooSearchEngine[NewsResult]):
         # Time filter
         if timelimit:
             time_map = {
-                "d": "1d",   # Past 24 hours
-                "w": "1w",   # Past week
-                "m": "1m",   # Past month
+                "d": "1d",  # Past 24 hours
+                "w": "1w",  # Past week
+                "m": "1m",  # Past month
             }
             if timelimit in time_map:
                 payload["btf"] = time_map[timelimit]
@@ -152,6 +152,7 @@ class YahooNews(YahooSearchEngine[NewsResult]):
             # Extract URL from redirect
             if result.url and "/RU=" in result.url:
                 from urllib.parse import unquote
+
                 start = result.url.find("/RU=") + 4
                 end = result.url.find("/RK=", start)
                 if end == -1:
@@ -199,7 +200,7 @@ class YahooNews(YahooSearchEngine[NewsResult]):
                 safesearch=safesearch,
                 timelimit=timelimit,
                 page=current_page,
-                **kwargs
+                **kwargs,
             )
 
             html_text = self.request(self.search_method, self.search_url, params=payload)
@@ -233,8 +234,8 @@ class YahooNews(YahooSearchEngine[NewsResult]):
         safesearch: str = "moderate",
         timelimit: str | None = None,
         max_results: int | None = None,
-    ) -> list[dict[str, str]]:
-        """Run news search and return results as dictionaries.
+    ) -> list[NewsResult]:
+        """Run news search.
 
         Args:
             keywords: Search query.
@@ -244,7 +245,7 @@ class YahooNews(YahooSearchEngine[NewsResult]):
             max_results: Maximum number of results.
 
         Returns:
-            List of news result dictionaries.
+            List of NewsResult objects.
         """
         results = self.search(
             query=keywords,
@@ -253,6 +254,4 @@ class YahooNews(YahooSearchEngine[NewsResult]):
             timelimit=timelimit,
             max_results=max_results,
         )
-        if results is None:
-            return []
-        return [result.to_dict() for result in results]
+        return results or []

@@ -62,7 +62,7 @@ class YahooText(YahooSearchEngine[TextResult]):
         safesearch: str,
         timelimit: str | None,
         page: int = 1,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> dict[str, Any]:
         """Build search payload for Yahoo.
 
@@ -156,7 +156,7 @@ class YahooText(YahooSearchEngine[TextResult]):
                 safesearch=safesearch,
                 timelimit=timelimit,
                 page=current_page,
-                **kwargs
+                **kwargs,
             )
 
             # Make request
@@ -180,7 +180,9 @@ class YahooText(YahooSearchEngine[TextResult]):
 
             # Look for next page link
             tree = self.extract_tree(html_text)
-            next_links = tree.xpath("//a[contains(text(), 'Next') or contains(@class, 'next')]/@href")
+            next_links = tree.xpath(
+                "//a[contains(text(), 'Next') or contains(@class, 'next')]/@href"
+            )
 
             if not next_links:
                 # Try to find numbered page links
@@ -227,7 +229,7 @@ class YahooText(YahooSearchEngine[TextResult]):
             safesearch=safesearch,
             timelimit=timelimit,
             page=page,
-            **kwargs
+            **kwargs,
         )
 
         html_text = self.request(self.search_method, self.search_url, params=payload)
@@ -247,8 +249,8 @@ class YahooText(YahooSearchEngine[TextResult]):
         timelimit: str | None = None,
         backend: str = "auto",
         max_results: int | None = None,
-    ) -> list[dict[str, str]]:
-        """Run text search and return results as dictionaries.
+    ) -> list[TextResult]:
+        """Run text search.
 
         Args:
             keywords: Search query.
@@ -259,7 +261,7 @@ class YahooText(YahooSearchEngine[TextResult]):
             max_results: Maximum number of results.
 
         Returns:
-            List of search result dictionaries.
+            List of TextResult objects.
         """
         results = self.search(
             query=keywords,
@@ -268,6 +270,4 @@ class YahooText(YahooSearchEngine[TextResult]):
             timelimit=timelimit,
             max_results=max_results,
         )
-        if results is None:
-            return []
-        return [result.to_dict() for result in results]
+        return results or []

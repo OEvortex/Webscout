@@ -182,21 +182,21 @@ class YahooImages(YahooSearchEngine[ImagesResult]):
 
         for result in results:
             # Parse JSON data from the data attribute
-            if result.title and result.title.startswith('{'):
+            if result.title and result.title.startswith("{"):
                 try:
                     data = json.loads(result.title)
 
                     # Extract title
-                    result.title = data.get('desc', '') or data.get('tit', '')
+                    result.title = data.get("desc", "") or data.get("tit", "")
 
                     # Extract URLs
-                    result.url = data.get('rurl', '')
-                    result.thumbnail = data.get('turl', '')
-                    result.image = data.get('turlL', '') or data.get('turl', '')
+                    result.url = data.get("rurl", "")
+                    result.thumbnail = data.get("turl", "")
+                    result.image = data.get("turlL", "") or data.get("turl", "")
 
                     # Extract dimensions
-                    result.width = int(data.get('imgW', 0))
-                    result.height = int(data.get('imgH', 0))
+                    result.width = int(data.get("imgW", 0))
+                    result.height = int(data.get("imgH", 0))
 
                 except (json.JSONDecodeError, KeyError, ValueError):
                     # If JSON parsing fails, keep original data
@@ -249,7 +249,7 @@ class YahooImages(YahooSearchEngine[ImagesResult]):
                 safesearch=safesearch,
                 timelimit=timelimit,
                 page=current_page,
-                **kwargs
+                **kwargs,
             )
 
             html_text = self.request(self.search_method, self.search_url, params=payload)
@@ -288,8 +288,8 @@ class YahooImages(YahooSearchEngine[ImagesResult]):
         layout: str | None = None,
         license_image: str | None = None,
         max_results: int | None = None,
-    ) -> list[dict[str, str]]:
-        """Run image search and return results as dictionaries.
+    ) -> list[ImagesResult]:
+        """Run image search.
 
         Args:
             keywords: Search query.
@@ -304,7 +304,7 @@ class YahooImages(YahooSearchEngine[ImagesResult]):
             max_results: Maximum number of results.
 
         Returns:
-            List of image result dictionaries.
+            List of ImagesResult objects.
         """
         results = self.search(
             query=keywords,
@@ -318,6 +318,4 @@ class YahooImages(YahooSearchEngine[ImagesResult]):
             license_image=license_image,
             max_results=max_results,
         )
-        if results is None:
-            return []
-        return [result.to_dict() for result in results]
+        return results or []
