@@ -12,7 +12,20 @@ import inspect
 import pkgutil
 import random
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Optional, Set, Tuple, Type, Union, cast
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from webscout.Provider.Openai_comp.base import (
     BaseChat,
@@ -51,32 +64,11 @@ def load_openai_providers() -> Tuple[Dict[str, Type[OpenAICompatibleProvider]], 
         >>> print('Claude' in auth_required)
         True
     """
-    provider_map = {}
-    auth_required_providers = set()
-
-    try:
-        provider_package = importlib.import_module("webscout.Provider.Openai_comp")
-        for _, module_name, _ in pkgutil.iter_modules(provider_package.__path__):
-            if module_name.startswith(("base", "utils", "pydantic", "__")):
-                continue
-            try:
-                module = importlib.import_module(f"webscout.Provider.Openai_comp.{module_name}")
-                for attr_name in dir(module):
-                    attr = getattr(module, attr_name)
-                    if (
-                        isinstance(attr, type)
-                        and issubclass(attr, OpenAICompatibleProvider)
-                        and attr != OpenAICompatibleProvider
-                        and not attr_name.startswith(("Base", "_"))
-                    ):
-                        provider_map[attr_name] = attr
-                        if hasattr(attr, "required_auth") and attr.required_auth:
-                            auth_required_providers.add(attr_name)
-            except Exception:
-                pass
-    except Exception:
-        pass
-    return provider_map, auth_required_providers
+    return _load_providers(
+        "webscout.Provider.Openai_comp",
+        OpenAICompatibleProvider,
+        ("base", "utils", "pydantic", "__"),
+    )
 
 
 def load_tti_providers() -> Tuple[Dict[str, Type[TTICompatibleProvider]], Set[str]]:
@@ -101,32 +93,7 @@ def load_tti_providers() -> Tuple[Dict[str, Type[TTICompatibleProvider]], Set[st
         >>> print('Stable Diffusion' in auth_required)
         False
     """
-    provider_map = {}
-    auth_required_providers = set()
-
-    try:
-        provider_package = importlib.import_module("webscout.Provider.TTI")
-        for _, module_name, _ in pkgutil.iter_modules(provider_package.__path__):
-            if module_name.startswith(("base", "utils", "__")):
-                continue
-            try:
-                module = importlib.import_module(f"webscout.Provider.TTI.{module_name}")
-                for attr_name in dir(module):
-                    attr = getattr(module, attr_name)
-                    if (
-                        isinstance(attr, type)
-                        and issubclass(attr, TTICompatibleProvider)
-                        and attr != TTICompatibleProvider
-                        and not attr_name.startswith(("Base", "_"))
-                    ):
-                        provider_map[attr_name] = attr
-                        if hasattr(attr, "required_auth") and attr.required_auth:
-                            auth_required_providers.add(attr_name)
-            except Exception:
-                pass
-    except Exception:
-        pass
-    return provider_map, auth_required_providers
+    return _load_providers("webscout.Provider.TTI", TTICompatibleProvider, ("base", "utils", "__"))
 
 
 def load_tts_providers() -> Tuple[Dict[str, Type[BaseTTSProvider]], Set[str]]:
@@ -141,37 +108,7 @@ def load_tts_providers() -> Tuple[Dict[str, Type[BaseTTSProvider]], Set[str]]:
         - A dictionary mapping TTS provider class names to their class objects.
         - A set of provider names that require API authentication.
     """
-    provider_map: Dict[str, Type[BaseTTSProvider]] = {}
-    auth_required_providers: Set[str] = set()
-
-    try:
-        provider_package = importlib.import_module("webscout.Provider.TTS")
-        for _, module_name, _ in pkgutil.iter_modules(provider_package.__path__):
-            if module_name.startswith(("base", "utils", "__")):
-                continue
-            try:
-                module = importlib.import_module(f"webscout.Provider.TTS.{module_name}")
-                for attr_name in dir(module):
-                    attr = getattr(module, attr_name)
-                    if (
-                        isinstance(attr, type)
-                        and issubclass(attr, BaseTTSProvider)
-                        and attr != BaseTTSProvider
-                        and not attr_name.startswith(("Base", "_"))
-                    ):
-                        provider_map[attr_name] = attr
-                        if hasattr(attr, "required_auth") and attr.required_auth:
-                            auth_required_providers.add(attr_name)
-            except Exception:
-                pass
-    except Exception:
-        pass
-    return provider_map, auth_required_providers
-
-
-OPENAI_PROVIDERS, OPENAI_AUTH_REQUIRED = load_openai_providers()
-TTI_PROVIDERS, TTI_AUTH_REQUIRED = load_tti_providers()
-TTS_PROVIDERS, TTS_AUTH_REQUIRED = load_tts_providers()
+    return _load_providers("webscout.Provider.TTS", BaseTTSProvider, ("base", "utils", "__"))
 
 
 def _get_models_safely(provider_cls: type, client: Optional["Client"] = None) -> List[str]:
@@ -270,6 +207,302 @@ def _normalized_name_set(values: Optional[List[str]]) -> Set[str]:
     return {value.casefold() for value in (values or []) if value}
 
 
+ProviderT = TypeVar("ProviderT")
+
+
+def _load_providers(
+    module_path: str,
+    base_class: Type[ProviderT],
+    exclude_prefixes: Tuple[str, ...],
+) -> Tuple[Dict[str, Type[ProviderT]], Set[str]]:
+    provider_map: Dict[str, Type[ProviderT]] = {}
+    auth_required_providers: Set[str] = set()
+
+    try:
+        provider_package = importlib.import_module(module_path)
+        for _, module_name, _ in pkgutil.iter_modules(provider_package.__path__):
+            if module_name.startswith(exclude_prefixes):
+                continue
+            try:
+                module = importlib.import_module(f"{module_path}.{module_name}")
+                for attr_name in dir(module):
+                    attr = getattr(module, attr_name)
+                    if (
+                        isinstance(attr, type)
+                        and issubclass(attr, base_class)
+                        and attr != base_class
+                        and not attr_name.startswith(("Base", "_"))
+                    ):
+                        provider_map[attr_name] = attr
+                        if getattr(attr, "required_auth", False):
+                            auth_required_providers.add(attr_name)
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    return provider_map, auth_required_providers
+
+
+def _print_provider_selection(provider_name: str, model_name: str, *, fallback: bool = False) -> None:
+    suffix = " (Fallback)" if fallback else ""
+    print(f"\033[1;34m{provider_name}:{model_name}{suffix}\033[0m\n")
+
+
+def _print_model_match(match_type: str, model: str, matched_model: str) -> None:
+    print(f"\033[1;33m{match_type}: '{model}' -> '{matched_model}'\033[0m")
+
+
+def _get_available_provider_items(
+    provider_registry: Dict[str, Type[ProviderT]],
+    auth_required_providers: Set[str],
+    excluded: Optional[List[str]],
+    api_key: Optional[str],
+) -> List[Tuple[str, Type[ProviderT]]]:
+    exclude = _normalized_name_set(excluded)
+    if api_key:
+        return [
+            (name, cls)
+            for name, cls in provider_registry.items()
+            if name.casefold() not in exclude
+        ]
+    return [
+        (name, cls)
+        for name, cls in provider_registry.items()
+        if name not in auth_required_providers and name.casefold() not in exclude
+    ]
+
+
+def _get_provider_instance_cached(
+    cache: Dict[str, Any],
+    provider_class: Type[ProviderT],
+    init_kwargs_candidates: List[Dict[str, Any]],
+    *,
+    provider_kind: Optional[str] = None,
+) -> ProviderT:
+    provider_name = provider_class.__name__
+    if provider_name in cache:
+        return cache[provider_name]
+
+    for init_kwargs in init_kwargs_candidates:
+        try:
+            instance = provider_class(**init_kwargs)
+            cache[provider_name] = instance
+            return instance
+        except Exception:
+            continue
+
+    try:
+        instance = provider_class()
+        cache[provider_name] = instance
+        return instance
+    except Exception as exc:
+        label = f"{provider_kind} " if provider_kind else ""
+        raise RuntimeError(f"Failed to initialize {label}provider {provider_class.__name__}: {exc}")
+
+
+def _build_search_models(model: str, resolved_model: Optional[str]) -> Tuple[str, Set[str]]:
+    base_model = model.split("/")[-1] if "/" in model else model
+    search_models = {base_model, resolved_model} if resolved_model else {base_model}
+    return base_model, search_models
+
+
+def _fuzzy_resolve_provider_and_model(
+    model: str,
+    available: List[Tuple[str, Type[ProviderT]]],
+    get_models_fn: Callable[[Type[ProviderT]], List[str]],
+    *,
+    print_provider_info: bool = False,
+    match_suffix: str = "",
+) -> Optional[Tuple[Type[ProviderT], str]]:
+    model_to_provider: Dict[str, Type[ProviderT]] = {}
+
+    for _, provider_class in available:
+        for provider_model in get_models_fn(provider_class):
+            if provider_model not in model_to_provider:
+                model_to_provider[provider_model] = provider_class
+
+    if not model_to_provider:
+        return None
+
+    model_lower = model.lower()
+
+    for model_name in model_to_provider:
+        if model_name.lower() == model_lower:
+            return model_to_provider[model_name], model_name
+
+    for model_name in model_to_provider:
+        candidate = model_name.lower()
+        if model_lower in candidate or candidate in model_lower:
+            if print_provider_info:
+                _print_model_match(f"Substring match{match_suffix}", model, model_name)
+            return model_to_provider[model_name], model_name
+
+    matches = difflib.get_close_matches(model, model_to_provider.keys(), n=1, cutoff=0.5)
+    if matches:
+        matched_model = matches[0]
+        if print_provider_info:
+            _print_model_match(f"Fuzzy match{match_suffix}", model, matched_model)
+        return model_to_provider[matched_model], matched_model
+
+    return None
+
+
+def _resolve_provider_and_model(
+    model: str,
+    provider: Optional[Type[ProviderT]],
+    provider_registry: Dict[str, Type[ProviderT]],
+    available_provider_fn: Callable[[], List[Tuple[str, Type[ProviderT]]]],
+    get_models_fn: Callable[[Type[ProviderT]], List[str]],
+    *,
+    print_provider_info: bool = False,
+    no_available_message: str,
+    no_available_with_models_message: str,
+    provider_no_models_message: str,
+    no_providers_for_model_message: str,
+    provider_empty_model_fallback: Optional[str] = None,
+    match_suffix: str = "",
+) -> Tuple[Type[ProviderT], str]:
+    if "/" in model:
+        provider_name, model_name = model.split("/", 1)
+        found_provider = next(
+            (cls for name, cls in provider_registry.items() if name.lower() == provider_name.lower()),
+            None,
+        )
+        if found_provider:
+            return found_provider, model_name
+
+    if provider:
+        resolved_model = model
+        if model == "auto":
+            provider_models = get_models_fn(provider)
+            if provider_models:
+                resolved_model = random.choice(provider_models)
+            elif provider_empty_model_fallback is not None:
+                resolved_model = provider_empty_model_fallback
+            else:
+                raise RuntimeError(provider_no_models_message.format(provider=provider.__name__))
+        return provider, resolved_model
+
+    if model == "auto":
+        available = available_provider_fn()
+        if not available:
+            raise RuntimeError(no_available_message)
+
+        providers_with_models = []
+        for _, provider_class in available:
+            provider_models = get_models_fn(provider_class)
+            if provider_models:
+                providers_with_models.append((provider_class, provider_models))
+
+        if providers_with_models:
+            provider_class, provider_models = random.choice(providers_with_models)
+            return provider_class, random.choice(provider_models)
+
+        raise RuntimeError(no_available_with_models_message)
+
+    available = available_provider_fn()
+    for _, provider_class in available:
+        provider_models = get_models_fn(provider_class)
+        if provider_models and model in provider_models:
+            return provider_class, model
+
+    fuzzy_result = _fuzzy_resolve_provider_and_model(
+        model,
+        available,
+        get_models_fn,
+        print_provider_info=print_provider_info,
+        match_suffix=match_suffix,
+    )
+    if fuzzy_result:
+        return fuzzy_result
+
+    if available:
+        random.shuffle(available)
+        return available[0][1], model
+
+    raise RuntimeError(no_providers_for_model_message.format(model=model))
+
+
+def _build_fallback_queue(
+    available: List[Tuple[str, Type[ProviderT]]],
+    resolved_provider: Optional[Type[ProviderT]],
+    model: str,
+    resolved_model: Optional[str],
+    get_models_fn: Callable[[Type[ProviderT]], List[str]],
+    *,
+    empty_model_fallback: str,
+) -> List[Tuple[str, Type[ProviderT], str]]:
+    tier1: List[Tuple[str, Type[ProviderT], str]] = []
+    tier2: List[Tuple[str, Type[ProviderT], str]] = []
+    tier3: List[Tuple[str, Type[ProviderT], str]] = []
+    base_model, search_models = _build_search_models(model, resolved_model)
+
+    for provider_name, provider_class in available:
+        if provider_class == resolved_provider:
+            continue
+
+        provider_models = get_models_fn(provider_class)
+        if not provider_models:
+            fallback_model = base_model if base_model != "auto" else empty_model_fallback
+            tier3.append((provider_name, provider_class, fallback_model))
+            continue
+
+        found_exact = False
+        for search_model in search_models:
+            if search_model != "auto" and search_model in provider_models:
+                tier1.append((provider_name, provider_class, search_model))
+                found_exact = True
+                break
+        if found_exact:
+            continue
+
+        if base_model != "auto":
+            matches = difflib.get_close_matches(base_model, provider_models, n=1, cutoff=0.5)
+            if matches:
+                tier2.append((provider_name, provider_class, matches[0]))
+                continue
+
+        tier3.append((provider_name, provider_class, random.choice(provider_models)))
+
+    random.shuffle(tier1)
+    random.shuffle(tier2)
+    random.shuffle(tier3)
+    return tier1 + tier2 + tier3
+
+
+def _is_valid_chat_completion(response: Any) -> bool:
+    return bool(
+        response
+        and hasattr(response, "choices")
+        and response.choices
+        and response.choices[0].message
+        and response.choices[0].message.content
+        and response.choices[0].message.content.strip()
+    )
+
+
+def _chain_stream_response(
+    first_chunk: ChatCompletionChunk,
+    response: Generator[ChatCompletionChunk, None, None],
+    *,
+    provider_name: str,
+    model_name: str,
+    print_provider_info: bool,
+    fallback: bool = False,
+) -> Generator[ChatCompletionChunk, None, None]:
+    if print_provider_info:
+        _print_provider_selection(provider_name, model_name, fallback=fallback)
+
+    yield first_chunk
+    yield from response
+
+
+OPENAI_PROVIDERS, OPENAI_AUTH_REQUIRED = load_openai_providers()
+TTI_PROVIDERS, TTI_AUTH_REQUIRED = load_tti_providers()
+TTS_PROVIDERS, TTS_AUTH_REQUIRED = load_tts_providers()
+
+
 class ClientCompletions(BaseCompletions):
     """
     Unified completions interface with intelligent provider and model resolution.
@@ -323,33 +556,6 @@ class ClientCompletions(BaseCompletions):
     def _get_provider_instance(
         self, provider_class: Type[OpenAICompatibleProvider], **kwargs
     ) -> OpenAICompatibleProvider:
-        """
-        Retrieves or creates a cached provider instance.
-
-        Checks if a provider instance already exists in the client's cache.
-        If not, initializes a new instance with client-level configuration
-        (proxies, api_key) merged with any additional kwargs.
-
-        Args:
-            provider_class: The OpenAI-compatible provider class to instantiate.
-            **kwargs: Additional keyword arguments to pass to the provider's constructor.
-
-        Returns:
-            An instantiated and initialized provider instance.
-
-        Raises:
-            RuntimeError: If the provider cannot be initialized with or without
-                         client configuration.
-
-        Examples:
-            >>> from webscout.Provider.Openai_comp.gpt4free import GPT4Free
-            >>> completions = client.chat.completions
-            >>> instance = completions._get_provider_instance(GPT4Free)
-        """
-        p_name = provider_class.__name__
-        if p_name in self._client._provider_cache:
-            return self._client._provider_cache[p_name]
-
         init_kwargs = {}
         if self._client.proxies:
             init_kwargs["proxies"] = self._client.proxies
@@ -357,199 +563,45 @@ class ClientCompletions(BaseCompletions):
             init_kwargs["api_key"] = self._client.api_key
         init_kwargs.update(kwargs)
 
-        try:
-            instance = provider_class(**init_kwargs)
-            self._client._provider_cache[p_name] = instance
-            return instance
-        except Exception:
-            try:
-                instance = provider_class()
-                self._client._provider_cache[p_name] = instance
-                return instance
-            except Exception as e:
-                raise RuntimeError(f"Failed to initialize provider {provider_class.__name__}: {e}")
+        return _get_provider_instance_cached(
+            self._client._provider_cache,
+            provider_class,
+            [init_kwargs],
+        )
 
     def _fuzzy_resolve_provider_and_model(
         self, model: str
     ) -> Optional[Tuple[Type[OpenAICompatibleProvider], str]]:
-        """
-        Performs fuzzy matching to find the closest model match across all providers.
-
-        Attempts three levels of matching:
-        1. Exact case-insensitive match
-        2. Substring match (model contains query or vice versa)
-        3. Fuzzy match using difflib with 50% cutoff
-
-        Args:
-            model: The model name or partial name to search for.
-
-        Returns:
-            A tuple of (provider_class, resolved_model_name) if a match is found,
-            or None if no suitable match is found.
-
-        Note:
-            Prints informational messages if client.print_provider_info is enabled.
-
-        Examples:
-            >>> result = completions._fuzzy_resolve_provider_and_model("gpt-4")
-            >>> if result:
-            ...     provider_cls, model_name = result
-            ...     print(f"Found: {model_name} via {provider_cls.__name__}")
-        """
-        available = self._get_available_providers()
-        model_to_provider = {}
-
-        for p_name, p_cls in available:
-            p_models = _get_models_safely(p_cls, self._client)
-            for m in p_models:
-                if m not in model_to_provider:
-                    model_to_provider[m] = p_cls
-
-        if not model_to_provider:
-            return None
-
-        # 1. Exact case-insensitive match
-        for m_name in model_to_provider:
-            if m_name.lower() == model.lower():
-                return model_to_provider[m_name], m_name
-
-        # 2. Substring match
-        for m_name in model_to_provider:
-            if model.lower() in m_name.lower() or m_name.lower() in model.lower():
-                if self._client.print_provider_info:
-                    print(f"\033[1;33mSubstring match: '{model}' -> '{m_name}'\033[0m")
-                return model_to_provider[m_name], m_name
-
-        # 3. Fuzzy match with difflib
-        matches = difflib.get_close_matches(model, model_to_provider.keys(), n=1, cutoff=0.5)
-        if matches:
-            matched_model = matches[0]
-            if self._client.print_provider_info:
-                print(f"\033[1;33mFuzzy match: '{model}' -> '{matched_model}'\033[0m")
-            return model_to_provider[matched_model], matched_model
-        return None
+        return _fuzzy_resolve_provider_and_model(
+            model,
+            self._get_available_providers(),
+            lambda provider_cls: _get_models_safely(provider_cls, self._client),
+            print_provider_info=self._client.print_provider_info,
+        )
 
     def _resolve_provider_and_model(
         self, model: str, provider: Optional[Type[OpenAICompatibleProvider]]
     ) -> Tuple[Type[OpenAICompatibleProvider], str]:
-        """
-        Resolves the best provider and model name based on input specifications.
-
-        Handles multiple input formats:
-        - "provider/model" format: Parses and resolves to exact provider
-        - "auto": Randomly selects an available provider and model
-        - Named model: Searches across all providers for exact or fuzzy match
-
-        Resolution strategy:
-        1. If "provider/model" format, find provider by name
-        2. If provider specified, use it with given or auto-selected model
-        3. If "auto", randomly select from available providers and models
-        4. Otherwise, search across providers for exact match
-        5. Fall back to fuzzy matching
-        6. Finally, randomly select from available providers
-
-        Args:
-            model: Model identifier. Can be "auto", "provider/model", or model name.
-            provider: Optional provider class to constrain resolution.
-
-        Returns:
-            A tuple of (provider_class, resolved_model_name).
-
-        Raises:
-            RuntimeError: If no providers are available or model cannot be resolved.
-
-        Examples:
-            >>> # Auto resolution
-            >>> p_cls, m_name = completions._resolve_provider_and_model("auto", None)
-            >>> # Explicit provider/model
-            >>> p_cls, m_name = completions._resolve_provider_and_model(
-            ...     "GPT4Free/gpt-3.5-turbo", None
-            ... )
-            >>> # Model name fuzzy matching
-            >>> p_cls, m_name = completions._resolve_provider_and_model("gpt-4", None)
-        """
-        if "/" in model:
-            p_name, m_name = model.split("/", 1)
-            found_p = next(
-                (cls for name, cls in OPENAI_PROVIDERS.items() if name.lower() == p_name.lower()),
-                None,
-            )
-            if found_p:
-                return found_p, m_name
-
-        if provider:
-            resolved_model = model
-            if model == "auto":
-                p_models = _get_models_safely(provider, self._client)
-                if p_models:
-                    resolved_model = random.choice(p_models)
-                else:
-                    raise RuntimeError(f"Provider {provider.__name__} has no available models.")
-            return provider, resolved_model
-
-        if model == "auto":
-            available = self._get_available_providers()
-            if not available:
-                raise RuntimeError("No available chat providers found.")
-
-            providers_with_models = []
-            for name, cls in available:
-                p_models = _get_models_safely(cls, self._client)
-                if p_models:
-                    providers_with_models.append((cls, p_models))
-
-            if providers_with_models:
-                p_cls, p_models = random.choice(providers_with_models)
-                m_name = random.choice(p_models)
-                return p_cls, m_name
-            else:
-                raise RuntimeError("No available chat providers with models found.")
-
-        available = self._get_available_providers()
-        for p_name, p_cls in available:
-            p_models = _get_models_safely(p_cls, self._client)
-            if p_models and model in p_models:
-                return p_cls, model
-
-        fuzzy_result = self._fuzzy_resolve_provider_and_model(model)
-        if fuzzy_result:
-            return fuzzy_result
-
-        if available:
-            random.shuffle(available)
-            return available[0][1], model
-
-        raise RuntimeError(f"No providers found for model '{model}'")
+        return _resolve_provider_and_model(
+            model,
+            provider,
+            OPENAI_PROVIDERS,
+            self._get_available_providers,
+            lambda provider_cls: _get_models_safely(provider_cls, self._client),
+            print_provider_info=self._client.print_provider_info,
+            no_available_message="No available chat providers found.",
+            no_available_with_models_message="No available chat providers with models found.",
+            provider_no_models_message="Provider {provider} has no available models.",
+            no_providers_for_model_message="No providers found for model '{model}'",
+        )
 
     def _get_available_providers(self) -> List[Tuple[str, Type[OpenAICompatibleProvider]]]:
-        """
-        Returns a list of available chat providers for the current client configuration.
-
-        Filters the global provider registry based on:
-        - Client's exclude list
-        - API key availability (if api_key is set, includes auth-required providers)
-
-        Returns:
-            A list of tuples containing (provider_name, provider_class) pairs
-            for all available providers.
-
-        Examples:
-            >>> providers = completions._get_available_providers()
-            >>> print([p[0] for p in providers])
-            ['GPT4Free', 'OpenRouter', 'Groq']
-        """
-        exclude = _normalized_name_set(self._client.exclude)
-        if self._client.api_key:
-            return [
-                (name, cls)
-                for name, cls in OPENAI_PROVIDERS.items()
-                if name.casefold() not in exclude
-            ]
-        return [
-            (name, cls)
-            for name, cls in OPENAI_PROVIDERS.items()
-            if name not in OPENAI_AUTH_REQUIRED and name.casefold() not in exclude
-        ]
+        return _get_available_provider_items(
+            OPENAI_PROVIDERS,
+            OPENAI_AUTH_REQUIRED,
+            self._client.exclude,
+            self._client.api_key,
+        )
 
     def create(
         self,
@@ -648,137 +700,81 @@ class ClientCompletions(BaseCompletions):
         if resolved_provider:
             try:
                 provider_instance = self._get_provider_instance(resolved_provider)
-                response = provider_instance.chat.completions.create(
-                    **call_kwargs
-                )
+                response = provider_instance.chat.completions.create(**call_kwargs)
 
                 if stream and inspect.isgenerator(response):
                     try:
                         first_chunk = next(response)
                         self._last_provider = resolved_provider.__name__
-
-                        def _chained_gen_stream(
-                            first: ChatCompletionChunk,
-                            rest: Generator[ChatCompletionChunk, None, None],
-                            pname: str,
-                        ) -> Generator[ChatCompletionChunk, None, None]:
-                            if self._client.print_provider_info:
-                                print(f"\033[1;34m{pname}:{resolved_model}\033[0m\n")
-                            yield first
-                            yield from rest
-
-                        return _chained_gen_stream(
-                            first_chunk, response, resolved_provider.__name__
+                        return _chain_stream_response(
+                            first_chunk,
+                            response,
+                            provider_name=resolved_provider.__name__,
+                            model_name=resolved_model,
+                            print_provider_info=self._client.print_provider_info,
                         )
                     except StopIteration:
                         pass
                     except Exception:
                         pass
                 else:
-                    # Type narrowing for non-streaming response
                     if not inspect.isgenerator(response):
                         completion_response = cast(ChatCompletion, response)
-                        if (
-                            completion_response
-                            and hasattr(completion_response, "choices")
-                            and completion_response.choices
-                            and completion_response.choices[0].message
-                            and completion_response.choices[0].message.content
-                            and completion_response.choices[0].message.content.strip()
-                        ):
+                        if _is_valid_chat_completion(completion_response):
                             self._last_provider = resolved_provider.__name__
                             if self._client.print_provider_info:
-                                print(
-                                    f"\033[1;34m{resolved_provider.__name__}:{resolved_model}\033[0m\n"
+                                _print_provider_selection(
+                                    resolved_provider.__name__, resolved_model
                                 )
                             return completion_response
-                        else:
-                            raise ValueError(
-                                f"Provider {resolved_provider.__name__} returned empty content"
-                            )
+                        raise ValueError(
+                            f"Provider {resolved_provider.__name__} returned empty content"
+                        )
             except Exception:
                 pass
 
         all_available = self._get_available_providers()
-        tier1, tier2, tier3 = [], [], []
-        base_model = model.split("/")[-1] if "/" in model else model
-        search_models = {base_model, resolved_model} if resolved_model else {base_model}
-
-        for p_name, p_cls in all_available:
-            if p_cls == resolved_provider:
-                continue
-
-            p_models = _get_models_safely(p_cls, self._client)
-            if not p_models:
-                fallback_model = (
-                    base_model
-                    if base_model != "auto"
-                    else (p_models[0] if p_models else base_model)
-                )
-                tier3.append((p_name, p_cls, fallback_model))
-                continue
-
-            found_exact = False
-            for sm in search_models:
-                if sm != "auto" and sm in p_models:
-                    tier1.append((p_name, p_cls, sm))
-                    found_exact = True
-                    break
-            if found_exact:
-                continue
-
-            if base_model != "auto":
-                matches = difflib.get_close_matches(base_model, p_models, n=1, cutoff=0.5)
-                if matches:
-                    tier2.append((p_name, p_cls, matches[0]))
-                    continue
-
-            tier3.append((p_name, p_cls, random.choice(p_models)))
-
-        random.shuffle(tier1)
-        random.shuffle(tier2)
-        random.shuffle(tier3)
-        fallback_queue = tier1 + tier2 + tier3
+        fallback_queue = _build_fallback_queue(
+            all_available,
+            resolved_provider,
+            model,
+            resolved_model,
+            lambda provider_cls: _get_models_safely(provider_cls, self._client),
+            empty_model_fallback="auto",
+        )
 
         errors = []
         for p_name, p_cls, p_model in fallback_queue:
             try:
                 provider_instance = self._get_provider_instance(p_cls)
-                fallback_kwargs = {**call_kwargs, "model": p_model}
+                fallback_kwargs: Dict[str, Any] = dict(call_kwargs)
+                fallback_kwargs["model"] = p_model
                 response = provider_instance.chat.completions.create(**fallback_kwargs)
 
                 if stream and inspect.isgenerator(response):
                     try:
                         first_chunk = next(response)
                         self._last_provider = p_name
-
-                        def _chained_gen_fallback(first, rest, pname, mname):
-                            if self._client.print_provider_info:
-                                print(f"\033[1;34m{pname}:{mname} (Fallback)\033[0m\n")
-                            yield first
-                            yield from rest
-
-                        return _chained_gen_fallback(first_chunk, response, p_name, p_model)
+                        return _chain_stream_response(
+                            first_chunk,
+                            response,
+                            provider_name=p_name,
+                            model_name=p_model,
+                            print_provider_info=self._client.print_provider_info,
+                            fallback=True,
+                        )
                     except (StopIteration, Exception):
                         continue
 
                 if not inspect.isgenerator(response):
                     completion_response = cast(ChatCompletion, response)
-                    if (
-                        completion_response
-                        and hasattr(completion_response, "choices")
-                        and completion_response.choices
-                        and completion_response.choices[0].message
-                        and completion_response.choices[0].message.content
-                        and completion_response.choices[0].message.content.strip()
-                    ):
+                    if _is_valid_chat_completion(completion_response):
                         self._last_provider = p_name
                         if self._client.print_provider_info:
-                            print(f"\033[1;34m{p_name}:{p_model} (Fallback)\033[0m\n")
+                            _print_provider_selection(p_name, p_model, fallback=True)
                         return completion_response
-                    else:
-                        errors.append(f"{p_name}: Returned empty response.")
-                        continue
+                    errors.append(f"{p_name}: Returned empty response.")
+                    continue
             except Exception as e:
                 errors.append(f"{p_name}: {str(e)}")
                 continue
@@ -867,228 +863,52 @@ class ClientImages(BaseImages):
     def _get_provider_instance(
         self, provider_class: Type[TTICompatibleProvider], **kwargs
     ) -> TTICompatibleProvider:
-        """
-        Retrieves or creates a cached TTI provider instance.
-
-        Checks if a TTI provider instance already exists in the client's cache.
-        If not, initializes a new instance with client-level configuration
-        (proxies) merged with any additional kwargs.
-
-        Args:
-            provider_class: The TTI-compatible provider class to instantiate.
-            **kwargs: Additional keyword arguments to pass to the provider's constructor.
-
-        Returns:
-            An instantiated and initialized TTI provider instance.
-
-        Raises:
-            RuntimeError: If the provider cannot be initialized with or without
-                         client configuration.
-
-        Examples:
-            >>> from webscout.Provider.TTI.dalle import DALLE
-            >>> images = client.images
-            >>> instance = images._get_provider_instance(DALLE)
-        """
-        p_name = provider_class.__name__
-        if p_name in self._client._provider_cache:
-            return self._client._provider_cache[p_name]
-
         init_kwargs = {}
         if self._client.proxies:
             init_kwargs["proxies"] = self._client.proxies
         init_kwargs.update(kwargs)
 
-        try:
-            instance = provider_class(**init_kwargs)
-            self._client._provider_cache[p_name] = instance
-            return instance
-        except Exception:
-            try:
-                instance = provider_class()
-                self._client._provider_cache[p_name] = instance
-                return instance
-            except Exception as e:
-                raise RuntimeError(
-                    f"Failed to initialize TTI provider {provider_class.__name__}: {e}"
-                )
+        return _get_provider_instance_cached(
+            self._client._provider_cache,
+            provider_class,
+            [init_kwargs],
+            provider_kind="TTI",
+        )
 
     def _fuzzy_resolve_provider_and_model(
         self, model: str
     ) -> Optional[Tuple[Type[TTICompatibleProvider], str]]:
-        """
-        Performs fuzzy matching to find the closest image model match across providers.
-
-        Attempts three levels of matching:
-        1. Exact case-insensitive match
-        2. Substring match (model contains query or vice versa)
-        3. Fuzzy match using difflib with 50% cutoff
-
-        Args:
-            model: The model name or partial name to search for.
-
-        Returns:
-            A tuple of (provider_class, resolved_model_name) if a match is found,
-            or None if no suitable match is found.
-
-        Note:
-            Prints informational messages if client.print_provider_info is enabled.
-
-        Examples:
-            >>> result = images._fuzzy_resolve_provider_and_model("dall-e")
-            >>> if result:
-            ...     provider_cls, model_name = result
-            ...     print(f"Found: {model_name} via {provider_cls.__name__}")
-        """
-        available = self._get_available_providers()
-        model_to_provider = {}
-
-        for p_name, p_cls in available:
-            p_models = _get_models_safely(p_cls, self._client)
-            for m in p_models:
-                if m not in model_to_provider:
-                    model_to_provider[m] = p_cls
-
-        if not model_to_provider:
-            return None
-
-        # 1. Exact match
-        for m_name in model_to_provider:
-            if m_name.lower() == model.lower():
-                return model_to_provider[m_name], m_name
-
-        # 2. Substring match
-        for m_name in model_to_provider:
-            if model.lower() in m_name.lower() or m_name.lower() in model.lower():
-                if self._client.print_provider_info:
-                    print(f"\033[1;33mSubstring match (TTI): '{model}' -> '{m_name}'\033[0m")
-                return model_to_provider[m_name], m_name
-
-        # 3. Fuzzy match
-        matches = difflib.get_close_matches(model, model_to_provider.keys(), n=1, cutoff=0.5)
-        if matches:
-            matched_model = matches[0]
-            if self._client.print_provider_info:
-                print(f"\033[1;33mFuzzy match (TTI): '{model}' -> '{matched_model}'\033[0m")
-            return model_to_provider[matched_model], matched_model
-        return None
+        return _fuzzy_resolve_provider_and_model(
+            model,
+            self._get_available_providers(),
+            lambda provider_cls: _get_models_safely(provider_cls, self._client),
+            print_provider_info=self._client.print_provider_info,
+            match_suffix=" (TTI)",
+        )
 
     def _resolve_provider_and_model(
         self, model: str, provider: Optional[Type[TTICompatibleProvider]]
     ) -> Tuple[Type[TTICompatibleProvider], str]:
-        """
-        Resolves the best TTI provider and model name based on input specifications.
-
-        Handles multiple input formats:
-        - "provider/model" format: Parses and resolves to exact provider
-        - "auto": Randomly selects an available provider and model
-        - Named model: Searches across all providers for exact or fuzzy match
-
-        Resolution strategy:
-        1. If "provider/model" format, find provider by name
-        2. If provider specified, use it with given or auto-selected model
-        3. If "auto", randomly select from available providers and models
-        4. Otherwise, search across providers for exact match
-        5. Fall back to fuzzy matching
-        6. Finally, randomly select from available providers
-
-        Args:
-            model: Model identifier. Can be "auto", "provider/model", or model name.
-            provider: Optional TTI provider class to constrain resolution.
-
-        Returns:
-            A tuple of (provider_class, resolved_model_name).
-
-        Raises:
-            RuntimeError: If no providers are available or model cannot be resolved.
-
-        Examples:
-            >>> # Auto resolution
-            >>> p_cls, m_name = images._resolve_provider_and_model("auto", None)
-            >>> # Explicit provider/model
-            >>> p_cls, m_name = images._resolve_provider_and_model(
-            ...     "StableDiffusion/stable-diffusion-v1-5", None
-            ... )
-        """
-        if "/" in model:
-            p_name, m_name = model.split("/", 1)
-            found_p = next(
-                (cls for name, cls in TTI_PROVIDERS.items() if name.lower() == p_name.lower()), None
-            )
-            if found_p:
-                return found_p, m_name
-
-        if provider:
-            resolved_model = model
-            if model == "auto":
-                p_models = _get_models_safely(provider, self._client)
-                if p_models:
-                    resolved_model = random.choice(p_models)
-                else:
-                    raise RuntimeError(f"TTI Provider {provider.__name__} has no available models.")
-            return provider, resolved_model
-
-        if model == "auto":
-            available = self._get_available_providers()
-            if not available:
-                raise RuntimeError("No available image providers found.")
-
-            providers_with_models = []
-            for name, cls in available:
-                p_models = _get_models_safely(cls, self._client)
-                if p_models:
-                    providers_with_models.append((cls, p_models))
-
-            if providers_with_models:
-                p_cls, p_models = random.choice(providers_with_models)
-                return p_cls, random.choice(p_models)
-            else:
-                raise RuntimeError("No available image providers with models found.")
-
-        available = self._get_available_providers()
-        for p_name, p_cls in available:
-            p_models = _get_models_safely(p_cls, self._client)
-            if p_models and model in p_models:
-                return p_cls, model
-
-        fuzzy_result = self._fuzzy_resolve_provider_and_model(model)
-        if fuzzy_result:
-            return fuzzy_result
-
-        if available:
-            random.shuffle(available)
-            return available[0][1], model
-        raise RuntimeError(f"No image providers found for model '{model}'")
+        return _resolve_provider_and_model(
+            model,
+            provider,
+            TTI_PROVIDERS,
+            self._get_available_providers,
+            lambda provider_cls: _get_models_safely(provider_cls, self._client),
+            print_provider_info=self._client.print_provider_info,
+            no_available_message="No available image providers found.",
+            no_available_with_models_message="No available image providers with models found.",
+            provider_no_models_message="TTI Provider {provider} has no available models.",
+            no_providers_for_model_message="No image providers found for model '{model}'",
+        )
 
     def _get_available_providers(self) -> List[Tuple[str, Type[TTICompatibleProvider]]]:
-        """
-        Returns a list of available image providers for the current client configuration.
-
-        Filters the global TTI provider registry based on:
-        - Client's exclude_images list
-        - API key availability (if api_key is set, includes auth-required providers)
-
-        Returns:
-            A list of tuples containing (provider_name, provider_class) pairs
-            for all available image providers.
-
-        Examples:
-            >>> providers = images._get_available_providers()
-            >>> print([p[0] for p in providers])
-            ['StableDiffusion', 'DALL-E', 'Midjourney']
-        """
-        exclude = _normalized_name_set(self._client.exclude_images)
-        if self._client.api_key:
-            return [
-                (name, cls)
-                for name, cls in TTI_PROVIDERS.items()
-                if name.casefold() not in exclude
-            ]
-        return [
-            (name, cls)
-            for name, cls in TTI_PROVIDERS.items()
-            if name not in TTI_AUTH_REQUIRED and name.casefold() not in exclude
-        ]
+        return _get_available_provider_items(
+            TTI_PROVIDERS,
+            TTI_AUTH_REQUIRED,
+            self._client.exclude_images,
+            self._client.api_key,
+        )
 
     def generate(
         self,
@@ -1165,65 +985,33 @@ class ClientImages(BaseImages):
         if resolved_provider:
             try:
                 provider_instance = self._get_provider_instance(resolved_provider)
-                response = provider_instance.images.create(
-                    **call_kwargs
-                )
+                response = provider_instance.images.create(**call_kwargs)
                 self._last_provider = resolved_provider.__name__
                 if self._client.print_provider_info:
-                    print(f"\033[1;34m{resolved_provider.__name__}:{resolved_model}\033[0m\n")
+                    _print_provider_selection(resolved_provider.__name__, resolved_model)
                 return response
             except Exception:
                 pass
 
         all_available = self._get_available_providers()
-        tier1, tier2, tier3 = [], [], []
-        base_model = model.split("/")[-1] if "/" in model else model
-        search_models = {base_model, resolved_model} if resolved_model else {base_model}
-
-        for p_name, p_cls in all_available:
-            if p_cls == resolved_provider:
-                continue
-
-            p_models = _get_models_safely(p_cls, self._client)
-            if not p_models:
-                fallback_model = (
-                    base_model
-                    if base_model != "auto"
-                    else (p_models[0] if p_models else base_model)
-                )
-                tier3.append((p_name, p_cls, fallback_model))
-                continue
-
-            found_exact = False
-            for sm in search_models:
-                if sm != "auto" and sm in p_models:
-                    tier1.append((p_name, p_cls, sm))
-                    found_exact = True
-                    break
-            if found_exact:
-                continue
-
-            if base_model != "auto":
-                matches = difflib.get_close_matches(base_model, p_models, n=1, cutoff=0.5)
-                if matches:
-                    tier2.append((p_name, p_cls, matches[0]))
-                    continue
-
-            tier3.append((p_name, p_cls, random.choice(p_models)))
-
-        random.shuffle(tier1)
-        random.shuffle(tier2)
-        random.shuffle(tier3)
-        fallback_queue = tier1 + tier2 + tier3
+        fallback_queue = _build_fallback_queue(
+            all_available,
+            resolved_provider,
+            model,
+            resolved_model,
+            lambda provider_cls: _get_models_safely(provider_cls, self._client),
+            empty_model_fallback="auto",
+        )
 
         for p_name, p_cls, p_model in fallback_queue:
             try:
                 provider_instance = self._get_provider_instance(p_cls)
-                fallback_kwargs = {**call_kwargs, "model": p_model}
+                fallback_kwargs: Dict[str, Any] = dict(call_kwargs)
+                fallback_kwargs["model"] = p_model
                 response = provider_instance.images.create(**fallback_kwargs)
                 self._last_provider = p_name
                 if self._client.print_provider_info:
-                    print(f"\033[1;34m{p_name}:{p_model} (Fallback)\033[0m\n")
+                    _print_provider_selection(p_name, p_model, fallback=True)
                 return response
             except Exception:
                 continue
@@ -1271,10 +1059,6 @@ class ClientAudioSpeech:
     def _get_provider_instance(
         self, provider_class: Type[BaseTTSProvider], **kwargs: Any
     ) -> BaseTTSProvider:
-        provider_name = provider_class.__name__
-        if provider_name in self._client._provider_cache:
-            return self._client._provider_cache[provider_name]
-
         init_kwargs: Dict[str, Any] = dict(kwargs)
         if self._client.api_key:
             init_kwargs["api_key"] = self._client.api_key
@@ -1292,115 +1076,49 @@ class ClientAudioSpeech:
             if proxy_value:
                 proxy_candidates.insert(1, {**init_kwargs, "proxy": proxy_value})
 
-        for candidate in proxy_candidates:
-            try:
-                instance = provider_class(**candidate)
-                self._client._provider_cache[provider_name] = instance
-                return instance
-            except Exception:
-                continue
-
-        try:
-            instance = provider_class()
-            self._client._provider_cache[provider_name] = instance
-            return instance
-        except Exception as exc:
-            raise RuntimeError(f"Failed to initialize TTS provider {provider_class.__name__}: {exc}")
+        return _get_provider_instance_cached(
+            self._client._provider_cache,
+            provider_class,
+            proxy_candidates,
+            provider_kind="TTS",
+        )
 
     def _fuzzy_resolve_provider_and_model(
         self, model: str
     ) -> Optional[Tuple[Type[BaseTTSProvider], str]]:
-        available = self._get_available_providers()
-        model_to_provider: Dict[str, Type[BaseTTSProvider]] = {}
-
-        for _, provider_class in available:
-            for provider_model in _get_tts_models_safely(provider_class):
-                if provider_model not in model_to_provider:
-                    model_to_provider[provider_model] = provider_class
-
-        if not model_to_provider:
-            return None
-
-        for model_name in model_to_provider:
-            if model_name.lower() == model.lower():
-                return model_to_provider[model_name], model_name
-
-        for model_name in model_to_provider:
-            if model.lower() in model_name.lower() or model_name.lower() in model.lower():
-                if self._client.print_provider_info:
-                    print(f"\033[1;33mSubstring match (TTS): '{model}' -> '{model_name}'\033[0m")
-                return model_to_provider[model_name], model_name
-
-        matches = difflib.get_close_matches(model, model_to_provider.keys(), n=1, cutoff=0.5)
-        if matches:
-            matched_model = matches[0]
-            if self._client.print_provider_info:
-                print(f"\033[1;33mFuzzy match (TTS): '{model}' -> '{matched_model}'\033[0m")
-            return model_to_provider[matched_model], matched_model
-        return None
+        return _fuzzy_resolve_provider_and_model(
+            model,
+            self._get_available_providers(),
+            _get_tts_models_safely,
+            print_provider_info=self._client.print_provider_info,
+            match_suffix=" (TTS)",
+        )
 
     def _resolve_provider_and_model(
         self, model: str, provider: Optional[Type[BaseTTSProvider]]
     ) -> Tuple[Type[BaseTTSProvider], str]:
-        if "/" in model:
-            provider_name, model_name = model.split("/", 1)
-            found_provider = next(
-                (cls for name, cls in TTS_PROVIDERS.items() if name.lower() == provider_name.lower()),
-                None,
-            )
-            if found_provider:
-                return found_provider, model_name
-
-        if provider:
-            if model == "auto":
-                provider_models = _get_tts_models_safely(provider)
-                return provider, random.choice(provider_models) if provider_models else "gpt-4o-mini-tts"
-            return provider, model
-
-        if model == "auto":
-            available = self._get_available_providers()
-            if not available:
-                raise RuntimeError("No available audio providers found.")
-
-            providers_with_models = []
-            for _, provider_class in available:
-                provider_models = _get_tts_models_safely(provider_class)
-                if provider_models:
-                    providers_with_models.append((provider_class, provider_models))
-
-            if providers_with_models:
-                provider_class, provider_models = random.choice(providers_with_models)
-                return provider_class, random.choice(provider_models)
-            raise RuntimeError("No available audio providers with models found.")
-
-        available = self._get_available_providers()
-        for _, provider_class in available:
-            provider_models = _get_tts_models_safely(provider_class)
-            if provider_models and model in provider_models:
-                return provider_class, model
-
-        fuzzy_result = self._fuzzy_resolve_provider_and_model(model)
-        if fuzzy_result:
-            return fuzzy_result
-
-        if available:
-            random.shuffle(available)
-            return available[0][1], model
-        raise RuntimeError(f"No audio providers found for model '{model}'")
+        return _resolve_provider_and_model(
+            model,
+            provider,
+            TTS_PROVIDERS,
+            self._get_available_providers,
+            _get_tts_models_safely,
+            print_provider_info=self._client.print_provider_info,
+            no_available_message="No available audio providers found.",
+            no_available_with_models_message="No available audio providers with models found.",
+            provider_no_models_message="TTI Provider {provider} has no available models.",
+            no_providers_for_model_message="No audio providers found for model '{model}'",
+            provider_empty_model_fallback="gpt-4o-mini-tts",
+            match_suffix=" (TTS)",
+        )
 
     def _get_available_providers(self) -> List[Tuple[str, Type[BaseTTSProvider]]]:
-        exclude = _normalized_name_set(self._client.exclude_tts)
-        if self._client.api_key:
-            return [
-                (name, provider_class)
-                for name, provider_class in TTS_PROVIDERS.items()
-                if name.casefold() not in exclude
-            ]
-        return [
-            (name, provider_class)
-            for name, provider_class in TTS_PROVIDERS.items()
-            if name not in TTS_AUTH_REQUIRED and name.casefold() not in exclude
-        ]
+        return _get_available_provider_items(
+            TTS_PROVIDERS,
+            TTS_AUTH_REQUIRED,
+            self._client.exclude_tts,
+            self._client.api_key,
+        )
 
     @staticmethod
     def _stream_audio_file(audio_file: str, chunk_size: int) -> Generator[bytes, None, None]:
@@ -1449,7 +1167,7 @@ class ClientAudioSpeech:
                 if audio_file and Path(audio_file).exists():
                     self._last_provider = resolved_provider.__name__
                     if self._client.print_provider_info:
-                        print(f"\033[1;34m{resolved_provider.__name__}:{resolved_model}\033[0m\n")
+                        _print_provider_selection(resolved_provider.__name__, resolved_model)
                     if stream:
                         return self._stream_audio_file(audio_file, chunk_size)
                     return audio_file
@@ -1458,54 +1176,26 @@ class ClientAudioSpeech:
                 pass
 
         all_available = self._get_available_providers()
-        tier1: List[Tuple[str, Type[BaseTTSProvider], str]] = []
-        tier2: List[Tuple[str, Type[BaseTTSProvider], str]] = []
-        tier3: List[Tuple[str, Type[BaseTTSProvider], str]] = []
-        base_model = model.split("/")[-1] if "/" in model else model
-        search_models = {base_model, resolved_model} if resolved_model else {base_model}
-
-        for provider_name, provider_class in all_available:
-            if provider_class == resolved_provider:
-                continue
-
-            provider_models = _get_tts_models_safely(provider_class)
-            if not provider_models:
-                fallback_model = base_model if base_model != "auto" else "gpt-4o-mini-tts"
-                tier3.append((provider_name, provider_class, fallback_model))
-                continue
-
-            found_exact = False
-            for search_model in search_models:
-                if search_model != "auto" and search_model in provider_models:
-                    tier1.append((provider_name, provider_class, search_model))
-                    found_exact = True
-                    break
-            if found_exact:
-                continue
-
-            if base_model != "auto":
-                matches = difflib.get_close_matches(base_model, provider_models, n=1, cutoff=0.5)
-                if matches:
-                    tier2.append((provider_name, provider_class, matches[0]))
-                    continue
-
-            tier3.append((provider_name, provider_class, random.choice(provider_models)))
-
-        random.shuffle(tier1)
-        random.shuffle(tier2)
-        random.shuffle(tier3)
-        fallback_queue = tier1 + tier2 + tier3
+        fallback_queue = _build_fallback_queue(
+            all_available,
+            resolved_provider,
+            model,
+            resolved_model,
+            _get_tts_models_safely,
+            empty_model_fallback="gpt-4o-mini-tts",
+        )
 
         errors: List[str] = []
         for provider_name, provider_class, provider_model in fallback_queue:
             try:
                 provider_instance = self._get_provider_instance(provider_class)
-                fallback_kwargs = {**call_kwargs, "model": provider_model}
-                audio_file = provider_instance.tts(input_text, **fallback_kwargs)  # ty:ignore[invalid-argument-type]
+                fallback_kwargs: Dict[str, Any] = dict(call_kwargs)
+                fallback_kwargs["model"] = provider_model
+                audio_file = provider_instance.tts(input_text, **fallback_kwargs)
                 if audio_file and Path(audio_file).exists():
                     self._last_provider = provider_name
                     if self._client.print_provider_info:
-                        print(f"\033[1;34m{provider_name}:{provider_model} (Fallback)\033[0m\n")
+                        _print_provider_selection(provider_name, provider_model, fallback=True)
                     if stream:
                         return self._stream_audio_file(audio_file, chunk_size)
                     return audio_file
