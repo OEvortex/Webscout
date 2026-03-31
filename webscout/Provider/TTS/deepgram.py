@@ -81,16 +81,16 @@ class DeepgramTTS(BaseTTSProvider):
 
     # Voice mapping for Deepgram API compatibility
     voice_mapping = {
-        # Aura-2
+        # Aura-2 voices (correct language codes)
         "thalia": "aura-2-thalia-en",
         "odysseus": "aura-2-odysseus-en",
         "harmonia": "aura-2-harmonia-en",
-        "theia": "aura-2-theia-en",
+        "theia": "aura-2-theia-au",
         "electra": "aura-2-electra-en",
         "arcas": "aura-2-arcas-en",
-        "amalthea": "aura-2-amalthea-en",
+        "amalthea": "aura-2-amalthea-ph",
         "helena": "aura-2-helena-en",
-        "hyperion": "aura-2-hyperion-en",
+        "hyperion": "aura-2-hyperion-au",
         "apollo": "aura-2-apollo-en",
         "luna": "aura-2-luna-en",
         # Aura-1 (Backward compatibility)
@@ -115,7 +115,7 @@ class DeepgramTTS(BaseTTSProvider):
             proxies (dict): Proxy configuration
         """
         super().__init__()
-        self.api_url = "https://deepgram.com/api/ttsAudioGeneration"
+        self.api_url = "https://deepgram.com/api/tts"
         self.session = requests.Session()
         self.session.headers.update(self.headers)
         if proxies:
@@ -167,7 +167,6 @@ class DeepgramTTS(BaseTTSProvider):
                         "text": part_text,
                         "model": voice_id,
                         "demoType": "voice-generator",
-                        "params": "tag=landingpage-aivoicegenerator",
                     }
                     response = self.session.post(self.api_url, json=payload, timeout=self.timeout)
                     response.raise_for_status()
@@ -179,6 +178,13 @@ class DeepgramTTS(BaseTTSProvider):
                         return part_number, response.content
 
                 except CurlError as e:
+                    if verbose:
+                        ic.configureOutput(prefix="WARNING| ")
+                        ic(
+                            f"Error processing chunk {part_number}: {e}. Retrying {attempt + 1}/{max_retries}"
+                        )
+                    time.sleep(1)
+                except Exception as e:
                     if verbose:
                         ic.configureOutput(prefix="WARNING| ")
                         ic(

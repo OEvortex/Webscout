@@ -102,6 +102,14 @@ class FreeTTS(BaseTTSProvider):
     def tts(self, text: str, voice: Optional[str] = None, verbose: bool = False, **kwargs) -> str:
         """
         Convert text to speech.
+
+        The FreeTTS API requires:
+        1. POST to /api/synthesis to start synthesis (returns task ID)
+        2. GET /api/synthesis to poll for completion (returns data when done)
+        3. GET /api/history to get the audio URL
+        4. Download audio from the URL
+
+        Note: The API requires a zero-width character (U+2063) prefix on the text.
         """
         response_format = kwargs.get("response_format", "mp3")
         if not text:
@@ -111,7 +119,8 @@ class FreeTTS(BaseTTSProvider):
         if not voice:
             raise ValueError("No voices available")
 
-        payload = {"text": text, "voiceid": voice, "ext": response_format}
+        # The API requires a zero-width character prefix (U+2063)
+        payload = {"text": f"\u2063{text.strip()}", "voiceid": voice, "ext": response_format}
 
         try:
             # Step 1: Start synthesis
@@ -121,9 +130,14 @@ class FreeTTS(BaseTTSProvider):
 
             response = self.session.post(self.api_url, json=payload, timeout=self.timeout)
             response.raise_for_status()
+            result = response.json()
+
+            if result.get("status") != "success":
+                error_msg = result.get("message", "Unknown error")
+                raise exceptions.FailedToGenerateResponseError(f"FreeTTS API error: {error_msg}")
 
             # Step 2: Poll for completion
-            max_polls = 20
+            max_polls = 30
             poll_interval = 2
 
             for i in range(max_polls):
@@ -131,15 +145,23 @@ class FreeTTS(BaseTTSProvider):
                 poll_resp.raise_for_status()
                 poll_data = poll_resp.json()
 
-                if poll_data.get("status") == 200 or poll_data.get("message") == "Обработка: 100%":
+                # Check if synthesis is complete
+                # When done: data contains the audio object
+                # When processing: data is false or contains progress message
+                if poll_data.get("data") and poll_data.get("data") is not False:
                     if verbose:
                         ic.configureOutput(prefix="DEBUG| ")
                         ic("FreeTTS: Synthesis completed")
                     break
 
+                # Check for error messages
+                message = poll_data.get("message", "")
+                if "Ошибка" in message or "Error" in message:
+                    raise exceptions.FailedToGenerateResponseError(f"FreeTTS API error: {message}")
+
                 if verbose:
                     ic.configureOutput(prefix="DEBUG| ")
-                    ic(f"FreeTTS: {poll_data.get('message', 'Processing...')}")
+                    ic(f"FreeTTS: {message or 'Processing...'}")
 
                 time.sleep(poll_interval)
             else:
@@ -150,18 +172,18 @@ class FreeTTS(BaseTTSProvider):
             hist_resp.raise_for_status()
             hist_data = hist_resp.json()
 
-            if hist_data.get("status") == "success":
+            # History endpoint returns status 200 on success
+            if hist_data.get("status") == 200 or hist_data.get("status") == "success":
                 history = hist_data.get("data", [])
                 if history:
-                    # Find matching item in history
-                    # For simplicity, take the first one as it's the latest
+                    # Find matching item in history (first one is the latest)
                     audio_url = history[0].get("url")
                     if audio_url:
                         if not audio_url.startswith("http"):
                             audio_url = self.base_url + audio_url
 
-                        # Download the file
-                        audio_file_resp = self.session.get(audio_url, timeout=self.timeout)
+                        # Download the audio file (follow redirects)
+                        audio_file_resp = self.session.get(audio_url, timeout=self.timeout, allow_redirects=True)
                         audio_file_resp.raise_for_status()
 
                         # Save to temp file
@@ -182,6 +204,8 @@ class FreeTTS(BaseTTSProvider):
                 "Failed to retrieve audio URL from history"
             )
 
+        except exceptions.FailedToGenerateResponseError:
+            raise
         except Exception as e:
             raise exceptions.FailedToGenerateResponseError(f"FreeTTS failed: {e}")
 

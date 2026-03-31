@@ -33,12 +33,22 @@ All notable changes to this project will be documented in this file.
   - Properly decode bytes to UTF-8 string before string operations
   - Fixed `FailedToGenerateResponseError: startswith first arg must be bytes or a tuple of bytes, not str`
   - All three providers now successfully generate audio files
+- **FreeTTS**: Fixed audio download to follow HTTP redirects:
+  - Added `allow_redirects=True` to the audio download request
+  - The FreeTTS API returns redirect URLs for audio files that were not being followed
+  - Provider now successfully downloads and saves audio files
 - **PocketTTS**: Fixed test configuration to use valid voice name (`alba` instead of invalid voice)
 - **FasterQwen3TTS**: Fixed model loading to handle `already_loaded` status from API
-- **TTS Provider Tests**: Added comprehensive test suite for all 12 TTS providers:
+- **TTS Provider Tests**: Added comprehensive test suite for all TTS providers:
   - `tests/providers/test_all_tts_providers.py` - Instantiation and attribute tests
   - `tests/providers/test_tts_audio_generation.py` - Actual audio generation tests
   - Results improved from 4/12 to 8/12 working providers (67%)
+
+### 🗑️ Removed
+- **SpeechMaTTS**: Removed non-functional provider (HTTP 403 errors, service no longer accessible)
+  - Deleted `webscout/Provider/TTS/speechma.py`
+  - Removed from `webscout/Provider/TTS/__init__.py` exports
+  - Updated Provider.md documentation
 
 ## [2026.02.23] - 2026-02-23
 
