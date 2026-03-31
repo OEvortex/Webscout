@@ -162,6 +162,7 @@ Located in `webscout/Provider/TTS/`:
 
 ### Speech-to-Text Providers
 Located in `webscout/Provider/STT/`:
+- Cohere (Multilingual ASR)
 - ElevenLabs
 
 ### Unfinished/Experimental Providers

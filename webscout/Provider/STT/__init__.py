@@ -12,6 +12,7 @@ from webscout.Provider.STT.base import (
 )
 
 # Provider implementations
+from webscout.Provider.STT.cohere import CohereSTT
 from webscout.Provider.STT.elevenlabs import ElevenLabsSTT
 
 # List of all exported names
@@ -24,5 +25,6 @@ __all__ = [
     "TranscriptionResponse",
     "STTModels",
     # Providers
+    "CohereSTT",
     "ElevenLabsSTT",
 ]

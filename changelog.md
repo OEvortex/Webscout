@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026.03.31] - 2026-03-31
+
+### ✨ Added
+- **Cohere STT Provider**: Added new Cohere Multilingual ASR provider for speech-to-text transcription:
+  - `webscout/Provider/STT/cohere.py` - OpenAI Whisper API-compatible interface for Cohere's multilingual ASR
+  - Supports 14 languages: English, French, German, Spanish, Portuguese, Italian, Dutch, Polish, Greek, Arabic, Japanese, Korean, Chinese, Vietnamese
+  - Implements Gradio API two-step flow (POST for event_id → GET SSE stream for result)
+  - Supports both streaming and non-streaming transcription modes
+  - Handles audio file uploads via multipart/form-data
+  - No authentication required (public Hugging Face Space)
+  - Updated `webscout/Provider/STT/__init__.py` to export CohereSTT
+  - Updated Provider.md documentation
+
 ## [2026.02.23] - 2026-02-23
 
 ### ✨ Added
