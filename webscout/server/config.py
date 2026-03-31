@@ -52,8 +52,10 @@ class AppConfig:
     """Legacy configuration class for backward compatibility."""
     provider_map = {}
     tti_provider_map = {}  # Add TTI provider map
+    tts_provider_map = {}  # Add TTS provider map
     default_provider = "ChatGPT"
     default_tti_provider = "PollinationsAI"  # Add default TTI provider
+    default_tts_provider = "ElevenLabs"  # Add default TTS provider
     base_url: Optional[str] = None
     auth_required: bool = False
     rate_limit_enabled: bool = False

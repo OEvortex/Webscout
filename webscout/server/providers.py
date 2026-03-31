@@ -15,6 +15,7 @@ from .exceptions import APIError
 # Cache for provider instances to avoid reinitialization on every request
 provider_instances: Dict[str, Any] = {}
 tti_provider_instances: Dict[str, Any] = {}
+tts_provider_instances: Dict[str, Any] = {}
 
 
 def initialize_provider_map() -> None:
@@ -146,6 +147,54 @@ def initialize_tti_provider_map() -> None:
         ic.configureOutput(prefix='ERROR| ')
         ic(f"Failed to initialize TTI provider map: {e}")
         raise APIError(f"TTI Provider initialization failed: {e}", HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def initialize_tts_provider_map() -> None:
+    """Initialize the TTS provider map by discovering available TTS providers."""
+    ic.configureOutput(prefix='INFO| ')
+    ic("Initializing TTS provider map...")
+
+    try:
+        from webscout.Provider.TTS.base import BaseTTSProvider
+        module = sys.modules["webscout.Provider.TTS"]
+
+        provider_count = 0
+        model_count = 0
+
+        for name, obj in inspect.getmembers(module):
+            if (
+                inspect.isclass(obj)
+                and issubclass(obj, BaseTTSProvider)
+                and obj.__name__ not in ("BaseTTSProvider", "TTSProvider")
+            ):
+                provider_name = obj.__name__
+                AppConfig.tts_provider_map[provider_name] = obj
+                provider_count += 1
+
+                # Register available models for this TTS provider
+                available_models = getattr(obj, "SUPPORTED_MODELS", None) or getattr(obj, "AVAILABLE_MODELS", None)
+                if available_models is not None and isinstance(
+                    available_models, (list, tuple, set)
+                ):
+                    for model in available_models:
+                        if model and isinstance(model, str):
+                            model_key = f"{provider_name}/{model}"
+                            AppConfig.tts_provider_map[model_key] = obj
+                            model_count += 1
+
+        # Fallback if no TTS providers found
+        if not AppConfig.tts_provider_map:
+            ic.configureOutput(prefix='WARNING| ')
+            ic("No TTS providers found")
+            raise APIError("No TTS providers available", HTTP_500_INTERNAL_SERVER_ERROR)
+
+        ic.configureOutput(prefix='INFO| ')
+        ic(f"Initialized {provider_count} TTS providers with {model_count} models")
+
+    except Exception as e:
+        ic.configureOutput(prefix='ERROR| ')
+        ic(f"Failed to initialize TTS provider map: {e}")
+        raise APIError(f"TTS Provider initialization failed: {e}", HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 def resolve_provider_and_model(model_identifier: str) -> Tuple[Any, str]:
@@ -283,4 +332,70 @@ def get_tti_provider_instance(provider_class: Any):
                 )
             raise
         tti_provider_instances[key] = instance
+    return instance
+
+
+def resolve_tts_provider_and_model(model_identifier: str) -> Tuple[Any, str]:
+    """Resolve TTS provider class and model name from model identifier."""
+    provider_class = None
+    model_name = None
+
+    # Check for explicit provider/model syntax
+    if model_identifier in AppConfig.tts_provider_map and "/" in model_identifier:
+        provider_class = AppConfig.tts_provider_map[model_identifier]
+        _, model_name = model_identifier.split("/", 1)
+    elif "/" in model_identifier:
+        provider_name, model_name = model_identifier.split("/", 1)
+        provider_class = AppConfig.tts_provider_map.get(provider_name)
+    else:
+        provider_class = AppConfig.tts_provider_map.get(AppConfig.default_tts_provider)
+        model_name = model_identifier
+
+    if not provider_class:
+        available_providers = list(set(v.__name__ for v in AppConfig.tts_provider_map.values()))
+        raise APIError(
+            f"TTS Provider for model '{model_identifier}' not found. Available TTS providers: {available_providers}",
+            HTTP_404_NOT_FOUND,
+            "model_not_found",
+            param="model"
+        )
+
+    # Validate model availability
+    if hasattr(provider_class, "SUPPORTED_MODELS") and model_name is not None:
+        available = getattr(provider_class, "SUPPORTED_MODELS", None) or getattr(provider_class, "AVAILABLE_MODELS", None)
+        if isinstance(available, property):
+            try:
+                available = getattr(provider_class(), "SUPPORTED_MODELS", [])
+            except Exception:
+                available = []
+        if not isinstance(available, (list, tuple, set)):
+            available = list(available) if available and hasattr(available, "__iter__") and not isinstance(available, str) else []
+        if available and model_name not in available:
+            raise APIError(
+                f"Model '{model_name}' not supported by TTS provider '{provider_class.__name__}'. Available models: {available}",
+                HTTP_404_NOT_FOUND,
+                "model_not_found",
+                param="model"
+            )
+
+    return provider_class, model_name
+
+
+def get_tts_provider_instance(provider_class: Any):
+    """Return a cached instance of the TTS provider, creating it if needed."""
+    key = provider_class.__name__
+    instance = tts_provider_instances.get(key)
+    if instance is None:
+        try:
+            instance = provider_class()
+        except TypeError as e:
+            if "abstract class" in str(e):
+                from .exceptions import APIError
+                raise APIError(
+                    f"Provider misconfiguration: Cannot instantiate abstract class '{provider_class.__name__}'. Please check the provider implementation.",
+                    HTTP_500_INTERNAL_SERVER_ERROR,
+                    "provider_error",
+                )
+            raise
+        tts_provider_instances[key] = instance
     return instance

@@ -22,6 +22,7 @@ from typing import (
     Set,
     Tuple,
     Type,
+    TypeGuard,
     TypeVar,
     Union,
     cast,
@@ -471,13 +472,20 @@ def _build_fallback_queue(
     return tier1 + tier2 + tier3
 
 
-def _is_valid_chat_completion(response: Any) -> bool:
+def _is_valid_chat_completion(response: Any) -> TypeGuard[ChatCompletion]:
+    """Type guard that validates a ChatCompletion has valid content.
+
+    This function performs runtime validation and also serves as a type
+    narrowing function for static type checkers. After this function
+    returns True, type checkers understand that response.choices[0].message
+    is not None and response.choices[0].message.content is not None.
+    """
     return bool(
         response
         and hasattr(response, "choices")
         and response.choices
-        and response.choices[0].message
-        and response.choices[0].message.content
+        and response.choices[0].message is not None
+        and response.choices[0].message.content is not None
         and response.choices[0].message.content.strip()
     )
 
@@ -704,7 +712,7 @@ class ClientCompletions(BaseCompletions):
 
                 if stream and inspect.isgenerator(response):
                     try:
-                        first_chunk = next(response)
+                        first_chunk = cast(ChatCompletionChunk, next(response))
                         self._last_provider = resolved_provider.__name__
                         return _chain_stream_response(
                             first_chunk,
@@ -753,7 +761,7 @@ class ClientCompletions(BaseCompletions):
 
                 if stream and inspect.isgenerator(response):
                     try:
-                        first_chunk = next(response)
+                        first_chunk = cast(ChatCompletionChunk, next(response))
                         self._last_provider = p_name
                         return _chain_stream_response(
                             first_chunk,
@@ -1545,10 +1553,9 @@ if __name__ == "__main__":
         if not inspect.isgenerator(response):
             completion = cast(ChatCompletion, response)
             if (
-                completion
-                and completion.choices
-                and completion.choices[0].message
-                and completion.choices[0].message.content
+                completion.choices
+                and completion.choices[0].message is not None
+                and completion.choices[0].message.content is not None
             ):
                 print(f"Auto Result: {completion.choices[0].message.content[:50]}...")
             else:

@@ -4,11 +4,12 @@ API routes for the Webscout server.
 
 import time
 import uuid
+from pathlib import Path
 from typing import Any, Dict, cast
 
 from fastapi import Body, FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from litprinter import ic
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.status import (
@@ -22,10 +23,17 @@ from .exceptions import APIError
 from .providers import (
     get_provider_instance,
     get_tti_provider_instance,
+    get_tts_provider_instance,
     resolve_provider_and_model,
     resolve_tti_provider_and_model,
+    resolve_tts_provider_and_model,
 )
-from .request_models import ChatCompletionRequest, ImageGenerationRequest, ModelListResponse
+from .request_models import (
+    ChatCompletionRequest,
+    ImageGenerationRequest,
+    ModelListResponse,
+    SpeechGenerationRequest,
+)
 from .request_processing import (
     handle_non_streaming_response,
     handle_streaming_response,
@@ -122,6 +130,8 @@ class Api:
         self._register_health_route()
         self._register_model_routes()
         self._register_chat_routes()
+        self._register_image_routes()
+        self._register_tts_routes()
         self._register_websearch_routes()
 
     def _register_health_route(self):
@@ -411,6 +421,8 @@ class Api:
                     "internal_error"
                 )
 
+    def _register_image_routes(self):
+        """Register image generation routes."""
 
         @self.app.post(
             "/v1/images/generations",
@@ -500,6 +512,123 @@ class Api:
             except Exception as e:
                 ic.configureOutput(prefix='ERROR| ')
                 ic(f"Unexpected error in image generation {request_id}: {e}")
+                raise APIError(
+                    f"Internal server error: {str(e)}",
+                    HTTP_500_INTERNAL_SERVER_ERROR,
+                    "internal_error"
+                )
+
+    def _register_tts_routes(self):
+        """Register TTS (text-to-speech) endpoints."""
+
+        @self.app.post(
+            "/v1/audio/speech",
+            tags=["Audio Generation"],
+            description="Generate audio from text using the specified TTS model."
+        )
+        async def audio_speech(
+            speech_request: SpeechGenerationRequest = Body(...)
+        ):
+            """Handle speech generation requests."""
+            start_time = time.time()
+            request_id = f"tts-{uuid.uuid4()}"
+
+            try:
+                ic.configureOutput(prefix='INFO| ')
+                ic(f"Processing speech generation request {request_id} for model: {speech_request.model}")
+
+                # Resolve TTS provider and model
+                provider_class, model_name = resolve_tts_provider_and_model(speech_request.model)
+
+                # Initialize TTS provider
+                try:
+                    provider = get_tts_provider_instance(provider_class)
+                    ic.configureOutput(prefix='DEBUG| ')
+                    ic(f"Using TTS provider instance: {provider_class.__name__}")
+                except APIError as e:
+                    return JSONResponse(
+                        status_code=e.status_code,
+                        content={
+                            "error": {
+                                "message": e.message,
+                                "type": e.error_type,
+                                "footer": "If you believe this is a bug, please pull an issue at https://github.com/OEvortex/Webscout."
+                            }
+                        }
+                    )
+                except Exception as e:
+                    ic.configureOutput(prefix='ERROR| ')
+                    ic(f"Failed to initialize TTS provider {provider_class.__name__}: {e}")
+                    raise APIError(
+                        f"Failed to initialize TTS provider {provider_class.__name__}: {e}",
+                        HTTP_500_INTERNAL_SERVER_ERROR,
+                        "provider_error"
+                    )
+
+                # Prepare parameters for TTS provider
+                params: Dict[str, Any] = {
+                    "input_text": speech_request.input,
+                    "model": model_name,
+                    "voice": speech_request.voice,
+                    "response_format": speech_request.response_format,
+                    "verbose": False,
+                }
+
+                # Add optional parameters
+                if speech_request.instructions is not None:
+                    params["instructions"] = speech_request.instructions
+
+                # Generate audio
+                audio_file = provider.create_speech(**params)
+
+                if not audio_file or not Path(audio_file).exists():
+                    raise APIError(
+                        "Failed to generate audio file",
+                        HTTP_500_INTERNAL_SERVER_ERROR,
+                        "generation_failed"
+                    )
+
+                elapsed = time.time() - start_time
+                ic.configureOutput(prefix='INFO| ')
+                ic(f"Completed speech generation request {request_id} in {elapsed:.2f}s")
+
+                # Determine content type based on format
+                content_type_map: Dict[str, str] = {
+                    "mp3": "audio/mpeg",
+                    "opus": "audio/opus",
+                    "aac": "audio/aac",
+                    "flac": "audio/flac",
+                    "wav": "audio/wav",
+                    "pcm": "audio/pcm",
+                }
+                content_type = content_type_map.get(speech_request.response_format or "mp3", "audio/mpeg")
+
+                if speech_request.stream:
+                    # Stream the audio file
+                    def audio_stream():
+                        with open(audio_file, "rb") as f:
+                            while chunk := f.read(8192):
+                                yield chunk
+
+                    return StreamingResponse(
+                        audio_stream(),
+                        media_type=content_type,
+                        headers={
+                            "Content-Disposition": f'attachment; filename="speech.{speech_request.response_format}"'
+                        }
+                    )
+                else:
+                    return FileResponse(
+                        audio_file,
+                        media_type=content_type,
+                        filename=f"speech.{speech_request.response_format}"
+                    )
+
+            except APIError:
+                raise
+            except Exception as e:
+                ic.configureOutput(prefix='ERROR| ')
+                ic(f"Unexpected error in speech generation {request_id}: {e}")
                 raise APIError(
                     f"Internal server error: {str(e)}",
                     HTTP_500_INTERNAL_SERVER_ERROR,

@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 ## [2026.03.31] - 2026-03-31
 
 ### ✨ Added
+- **Server TTS endpoint**: Added OpenAI-compatible `/v1/audio/speech` endpoint to the FastAPI server:
+  - `webscout/server/request_models.py` - Added `SpeechGenerationRequest` model with OpenAI-compatible fields
+  - `webscout/server/providers.py` - Added TTS provider discovery, caching, and resolution functions
+  - `webscout/server/routes.py` - Added `_register_tts_routes()` with POST `/v1/audio/speech` endpoint
+  - `webscout/server/server.py` - Added TTS provider initialization on server startup
+  - `webscout/server/config.py` - Added `tts_provider_map` and `default_tts_provider` configuration
+  - Supports multiple audio formats: mp3, opus, aac, flac, wav, pcm
+  - Supports both file download and streaming responses
+  - Automatic TTS provider discovery and model resolution
 - **Client audio speech interface**: Added `client.audio.speech.create(...)` in `webscout/client.py` for TTS-backed speech generation with provider discovery, caching, failover, and `last_provider` tracking.
 - **Client docs refresh**: Rewrote `docs/client.md` into a shorter guide that still covers chat, image, and audio usage plus the updated helper methods.
 - **Cohere STT Provider**: Added new Cohere Multilingual ASR provider for speech-to-text transcription:
@@ -30,6 +39,10 @@ All notable changes to this project will be documented in this file.
   - Updated Provider.md documentation
 
 ### 🔧 Fixed
+- **Client type checking**: Fixed `Attribute content may be missing` type errors in `webscout/client.py`:
+  - Added `TypeGuard` import and updated `_is_valid_chat_completion` to use proper type narrowing
+  - Fixed `ChatCompletionChunk` cast issues for streaming responses
+  - All type checks now pass with `uvx ty check`
 - **ParlerTTS, QwenTTS, SherpaTTS**: Fixed `startswith` bytes vs string bug in SSE stream parsing:
   - Added `isinstance(line, bytes)` check before calling `startswith()`
   - Properly decode bytes to UTF-8 string before string operations

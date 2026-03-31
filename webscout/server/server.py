@@ -19,7 +19,11 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from starlette.responses import HTMLResponse
 
 from .config import AppConfig, ServerConfig
-from .providers import initialize_provider_map, initialize_tti_provider_map
+from .providers import (
+    initialize_provider_map,
+    initialize_tti_provider_map,
+    initialize_tts_provider_map,
+)
 from .routes import Api
 from .ui_templates import LANDING_PAGE_HTML, SWAGGER_CSS
 
@@ -98,7 +102,7 @@ def create_app():
 
     # Add CORS middleware
     app.add_middleware(
-        CORSMiddleware,  # type: ignore
+        CORSMiddleware,  # type: ignore[arg-type]
         allow_origins=["*"],
         allow_credentials=True,
         allow_methods=["*"],
@@ -113,6 +117,7 @@ def create_app():
     # Initialize providers
     initialize_provider_map()
     initialize_tti_provider_map()
+    initialize_tts_provider_map()
 
     # Root landing page
     @app.get("/", include_in_schema=False)

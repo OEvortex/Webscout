@@ -107,6 +107,34 @@ class ImageGenerationRequest(BaseModel):
     )
 
 
+class SpeechGenerationRequest(BaseModel):
+    """Request model for OpenAI-compatible speech generation endpoint."""
+    input: str = Field(..., description="The text to generate audio for. The maximum length is 4096 characters.")
+    model: str = Field(..., description="The model to use for speech generation.")
+    voice: Optional[str] = Field("alloy", description="The voice to use when generating the audio.")
+    response_format: Optional[Literal["mp3", "opus", "aac", "flac", "wav", "pcm"]] = Field(
+        "mp3",
+        description="The format to audio in. Supported formats are mp3, opus, aac, flac, wav, and pcm."
+    )
+    speed: Optional[float] = Field(1.0, description="The speed of the generated audio. Select a value from 0.25 to 4.0.")
+    instructions: Optional[str] = Field(None, description="Voice instructions for controlling speech aspects.")
+    user: Optional[str] = Field(None, description="A unique identifier representing your end-user.")
+    stream: Optional[bool] = Field(False, description="If set, the audio will be streamed.")
+
+    model_config = ConfigDict(
+        extra="ignore",
+        json_schema_extra={
+            "example": {
+                "input": "Hello, welcome to Webscout AI!",
+                "model": "gpt-4o-mini-tts",
+                "voice": "alloy",
+                "response_format": "mp3",
+                "speed": 1.0
+            }
+        }
+    )
+
+
 class ModelInfo(BaseModel):
     """Model information for the models endpoint."""
     id: str
