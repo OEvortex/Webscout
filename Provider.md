@@ -152,6 +152,7 @@ Located in `webscout/Provider/TTI/`:
 Located in `webscout/Provider/TTS/`:
 - DeepGram
 - ElevenLabs
+- Faster Qwen3-TTS
 - FreeTTS
 - Gesserit
 - Murf AI

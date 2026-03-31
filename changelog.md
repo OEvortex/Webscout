@@ -15,6 +15,31 @@ All notable changes to this project will be documented in this file.
   - Updated `webscout/Provider/STT/__init__.py` to export CohereSTT
   - Updated Provider.md documentation
 
+- **Faster Qwen3-TTS Provider**: Added new Faster Qwen3-TTS provider for text-to-speech synthesis:
+  - `webscout/Provider/TTS/faster_qwen3.py` - OpenAI TTS API-compatible interface for Faster Qwen3-TTS
+  - Supports 5 model variants: Base (0.6B, 1.7B), CustomVoice (0.6B, 1.7B), VoiceDesign (1.7B)
+  - Three generation modes: voice cloning, custom voice, voice design
+  - Streaming (SSE) and non-streaming generation modes
+  - Preset reference voices and custom reference audio upload
+  - Audio transcription support via nano-parakeet
+  - 6 languages: English, Chinese, French, German, Spanish, Auto
+  - No authentication required (public Hugging Face Space)
+  - Updated `webscout/Provider/TTS/__init__.py` to export FasterQwen3TTS
+  - Updated Provider.md documentation
+
+### 🔧 Fixed
+- **ParlerTTS, QwenTTS, SherpaTTS**: Fixed `startswith` bytes vs string bug in SSE stream parsing:
+  - Added `isinstance(line, bytes)` check before calling `startswith()`
+  - Properly decode bytes to UTF-8 string before string operations
+  - Fixed `FailedToGenerateResponseError: startswith first arg must be bytes or a tuple of bytes, not str`
+  - All three providers now successfully generate audio files
+- **PocketTTS**: Fixed test configuration to use valid voice name (`alba` instead of invalid voice)
+- **FasterQwen3TTS**: Fixed model loading to handle `already_loaded` status from API
+- **TTS Provider Tests**: Added comprehensive test suite for all 12 TTS providers:
+  - `tests/providers/test_all_tts_providers.py` - Instantiation and attribute tests
+  - `tests/providers/test_tts_audio_generation.py` - Actual audio generation tests
+  - Results improved from 4/12 to 8/12 working providers (67%)
+
 ## [2026.02.23] - 2026-02-23
 
 ### ✨ Added

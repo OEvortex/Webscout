@@ -113,6 +113,8 @@ class ParlerTTS(BaseTTSProvider):
                     for line in stream.iter_lines():
                         if not line:
                             continue
+                        if isinstance(line, bytes):
+                            line = line.decode("utf-8")
                         if line.startswith("data: "):
                             try:
                                 data = json.loads(line[6:])
