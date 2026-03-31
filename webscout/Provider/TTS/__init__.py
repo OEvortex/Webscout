@@ -11,7 +11,6 @@ from webscout.Provider.TTS.base import (
 from webscout.Provider.TTS.deepgram import DeepgramTTS
 from webscout.Provider.TTS.elevenlabs import ElevenlabsTTS
 from webscout.Provider.TTS.faster_qwen3 import FasterQwen3TTS
-from webscout.Provider.TTS.freetts import FreeTTS
 from webscout.Provider.TTS.murfai import MurfAITTS
 from webscout.Provider.TTS.openai_fm import OpenAIFMTTS
 from webscout.Provider.TTS.parler import ParlerTTS
@@ -34,7 +33,6 @@ __all__ = [
     "DeepgramTTS",
     "ElevenlabsTTS",
     "FasterQwen3TTS",
-    "FreeTTS",
     "MurfAITTS",
     "OpenAIFMTTS",
     "ParlerTTS",

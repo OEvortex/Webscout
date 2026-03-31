@@ -20,10 +20,13 @@ Webscout's TTS Providers offer a versatile and powerful text-to-speech conversio
 1. **ElevenlabsTTS**
 2. **MurfAITTS**
 3. **ParlerTTS**
-5. **DeepgramTTS**
-6. **StreamElementsTTS**
-7. **SpeechMaTTS**
-9. **FreeTTS**
+4. **DeepgramTTS**
+5. **StreamElementsTTS**
+6. **OpenAIFMTTS**
+7. **QwenTTS**
+8. **SherpaTTS**
+9. **PocketTTS**
+10. **FasterQwen3TTS**
 ## 🚀 Installation
 
 ```bash
@@ -99,12 +102,6 @@ audio_file = tts.tts(text, verbose=True)
 ### StreamElementsTTS
 
 - Wide range of international voices
-
-### SpeechMaTTS
-
-- Multilingual voices (Ava, Emma, Andrew, Brian)
-- Adjustable pitch and speech rate
-- Fast audio generation
 
 ## 🛡️ Error Handling
 

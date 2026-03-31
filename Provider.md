@@ -153,13 +153,13 @@ Located in `webscout/Provider/TTS/`:
 - DeepGram
 - ElevenLabs
 - Faster Qwen3-TTS
-- FreeTTS
-- Gesserit
 - Murf AI
 - OpenAI FM
 - Parler
-- SpeechMA
 - Stream Elements
+- Qwen
+- Sherpa
+- PocketTTS
 
 ### Speech-to-Text Providers
 Located in `webscout/Provider/STT/`:

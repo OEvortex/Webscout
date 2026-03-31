@@ -11,14 +11,12 @@ from webscout.Provider.TTS import (
     DeepgramTTS,
     ElevenlabsTTS,
     FasterQwen3TTS,
-    FreeTTS,
     MurfAITTS,
     OpenAIFMTTS,
     ParlerTTS,
     PocketTTS,
     QwenTTS,
     SherpaTTS,
-    SpeechMaTTS,
     StreamElements,
 )
 
@@ -45,10 +43,6 @@ def test_audio_generation():
                 "ref_preset": "ref_audio_3",
             },
         },
-        "FreeTTS": {
-            "instance": FreeTTS(),
-            "params": {"text": test_text, "voice": "alloy"},
-        },
         "MurfAITTS": {
             "instance": MurfAITTS(),
             "params": {"text": test_text, "voice": "Hazel"},
@@ -72,10 +66,6 @@ def test_audio_generation():
         "SherpaTTS": {
             "instance": SherpaTTS(),
             "params": {"text": test_text, "voice": "alloy"},
-        },
-        "SpeechMaTTS": {
-            "instance": SpeechMaTTS(),
-            "params": {"text": test_text, "voice": "aditi"},
         },
         "StreamElements": {
             "instance": StreamElements(),

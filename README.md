@@ -293,10 +293,10 @@ TTI docs: [docs/getting-started.md#image-generation](docs/getting-started.md#ima
 ## Text-to-Speech
 
 ```python
-from webscout.Provider.TTS import ElevenlabsTTS, FreeTTS, ParlerTTS
+from webscout.Provider.TTS import ElevenlabsTTS, ParlerTTS
 
-tts = FreeTTS()
-tts.text_to_speech("Hello, world!", voice="en-US")
+tts = ElevenlabsTTS()
+tts.text_to_speech("Hello, world!", voice="alloy")
 ```
 
 TTS model registry: [docs/models.md](docs/models.md)
