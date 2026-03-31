@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 ## [2026.03.31] - 2026-03-31
 
 ### ✨ Added
+- **Client audio speech interface**: Added `client.audio.speech.create(...)` in `webscout/client.py` for TTS-backed speech generation with provider discovery, caching, failover, and `last_provider` tracking.
+- **Client docs refresh**: Rewrote `docs/client.md` into a shorter guide that still covers chat, image, and audio usage plus the updated helper methods.
 - **Cohere STT Provider**: Added new Cohere Multilingual ASR provider for speech-to-text transcription:
   - `webscout/Provider/STT/cohere.py` - OpenAI Whisper API-compatible interface for Cohere's multilingual ASR
   - Supports 14 languages: English, French, German, Spanish, Portuguese, Italian, Dutch, Polish, Greek, Arabic, Japanese, Korean, Chinese, Vietnamese

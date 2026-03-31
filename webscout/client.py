@@ -2,14 +2,8 @@
 Webscout Unified Client Interface
 
 A unified client for webscout that provides a simple interface
-to interact with multiple AI providers for chat completions and image generation.
-
-Features:
-- Automatic provider failover
-- Support for specifying exact provider
-- Intelligent model resolution (auto, provider/model, or model name)
-- Caching of provider instances
-- Full streaming support
+to interact with multiple AI providers for chat completions, image generation,
+and TTS-based audio generation.
 """
 
 import difflib
@@ -17,6 +11,7 @@ import importlib
 import inspect
 import pkgutil
 import random
+from pathlib import Path
 from typing import Any, Dict, Generator, List, Optional, Set, Tuple, Type, Union, cast
 
 from webscout.Provider.Openai_comp.base import (
@@ -31,6 +26,7 @@ from webscout.Provider.Openai_comp.utils import (
 )
 from webscout.Provider.TTI.base import BaseImages, TTICompatibleProvider
 from webscout.Provider.TTI.utils import ImageResponse
+from webscout.Provider.TTS.base import BaseTTSProvider
 
 
 def load_openai_providers() -> Tuple[Dict[str, Type[OpenAICompatibleProvider]], Set[str]]:
@@ -133,8 +129,49 @@ def load_tti_providers() -> Tuple[Dict[str, Type[TTICompatibleProvider]], Set[st
     return provider_map, auth_required_providers
 
 
+def load_tts_providers() -> Tuple[Dict[str, Type[BaseTTSProvider]], Set[str]]:
+    """
+    Dynamically loads all TTS provider classes from the TTS module.
+
+    Scans the webscout.Provider.TTS package and imports all subclasses of
+    BaseTTSProvider. Excludes base classes, utility modules, and private classes.
+
+    Returns:
+        A tuple containing:
+        - A dictionary mapping TTS provider class names to their class objects.
+        - A set of provider names that require API authentication.
+    """
+    provider_map: Dict[str, Type[BaseTTSProvider]] = {}
+    auth_required_providers: Set[str] = set()
+
+    try:
+        provider_package = importlib.import_module("webscout.Provider.TTS")
+        for _, module_name, _ in pkgutil.iter_modules(provider_package.__path__):
+            if module_name.startswith(("base", "utils", "__")):
+                continue
+            try:
+                module = importlib.import_module(f"webscout.Provider.TTS.{module_name}")
+                for attr_name in dir(module):
+                    attr = getattr(module, attr_name)
+                    if (
+                        isinstance(attr, type)
+                        and issubclass(attr, BaseTTSProvider)
+                        and attr != BaseTTSProvider
+                        and not attr_name.startswith(("Base", "_"))
+                    ):
+                        provider_map[attr_name] = attr
+                        if hasattr(attr, "required_auth") and attr.required_auth:
+                            auth_required_providers.add(attr_name)
+            except Exception:
+                pass
+    except Exception:
+        pass
+    return provider_map, auth_required_providers
+
+
 OPENAI_PROVIDERS, OPENAI_AUTH_REQUIRED = load_openai_providers()
 TTI_PROVIDERS, TTI_AUTH_REQUIRED = load_tti_providers()
+TTS_PROVIDERS, TTS_AUTH_REQUIRED = load_tts_providers()
 
 
 def _get_models_safely(provider_cls: type, client: Optional["Client"] = None) -> List[str]:
@@ -209,6 +246,28 @@ def _get_models_safely(provider_cls: type, client: Optional["Client"] = None) ->
         pass
 
     return models
+
+
+def _get_tts_models_safely(provider_cls: type) -> List[str]:
+    """
+    Returns the TTS models exposed by a provider class.
+
+    TTS providers advertise models through class attributes rather than a
+    nested models.list() interface, so we inspect the class directly.
+    """
+    models = getattr(provider_cls, "SUPPORTED_MODELS", None)
+    if isinstance(models, list):
+        return [model for model in models if isinstance(model, str)]
+
+    models = getattr(provider_cls, "AVAILABLE_MODELS", None)
+    if isinstance(models, list):
+        return [model for model in models if isinstance(model, str)]
+
+    return ["gpt-4o-mini-tts"]
+
+
+def _normalized_name_set(values: Optional[List[str]]) -> Set[str]:
+    return {value.casefold() for value in (values or []) if value}
 
 
 class ClientCompletions(BaseCompletions):
@@ -479,13 +538,17 @@ class ClientCompletions(BaseCompletions):
             >>> print([p[0] for p in providers])
             ['GPT4Free', 'OpenRouter', 'Groq']
         """
-        exclude = set(self._client.exclude or [])
+        exclude = _normalized_name_set(self._client.exclude)
         if self._client.api_key:
-            return [(name, cls) for name, cls in OPENAI_PROVIDERS.items() if name not in exclude]
+            return [
+                (name, cls)
+                for name, cls in OPENAI_PROVIDERS.items()
+                if name.casefold() not in exclude
+            ]
         return [
             (name, cls)
             for name, cls in OPENAI_PROVIDERS.items()
-            if name not in OPENAI_AUTH_REQUIRED and name not in exclude
+            if name not in OPENAI_AUTH_REQUIRED and name.casefold() not in exclude
         ]
 
     def create(
@@ -1014,13 +1077,17 @@ class ClientImages(BaseImages):
             >>> print([p[0] for p in providers])
             ['StableDiffusion', 'DALL-E', 'Midjourney']
         """
-        exclude = set(self._client.exclude_images or [])
+        exclude = _normalized_name_set(self._client.exclude_images)
         if self._client.api_key:
-            return [(name, cls) for name, cls in TTI_PROVIDERS.items() if name not in exclude]
+            return [
+                (name, cls)
+                for name, cls in TTI_PROVIDERS.items()
+                if name.casefold() not in exclude
+            ]
         return [
             (name, cls)
             for name, cls in TTI_PROVIDERS.items()
-            if name not in TTI_AUTH_REQUIRED and name not in exclude
+            if name not in TTI_AUTH_REQUIRED and name.casefold() not in exclude
         ]
 
     def generate(
@@ -1184,9 +1251,283 @@ class ClientImages(BaseImages):
         return self.generate(**kwargs)
 
 
+class ClientAudioSpeech:
+    """
+    Unified audio/speech interface with automatic provider selection and failover.
+
+    Mirrors the nested OpenAI client shape:
+
+        client.audio.speech.create(...)
+    """
+
+    def __init__(self, client: "Client"):
+        self._client = client
+        self._last_provider: Optional[str] = None
+
+    @property
+    def last_provider(self) -> Optional[str]:
+        return self._last_provider
+
+    def _get_provider_instance(
+        self, provider_class: Type[BaseTTSProvider], **kwargs: Any
+    ) -> BaseTTSProvider:
+        provider_name = provider_class.__name__
+        if provider_name in self._client._provider_cache:
+            return self._client._provider_cache[provider_name]
+
+        init_kwargs: Dict[str, Any] = dict(kwargs)
+        if self._client.api_key:
+            init_kwargs["api_key"] = self._client.api_key
+
+        proxy_candidates: List[Dict[str, Any]] = [init_kwargs]
+        if self._client.proxies:
+            proxy_kwargs = {**init_kwargs, "proxies": self._client.proxies}
+            proxy_candidates.insert(0, proxy_kwargs)
+
+            proxy_value = (
+                self._client.proxies.get("https")
+                or self._client.proxies.get("http")
+                or next(iter(self._client.proxies.values()), None)
+            )
+            if proxy_value:
+                proxy_candidates.insert(1, {**init_kwargs, "proxy": proxy_value})
+
+        for candidate in proxy_candidates:
+            try:
+                instance = provider_class(**candidate)
+                self._client._provider_cache[provider_name] = instance
+                return instance
+            except Exception:
+                continue
+
+        try:
+            instance = provider_class()
+            self._client._provider_cache[provider_name] = instance
+            return instance
+        except Exception as exc:
+            raise RuntimeError(f"Failed to initialize TTS provider {provider_class.__name__}: {exc}")
+
+    def _fuzzy_resolve_provider_and_model(
+        self, model: str
+    ) -> Optional[Tuple[Type[BaseTTSProvider], str]]:
+        available = self._get_available_providers()
+        model_to_provider: Dict[str, Type[BaseTTSProvider]] = {}
+
+        for _, provider_class in available:
+            for provider_model in _get_tts_models_safely(provider_class):
+                if provider_model not in model_to_provider:
+                    model_to_provider[provider_model] = provider_class
+
+        if not model_to_provider:
+            return None
+
+        for model_name in model_to_provider:
+            if model_name.lower() == model.lower():
+                return model_to_provider[model_name], model_name
+
+        for model_name in model_to_provider:
+            if model.lower() in model_name.lower() or model_name.lower() in model.lower():
+                if self._client.print_provider_info:
+                    print(f"\033[1;33mSubstring match (TTS): '{model}' -> '{model_name}'\033[0m")
+                return model_to_provider[model_name], model_name
+
+        matches = difflib.get_close_matches(model, model_to_provider.keys(), n=1, cutoff=0.5)
+        if matches:
+            matched_model = matches[0]
+            if self._client.print_provider_info:
+                print(f"\033[1;33mFuzzy match (TTS): '{model}' -> '{matched_model}'\033[0m")
+            return model_to_provider[matched_model], matched_model
+        return None
+
+    def _resolve_provider_and_model(
+        self, model: str, provider: Optional[Type[BaseTTSProvider]]
+    ) -> Tuple[Type[BaseTTSProvider], str]:
+        if "/" in model:
+            provider_name, model_name = model.split("/", 1)
+            found_provider = next(
+                (cls for name, cls in TTS_PROVIDERS.items() if name.lower() == provider_name.lower()),
+                None,
+            )
+            if found_provider:
+                return found_provider, model_name
+
+        if provider:
+            if model == "auto":
+                provider_models = _get_tts_models_safely(provider)
+                return provider, random.choice(provider_models) if provider_models else "gpt-4o-mini-tts"
+            return provider, model
+
+        if model == "auto":
+            available = self._get_available_providers()
+            if not available:
+                raise RuntimeError("No available audio providers found.")
+
+            providers_with_models = []
+            for _, provider_class in available:
+                provider_models = _get_tts_models_safely(provider_class)
+                if provider_models:
+                    providers_with_models.append((provider_class, provider_models))
+
+            if providers_with_models:
+                provider_class, provider_models = random.choice(providers_with_models)
+                return provider_class, random.choice(provider_models)
+            raise RuntimeError("No available audio providers with models found.")
+
+        available = self._get_available_providers()
+        for _, provider_class in available:
+            provider_models = _get_tts_models_safely(provider_class)
+            if provider_models and model in provider_models:
+                return provider_class, model
+
+        fuzzy_result = self._fuzzy_resolve_provider_and_model(model)
+        if fuzzy_result:
+            return fuzzy_result
+
+        if available:
+            random.shuffle(available)
+            return available[0][1], model
+        raise RuntimeError(f"No audio providers found for model '{model}'")
+
+    def _get_available_providers(self) -> List[Tuple[str, Type[BaseTTSProvider]]]:
+        exclude = _normalized_name_set(self._client.exclude_tts)
+        if self._client.api_key:
+            return [
+                (name, provider_class)
+                for name, provider_class in TTS_PROVIDERS.items()
+                if name.casefold() not in exclude
+            ]
+        return [
+            (name, provider_class)
+            for name, provider_class in TTS_PROVIDERS.items()
+            if name not in TTS_AUTH_REQUIRED and name.casefold() not in exclude
+        ]
+
+    @staticmethod
+    def _stream_audio_file(audio_file: str, chunk_size: int) -> Generator[bytes, None, None]:
+        with open(audio_file, "rb") as file_handle:
+            while chunk := file_handle.read(chunk_size):
+                yield chunk
+
+    def create(
+        self,
+        *,
+        input_text: Optional[str] = None,
+        model: str = "auto",
+        voice: Optional[str] = None,
+        response_format: str = "mp3",
+        instructions: Optional[str] = None,
+        stream: bool = False,
+        chunk_size: int = 1024,
+        provider: Optional[Type[BaseTTSProvider]] = None,
+        verbose: bool = False,
+        **kwargs: Any,
+    ) -> Union[str, Generator[bytes, None, None]]:
+        if input_text is None:
+            input_text = kwargs.pop("input", None)
+
+        if not input_text or not isinstance(input_text, str):
+            raise ValueError("Input text must be a non-empty string")
+
+        try:
+            resolved_provider, resolved_model = self._resolve_provider_and_model(model, provider)
+        except Exception:
+            resolved_provider, resolved_model = None, model
+
+        call_kwargs: Dict[str, Any] = {
+            "model": resolved_model,
+            "voice": voice,
+            "response_format": response_format,
+            "instructions": instructions,
+            "verbose": verbose,
+        }
+        call_kwargs.update(kwargs)
+
+        if resolved_provider:
+            try:
+                provider_instance = self._get_provider_instance(resolved_provider)
+                audio_file = provider_instance.tts(input_text, **call_kwargs)
+                if audio_file and Path(audio_file).exists():
+                    self._last_provider = resolved_provider.__name__
+                    if self._client.print_provider_info:
+                        print(f"\033[1;34m{resolved_provider.__name__}:{resolved_model}\033[0m\n")
+                    if stream:
+                        return self._stream_audio_file(audio_file, chunk_size)
+                    return audio_file
+                raise FileNotFoundError(f"Audio file not generated by {resolved_provider.__name__}")
+            except Exception:
+                pass
+
+        all_available = self._get_available_providers()
+        tier1: List[Tuple[str, Type[BaseTTSProvider], str]] = []
+        tier2: List[Tuple[str, Type[BaseTTSProvider], str]] = []
+        tier3: List[Tuple[str, Type[BaseTTSProvider], str]] = []
+        base_model = model.split("/")[-1] if "/" in model else model
+        search_models = {base_model, resolved_model} if resolved_model else {base_model}
+
+        for provider_name, provider_class in all_available:
+            if provider_class == resolved_provider:
+                continue
+
+            provider_models = _get_tts_models_safely(provider_class)
+            if not provider_models:
+                fallback_model = base_model if base_model != "auto" else "gpt-4o-mini-tts"
+                tier3.append((provider_name, provider_class, fallback_model))
+                continue
+
+            found_exact = False
+            for search_model in search_models:
+                if search_model != "auto" and search_model in provider_models:
+                    tier1.append((provider_name, provider_class, search_model))
+                    found_exact = True
+                    break
+            if found_exact:
+                continue
+
+            if base_model != "auto":
+                matches = difflib.get_close_matches(base_model, provider_models, n=1, cutoff=0.5)
+                if matches:
+                    tier2.append((provider_name, provider_class, matches[0]))
+                    continue
+
+            tier3.append((provider_name, provider_class, random.choice(provider_models)))
+
+        random.shuffle(tier1)
+        random.shuffle(tier2)
+        random.shuffle(tier3)
+        fallback_queue = tier1 + tier2 + tier3
+
+        errors: List[str] = []
+        for provider_name, provider_class, provider_model in fallback_queue:
+            try:
+                provider_instance = self._get_provider_instance(provider_class)
+                fallback_kwargs = {**call_kwargs, "model": provider_model}
+                audio_file = provider_instance.tts(input_text, **fallback_kwargs)  # ty:ignore[invalid-argument-type]
+                if audio_file and Path(audio_file).exists():
+                    self._last_provider = provider_name
+                    if self._client.print_provider_info:
+                        print(f"\033[1;34m{provider_name}:{provider_model} (Fallback)\033[0m\n")
+                    if stream:
+                        return self._stream_audio_file(audio_file, chunk_size)
+                    return audio_file
+                errors.append(f"{provider_name}: Audio file not generated.")
+            except Exception as exc:
+                errors.append(f"{provider_name}: {exc}")
+
+        raise RuntimeError(f"All audio providers failed. Errors: {'; '.join(errors[:3])}")
+
+
+class ClientAudio:
+    """
+    Audio namespace that mirrors the OpenAI client structure.
+    """
+
+    def __init__(self, client: "Client"):
+        self.speech = ClientAudioSpeech(client)
+
+
 class Client:
     """
-    Unified Webscout Client for AI chat and image generation.
+    Unified Webscout Client for AI chat, image generation, and audio synthesis.
 
     A high-level client that provides a single interface for interacting with
     multiple AI providers (chat completions and image generation). Automatically
@@ -1207,9 +1548,11 @@ class Client:
         proxies: HTTP proxy configuration dictionary.
         exclude: List of provider names to exclude from chat completions.
         exclude_images: List of provider names to exclude from image generation.
+        exclude_tts: List of provider names to exclude from audio generation.
         print_provider_info: Whether to print selected provider and model info.
         chat: ClientChat instance for chat completions.
         images: ClientImages instance for image generation.
+        audio: ClientAudio instance for speech generation.
 
     Examples:
         >>> # Basic usage with automatic provider selection
@@ -1247,6 +1590,7 @@ class Client:
         proxies: Optional[dict] = None,
         exclude: Optional[List[str]] = None,
         exclude_images: Optional[List[str]] = None,
+        exclude_tts: Optional[List[str]] = None,
         print_provider_info: bool = False,
         **kwargs: Any,
     ):
@@ -1266,6 +1610,8 @@ class Client:
                     Names are case-insensitive. Optional.
             exclude_images: List of provider names to exclude from image generation selection.
                            Names are case-insensitive. Optional.
+            exclude_tts: List of provider names to exclude from audio generation selection.
+                         Names are case-insensitive. Optional.
             print_provider_info: If True, prints selected provider name and model to stdout
                                 before each request. Useful for debugging. Default is False.
             **kwargs: Additional keyword arguments stored for future use.
@@ -1294,14 +1640,16 @@ class Client:
         self.image_provider = image_provider
         self.api_key = api_key
         self.proxies = proxies or {}
-        self.exclude = [e.upper() if e else e for e in (exclude or [])]
-        self.exclude_images = [e.upper() if e else e for e in (exclude_images or [])]
+        self.exclude = exclude or []
+        self.exclude_images = exclude_images or []
+        self.exclude_tts = exclude_tts or []
         self.print_provider_info = print_provider_info
         self.kwargs = kwargs
 
         self._provider_cache = {}
         self.chat = ClientChat(self)
         self.images = ClientImages(self)
+        self.audio = ClientAudio(self)
 
     @staticmethod
     def get_chat_providers() -> List[str]:
@@ -1386,6 +1734,34 @@ class Client:
             6
         """
         return [name for name in TTI_PROVIDERS.keys() if name not in TTI_AUTH_REQUIRED]
+
+    @staticmethod
+    def get_tts_providers() -> List[str]:
+        """
+        Returns a list of all available TTS provider names.
+        """
+        return list(TTS_PROVIDERS.keys())
+
+    @staticmethod
+    def get_free_tts_providers() -> List[str]:
+        """
+        Returns a list of TTS providers that don't require authentication.
+        """
+        return [name for name in TTS_PROVIDERS.keys() if name not in TTS_AUTH_REQUIRED]
+
+    @staticmethod
+    def get_audio_providers() -> List[str]:
+        """
+        Alias for get_tts_providers().
+        """
+        return Client.get_tts_providers()
+
+    @staticmethod
+    def get_free_audio_providers() -> List[str]:
+        """
+        Alias for get_free_tts_providers().
+        """
+        return Client.get_free_tts_providers()
 
 
 try:
