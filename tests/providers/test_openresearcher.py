@@ -153,3 +153,16 @@ class TestOpenResearcher(TestCase):
 
         with self.assertRaises(exceptions.APIConnectionError):
             self.provider.search("What is AI?")
+
+    def test_format_search_response_extracts_exact_answer(self):
+        """Test the formatter extracts the final exact answer block."""
+        text = (
+            "Research log... Exact Answer: Python is a language.  Confidence: 99%"
+        )
+
+        formatted = self.provider.format_SearchResponse(text)
+
+        self.assertEqual(
+            formatted,
+            "Python is a language.",
+        )

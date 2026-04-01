@@ -14,6 +14,8 @@ Features:
 Reference: https://openresearcher-openresearcher.hf.space
 """
 
+import html
+import re
 from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi import requests
@@ -174,33 +176,15 @@ class OpenResearcher(AISearch):
                         f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                     )
 
-                processed_chunks = sanitize_stream(
-                    data=response.iter_lines(),
-                    intro_value="data:",
-                    to_json=True,
-                    content_extractor=lambda chunk: chunk[1]
-                    if isinstance(chunk, list)
-                    and len(chunk) >= 2
-                    and isinstance(chunk[1], str)
-                    and chunk[1]
-                    else (
-                        chunk[0]
-                        if isinstance(chunk, list)
-                        and chunk
-                        and isinstance(chunk[0], str)
-                        and chunk[0]
-                        else None
-                    ),
-                    yield_raw_on_error=False,
-                    encoding="utf-8",
-                    encoding_errors="replace",
-                    raw=raw,
-                    output_formatter=None
-                    if raw
-                    else lambda x: SearchResponse(x) if isinstance(x, str) else x,
-                )
+                final_output = ""
+                for current_output in self._iter_response_chunks(response):
+                    final_output = current_output
 
-                yield from processed_chunks
+                final_text = self.format_SearchResponse(final_output)
+                if raw:
+                    yield final_text
+                else:
+                    yield SearchResponse(final_text)
 
             except RequestException as e:
                 raise exceptions.APIConnectionError(f"Request failed: {e}")
@@ -228,44 +212,16 @@ class OpenResearcher(AISearch):
                     )
 
                 if raw:
-                    full_response = ""
-                    for line in response.iter_lines():
-                        if line:
-                            line_str = (
-                                line.decode("utf-8")
-                                if isinstance(line, bytes)
-                                else line
-                            )
-                            full_response += line_str + "\n"
-                    return full_response
+                    raw_response = ""
+                    for chunk in self._iter_response_chunks(response):
+                        raw_response = chunk
+                    return self.format_SearchResponse(raw_response)
 
-                processed_chunks = sanitize_stream(
-                    data=response.iter_lines(),
-                    intro_value="data:",
-                    to_json=True,
-                    content_extractor=lambda chunk: chunk[1]
-                    if isinstance(chunk, list)
-                    and len(chunk) >= 2
-                    and isinstance(chunk[1], str)
-                    and chunk[1]
-                    else (
-                        chunk[0]
-                        if isinstance(chunk, list)
-                        and chunk
-                        and isinstance(chunk[0], str)
-                        and chunk[0]
-                        else None
-                    ),
-                    yield_raw_on_error=False,
-                    encoding="utf-8",
-                    encoding_errors="replace",
-                )
+                final_output = ""
+                for current_output in self._iter_response_chunks(response):
+                    final_output = current_output
 
-                full_response = ""
-                for content_chunk in processed_chunks:
-                    if content_chunk is not None and isinstance(content_chunk, str):
-                        full_response += content_chunk
-
+                full_response = self.format_SearchResponse(final_output)
                 self.last_response = SearchResponse(full_response)
                 return self.last_response
 
@@ -310,10 +266,66 @@ class OpenResearcher(AISearch):
 
         return event_id
 
+    def _iter_response_chunks(self, response: Any) -> Generator[str, None, None]:
+        """Yield cumulative HTML snippets from the SSE stream."""
+        processed_chunks = sanitize_stream(
+            data=response.iter_lines(),
+            intro_value="data:",
+            to_json=True,
+            content_extractor=lambda chunk: chunk[1]
+            if isinstance(chunk, list)
+            and len(chunk) >= 2
+            and isinstance(chunk[1], str)
+            and chunk[1]
+            else (
+                chunk[0]
+                if isinstance(chunk, list)
+                and chunk
+                and isinstance(chunk[0], str)
+                and chunk[0]
+                else None
+            ),
+            yield_raw_on_error=False,
+            encoding="utf-8",
+            encoding_errors="replace",
+        )
+
+        for content_chunk in processed_chunks:
+            if content_chunk is not None and isinstance(content_chunk, str):
+                yield content_chunk
+
+    @staticmethod
+    def format_SearchResponse(text: str) -> str:
+        """Format the SearchResponse text for better readability."""
+        exact_answer_matches = re.findall(
+            r"Exact Answer:\s*(.*?)(?=\s*(?:Confidence:|</p>|</div>|$))",
+            text,
+            flags=re.DOTALL | re.IGNORECASE,
+        )
+        if exact_answer_matches:
+            exact_answer = exact_answer_matches[-1]
+            exact_answer = re.sub(r"\s+", " ", exact_answer).strip()
+            return exact_answer
+
+        answer_match = re.search(
+            r'<div class="answer-section">(.*?)</div>',
+            text,
+            flags=re.DOTALL,
+        )
+        if answer_match:
+            text = answer_match.group(1)
+
+        text = html.unescape(text)
+        clean_text = re.sub(r"\n{3,}", "\n\n", text)
+        clean_text = re.sub(r"([.!?])\s*\n\s*([A-Z])", r"\1\n\n\2", clean_text)
+        clean_text = re.sub(r"<[^>]*>", "", clean_text)
+        clean_text = "\n".join(line.rstrip() for line in clean_text.split("\n"))
+        return clean_text.strip()
+
 
 if __name__ == "__main__":
     ai = OpenResearcher()
-    response = ai.search("What is Python?", stream=True, raw=False)
+    response = ai.search("HelpingAI models details", stream=True, raw=False)
     if hasattr(response, "__iter__") and not isinstance(
         response, (str, bytes, SearchResponse)
     ):
