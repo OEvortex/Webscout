@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 ## [2026.04.01] - 2026-04-01
 
 ### ✨ Added
+- **KittenTTS Provider**: Added new KittenTTS provider for text-to-speech synthesis:
+  - `webscout/Provider/TTS/kittentts.py` - OpenAI TTS API-compatible interface for KittenTTS
+  - 3 model sizes: Nano (15M), Micro (40M), Mini (80M)
+  - 8 voice presets: Bella, Jasper, Luna, Bruno, Rosie, Hugo, Kiki, Leo
+  - Adjustable speech speed (0.5x to 2.0x)
+  - Gradio API two-step flow (POST for event_id → GET SSE stream for result)
+  - No authentication required (public Hugging Face Space)
+  - Updated `webscout/Provider/TTS/__init__.py` to export KittenTTS
+  - Updated Provider.md documentation
+  - Full test coverage in `tests/providers/test_kittentts.py`
+
 - **LuxTTS Provider**: Added new LuxTTS voice cloning provider for text-to-speech synthesis:
   - `webscout/Provider/TTS/luxtts.py` - OpenAI TTS API-compatible interface for LuxTTS voice cloning
   - Voice cloning from reference audio (preset voices or custom URLs)
