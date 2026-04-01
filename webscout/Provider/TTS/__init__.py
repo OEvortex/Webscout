@@ -20,6 +20,7 @@ from webscout.Provider.TTS.pockettts import PocketTTS
 from webscout.Provider.TTS.qwen import QwenTTS
 from webscout.Provider.TTS.sherpa import SherpaTTS
 from webscout.Provider.TTS.streamElements import StreamElements
+from webscout.Provider.TTS.xlnk import XLNKTTS
 
 # Utility classes
 from webscout.Provider.TTS.utils import SentenceTokenizer
@@ -44,4 +45,5 @@ __all__ = [
     "QwenTTS",
     "SherpaTTS",
     "StreamElements",
+    "XLNKTTS",
 ]

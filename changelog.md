@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 ## [2026.04.01] - 2026-04-01
 
 ### ✨ Added
+- **XLNK TTS Provider**: Added new XLNK TTS provider for text-to-speech synthesis:
+  - `webscout/Provider/TTS/xlnk.py` - OpenAI TTS API-compatible interface for XLNK TTS
+  - 8 Kyutai voice presets: alba, marius, javert, jean, fantine, cosette, eponine, azelma
+  - Voice cloning support via uploaded audio
+  - Adjustable generation parameters: temperature, LSD decode steps, noise clamp, EOS threshold
+  - Gradio API two-step flow (POST for event_id → GET SSE stream for result)
+  - No authentication required (public Hugging Face Space)
+  - Updated `webscout/Provider/TTS/__init__.py` to export XLNKTTS
+  - Updated Provider.md documentation
+  - Full test coverage in `tests/providers/test_xlnk.py`
+
 - **KittenTTS Provider**: Added new KittenTTS provider for text-to-speech synthesis:
   - `webscout/Provider/TTS/kittentts.py` - OpenAI TTS API-compatible interface for KittenTTS
   - 3 model sizes: Nano (15M), Micro (40M), Mini (80M)

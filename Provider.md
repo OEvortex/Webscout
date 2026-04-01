@@ -162,6 +162,7 @@ Located in `webscout/Provider/TTS/`:
 - Qwen
 - Sherpa
 - PocketTTS
+- XLNK TTS
 
 ### Speech-to-Text Providers
 Located in `webscout/Provider/STT/`:
