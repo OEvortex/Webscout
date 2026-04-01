@@ -153,6 +153,7 @@ Located in `webscout/Provider/TTS/`:
 - DeepGram
 - ElevenLabs
 - Faster Qwen3-TTS
+- LuxTTS
 - Murf AI
 - OpenAI FM
 - Parler

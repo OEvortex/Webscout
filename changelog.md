@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026.04.01] - 2026-04-01
+
+### ✨ Added
+- **LuxTTS Provider**: Added new LuxTTS voice cloning provider for text-to-speech synthesis:
+  - `webscout/Provider/TTS/luxtts.py` - OpenAI TTS API-compatible interface for LuxTTS voice cloning
+  - Voice cloning from reference audio (preset voices or custom URLs)
+  - Adjustable speech parameters: speed, loudness (RMS), reference duration, T-shift, steps
+  - Gradio API two-step flow (POST for event_id → GET SSE stream for result)
+  - No authentication required (public Hugging Face Space)
+  - Updated `webscout/Provider/TTS/__init__.py` to export LuxTTS
+  - Updated Provider.md documentation
+  - Full test coverage in `tests/providers/test_luxtts.py`
+
 ## [2026.03.31] - 2026-03-31
 
 ### ✨ Added
