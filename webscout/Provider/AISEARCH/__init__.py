@@ -1,6 +1,7 @@
 from webscout.Provider.AISEARCH.ayesoul_search import AyeSoul
 from webscout.Provider.AISEARCH.iask_search import IAsk
 from webscout.Provider.AISEARCH.monica_search import Monica
+from webscout.Provider.AISEARCH.openresearcher import OpenResearcher
 from webscout.Provider.AISEARCH.PERPLEXED_search import PERPLEXED
 from webscout.Provider.AISEARCH.Perplexity import Perplexity
 from webscout.Provider.AISEARCH.webpilotai_search import webpilotai
@@ -13,4 +14,5 @@ __all__ = [
     "Monica",
     "webpilotai",
     "AyeSoul",
+    "OpenResearcher",
 ]

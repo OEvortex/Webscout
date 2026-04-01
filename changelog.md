@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 ## [2026.04.01] - 2026-04-01
 
 ### ✨ Added
+- **OpenResearcher Provider**: Added new OpenResearcher provider for AI-powered research search:
+  - `webscout/Provider/AISEARCH/openresearcher.py` - AISearch-compatible interface for OpenResearcher
+  - Multi-round iterative research (search → open page → find → answer)
+  - Real-time streaming via Server-Sent Events
+  - Configurable max research rounds (default: 50)
+  - Built-in Serper API key (or custom key support)
+  - HTML-formatted results with citations and thought process
+  - Gradio API two-step flow (POST for event_id → GET SSE stream for result)
+  - No authentication required (public Hugging Face Space)
+  - Updated `webscout/Provider/AISEARCH/__init__.py` to export OpenResearcher
+  - Updated Provider.md documentation
+  - Full test coverage in `tests/providers/test_openresearcher.py`
+
 - **XLNK TTS Provider**: Added new XLNK TTS provider for text-to-speech synthesis:
   - `webscout/Provider/TTS/xlnk.py` - OpenAI TTS API-compatible interface for XLNK TTS
   - 8 Kyutai voice presets: alba, marius, javert, jean, fantine, cosette, eponine, azelma
