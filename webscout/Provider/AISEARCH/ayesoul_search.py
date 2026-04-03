@@ -302,7 +302,7 @@ class AyeSoul(AISearch):
         return "".join(random.choice(chars) for _ in range(length))
 
     def map_status(self, status: Optional[str]) -> Optional[str]:
-        mapping = {
+        mapping: dict[str, str] = {
             "SOUL XLyze": "analyze",
             "SOUL XCon": "context",
             "SOUL XCraft": "answer",
@@ -316,7 +316,7 @@ class AyeSoul(AISearch):
             "SOUL Step": "step",
             "sOUL stock": "stock_chart",
         }
-        return mapping.get(status)
+        return mapping.get(status) if status is not None else None
 
 
 if __name__ == "__main__":

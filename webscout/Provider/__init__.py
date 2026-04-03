@@ -27,6 +27,7 @@ from webscout.Provider.ai4chat import AI4Chat
 from webscout.Provider.Apriel import Apriel
 from webscout.Provider.Ayle import Ayle
 from webscout.Provider.AvaSupernova import AvaSupernova
+from webscout.Provider.CohereCommand import CohereCommand
 from webscout.Provider.elmo import Elmo
 from webscout.Provider.EssentialAI import EssentialAI
 from webscout.Provider.ExaAI import ExaAI
@@ -58,6 +59,7 @@ __all__ = [
     "Apriel",
     "Cerebras",
     "Cohere",
+    "CohereCommand",
     "DeepAI",
     "DeepInfra",
     "AvaSupernova",

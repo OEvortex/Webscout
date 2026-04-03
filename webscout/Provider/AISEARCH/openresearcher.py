@@ -222,8 +222,8 @@ class OpenResearcher(AISearch):
                     final_output = current_output
 
                 full_response = self.format_SearchResponse(final_output)
-                self.last_response = SearchResponse(full_response)
-                return self.last_response
+                self.last_response = {"text": full_response}
+                return SearchResponse(full_response)
 
             except RequestException as e:
                 raise exceptions.APIConnectionError(f"Request failed: {e}")
@@ -268,23 +268,25 @@ class OpenResearcher(AISearch):
 
     def _iter_response_chunks(self, response: Any) -> Generator[str, None, None]:
         """Yield cumulative HTML snippets from the SSE stream."""
+
+        def _extract_html(chunk: Any) -> Optional[str]:
+            """Extract HTML from Gradio SSE data, skipping cache_control markers."""
+            # Skip cache_control markers
+            if isinstance(chunk, dict) and chunk.get("mimeType") == "cache_control":
+                return None
+            # Extract HTML from ["", "<html>", ""] format
+            if isinstance(chunk, list) and len(chunk) >= 2:
+                if isinstance(chunk[1], str) and chunk[1]:
+                    return chunk[1]
+                if isinstance(chunk[0], str) and chunk[0]:
+                    return chunk[0]
+            return None
+
         processed_chunks = sanitize_stream(
             data=response.iter_lines(),
             intro_value="data:",
             to_json=True,
-            content_extractor=lambda chunk: chunk[1]
-            if isinstance(chunk, list)
-            and len(chunk) >= 2
-            and isinstance(chunk[1], str)
-            and chunk[1]
-            else (
-                chunk[0]
-                if isinstance(chunk, list)
-                and chunk
-                and isinstance(chunk[0], str)
-                and chunk[0]
-                else None
-            ),
+            content_extractor=_extract_html,
             yield_raw_on_error=False,
             encoding="utf-8",
             encoding_errors="replace",
@@ -297,6 +299,23 @@ class OpenResearcher(AISearch):
     @staticmethod
     def format_SearchResponse(text: str) -> str:
         """Format the SearchResponse text for better readability."""
+        # Try to extract the answer-section from HTML
+        answer_match = re.search(
+            r'<div class="answer-section">(.*?)</div>',
+            text,
+            flags=re.DOTALL,
+        )
+        if answer_match:
+            answer_html = answer_match.group(1)
+            # Extract text from answer HTML
+            answer_html = html.unescape(answer_html)
+            # Remove HTML tags
+            answer_text = re.sub(r"<[^>]*>", "", answer_html)
+            # Clean up whitespace
+            answer_text = re.sub(r"\s+", " ", answer_text).strip()
+            return answer_text
+
+        # Fallback: try to extract Exact Answer from plain text
         exact_answer_matches = re.findall(
             r"Exact Answer:\s*(.*?)(?=\s*(?:Confidence:|</p>|</div>|$))",
             text,
@@ -307,18 +326,26 @@ class OpenResearcher(AISearch):
             exact_answer = re.sub(r"\s+", " ", exact_answer).strip()
             return exact_answer
 
-        answer_match = re.search(
-            r'<div class="answer-section">(.*?)</div>',
-            text,
-            flags=re.DOTALL,
-        )
-        if answer_match:
-            text = answer_match.group(1)
+        # Last resort: extract the last meaningful paragraph before completion-msg
+        # Find content before completion message
+        completion_idx = text.find("completion-msg")
+        if completion_idx != -1:
+            # Get the last 2000 chars before completion
+            content_before = text[max(0, completion_idx - 2000) : completion_idx]
+            # Extract last paragraph
+            paragraphs = re.findall(r"<p[^>]*>(.*?)</p>", content_before, flags=re.DOTALL)
+            if paragraphs:
+                last_p = paragraphs[-1]
+                last_p = html.unescape(last_p)
+                last_p = re.sub(r"<[^>]*>", "", last_p)
+                last_p = re.sub(r"\s+", " ", last_p).strip()
+                if last_p:
+                    return last_p
 
+        # Final fallback: strip HTML and clean
         text = html.unescape(text)
-        clean_text = re.sub(r"\n{3,}", "\n\n", text)
-        clean_text = re.sub(r"([.!?])\s*\n\s*([A-Z])", r"\1\n\n\2", clean_text)
-        clean_text = re.sub(r"<[^>]*>", "", clean_text)
+        clean_text = re.sub(r"<[^>]*>", "", text)
+        clean_text = re.sub(r"\n{3,}", "\n\n", clean_text)
         clean_text = "\n".join(line.rstrip() for line in clean_text.split("\n"))
         return clean_text.strip()
 
