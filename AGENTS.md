@@ -151,9 +151,25 @@ When adding new providers:
 ### Import Conventions
 - Main package (`webscout/__init__.py`) uses wildcard imports with `# noqa: F403`
 - Client is explicitly imported: `from .client import Client`
-- Model registry exposed as: `from .models import model`
+- Agent registry exposed as: `from .models import model`
 
-## Key Dependencies
+## Agent Workflow Guidelines
+
+### Reverse Engineering
+When performing reverse engineering tasks (e.g., generating curl commands from websites or APIs, analyzing request/response patterns):
+- **Always use the `Reverse` subagent** for reverse engineering work
+- The Reverse agent has access to browser tools and specialized reverse engineering capabilities
+- Do not attempt to manually reverse engineer using terminal commands alone
+
+### Native Tools Usage
+Prefer using native VS Code tools instead of directly relying on PowerShell (bash) terminal for file operations and edits:
+
+- **For file operations**: Use `read_file`, `create_file`, `replace_string_in_file`, `multi_replace_string_in_file` tools
+- **For searching**: Use `grep_search`, `file_search`, `semantic_search`, `vscode_listCodeUsages` tools
+- **For renaming/refactoring**: Use `vscode_renameSymbol` tool
+- **For terminal operations**: Only use `run_in_terminal` when native tools cannot accomplish the task (e.g., running Python scripts, installing packages with uv, running git commands)
+
+This ensures better integration with VS Code and provides a more reliable workflow.
 
 ### Core
 - `curl_cffi` - HTTP client with browser impersonation

@@ -18,6 +18,32 @@ tti_provider_instances: Dict[str, Any] = {}
 tts_provider_instances: Dict[str, Any] = {}
 
 
+def _get_available_models(provider_class: Any, attribute_name: str = "AVAILABLE_MODELS") -> list[str]:
+    """Return a normalized list of model names for a provider class."""
+    available = getattr(provider_class, attribute_name, None)
+
+    # Many providers expose AVAILABLE_MODELS as a property on the instance.
+    if isinstance(available, property):
+        try:
+            available = getattr(provider_class(), attribute_name, [])
+        except Exception:
+            available = []
+
+    if available is None:
+        return []
+
+    if isinstance(available, str):
+        return [available]
+
+    if isinstance(available, (list, tuple, set)):
+        return [model for model in available if isinstance(model, str) and model]
+
+    if hasattr(available, "__iter__"):
+        return [model for model in available if isinstance(model, str) and model]
+
+    return []
+
+
 def initialize_provider_map() -> None:
     """Initialize the provider map by discovering available providers."""
     ic.configureOutput(prefix='INFO| ')
@@ -25,9 +51,8 @@ def initialize_provider_map() -> None:
 
     try:
         import importlib
-        import webscout.Provider
         # Ensure Openai_comp is loaded in sys.modules
-        openai_comp = importlib.import_module("webscout.Provider.Openai_comp")
+        importlib.import_module("webscout.Provider.Openai_comp")
         module = sys.modules["webscout.Provider.Openai_comp"]
         from webscout.Provider.Openai_comp.base import OpenAICompatibleProvider, SimpleModelList
 
@@ -47,15 +72,10 @@ def initialize_provider_map() -> None:
                     provider_count += 1
 
                     # Register available models for this provider
-                    available_models = getattr(obj, "AVAILABLE_MODELS", None)
-                    if available_models is not None and isinstance(
-                        available_models, (list, tuple, set)
-                    ):
-                        for model in available_models:
-                            if model and isinstance(model, str):
-                                model_key = f"{provider_name}/{model}"
-                                AppConfig.provider_map[model_key] = obj
-                                model_count += 1
+                    for model in _get_available_models(obj):
+                        model_key = f"{provider_name}/{model}"
+                        AppConfig.provider_map[model_key] = obj
+                        model_count += 1
 
         # Fallback to ChatGPT if no providers found
         if not AppConfig.provider_map:
@@ -95,9 +115,8 @@ def initialize_tti_provider_map() -> None:
 
     try:
         import importlib
-        import webscout.Provider
         # Ensure TTI is loaded in sys.modules
-        tti_module = importlib.import_module("webscout.Provider.TTI")
+        importlib.import_module("webscout.Provider.TTI")
         module = sys.modules["webscout.Provider.TTI"]
         from webscout.Provider.TTI.base import TTICompatibleProvider
 
@@ -116,15 +135,10 @@ def initialize_tti_provider_map() -> None:
                 provider_count += 1
 
                 # Register available models for this TTI provider
-                available_models = getattr(obj, "AVAILABLE_MODELS", None)
-                if available_models is not None and isinstance(
-                    available_models, (list, tuple, set)
-                ):
-                    for model in available_models:
-                        if model and isinstance(model, str):
-                            model_key = f"{provider_name}/{model}"
-                            AppConfig.tti_provider_map[model_key] = obj
-                            model_count += 1
+                for model in _get_available_models(obj):
+                    model_key = f"{provider_name}/{model}"
+                    AppConfig.tti_provider_map[model_key] = obj
+                    model_count += 1
 
         # Fallback to PollinationsAI if no TTI providers found
         if not AppConfig.tti_provider_map:
@@ -164,9 +178,8 @@ def initialize_tts_provider_map() -> None:
 
     try:
         import importlib
-        import webscout.Provider
         # Ensure TTS is loaded in sys.modules
-        tts_module = importlib.import_module("webscout.Provider.TTS")
+        importlib.import_module("webscout.Provider.TTS")
         module = sys.modules["webscout.Provider.TTS"]
         from webscout.Provider.TTS.base import BaseTTSProvider
 
@@ -184,15 +197,10 @@ def initialize_tts_provider_map() -> None:
                 provider_count += 1
 
                 # Register available models for this TTS provider
-                available_models = getattr(obj, "SUPPORTED_MODELS", None) or getattr(obj, "AVAILABLE_MODELS", None)
-                if available_models is not None and isinstance(
-                    available_models, (list, tuple, set)
-                ):
-                    for model in available_models:
-                        if model and isinstance(model, str):
-                            model_key = f"{provider_name}/{model}"
-                            AppConfig.tts_provider_map[model_key] = obj
-                            model_count += 1
+                for model in _get_available_models(obj, "SUPPORTED_MODELS") or _get_available_models(obj):
+                    model_key = f"{provider_name}/{model}"
+                    AppConfig.tts_provider_map[model_key] = obj
+                    model_count += 1
 
         # Fallback if no TTS providers found
         if not AppConfig.tts_provider_map:
