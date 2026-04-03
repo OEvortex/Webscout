@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026.04.03] - 2026-04-03
+
+### 🔧 Changed
+- **Release Workflow**: Updated `publish-to-pypi.yml` for daily stable releases:
+  - Changed from beta (daily) + stable (Monday) to **daily stable releases**
+  - Schedule now runs every day at 00:00 UTC instead of just Mondays for stable
+  - Default release type changed from "beta" to "stable"
+  - Version format is now date-based (YYYY.MM.DD) without beta suffix
+  - Manual workflow dispatch now defaults to "stable" release type
+
+### 🐛 Fixed
+- **API Server**: Fixed provider initialization error in `webscout/server/providers.py`:
+  - Resolved `KeyError: 'webscout.Provider.Openai_comp'` on server startup
+  - Fixed module import order to ensure proper registration in `sys.modules`
+  - Applied same fix to TTI and TTS provider maps
+
 ## [2026.04.01] - 2026-04-01
 
 ### ✨ Added

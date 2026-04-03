@@ -1,10 +1,9 @@
 name: Publish to PyPI
 
 on:
-  # Daily beta releases - runs every day at 00:00 UTC
+  # Daily stable releases - runs every day at 00:00 UTC
   schedule:
-    - cron: '0 0 * * *'  # Daily at midnight UTC for beta releases
-    - cron: '0 0 * * 1'  # Every Monday at midnight UTC for stable releases
+    - cron: '0 0 * * *'  # Daily at midnight UTC for stable releases
   workflow_dispatch:  # Allows manual trigger
     inputs:
       release_type:
@@ -12,9 +11,9 @@ on:
         required: true
         type: choice
         options:
-          - beta
           - stable
-        default: 'beta'
+          - beta
+        default: 'stable'
 
 jobs:
   determine-release-type:
@@ -34,15 +33,10 @@ jobs:
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             RELEASE_TYPE="${{ inputs.release_type }}"
           elif [ "${{ github.event_name }}" == "schedule" ]; then
-            # Check if it's Monday (day 1) for stable release
-            DAY_OF_WEEK=$(date +%u)
-            if [ "$DAY_OF_WEEK" == "1" ]; then
-              RELEASE_TYPE="stable"
-            else
-              RELEASE_TYPE="beta"
-            fi
+            # Daily schedule always publishes stable releases
+            RELEASE_TYPE="stable"
           else
-            RELEASE_TYPE="beta"
+            RELEASE_TYPE="stable"
           fi
           echo "release_type=$RELEASE_TYPE" >> $GITHUB_OUTPUT
           echo "Release type: $RELEASE_TYPE"
@@ -114,7 +108,8 @@ jobs:
               NEW_VERSION="${DATE_VERSION}.beta.1"
             fi
           else
-            # Stable version format: YYYY.MM.DD or YYYY.MM.DD.N
+            # Stable version format: YYYY.MM.DD (daily releases are always stable)
+            # No beta suffix - releases are date-based stable versions
             if [[ "$CURRENT_VERSION" == "${DATE_VERSION}"* ]] && [[ "$CURRENT_VERSION" != *".beta"* ]]; then
               # Check if we need a patch number
               if [[ "$CURRENT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.([0-9]+)$ ]]; then
