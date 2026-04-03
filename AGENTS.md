@@ -1,266 +1,202 @@
-# Webscout Copilot Instructions
+# Webscout - QWEN Context File
 
-## Purpose
+## Project Overview
 
-Concise, actionable guidance so an AI coding agent can be productive immediately when editing Webscout.
+**Webscout** is a comprehensive Python toolkit for web search, AI interaction, and digital utilities. It provides unified access to 90+ AI providers, multiple search engines, text-to-image/speech generation, developer tools, and an OpenAI-compatible API server — all through a single library.
 
----
+**Key Characteristics:**
+- **Package Name:** `webscout` (PyPI)
+- **Python Version:** >=3.10
+- **License:** Apache-2.0
+- **Repository:** https://github.com/OEvortex/Webscout
+- **Author:** OEvortex (koulabhay26@gmail.com)
 
-## Agent Orchestration
+## Architecture
 
-### Overview
+The project is organized into several key layers:
 
-If the subagent tool is available, the main Copilot agent acts strictly as an orchestrator. All research, planning, and heavy reasoning **MUST** be delegated to specialized subagents.
-
-> Note: There may be other subagents available beyond those listed below.
-
-- Always call multiple subagents in parallel.
-- Break down tasks into subtasks first.
-- For each subtask, call the appropriate subagent or custom agent.
-
-### Available Subagents
-
-#### Reverse
-- **Role:** Reverse Engineering & Provider Discovery Agent
-- **Responsibilities:**
-  - Inspect websites or APIs
-  - Extract endpoints, headers, payloads, auth, streaming patterns
-  - Generate production-ready Provider classes
-- **When to call:**
-  - User asks to reverse engineer a website or API
-  - User requests a new Provider implementation
-  - Unknown or undocumented API behavior
-- **Must not:**
-  - Modify unrelated files
-  - Plan multi-file refactors
-
-#### Plan
-- **Role:** Planning & Task Decomposition Agent
-- **Responsibilities:**
-  - Break large requests into discrete tasks
-  - Define execution order
-  - Identify required files and agents
-- **When to call:**
-  - Task spans multiple files
-  - Complex refactors or new subsystems
-  - Ambiguous or high-level user requests
-- **Must not:**
-  - Write production code
-  - Perform API research
-
-### Agent Calling Rules
-
-- If the subagent tool is available, the main agent **MUST** decide which subagent to call before acting.
-- If the subagent tool is available, one or more subagents may be active per task chunk.
-- If the subagent tool is available and a task involves multiple concerns, call **Plan** first.
-- If the subagent tool is available, never mix reverse engineering, planning, and documentation in one agent.
-
-### Execution Flow
-
-1. Receive user request
-2. Classify intent (Reverse / Docstring / Plan)
-3. If subagent tool is available, delegate to appropriate subagent
-4. If subagent tool is available, receive result
-5. Apply or present result
-
----
-
-## Critical Context Window Management
-
-- ALWAYS work in discrete, focused steps.
-- Use **runSubagent** for tasks when the subagent tool is available.
-- Break large tasks into smaller chunks.
-- Avoid reading large files entirely; search for specific code first using codebase-retrieval.
-- Never batch too many operations; use subagents or groups of 3–5 files.
-
-> Always delegate to a subagent rather than risk output truncation.
-
----
-
-## Code Quality Tools
-
-### Required Skills
-- **modern-python** — ALWAYS load and use this skill when writing or editing Python code in this project. It provides guidance on modern Python best practices, tooling, and conventions.
-
-### Approved Tools
-- **Ruff** — `uvx ruff check .` — Linting & formatting
-- **Ty** — `uvx ty check .` — Type checking
-
-### Disallowed Tools
-- mypy
-- pyright
-- pylint
-- flake8
-- black
-
-### Rationale
-
-Ruff is extremely fast and handles linting/formatting. Ty is a modern, faster alternative to mypy/pyright. Multiple tools cause conflicts and slow development.
-
----
-
-## Project Structure
-
-### Root
-- `webscout/`
-
-### Subsystems
-- **AI provider implementations** — `webscout/Provider/`
-  - **OpenAI-compatible wrappers** — `Openai_comp/`
-  - **Text-to-Image providers** — `TTI/`
-- **Search engine backends** — `webscout/search/`
-- **FastAPI OpenAI-compatible API server** — `webscout/server/`
-- **CLI entrypoint** — `webscout/cli.py`
-- **CLI helpers** — `webscout/swiftcli/`
-- **Misc utilities** — `webscout/Extra/`
-- **Human-facing documentation** — `docs/`
-
----
-
-## Developer Workflows
-
-### Environment
-- Always use `uv`; never bare `python` or `pip`.
-- Never run one-off Python snippets with `python -c`; instead write test code to a temporary file, run it, then delete the file.
-
-### Common Commands
-- `uv pip install <package>`
-- `uv pip uninstall <package>`
-- `uv run <command>`
-- `uv run --extra api webscout-server`
-- `uv sync --extra dev --extra api`
-- `uv run webscout`
-- `uv run --extra api webscout-server -- --debug`
-- `uv run pytest`
-- `uv run ruff .`
-
----
-
-## Provider Conventions
-
-### OpenAI-Compatible Providers
-#### Discovery
-- Must live under `webscout/Provider/OPENAI/`
-- Must be imported in `webscout/Provider/OPENAI/__init__.py`
-- Must subclass `OpenAICompatibleProvider`
-- Must define `required_auth` attribute
-- `required_auth` must be `False` to be publicly registered
-
-#### Optional
-- Feature: `AVAILABLE_MODELS`
-
-#### Example
-```py
-class MyProvider(OpenAICompatibleProvider):
-    required_auth = False
-    AVAILABLE_MODELS = ["fast", "accurate"]
-
-    @property
-    def models(self):
-        return type("M", (), {"list": lambda self: ["fast", "accurate"]})()
-
-    def chat(self):
-        ...
+```
+webscout/
+├── Provider/          # AI provider implementations (63+ providers)
+│   ├── Openai_comp/   # OpenAI-compatible provider versions
+│   ├── TTI/           # Text-to-Image providers
+│   ├── TTS/           # Text-to-Speech providers
+│   ├── STT/           # Speech-to-Text providers
+│   ├── AISEARCH/      # AI-powered search providers
+│   └── UNFINISHED/    # Experimental providers
+├── search/            # Multi-engine web search (DuckDuckGo, Bing, Brave, etc.)
+├── server/            # OpenAI-compatible FastAPI server
+├── swiftcli/          # CLI framework
+├── scout/             # HTML parser and web crawler
+├── litagent/          # User-agent rotation and IP toolkit
+├── zeroart/           # ASCII art generator
+├── Extra/             # Additional utilities
+├── AIbase.py          # Base class for provider implementations
+├── AIauto.py          # Auto-failover logic
+├── client.py          # Unified Python client
+├── models.py          # Model registry (LLM, TTS, TTI)
+├── prompt_manager.py  # System prompt management
+├── sanitize.py        # Stream sanitization
+└── cli.py             # Command-line interface entry point
 ```
 
-### Normal Providers
-- Subclass `webscout.AIbase.Provider`
-- Implement `ask()`, `chat()`, `get_message()`
-- Export via `webscout/Provider/__init__.py`
-- Use `requests.Session`
-- Add unit tests under `tests/providers/`
-- Update `Provider.md` and `docs/`
+## Building and Running
 
-### TTI Providers
-- Follow patterns in `webscout/Provider/TTI/`
-- Discovered via `initialize_tti_provider_map`
+### Dependency Management (Use `uv` Only)
 
----
+This project uses `uv` for all Python environment management. **Never run bare `python` or `pip` directly.**
 
-## CLI Conventions
+```bash
+# Install dependencies
+uv sync
 
-- **Framework:** `swiftcli`
-- **Rules:**
-  - Use `@app.command()`
-  - Use `@option()`
-  - Async handlers supported
-  - Use `rich` for console output
+# Add a new dependency
+uv add <package>
 
----
+# Remove a dependency
+uv remove <package>
 
-## Logging and Errors
+# Run with extra dependencies
+uv run --extra api webscout-server
+uv run --extra dev pytest
+```
 
-- **Internal:** `litprinter.ic`
-- **User-facing:** Rich console
+### CLI Usage
 
-### Server
-- Use FastAPI exceptions
-- Follow OpenAI-compatible error shapes
+```bash
+# Show help
+uv run webscout --help
 
----
+# Search the web
+uv run webscout text -k "python programming"
+uv run webscout text -k "climate change" -e bing
+uv run webscout images -k "mountains"
+uv run webscout news -k "AI breakthrough" -t w
 
-## Release and CI
+# Weather info
+uv run webscout weather -l "New York"
 
-- **Versioning:** Date-based in `webscout/version.py`
-- **Automation:**
-  - `.github/workflows/publish-to-pypi.yml`
-  - `release-with-changelog.yml`
+# Translation
+uv run webscout translate -k "Hola" --to en
 
----
+# Show version
+uv run webscout version
+```
 
-## Testing Guidelines
+### API Server
 
-- Add tests for new behavior
-- Validate provider discovery and model registration
-- Use `pytest` under `tests/`
+```bash
+# Start the OpenAI-compatible API server
+uv run --extra api webscout-server
+uv run --extra api webscout-server --port 8080 --host 0.0.0.0 --debug
+```
 
-### Structure
-- Place unit tests in `tests/providers/` for provider implementations
-- Use `unittest.TestCase` for unit tests with `setUp()` methods
-- Mock external dependencies using FakeResp or similar patterns
-- Test parsing, validation, and error handling
-- Name test files as `test_<provider_name>.py`
-- Interactive/stress tests use `pytestmark = pytest.mark.skip()` to avoid running in CI
-- All test files must pass: `uvx ruff check .` and `uvx ty check .`
+### Docker
 
----
+```bash
+# Build and run
+docker-compose up webscout-api
 
-## Docs To Update
+# No-auth profile
+docker-compose -f docker-compose.yml -f docker-compose.no-auth.yml up webscout-api
+```
 
-- `docs/`
-- `changelog.md`
+### Testing
 
----
+```bash
+# Run tests
+uv run pytest
 
-## Modern Python
+# Run specific test markers
+uv run pytest -m "not live"  # Skip network-dependent tests
+```
 
-- Use type annotations
-- Add docstrings
-- Prefer f-strings
-- Use comprehensions
+### Linting and Formatting
 
----
+```bash
+# Lint with ruff
+uv run ruff check .
 
-# Hard Rules
+# Format with ruff
+uv run ruff format .
+```
 
-- **ALWAYS** divide work into small, discrete tasks before acting.
-- **If `tool:runSubagent` is available, ALWAYS use it for:**
-  - Research or investigation
-  - Multi-step planning
-  - High-context reasoning
-  - Web search or external knowledge gathering
-  - Editing or analyzing many files
+## Development Conventions
 
-> If `tool:runSubagent` is not available, skip subagent-only steps entirely.
+### Code Style
+- **Line length:** 100 characters (configured in `pyproject.toml`)
+- **Target Python:** 3.9+ (runtime requires 3.10+)
+- **Linting rules:** E, F, W, I (with E501, F403, F401 ignored)
+- **Formatter:** ruff
 
-- **NEVER** perform research, exploration, or large reasoning chains in the main agent. Delegate those to subagents.
-- **NEVER** rely on assumptions about the codebase; fetch exact context before reading, modifying, or reasoning about code.
-- Batch changes in small groups (3–5 files max). If more are required, split into multiple subagent tasks.
-- Respect line-length = 100 and all Ruff rules.
-- Remove unused imports, variables, and dead code immediately.
-- Never make new unwanted doc files.
-- After changes, **ALWAYS** run:
-  - `uvx ruff check .`
-  - `uvx ty check .`
+### Provider Development
+When adding new providers:
+1. Subclass `Provider` from `webscout.AIbase`
+2. Implement: `ask(prompt, ...)`, `chat(prompt, ...)`, `get_message(response)`
+3. Use consistent CamelCase class names matching filenames
+4. Add static import in `webscout/Provider/__init__.py`
+5. Prefer `requests.Session` for HTTP clients
+6. Avoid global mutable state
+7. Add tests under `tests/providers/`
+8. Update `Provider.md` documentation
 
-> Do not proceed until all issues are resolved. Do not use `uvx run`; always use `uv run` instead.
+### Testing Practices
+- Tests live in `tests/` directory
+- Network-dependent tests use `@pytest.mark.live` marker
+- **NO MOCKS OR FAKE RESPONSES** — Never use mocks, stubs, or fabricated responses in tests. Always use real clients and actual API calls to catch production-level bugs. The goal is to find real-world issues before they reach users.
+- Test both normal and error behavior including streaming
+- Use real HTTP requests against actual provider endpoints
+- Validate real response structures, not hardcoded fake data
+
+### Import Conventions
+- Main package (`webscout/__init__.py`) uses wildcard imports with `# noqa: F403`
+- Client is explicitly imported: `from .client import Client`
+- Model registry exposed as: `from .models import model`
+
+## Key Dependencies
+
+### Core
+- `curl_cffi` - HTTP client with browser impersonation
+- `aiohttp` - Async HTTP
+- `rich` - Rich terminal output
+- `pydantic` - Data validation
+- `lxml` - HTML/XML parsing
+- `cloudscraper` - Cloudflare bypass
+- `browser-cookie3` - Browser cookie extraction
+
+### Optional
+- **api:** `fastapi`, `uvicorn`, `websockets`, `tiktoken`, `jinja2`
+- **dev:** `ruff`, `pytest`
+
+## Entry Points
+
+| Command | Module |
+|---------|--------|
+| `webscout` / `WEBS` | `webscout.cli:main` |
+| `webscout-server` / `webscout-serve` | `webscout.server.server:main` |
+
+## Documentation
+
+Comprehensive documentation is in `docs/`:
+- [Getting Started](docs/getting-started.md)
+- [Architecture](docs/architecture.md)
+- [CLI Reference](docs/cli.md)
+- [Python Client](docs/client.md)
+- [API Server](docs/openai-api-server.md)
+- [Model Registry](docs/models.md)
+- [Tool Calling](docs/tool-calling.md)
+- [Search Docs](docs/search.md)
+- [Provider Development](docs/provider-development.md)
+- [Deployment](docs/deployment.md)
+- [Docker](docs/DOCKER.md)
+- [Troubleshooting](docs/troubleshooting.md)
+
+## Provider Matrix
+
+- **63 total AI providers** supported
+- **37 providers** have both normal and OpenAI-compatible implementations
+- **17 providers** have only normal implementations
+- **5 providers** have only OpenAI-compatible implementations
+- TTI, TTS, and STT providers in dedicated subdirectories
+
+See [Provider.md](Provider.md) for the complete matrix.

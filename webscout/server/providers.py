@@ -24,8 +24,12 @@ def initialize_provider_map() -> None:
     ic("Initializing provider map...")
 
     try:
-        from webscout.Provider.Openai_comp.base import OpenAICompatibleProvider, SimpleModelList
+        import importlib
+        import webscout.Provider
+        # Ensure Openai_comp is loaded in sys.modules
+        openai_comp = importlib.import_module("webscout.Provider.Openai_comp")
         module = sys.modules["webscout.Provider.Openai_comp"]
+        from webscout.Provider.Openai_comp.base import OpenAICompatibleProvider, SimpleModelList
 
         provider_count = 0
         model_count = 0
@@ -90,8 +94,12 @@ def initialize_tti_provider_map() -> None:
     ic("Initializing TTI provider map...")
 
     try:
-        from webscout.Provider.TTI.base import TTICompatibleProvider
+        import importlib
+        import webscout.Provider
+        # Ensure TTI is loaded in sys.modules
+        tti_module = importlib.import_module("webscout.Provider.TTI")
         module = sys.modules["webscout.Provider.TTI"]
+        from webscout.Provider.TTI.base import TTICompatibleProvider
 
         provider_count = 0
         model_count = 0
@@ -155,8 +163,12 @@ def initialize_tts_provider_map() -> None:
     ic("Initializing TTS provider map...")
 
     try:
-        from webscout.Provider.TTS.base import BaseTTSProvider
+        import importlib
+        import webscout.Provider
+        # Ensure TTS is loaded in sys.modules
+        tts_module = importlib.import_module("webscout.Provider.TTS")
         module = sys.modules["webscout.Provider.TTS"]
+        from webscout.Provider.TTS.base import BaseTTSProvider
 
         provider_count = 0
         model_count = 0

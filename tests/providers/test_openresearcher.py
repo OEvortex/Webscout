@@ -92,7 +92,7 @@ class TestOpenResearcher(TestCase):
             response = self.provider.search("What is AI?", stream=False)
 
             self.assertIsNotNone(response)
-            self.assertIsInstance(response.text, str)
+            self.assertIsInstance(response.text, str)  # ty:ignore[possibly-missing-attribute]
 
     @mock.patch.object(OpenResearcher, "_submit_research", return_value="test-event-id")
     def test_search_streaming(self, mock_submit):
@@ -101,7 +101,7 @@ class TestOpenResearcher(TestCase):
         mock_response.ok = True
 
         with mock.patch.object(self.provider.session, "get", return_value=mock_response):
-            chunks = list(self.provider.search("What is AI?", stream=True))
+            chunks = list(self.provider.search("What is AI?", stream=True))  # ty:ignore[invalid-argument-type]
 
             self.assertGreater(len(chunks), 0)
 
