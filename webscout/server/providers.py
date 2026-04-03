@@ -77,27 +77,10 @@ def initialize_provider_map() -> None:
                         AppConfig.provider_map[model_key] = obj
                         model_count += 1
 
-        # Fallback to ChatGPT if no providers found
         if not AppConfig.provider_map:
-            ic.configureOutput(prefix='WARNING| ')
-            ic("No providers found, using ChatGPT fallback")
-            try:
-                from webscout.Provider.Openai_comp.chatgpt import ChatGPT
-                fallback_models = ["gpt-4", "gpt-4o", "gpt-4o-mini", "gpt-3.5-turbo"]
-
-                AppConfig.provider_map["ChatGPT"] = ChatGPT
-
-                for model in fallback_models:
-                    model_key = f"ChatGPT/{model}"
-                    AppConfig.provider_map[model_key] = ChatGPT
-
-                AppConfig.default_provider = "ChatGPT"
-                provider_count = 1
-                model_count = len(fallback_models)
-            except ImportError as e:
-                ic.configureOutput(prefix='ERROR| ')
-                ic(f"Failed to import ChatGPT fallback: {e}")
-                raise APIError("No providers available", HTTP_500_INTERNAL_SERVER_ERROR)
+            ic.configureOutput(prefix='ERROR| ')
+            ic("No providers found")
+            raise APIError("No providers available", HTTP_500_INTERNAL_SERVER_ERROR)
 
         ic.configureOutput(prefix='INFO| ')
         ic(f"Initialized {provider_count} providers with {model_count} models")
@@ -129,6 +112,7 @@ def initialize_tti_provider_map() -> None:
                 and issubclass(obj, TTICompatibleProvider)
                 and obj.__name__ != "TTICompatibleProvider"
                 and obj.__name__ != "BaseImages"
+                and not getattr(obj, "required_auth", True)
             ):
                 provider_name = obj.__name__
                 AppConfig.tti_provider_map[provider_name] = obj
@@ -140,27 +124,10 @@ def initialize_tti_provider_map() -> None:
                     AppConfig.tti_provider_map[model_key] = obj
                     model_count += 1
 
-        # Fallback to PollinationsAI if no TTI providers found
         if not AppConfig.tti_provider_map:
-            ic.configureOutput(prefix='WARNING| ')
-            ic("No TTI providers found, using PollinationsAI fallback")
-            try:
-                from webscout.Provider.TTI.pollinations import PollinationsAI
-                fallback_models = ["flux", "turbo", "gptimage"]
-
-                AppConfig.tti_provider_map["PollinationsAI"] = PollinationsAI
-
-                for model in fallback_models:
-                    model_key = f"PollinationsAI/{model}"
-                    AppConfig.tti_provider_map[model_key] = PollinationsAI
-
-                AppConfig.default_tti_provider = "PollinationsAI"
-                provider_count = 1
-                model_count = len(fallback_models)
-            except ImportError as e:
-                ic.configureOutput(prefix='ERROR| ')
-                ic(f"Failed to import PollinationsAI fallback: {e}")
-                raise APIError("No TTI providers available", HTTP_500_INTERNAL_SERVER_ERROR)
+            ic.configureOutput(prefix='ERROR| ')
+            ic("No TTI providers found")
+            raise APIError("No TTI providers available", HTTP_500_INTERNAL_SERVER_ERROR)
 
         ic.configureOutput(prefix='INFO| ')
         ic(f"Initialized {provider_count} TTI providers with {model_count} models")
@@ -191,6 +158,7 @@ def initialize_tts_provider_map() -> None:
                 inspect.isclass(obj)
                 and issubclass(obj, BaseTTSProvider)
                 and obj.__name__ not in ("BaseTTSProvider", "TTSProvider")
+                and not getattr(obj, "required_auth", True)
             ):
                 provider_name = obj.__name__
                 AppConfig.tts_provider_map[provider_name] = obj
@@ -202,9 +170,7 @@ def initialize_tts_provider_map() -> None:
                     AppConfig.tts_provider_map[model_key] = obj
                     model_count += 1
 
-        # Fallback if no TTS providers found
         if not AppConfig.tts_provider_map:
-            ic.configureOutput(prefix='WARNING| ')
             ic("No TTS providers found")
             raise APIError("No TTS providers available", HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -251,7 +217,7 @@ def resolve_provider_and_model(model_identifier: str) -> Tuple[Any, str]:
                 available = getattr(provider_class(), "AVAILABLE_MODELS", [])
             except Exception:
                 available = []
-        # If still not iterable, fallback to empty list
+        # If still not iterable, normalize to an empty list
         if not isinstance(available, (list, tuple, set)):
             available = list(available) if available and hasattr(available, "__iter__") and not isinstance(available, str) else []
         if available and model_name not in available:
@@ -299,7 +265,7 @@ def resolve_tti_provider_and_model(model_identifier: str) -> Tuple[Any, str]:
                 available = getattr(provider_class(), "AVAILABLE_MODELS", [])
             except Exception:
                 available = []
-        # If still not iterable, fallback to empty list
+        # If still not iterable, normalize to an empty list
         if not isinstance(available, (list, tuple, set)):
             available = list(available) if available and hasattr(available, "__iter__") and not isinstance(available, str) else []
         if available and model_name not in available:

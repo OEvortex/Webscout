@@ -287,7 +287,6 @@ def main():
     """Main entry point for the webscout-server console script."""
     import argparse
 
-    # Read environment variables with fallbacks
     default_port = int(os.getenv("WEBSCOUT_PORT", os.getenv("PORT", DEFAULT_PORT)))
     default_host = os.getenv("WEBSCOUT_HOST", DEFAULT_HOST)
     default_workers = int(os.getenv("WEBSCOUT_WORKERS", "1"))

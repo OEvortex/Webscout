@@ -17,6 +17,11 @@ All notable changes to this project will be documented in this file.
   - Resolved `KeyError: 'webscout.Provider.Openai_comp'` on server startup
   - Fixed module import order to ensure proper registration in `sys.modules`
   - Applied same fix to TTI and TTS provider maps
+- **Provider discovery flow**: removed implicit server provider fallbacks
+  - removed ChatGPT provider fallback from `initialize_provider_map()`
+  - removed PollinationsAI fallback from `initialize_tti_provider_map()`
+  - no fallback for missing TTS providers
+  - added strict `required_auth=False` filter for TTI and TTS providers
 
 ## [2026.04.01] - 2026-04-01
 

@@ -688,7 +688,6 @@ class Api:
                                     try:
                                         results = method(q, region=region, max_results=max_results)
                                     except TypeError:
-                                        # Fallback for engines that don't accept region
                                         results = method(q, max_results=max_results)
                                 elif type == "answers":
                                     results = method(keywords=q)

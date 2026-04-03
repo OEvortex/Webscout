@@ -210,7 +210,7 @@ async def handle_streaming_response(provider: Any, params: Dict[str, Any], reque
                             chunk_data = model_dict(exclude_none=True)
                         elif isinstance(chunk, dict):
                             chunk_data = chunk
-                        else:  # Fallback for unknown chunk types
+                        else:
                             chunk_data = chunk
 
                         # Clean text content in the chunk to remove control characters
