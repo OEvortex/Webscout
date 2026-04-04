@@ -22,6 +22,10 @@ All notable changes to this project will be documented in this file.
   - removed PollinationsAI fallback from `initialize_tti_provider_map()`
   - no fallback for missing TTS providers
   - added strict `required_auth=False` filter for TTI and TTS providers
+- **API Server**: Added missing TTS model/provider GET routes in `webscout/server/routes.py`:
+  - Added `GET /v1/TTS/models` to list available TTS models
+  - Added `GET /v1/TTS/providers` to list available TTS providers
+  - Now mirrors TTI route pattern for consistency
 
 ## [2026.04.01] - 2026-04-01
 

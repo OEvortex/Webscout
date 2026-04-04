@@ -520,6 +520,78 @@ class Api:
 
     def _register_tts_routes(self):
         """Register TTS (text-to-speech) endpoints."""
+        
+        @self.app.get(
+            "/v1/TTS/models",
+            response_model=ModelListResponse,
+            tags=["Audio Generation"],
+            description="List all available text-to-speech (TTS) models."
+        )
+        async def list_tts_models():
+            models = []
+            for model_name, provider_class in AppConfig.tts_provider_map.items():
+                if "/" not in model_name:
+                    continue  # Skip provider names
+                if any(m["id"] == model_name for m in models):
+                    continue
+                models.append({
+                    "id": model_name,
+                    "object": "model",
+                    "created": int(time.time()),
+                    "owned_by": 'webscout'  # Set owned_by to webscout
+                })
+            # Sort models alphabetically by the part after the first '/'
+            models = sorted(models, key=lambda m: m["id"].split("/", 1)[1].lower())
+            return {
+                "object": "list",
+                "data": models
+            }
+
+        @self.app.get(
+            "/v1/TTS/providers",
+            tags=["Audio Generation"],
+            description="Get details about available text-to-speech (TTS) providers including supported models and parameters."
+        )
+        async def list_tts_providers():
+            """Get information about all available TTS providers."""
+            providers = {}
+
+            # Extract unique provider names (exclude model mappings)
+            provider_names = set()
+            for key, provider_class in AppConfig.tts_provider_map.items():
+                if "/" not in key:  # Provider name, not model mapping
+                    provider_names.add(key)
+
+            for provider_name in sorted(provider_names):
+                provider_class = AppConfig.tts_provider_map[provider_name]
+
+                # Get available models for this provider
+                models = []
+                for key, cls in AppConfig.tts_provider_map.items():
+                    if key.startswith(f"{provider_name}/"):
+                        model_name = key.split("/", 1)[1]
+                        models.append(model_name)
+
+                # Sort models
+                models = sorted(models)
+
+                # Get supported parameters (common TTS parameters)
+                supported_params = [
+                    "input", "model", "voice", "response_format", "instructions", "stream"
+                ]
+
+                providers[provider_name] = {
+                    "name": provider_name,
+                    "class": provider_class.__name__,
+                    "models": models,
+                    "parameters": supported_params,
+                    "model_count": len(models)
+                }
+
+            return {
+                "providers": providers,
+                "total_providers": len(providers)
+            }
 
         @self.app.post(
             "/v1/audio/speech",
