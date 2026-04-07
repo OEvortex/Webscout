@@ -43,7 +43,7 @@ class Completions(BaseCompletions):
         Creates a model response for the given chat conversation.
         Mimics openai.chat.completions.create
         """
-        payload = {
+        payload: Dict[str, Any] = {
             "model": model,
             "messages": messages,
             "max_tokens": max_tokens,

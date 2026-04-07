@@ -45,10 +45,11 @@ keywords = [
     "web-search", "duckduckgo", "google", "yep"
 ]
 dependencies = [
-    "setuptools",
-    "wheel",
-    "pip",
+    "typing_extensions>=4.0.0",
     "curl_cffi",
+    "httpx",
+    "tqdm",
+    "packaging",
     "nest-asyncio",
     "colorama",
     "rich",
@@ -78,6 +79,7 @@ YouTube = "https://youtube.com/@OEvortex"
 dev = [
     "ruff>=0.1.6",
     "pytest>=7.4.2",
+    "pytest-cov>=4.1.0",
 ]
 api = [
     "fastapi",
@@ -97,6 +99,25 @@ parser = [
 [tool.pytest.ini_options]
 markers = [
     "live: network-dependent search engine tests",
+]
+
+[tool.coverage.run]
+source = ["webscout"]
+branch = true
+omit = ["tests/*", "*/__pycache__/*", "*/site-packages/*"]
+
+[tool.coverage.report]
+fail_under = 60
+show_missing = true
+skip_covered = true
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
 ]
 
 [tool.setuptools]

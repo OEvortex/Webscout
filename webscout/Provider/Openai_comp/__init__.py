@@ -46,7 +46,6 @@ from webscout.Provider.Openai_comp.netwrck import Netwrck
 from webscout.Provider.Openai_comp.PI import PiAI
 from webscout.Provider.Openai_comp.sonus import SonusAI
 from webscout.Provider.Openai_comp.textpollinations import TextPollinations
-from webscout.Provider.Openai_comp.avasupernova import AvaSupernova
 from webscout.Provider.Openai_comp.toolbaz import Toolbaz
 from webscout.Provider.Openai_comp.typliai import TypliAI
 from webscout.Provider.Openai_comp.utils import (
@@ -126,7 +125,6 @@ __all__ = [
     "OpenRouter",
     "SonusAI",
     "TextPollinations",
-    "AvaSupernova",
     "Toolbaz",
     "Upstage",
     "WiseCat",

@@ -407,8 +407,8 @@ class DeepInfra(Provider):
     def get_message(self, response: Response) -> str:
         if not isinstance(response, dict):
             return str(response)
-        # Type narrowing after isinstance check
-        text = response.get("text")  # type: ignore
+        # Type narrowing after isinstance check - cast to dict for type checker
+        text = cast(dict, response).get("text")
         return cast(str, text) if text else ""
 
 

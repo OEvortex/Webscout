@@ -22,8 +22,10 @@ from .version import __version__
 from .zeroart import *
 
 useragent = LitAgent()
+
+# Check for updates on import to notify users of new versions
 try:
-    update_message = check_for_updates(force=False)
+    update_message = check_for_updates(force=True)
     if update_message:
         print(update_message)
 except Exception:

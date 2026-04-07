@@ -6,10 +6,9 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from functools import wraps
 from pathlib import Path
-from typing import Any, Callable, Dict, Generator, List, Optional, Union
+from typing import Any, Callable, Dict, Generator, List, Optional, TypeAlias, Union
 
 from litprinter import ic
-from typing_extensions import TypeAlias
 
 Response: TypeAlias = Union[Dict[str, Any], Generator[Any, None, None], str]
 

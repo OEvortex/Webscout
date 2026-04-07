@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union, cast
 
 try:
-    import trio  # type: ignore  # noqa: F401
+    import trio  # ty:ignore[unresolved-import]
 except ImportError:
     pass
 from curl_cffi import CurlError

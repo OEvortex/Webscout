@@ -26,7 +26,6 @@ from webscout.Provider.Auth import (
 from webscout.Provider.ai4chat import AI4Chat
 from webscout.Provider.Apriel import Apriel
 from webscout.Provider.Ayle import Ayle
-from webscout.Provider.AvaSupernova import AvaSupernova
 from webscout.Provider.CohereCommand import CohereCommand
 from webscout.Provider.elmo import Elmo
 from webscout.Provider.EssentialAI import EssentialAI
@@ -62,7 +61,6 @@ __all__ = [
     "CohereCommand",
     "DeepAI",
     "DeepInfra",
-    "AvaSupernova",
     "Falcon",
     "Elmo",
     "EssentialAI",

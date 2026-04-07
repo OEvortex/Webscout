@@ -15,7 +15,7 @@ import threading
 import time
 from itertools import cycle
 from pathlib import Path
-from typing import Iterator, Optional
+from typing import Any, Iterator, Optional, cast
 
 import httpx
 from curl_cffi import requests
@@ -170,7 +170,7 @@ class ProxyManager:
         def patched_req(self: requests.Session, *a, **k) -> None:
             original_req_init(self, *a, **k)
             if p := pm.get():
-                self.proxies.update(p)
+                self.proxies.update(cast(Any, p))
 
         def patched_curl(self: CurlSession, *a, **k) -> None:
             k["proxies"] = k.get("proxies") or pm.get()

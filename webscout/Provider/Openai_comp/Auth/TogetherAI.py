@@ -53,7 +53,7 @@ class Completions(BaseCompletions):
             pass
 
         model_name = self._client.convert_model_name(model)
-        payload = {
+        payload: Dict[str, Any] = {
             "model": model_name,
             "messages": messages,
             "stream": stream,

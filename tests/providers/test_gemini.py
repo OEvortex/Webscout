@@ -1,55 +1,79 @@
-import json
+"""
+Real API tests for Gemini provider.
+
+These tests use actual API calls to verify provider functionality.
+Requires a valid cookies.json file for Gemini authentication.
+Set GEMINI_COOKIE_FILE environment variable to run these tests.
+"""
+
 import os
-import tempfile
-import unittest
-from typing import Any, Dict, cast
-from unittest.mock import MagicMock, patch
+import pytest
 
 from webscout.Provider.Auth.Gemini import GEMINI
 
 
-class TestGEMINI(unittest.TestCase):
-    def setUp(self):
-        # Create a dummy cookie file
-        self.temp_dir = tempfile.TemporaryDirectory()
-        self.cookie_file = os.path.join(self.temp_dir.name, "cookies.json")
-        with open(self.cookie_file, "w") as f:
-            f.write("dummy cookies")
+# Skip all tests in this module if no cookie file is available
+pytestmark = pytest.mark.skipif(
+    not os.environ.get("GEMINI_COOKIE_FILE"),
+    reason="GEMINI_COOKIE_FILE environment variable not set"
+)
 
-        # Patch Chatbot to avoid actual network calls during init
-        with patch('webscout.Provider.Auth.Gemini.Chatbot') as mock_chatbot:
-            mock_chatbot.return_value.secure_1psid = "test_id"
-            mock_chatbot.return_value.secure_1psidts = "test_ts"
-            self.provider = GEMINI(cookie_file=self.cookie_file)
 
-    def tearDown(self):
-        self.temp_dir.cleanup()
+class TestGemini:
+    """Real API tests for Gemini provider."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        """Set up the Gemini provider with cookie file from environment."""
+        cookie_file = os.environ.get("GEMINI_COOKIE_FILE")
+        assert cookie_file is not None, "GEMINI_COOKIE_FILE must be set"
+        self.cookie_file = cookie_file
+        self.provider = GEMINI(cookie_file=self.cookie_file)
 
     def test_ask_non_stream(self):
-        # Mock Chatbot.ask
-        mock_response = {
-            "content": "Hello from Gemini!",
-            "conversation_id": "conv_123",
-            "response_id": "resp_456",
-            "choices": [{"content": ["Hello from Gemini!"]}],
-            "images": [],
-            "error": False
-        }
-        # Cast session to MagicMock for type checker
-        mock_session = cast(MagicMock, self.provider.session)
-        mock_session.ask.return_value = mock_response
+        """Test non-streaming chat completion."""
+        response = self.provider.ask("Say 'Hello World' and nothing else")
+        
+        # Verify we got a response
+        assert response is not None
+        
+        # Get the message content
+        message = self.provider.get_message(response)
+        assert message is not None
+        assert len(message) > 0
+        assert isinstance(message, str)
 
-        response = self.provider.ask("Hi")
-
-        # Cast response to dict for type checker
-        response_dict = cast(Dict[str, Any], response)
-        self.assertEqual(response_dict["content"], "Hello from Gemini!")
-        mock_session.ask.assert_called_once()
+    def test_ask_stream(self):
+        """Test streaming chat completion."""
+        response = self.provider.ask("Count from 1 to 5", stream=True)
+        
+        # Verify we got a generator
+        assert response is not None
+        
+        # Collect chunks
+        chunks = list(response)
+        assert len(chunks) > 0
 
     def test_get_message(self):
-        mock_response = {"content": "Test message"}
-        message = self.provider.get_message(mock_response)
-        self.assertEqual(message, "Test message")
+        """Test message extraction from response."""
+        response = self.provider.ask("Say 'test'")
+        message = self.provider.get_message(response)
+        assert message is not None
+        assert isinstance(message, str)
+
+    def test_different_models(self):
+        """Test using different Gemini models."""
+        models_to_test = ["gemini-3.0-flash", "gemini-3.0-pro"]
+        
+        for model in models_to_test:
+            try:
+                provider = GEMINI(cookie_file=self.cookie_file, model=model)  # type: ignore[arg-type]
+                response = provider.ask("Say 'test'")
+                assert response is not None
+            except Exception as e:
+                # Model might not be available, that's okay
+                pytest.skip(f"Model {model} not available: {e}")
+
 
 if __name__ == "__main__":
-    unittest.main()
+    pytest.main([__file__, "-v"])

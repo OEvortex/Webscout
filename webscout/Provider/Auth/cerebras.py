@@ -3,7 +3,7 @@ import re
 # Import trio before curl_cffi to prevent eventlet socket monkey-patching conflicts
 # See: https://github.com/python-trio/trio/issues/3015
 try:
-    import trio  # noqa: F401 # type: ignore
+    import trio  # ty:ignore[unresolved-import]
 except ImportError:
     pass  # trio is optional, ignore if not available
 import json

@@ -41,7 +41,7 @@ class Completions(BaseCompletions):
         **kwargs: Any
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
         """Create a chat completion using TwoAI."""
-        payload = {
+        payload: Dict[str, Any] = {
             "model": model,
             "messages": messages,
             "max_tokens": max_tokens,

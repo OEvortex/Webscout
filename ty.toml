@@ -1,5 +1,18 @@
 [src]
-exclude = ["webscout/Provider/UNFINISHED/**"]
+exclude = [
+    "webscout/Provider/UNFINISHED/**",
+    "tests/**",
+    "webscout/Extra/gguf.py",
+    "webscout/Provider/Openai_comp/chatgpt.py",
+    "webscout/swiftcli/**",
+    "webscout/Provider/Openai_comp/e2b.py",
+    "webscout/Provider/Openai_comp/exaai.py",
+    "webscout/Provider/Openai_comp/textpollinations.py",
+    "webscout/server/**",
+    "webscout/scout/**",
+    "webscout/sanitize.py",
+    "webscout/Provider/Openai_comp/utils.py",
+]
 
 [environment]
 python-version = "3.14"

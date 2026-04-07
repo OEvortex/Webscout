@@ -34,7 +34,7 @@ def list_providers():
 
     console.print(table)
 
-def test_provider(provider_name, model=None, prompt="Say 'Hello World' in one word", stream=False, api_key=None):
+def run_provider(provider_name, model=None, prompt="Say 'Hello World' in one word", stream=False, api_key=None):
     provider_module = sys.modules['webscout.Provider']
     provider_cls = getattr(provider_module, provider_name, None)
     if not provider_cls:
@@ -93,7 +93,7 @@ def test_provider(provider_name, model=None, prompt="Say 'Hello World' in one wo
         import traceback
         console.print(traceback.format_exc())
 
-def test_all_providers(api_keys=None, prompt="Say 'Hello World' in one word"):
+def run_all_providers(api_keys=None, prompt="Say 'Hello World' in one word"):
     provider_module = sys.modules['webscout.Provider']
     results = []
 
@@ -153,7 +153,7 @@ def test_all_providers(api_keys=None, prompt="Say 'Hello World' in one word"):
 
     console.print(table)
 
-def test_provider_models(provider_name, api_key=None, prompt="Say 'Hello World' in one word"):
+def run_provider_models(provider_name, api_key=None, prompt="Say 'Hello World' in one word"):
     provider_module = sys.modules['webscout.Provider']
     provider_cls = getattr(provider_module, provider_name, None)
     if not provider_cls:
@@ -220,12 +220,12 @@ def main():
     if args.list:
         list_providers()
     elif args.test_all:
-        test_all_providers(api_keys, args.prompt)
+        run_all_providers(api_keys, args.prompt)
     elif args.provider:
         if args.test_models:
-            test_provider_models(args.provider, args.api_key or api_keys.get(args.provider), args.prompt)
+            run_provider_models(args.provider, args.api_key or api_keys.get(args.provider), args.prompt)
         else:
-            test_provider(args.provider, args.model, args.prompt, args.stream, args.api_key or api_keys.get(args.provider))
+            run_provider(args.provider, args.model, args.prompt, args.stream, args.api_key or api_keys.get(args.provider))
     else:
         parser.print_help()
 

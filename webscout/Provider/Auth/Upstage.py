@@ -124,7 +124,7 @@ class Upstage(Provider):
         self.session = requests.Session()
         self.session.headers.update(self.headers)
         if proxies:
-            self.session.proxies.update(proxies)
+            self.session.proxies.update(cast(Any, proxies))
 
         self.is_conversation = is_conversation
         self.max_tokens = max_tokens
@@ -187,7 +187,7 @@ class Upstage(Provider):
         optimizer: Optional[str] = None,
         conversationally: bool = False,
         **kwargs: Any,
-    ) -> Union[Dict[str, Any], Generator[str, None, None]]:
+    ) -> Union[Dict[str, Any], Generator[Union[Dict[str, Any], str], None, None]]:
         """
         Send a request to the Upstage API.
 
@@ -234,7 +234,7 @@ class Upstage(Provider):
             "stream": stream,
         }
 
-        def for_stream() -> Generator[str, None, None]:
+        def for_stream() -> Generator[Union[Dict[str, Any], str], None, None]:
             """Handle streaming response."""
             streaming_text = ""
             try:
@@ -266,8 +266,10 @@ class Upstage(Provider):
                 for content_chunk in processed_stream:
                     if content_chunk and isinstance(content_chunk, str):
                         streaming_text += content_chunk
-                        resp = {"text": content_chunk}
-                        yield resp if not raw else content_chunk
+                        if raw:
+                            yield content_chunk
+                        else:
+                            yield {"text": content_chunk}
 
                 # Update conversation history
                 self.last_response = {"text": streaming_text}
@@ -374,7 +376,7 @@ class Upstage(Provider):
             )
             for response in gen:
                 if raw:
-                    yield response
+                    yield cast(str, response)
                 else:
                     yield self.get_message(cast(Response, response))
 

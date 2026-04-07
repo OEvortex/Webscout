@@ -41,7 +41,7 @@ class Completions(BaseCompletions):
         proxies: Optional[Dict[str, str]] = None,
         **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
-        payload = {
+        payload: Dict[str, Any] = {
             "model": model,
             "messages": messages,
             "max_tokens": max_tokens,

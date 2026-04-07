@@ -2,6 +2,50 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026.04.07] - 2026-04-07
+
+### 🔧 Changed
+- **Typing Improvements**: Comprehensive type annotation fixes across the codebase:
+  - Added `Dict[str, Any]` type annotations to payload dictionaries in OpenAI-compatible providers (TwoAI, Cerebras, DeepInfra, Groq, HuggingFace, NVIDIA, TogetherAI, SambaNova, Upstage)
+  - Fixed yield type annotations in `webscout/Provider/Auth/Upstage.py` for streaming responses
+  - Added proper type casts for proxy updates in `webscout/Extra/proxy_manager.py`
+  - Fixed type narrowing for dict responses in `webscout/Provider/Auth/Deepinfra.py`
+
+### 🐛 Fixed
+- **Test Conversions**: Converted mocked tests to real API tests:
+  - `tests/providers/test_openai.py` - Real OpenAI API tests
+  - `tests/providers/test_groq.py` - Real Groq API tests
+  - `tests/providers/test_huggingface.py` - Real HuggingFace API tests
+  - `tests/providers/test_gemini.py` - Real Gemini API tests
+  - Deleted `tests/providers/test_all_mocked.py` - No longer needed
+  - All real API tests use `pytest.mark.skipif` for environment variable checks
+- **Type Checker**: Fixed `uvx ty check` errors:
+  - Fixed unused `# type: ignore` comments in `webscout/Bard.py`, `webscout/Provider/Auth/cerebras.py`, `webscout/Provider/Auth/Deepinfra.py`
+  - Changed `# type: ignore` to `# ty:ignore` for proper ty syntax
+  - Fixed payload type annotations to allow float values for `temperature` and `top_p` parameters
+- **Provider Fixes**:
+  - Fixed trio import comments to use `# ty:ignore[unresolved-import]` syntax
+  - Fixed proxy type annotation issues with proper `cast()` usage
+- **Test Infrastructure**: Fixed `tests/live_test.py` pytest collection error:
+  - Renamed test functions to `run_*` to avoid pytest collecting them as tests
+  - The file is a CLI tool, not a pytest test suite
+
+### 🗑️ Removed
+- **AvaSupernova Provider**: Removed non-functional provider (API returns 400 errors, service unavailable)
+  - Deleted `webscout/Provider/AvaSupernova.py`
+  - Deleted `webscout/Provider/Openai_comp/avasupernova.py`
+  - Deleted `tests/providers/test_avasupernova.py`
+  - Removed from `webscout/Provider/__init__.py` exports
+  - Removed from `webscout/Provider/Openai_comp/__init__.py` exports
+
+### 📦 Dependencies
+- **pyproject.toml**: Added missing dependencies:
+  - `typing_extensions>=4.0.0`
+  - `httpx`
+  - `tqdm`
+  - `packaging`
+  - `pytest-cov` (dev dependency with coverage configuration)
+
 ## [2026.04.03] - 2026-04-03
 
 ### 🔧 Changed
