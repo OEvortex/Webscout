@@ -12,6 +12,7 @@ from webscout.Provider.TTI.magicstudio import MagicStudioAI
 from webscout.Provider.TTI.miragic import MiragicAI
 from webscout.Provider.TTI.pollinations import PollinationsAI
 from webscout.Provider.TTI.together import TogetherImage
+from webscout.Provider.TTI.visualgpt import VisualGPT
 
 # Utility classes
 from webscout.Provider.TTI.utils import (
@@ -32,4 +33,5 @@ __all__ = [
     "PollinationsAI",
     "TogetherImage",
     "MiragicAI",
+    "VisualGPT",
 ]
