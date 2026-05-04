@@ -15,6 +15,7 @@ from litprinter import ic
 
 from webscout import exceptions
 from webscout.litagent import LitAgent
+from webscout.AIbase import SimpleModelList
 
 try:
     from . import utils
@@ -84,32 +85,30 @@ class TTSAI(BaseTTSProvider):
     # Supported formats
     SUPPORTED_FORMATS = ["wav", "mp3"]
 
-    def __init__(self, timeout: int = 120, **kwargs):
-        """
-        Initialize TTS.ai provider.
-
-        Args:
-            timeout (int): Request timeout in seconds
-            **kwargs: Additional configuration
-        """
+    def __init__(self, timeout: int = 120, proxies: Optional[dict] = None):
+        """Initialize TTS.ai provider."""
         super().__init__()
+        # Set default attributes before calling parent init properly
+        self.temp_dir = tempfile.mkdtemp(prefix="webscout_tts_")
+        self.default_model = "piper"
+        self.default_voice = "en_GB-alan-medium"
+        self.default_format = "wav"
+
         self.api_url = "https://tts.ai/api/v1/tts"
         self.voices_url = "https://tts.ai/api/v1/voices"
         self.session = requests.Session()
         self.session.headers.update(self.headers)
+        if proxies:
+            self.session.proxies.update(proxies)
         self.timeout = timeout
-        self.default_voice = "en_GB-alan-medium"
+
+    @property
+    def models(self) -> SimpleModelList:
+        """Return available models."""
+        return SimpleModelList(type(self).SUPPORTED_MODELS)
 
     def get_available_voices(self, model: Optional[str] = None) -> list:
-        """
-        Get available voices, optionally filtered by model.
-
-        Args:
-            model (str): Optional model name to filter voices
-
-        Returns:
-            list: List of voice dictionaries
-        """
+        """Get available voices, optionally filtered by model."""
         response = self.session.get(self.voices_url, timeout=30)
         response.raise_for_status()
         voices = response.json()["voices"]
@@ -119,25 +118,36 @@ class TTSAI(BaseTTSProvider):
         return voices
 
     def get_available_models(self) -> dict:
-        """
-        Get available models with voice counts.
-
-        Returns:
-            dict: Dictionary mapping model names to voice counts
-        """
+        """Get available models with voice counts."""
         voices = self.get_available_voices()
-        model_counts = {}
+        model_counts: dict = {}
         for v in voices:
             model = v["model_name"]
             model_counts[model] = model_counts.get(model, 0) + 1
         return model_counts
 
+    def validate_model(self, model: str) -> str:
+        """Validate and return the model name."""
+        if model not in self.SUPPORTED_MODELS:
+            raise ValueError(
+                f"Model '{model}' not supported. Available models: {', '.join(self.SUPPORTED_MODELS)}"
+            )
+        return model
+
+    def validate_voice(self, voice: str) -> str:
+        """Validate and return the voice name."""
+        voices = self.get_available_voices()
+        voice_ids = [v["voice_id"] for v in voices]
+        if voice not in voice_ids:
+            raise ValueError(
+                f"Voice '{voice}' not supported. Available voices: {', '.join(voice_ids[:10])}..."
+            )
+        return voice
+
     def tts(
         self,
         text: str,
         voice: Optional[str] = None,
-        model: Optional[str] = None,
-        response_format: Optional[str] = None,
         verbose: bool = False,
         **kwargs,
     ) -> str:
@@ -147,8 +157,6 @@ class TTSAI(BaseTTSProvider):
         Args:
             text (str): The text to convert to speech
             voice (str): The voice to use
-            model (str): The TTS model to use
-            response_format (str): Output format (wav, mp3)
             verbose (bool): Whether to print debug information
             **kwargs: Additional parameters
 
@@ -159,24 +167,26 @@ class TTSAI(BaseTTSProvider):
 
         # Set defaults
         voice = voice or self.default_voice
-        model = model or "piper"
-        response_format = response_format or "wav"
 
         if not text:
             raise ValueError("Input text must be a non-empty string")
 
-        # Map format
-        response_format = response_format.lower().replace(".", "")
+        # Get response_format from kwargs
+        response_format = kwargs.get("response_format", "wav").lower().replace(".", "")
 
         if verbose:
             ic.configureOutput(prefix="DEBUG| ")
+            ic.configureOutput(prefix="DEBUG| ")
             ic(f"TTS.ai: Generating speech for {len(text)} chars")
-            ic(f"Model: {model}, Voice: {voice}, Format: {response_format}")
+            ic.configureOutput(prefix="DEBUG| ")
+            ic(f"Voice: {voice}, Format: {response_format}")
 
         # Create temporary file
         file_extension = f".{response_format}"
         filename = pathlib.Path(
-            tempfile.NamedTemporaryFile(suffix=file_extension, dir=self.temp_dir, delete=False).name
+            tempfile.NamedTemporaryFile(
+                suffix=file_extension, dir=self.temp_dir, delete=False
+            ).name
         )
 
         # Split text into sentences
@@ -186,13 +196,11 @@ class TTSAI(BaseTTSProvider):
             max_retries = 3
             for attempt in range(max_retries):
                 try:
-                    payload = {
-                        "text": part_text,
-                        "model": model,
-                        "voice": voice,
-                    }
+                    payload = {"text": part_text, "model": "piper", "voice": voice}
 
-                    response = self.session.post(self.api_url, json=payload, timeout=self.timeout)
+                    response = self.session.post(
+                        self.api_url, json=payload, timeout=self.timeout
+                    )
                     response.raise_for_status()
                     result = response.json()
 
@@ -246,6 +254,7 @@ class TTSAI(BaseTTSProvider):
 
                     if verbose:
                         ic.configureOutput(prefix="DEBUG| ")
+                        ic.configureOutput(prefix="DEBUG| ")
                         ic(f"Chunk {part_number} processed successfully")
 
                     return part_number, audio_resp.content
@@ -253,10 +262,12 @@ class TTSAI(BaseTTSProvider):
                 except CurlError as e:
                     if verbose:
                         ic.configureOutput(prefix="WARNING| ")
+                        ic.configureOutput(prefix="WARNING| ")
                         ic(f"CurlError: {e}. Retrying {attempt + 1}/{max_retries}")
                     time.sleep(1)
                 except Exception as e:
                     if verbose:
+                        ic.configureOutput(prefix="WARNING| ")
                         ic.configureOutput(prefix="WARNING| ")
                         ic(f"Error: {e}. Retrying {attempt + 1}/{max_retries}")
                     time.sleep(1)
@@ -272,21 +283,22 @@ class TTSAI(BaseTTSProvider):
                     for i, sentence in enumerate(sentences)
                 }
 
-                audio_chunks = {}
+                audio_chunks: dict = {}
                 for future in as_completed(futures):
                     part_num, data = future.result()
                     audio_chunks[part_num] = data
 
-                # Combine audio chunks
-                with open(filename, "wb") as f:
-                    for i in sorted(audio_chunks.keys()):
-                        f.write(audio_chunks[i])
+            # Combine audio chunks
+            with open(filename, "wb") as f:
+                for i in sorted(audio_chunks.keys()):
+                    f.write(audio_chunks[i])
 
-                if verbose:
-                    ic.configureOutput(prefix="INFO| ")
-                    ic(f"Audio saved to {filename}")
+            if verbose:
+                ic.configureOutput(prefix="INFO| ")
+                ic.configureOutput(prefix="INFO| ")
+                ic(f"Audio saved to {filename}")
 
-                return str(filename)
+            return str(filename)
 
         except Exception as e:
             raise exceptions.FailedToGenerateResponseError(f"TTS.ai generation failed: {e}")
@@ -300,30 +312,17 @@ class TTSAI(BaseTTSProvider):
         instructions: Optional[str] = None,
         verbose: bool = False,
     ) -> str:
-        """
-        Create speech from input text (OpenAI-compatible interface).
-
-        Args:
-            input_text (str): The text to convert to speech
-            model (str): The TTS model to use
-            voice (str): The voice to use
-            response_format (str): Audio format
-            instructions (str): Voice instructions (ignored)
-            verbose (bool): Print debug information
-
-        Returns:
-            str: Path to the generated audio file
-        """
+        """Create speech from input text (OpenAI-compatible interface)."""
         return self.tts(
             text=input_text,
-            model=model or "piper",
             voice=voice or self.default_voice,
-            response_format=response_format or "wav",
             verbose=verbose,
         )
 
 
 if __name__ == "__main__":
+    from rich import print
+
     client = TTSAI()
 
     print("Available models:", client.models.list())
@@ -332,9 +331,9 @@ if __name__ == "__main__":
     print("\nSample piper voices:", [v["voice_id"] for v in voices])
 
     print("\nGenerating speech...")
-    result = client.speech(
+    result = client.tts(
         text="Hello world, this is a test of text to speech.",
-        model="piper",
         voice="en_GB-alan-medium",
+        verbose=True,
     )
     print("Audio file:", result)

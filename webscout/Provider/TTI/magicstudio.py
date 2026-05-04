@@ -129,9 +129,9 @@ class Images(BaseImages):
                 "output_format": "bytes",
                 "user_profile_id": "null",
                 "anonymous_user_id": str(uuid.uuid4()),
-                "request_timestamp": time.time(),
+                "request_timestamp": str(time.time()),
                 "user_is_subscribed": "false",
-                "client_id": uuid.uuid4().hex,
+                "client_id": str(uuid.uuid4().hex),
             }
             resp = session.post(
                 api_url,
