@@ -340,3 +340,15 @@ class KittenTTS(BaseTTSProvider):
             list: List of available voice names
         """
         return self.SUPPORTED_VOICES.copy()
+
+if __name__ == "__main__":
+    # Example usage
+    provider = KittenTTS()
+    audio_file = provider.tts(
+        text="Hello, this is a test of the KittenTTS provider.",
+        voice="Jasper",
+        model="micro",
+        speed=1.0,
+        verbose=True,
+    )
+    print(f"Generated audio file: {audio_file}")

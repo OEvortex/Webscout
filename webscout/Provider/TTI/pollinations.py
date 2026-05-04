@@ -1,8 +1,6 @@
 import base64
 import json
-import os
 import random
-import tempfile
 import time
 from io import BytesIO
 from typing import TYPE_CHECKING, Any, Optional
@@ -12,6 +10,7 @@ from curl_cffi import CurlError, requests
 from webscout.AIbase import SimpleModelList
 from webscout.litagent import LitAgent
 from webscout.Provider.TTI.base import BaseImages, TTICompatibleProvider
+from webscout.Provider.TTI.image_hosting import upload_image_with_fallback
 from webscout.Provider.TTI.utils import ImageData, ImageResponse
 
 # Optional Pillow import for image format conversion
@@ -135,86 +134,9 @@ class Images(BaseImages):
         # Use default timeout if not provided
         effective_timeout = timeout if timeout is not None else 60
 
+        agent = LitAgent()
         images = []
         urls = []
-
-        def upload_file_with_retry(img_bytes: bytes, image_format: str, max_retries: int = 3):
-            ext = "jpg" if image_format.lower() == "jpeg" else image_format.lower()
-            if ext not in ("jpg", "png", "gif", "webp"):
-                ext = "png"
-            for attempt in range(max_retries):
-                tmp_path = None
-                try:
-                    with tempfile.NamedTemporaryFile(suffix=f".{ext}", delete=False) as tmp:
-                        tmp.write(img_bytes)
-                        tmp.flush()
-                        tmp_path = tmp.name
-                    with open(tmp_path, "rb") as f:
-                        files = {"fileToUpload": (f"image.{ext}", f, f"image/{ext}")}
-                        data = {"reqtype": "fileupload", "json": "true"}
-                        headers = {"User-Agent": LitAgent().random()}
-                        if attempt > 0:
-                            headers["Connection"] = "close"
-                        resp = requests.post(
-                            "https://catbox.moe/user/api.php",
-                            files=files,
-                            data=data,
-                            headers=headers,
-                            timeout=effective_timeout,
-                        )
-                        if resp.status_code == 200 and resp.text.strip():
-                            text = resp.text.strip()
-                            if text.startswith("http"):
-                                return text
-                            try:
-                                result = resp.json()
-                                if "url" in result:
-                                    return result["url"]
-                            except json.JSONDecodeError:
-                                if "http" in text:
-                                    return text
-                except Exception:
-                    if attempt < max_retries - 1:
-                        time.sleep(1 * (attempt + 1))
-                finally:
-                    if tmp_path and os.path.isfile(tmp_path):
-                        try:
-                            os.remove(tmp_path)
-                        except Exception:
-                            pass
-            return None
-
-        def upload_file_alternative(img_bytes: bytes, image_format: str):
-            try:
-                ext = "jpg" if image_format.lower() == "jpeg" else image_format.lower()
-                if ext not in ("jpg", "png", "gif", "webp"):
-                    ext = "png"
-                with tempfile.NamedTemporaryFile(suffix=f".{ext}", delete=False) as tmp:
-                    tmp.write(img_bytes)
-                    tmp.flush()
-                    tmp_path = tmp.name
-                try:
-                    if not os.path.isfile(tmp_path):
-                        return None
-                    with open(tmp_path, "rb") as img_file:
-                        files = {"file": img_file}
-                        response = requests.post(
-                            "https://0x0.st", files=files, timeout=effective_timeout
-                        )
-                        response.raise_for_status()
-                        image_url = response.text.strip()
-                        if not image_url.startswith("http"):
-                            return None
-                        return image_url
-                except Exception:
-                    return None
-                finally:
-                    try:
-                        os.remove(tmp_path)
-                    except Exception:
-                        pass
-            except Exception:
-                return None
 
         for i in range(n):
             # Prepare parameters for Pollinations API
@@ -250,15 +172,13 @@ class Images(BaseImages):
             images.append(img_bytes)
 
             if response_format == "url":
-                uploaded_url = upload_file_with_retry(img_bytes, actual_format)
-                if not uploaded_url:
-                    uploaded_url = upload_file_alternative(img_bytes, actual_format)
+                uploaded_url = upload_image_with_fallback(
+                    img_bytes, actual_format, agent, effective_timeout
+                )
                 if uploaded_url:
                     urls.append(uploaded_url)
                 else:
-                    raise RuntimeError(
-                        "Failed to upload image to catbox.moe using all available methods"
-                    )
+                    raise RuntimeError("Failed to upload image: all hosting services exhausted")
 
         result_data = []
         if response_format == "url":
@@ -271,9 +191,7 @@ class Images(BaseImages):
         else:
             raise ValueError("response_format must be 'url' or 'b64_json'")
 
-        from time import time as _time
-
-        return ImageResponse(created=int(_time()), data=result_data)
+        return ImageResponse(created=int(time.time()), data=result_data)
 
 
 class PollinationsAI(TTICompatibleProvider):

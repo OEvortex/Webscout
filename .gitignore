@@ -172,3 +172,5 @@ _plans/*
 .zenflow/
 .blackboxrules
 .claude
+.mcp.json
+.pi/
