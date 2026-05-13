@@ -338,11 +338,11 @@ class WrDoChat(Provider):
         def for_stream():
             for response in self.ask(
                 prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
-            ):
+            ):  # ty:ignore[not-iterable]
                 if raw:
                     yield response
                 else:
-                    yield self.get_message(response)
+                    yield self.get_message(response)  # ty:ignore[invalid-argument-type]
 
         def for_non_stream():
             result = self.ask(

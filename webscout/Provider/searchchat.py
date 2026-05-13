@@ -174,7 +174,7 @@ class SearchChatAI(Provider):
                     timeout=self.timeout,
                     impersonate=self.fingerprint.get(
                         "browser_type", "chrome110"
-                    ),  # Use fingerprint browser type
+                    ),  # Use fingerprint browser type  # ty:ignore[invalid-argument-type]
                 )
                 if response.status_code != 200:
                     # Add identity refresh logic on 403/429
@@ -187,7 +187,7 @@ class SearchChatAI(Provider):
                             timeout=self.timeout,
                             impersonate=self.fingerprint.get(
                                 "browser_type", "chrome110"
-                            ),  # Use updated fingerprint
+                            ),  # Use updated fingerprint  # ty:ignore[invalid-argument-type]
                         )
                         if not response.ok:
                             raise exceptions.FailedToGenerateResponseError(

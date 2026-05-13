@@ -162,7 +162,7 @@ class WiseCat(Provider):
                         else:
                             streaming_text += extracted_content
                             yield dict(text=extracted_content)
-                self.last_response.update(dict(text=streaming_text))
+                self.last_response.update(dict(text=streaming_text))  # ty:ignore[unresolved-attribute]
                 self.conversation.update_chat_history(prompt, self.get_message(self.last_response))
             except CurlError as e:
                 raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {e}")

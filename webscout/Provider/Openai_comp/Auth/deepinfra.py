@@ -76,7 +76,7 @@ class Completions(BaseCompletions):
                 json=payload,
                 stream=True,
                 timeout=timeout or self._client.timeout,
-                proxies=proxies,
+                proxies=proxies,  # ty:ignore[invalid-argument-type]
             )
             response.raise_for_status()
             prompt_tokens = 0
@@ -169,7 +169,7 @@ class Completions(BaseCompletions):
                 headers=self._client.headers,
                 json=payload,
                 timeout=timeout or self._client.timeout,
-                proxies=proxies,
+                proxies=proxies,  # ty:ignore[invalid-argument-type]
             )
             response.raise_for_status()
             data = response.json()

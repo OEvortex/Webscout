@@ -194,7 +194,7 @@ class EssentialAI(Provider):
         def for_non_stream():
             for _ in for_stream():
                 pass
-            return self.last_response if not raw else self.last_response.get("text", "")
+            return self.last_response if not raw else self.last_response.get("text", "")  # ty:ignore[unresolved-attribute]
 
         return for_stream() if stream else for_non_stream()
 

@@ -140,7 +140,7 @@ class Completions(BaseCompletions):
                 headers=self._client.headers,
                 json=payload,
                 timeout=timeout or 30,
-                proxies=proxies,
+                proxies=proxies,  # ty:ignore[invalid-argument-type]
                 stream=True,
             )
 
@@ -260,7 +260,7 @@ class Completions(BaseCompletions):
                 headers=self._client.headers,
                 json=payload,
                 timeout=timeout or 30,
-                proxies=proxies,
+                proxies=proxies,  # ty:ignore[invalid-argument-type]
                 stream=True,  # <-- Enable streaming mode for iter_lines
             )
 

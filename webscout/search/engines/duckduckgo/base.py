@@ -85,8 +85,8 @@ class DuckDuckGoBase:
         self.client = curl_cffi.requests.Session(
             headers=self.headers,
             proxies={'http': self.proxy, 'https': self.proxy} if self.proxy else None,
-            timeout=timeout,
-            impersonate=impersonate_browser,
+            timeout=timeout,  # ty:ignore[invalid-argument-type]
+            impersonate=impersonate_browser,  # ty:ignore[invalid-argument-type]
             verify=verify,
         )
         self.timeout = timeout

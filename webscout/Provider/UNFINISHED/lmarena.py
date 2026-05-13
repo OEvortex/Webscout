@@ -1,4 +1,3 @@
-# ty: ignore
 import asyncio
 import base64
 import builtins as _builtins

@@ -155,7 +155,7 @@ class Cohere(Provider):
                         yield chunk if isinstance(chunk, str) else json.dumps(chunk)
                     else:
                         if isinstance(chunk, dict):
-                            self.last_response.update(chunk)
+                            self.last_response.update(chunk)  # ty:ignore[unresolved-attribute]
                             yield chunk
 
             if self.last_response:
@@ -195,11 +195,11 @@ class Cohere(Provider):
         def for_stream():
             for response in self.ask(
                 prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
-            ):
+            ):  # ty:ignore[not-iterable]
                 if raw:
                     yield response
                 else:
-                    yield self.get_message(response)
+                    yield self.get_message(response)  # ty:ignore[invalid-argument-type]
 
         def for_non_stream():
             result = self.ask(

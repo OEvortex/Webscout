@@ -141,7 +141,7 @@ class LLMChat(Provider):
         optimizer: Optional[str] = None,
         conversationally: bool = False,
         **kwargs: Any,
-    ) -> Union[Dict[str, Any], Generator[Any, None, None], str]:
+    ) -> Union[Dict[str, Any], Generator[Any, None, None], str]:  # ty:ignore[invalid-method-override]
         """Chat with LLMChat with logging capabilities and raw output support using sanitize_stream."""
 
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)

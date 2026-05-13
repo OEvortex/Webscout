@@ -169,7 +169,7 @@ class OpenResearcher(AISearch):
                     headers={"Accept": "text/event-stream"},
                     timeout=self.timeout,
                     stream=True,
-                    proxies=self.proxies,
+                    proxies=self.proxies,  # ty:ignore[invalid-argument-type]
                 )
                 if not response.ok:
                     raise exceptions.APIConnectionError(
@@ -204,7 +204,7 @@ class OpenResearcher(AISearch):
                     headers={"Accept": "text/event-stream"},
                     timeout=self.timeout,
                     stream=True,
-                    proxies=self.proxies,
+                    proxies=self.proxies,  # ty:ignore[invalid-argument-type]
                 )
                 if not response.ok:
                     raise exceptions.APIConnectionError(

@@ -167,7 +167,7 @@ class TextPollinationsAI(Provider):
         if tools:
             payload["tools"] = tools
         if tool_choice:
-            payload["tool_choice"] = tool_choice
+            payload["tool_choice"] = tool_choice  # ty:ignore[invalid-assignment]
 
         def for_stream():
             try:

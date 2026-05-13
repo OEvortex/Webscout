@@ -291,7 +291,7 @@ if __name__ == "__main__":
     print(f"Response: {resp}")
 
     print("\n[Streaming]")
-    for chunk in ai.ask("Say hello in three words.", stream=True):
+    for chunk in ai.ask("Say hello in three words.", stream=True):  # ty:ignore[not-iterable]
         if isinstance(chunk, dict):
             print(chunk.get("text", ""), end="", flush=True)
     print()

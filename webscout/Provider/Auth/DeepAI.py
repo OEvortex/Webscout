@@ -177,7 +177,7 @@ class DeepAI(Provider):
         optimizer: Optional[str] = None,
         conversationally: bool = False,
         **kwargs: Any,
-    ) -> Response:
+    ) -> Response:  # ty:ignore[invalid-return-type]
         """
         Send a prompt to DeepAI and get the response.
 
@@ -280,11 +280,11 @@ class DeepAI(Provider):
                 optimizer=optimizer,
                 conversationally=conversationally,
                 **kwargs
-            ):
+            ):  # ty:ignore[not-iterable]
                 if raw:
                     yield resp
                 else:
-                    yield self.get_message(resp)
+                    yield self.get_message(resp)  # ty:ignore[invalid-argument-type]
         else:
             response = self.ask(
                 prompt=prompt,

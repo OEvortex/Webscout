@@ -240,9 +240,9 @@ class Falcon(Provider):
 
             self.last_response = {"text": content}
             self.conversation.update_chat_history(prompt, content)
-            return self.last_response
+            return self.last_response  # ty:ignore[invalid-return-type]
 
-        return for_stream() if stream else for_non_stream()
+        return for_stream() if stream else for_non_stream()  # ty:ignore[invalid-return-type]
 
     def chat(
         self,
@@ -258,7 +258,7 @@ class Falcon(Provider):
         def for_stream() -> Generator[str, None, None]:
             for response in self.ask(
                 prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
-            ):
+            ):  # ty:ignore[not-iterable]
                 if raw:
                     yield cast(str, response)
                 else:

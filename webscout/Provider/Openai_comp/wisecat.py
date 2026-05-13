@@ -56,13 +56,13 @@ class Completions(BaseCompletions):
 
         # Add optional parameters if provided
         if max_tokens is not None and max_tokens > 0:
-            payload["max_tokens"] = max_tokens
+            payload["max_tokens"] = max_tokens  # ty:ignore[invalid-assignment]
 
         if temperature is not None:
-            payload["temperature"] = temperature
+            payload["temperature"] = temperature  # ty:ignore[invalid-assignment]
 
         if top_p is not None:
-            payload["top_p"] = top_p
+            payload["top_p"] = top_p  # ty:ignore[invalid-assignment]
 
         # Add any additional parameters
         payload.update(kwargs)

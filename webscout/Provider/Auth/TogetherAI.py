@@ -401,7 +401,7 @@ class TogetherAI(Provider):
                     conversationally=conversationally,
                 )
                 if hasattr(gen, "__iter__"):
-                    for response in gen:
+                    for response in gen:  # ty:ignore[not-iterable]
                         if raw:
                             yield cast(str, response)
                         else:

@@ -79,7 +79,7 @@ class Completions(BaseCompletions):
                 json=payload,
                 stream=True,
                 timeout=timeout if timeout is not None else self._client.timeout,
-                proxies=proxies or getattr(self._client, "proxies", None)
+                proxies=proxies or getattr(self._client, "proxies", None)  # ty:ignore[invalid-argument-type]
             )
             response.raise_for_status()
 
@@ -156,7 +156,7 @@ class Completions(BaseCompletions):
                 headers=self._client.headers,
                 json=payload,
                 timeout=timeout if timeout is not None else self._client.timeout,
-                proxies=proxies or getattr(self._client, "proxies", None)
+                proxies=proxies or getattr(self._client, "proxies", None)  # ty:ignore[invalid-argument-type]
             )
             response.raise_for_status()
             data = response.json()
@@ -196,7 +196,7 @@ class Completions(BaseCompletions):
         except Exception as e:
             raise IOError(f"TwoAI request failed: {e}") from e
         finally:
-            self._client.session.proxies.clear()
+            self._client.session.proxies.clear()  # ty:ignore[unresolved-attribute]
             self._client.session.proxies.update(cast(Any, original_proxies))
 
 

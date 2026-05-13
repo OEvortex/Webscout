@@ -164,7 +164,7 @@ class Sambanova(Provider):
         if tools:
             payload["tools"] = tools
         if tool_choice:
-            payload["tool_choice"] = tool_choice
+            payload["tool_choice"] = tool_choice  # ty:ignore[invalid-assignment]
 
         def for_stream():
             try:
@@ -205,7 +205,7 @@ class Sambanova(Provider):
                             else:
                                 yield {"tool_calls": tool_calls}
 
-                self.last_response.update({"text": streaming_text})
+                self.last_response.update({"text": streaming_text})  # ty:ignore[unresolved-attribute]
                 if streaming_text:
                     self.conversation.update_chat_history(prompt, streaming_text)
 
@@ -272,7 +272,7 @@ class Sambanova(Provider):
                  optimizer=optimizer, conversationally=conversationally,
                  tools=tools, tool_choice=tool_choice
              )
-             for response_dict in gen:
+             for response_dict in gen:  # ty:ignore[not-iterable]
                  if raw:
                      yield cast(str, response_dict)
                  else:

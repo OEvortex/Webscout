@@ -98,7 +98,7 @@ class Completions(BaseCompletions):
                 params=params,
                 headers=self._client.headers,
                 timeout=timeout or self._client.timeout,
-                proxies=proxies or getattr(self._client, "proxies", None),
+                proxies=proxies or getattr(self._client, "proxies", None),  # ty:ignore[invalid-argument-type]
             )
             response.raise_for_status()
             data = response.json()

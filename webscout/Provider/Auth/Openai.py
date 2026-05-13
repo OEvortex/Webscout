@@ -319,8 +319,8 @@ class OpenAI(Provider):
                 optimizer=optimizer,
                 conversationally=conversationally,
             )
-            for response_dict in gen:
-                yield self.get_message(response_dict)
+            for response_dict in gen:  # ty:ignore[not-iterable]
+                yield self.get_message(response_dict)  # ty:ignore[invalid-argument-type]
 
         def for_non_stream_chat():
             response_data = self.ask(

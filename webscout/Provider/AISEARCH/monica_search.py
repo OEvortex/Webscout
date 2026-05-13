@@ -124,7 +124,7 @@ class Monica(AISearch):
                     json=payload,
                     stream=True,
                     timeout=self.timeout,
-                    proxies=self.proxies,
+                    proxies=self.proxies,  # ty:ignore[invalid-argument-type]
                 )
                 if not response.ok:
                     raise exceptions.APIConnectionError(
@@ -161,7 +161,7 @@ class Monica(AISearch):
                     json=payload,
                     stream=False,
                     timeout=self.timeout,
-                    proxies=self.proxies,
+                    proxies=self.proxies,  # ty:ignore[invalid-argument-type]
                 )
                 if not response.ok:
                     raise exceptions.APIConnectionError(

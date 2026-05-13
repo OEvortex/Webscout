@@ -170,7 +170,7 @@ def get_fb_session(email, password, proxies=None):
     }
 
     # Send the POST request
-    result = session.post(post_url, headers=headers, data=data)
+    result = session.post(post_url, headers=headers, data=data)  # ty:ignore[invalid-argument-type]
     if "sb" not in session.cookies:
         raise exceptions.FacebookInvalidCredentialsException(
             "Was not able to login to Facebook. Please check your credentials. "
@@ -437,7 +437,7 @@ class Meta(Provider):
             bool: True if the proxy is working, False otherwise.
         """
         try:
-            response = self.session.get(test_url, proxies=self.proxy, timeout=10)
+            response = self.session.get(test_url, proxies=self.proxy, timeout=10)  # ty:ignore[invalid-argument-type]
             if response.status_code == 200:
                 self.session.proxies = cast(Any, self.proxy)
                 return True
@@ -663,7 +663,7 @@ class Meta(Provider):
                                     extracted_data = self.extract_data(json_line)
                                     if not extracted_data.get("message"):
                                         continue
-                                    self.last_response.update(extracted_data)
+                                    self.last_response.update(extracted_data)  # ty:ignore[unresolved-attribute]
                                     final_message = extracted_data  # Always keep the latest
                                     yield final_message if not raw else json.dumps(final_message)
                                 except json.JSONDecodeError:
@@ -749,7 +749,7 @@ class Meta(Provider):
                 )
 
             extracted_data = self.extract_data(last_streamed_response)
-            self.last_response.update(extracted_data)
+            self.last_response.update(extracted_data)  # ty:ignore[unresolved-attribute]
             self.conversation.update_chat_history(prompt, self.get_message(self.last_response))
             return extracted_data
 
@@ -853,7 +853,7 @@ class Meta(Provider):
                 response = self.session.get(
                     url="https://www.meta.ai/",
                     headers=headers,
-                    proxies=self.proxy,
+                    proxies=self.proxy,  # ty:ignore[invalid-argument-type]
                     timeout=self.timeout,
                 )
                 last_response = response

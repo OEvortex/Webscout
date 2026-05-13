@@ -104,7 +104,7 @@ class Completions(BaseCompletions):
                 stream=True,
                 timeout=timeout or self._client.timeout,
                 impersonate="chrome120",
-                proxies=proxies or self._client.proxies,
+                proxies=proxies or self._client.proxies,  # ty:ignore[invalid-argument-type]
             )
 
             if not response.ok:

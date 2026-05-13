@@ -317,7 +317,7 @@ class AI4Chat(Provider):
         user_id: Optional[str] = None,
         model: Optional[str] = None,
         **kwargs: Any,
-    ) -> Response:
+    ) -> Response:  # ty:ignore[invalid-return-type]
         """
         Sends a prompt to the AI4Chat API and returns the response.
         If stream=True, yields small chunks of the response (simulated streaming).
@@ -372,7 +372,7 @@ class AI4Chat(Provider):
         if response_text.endswith('"'):
             response_text = response_text[:-1]
         response_text = response_text.replace("\\n", "\n").replace("\\n\\n", "\n\n")
-        self.last_response.update(dict(text=response_text))
+        self.last_response.update(dict(text=response_text))  # ty:ignore[unresolved-attribute]
         self.conversation.update_chat_history(prompt, response_text)
         if stream:
             # Simulate streaming by yielding fixed-size character chunks (e.g., 48 chars)

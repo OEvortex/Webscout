@@ -322,7 +322,7 @@ class GROQ(Provider):
                 raise exceptions.FailedToGenerateResponseError(f"Error: {str(e)}")
 
             # Handle tool calls if any
-            first_choice = self.last_response.get("choices", [{}])[0]
+            first_choice = self.last_response.get("choices", [{}])[0]  # ty:ignore[unresolved-attribute]
             message = first_choice.get("message", {})
             if "tool_calls" in message:
                 tool_calls = message.get("tool_calls", [])
@@ -464,7 +464,7 @@ class GROQ(Provider):
                                 f"Error during tool execution: {str(e)}"
                             )
 
-            self.last_response.update(resp)
+            self.last_response.update(resp)  # ty:ignore[unresolved-attribute]
             self.conversation.update_chat_history(prompt, self.get_message(self.last_response))
             return resp
 
@@ -501,7 +501,7 @@ class GROQ(Provider):
                     **kwargs,
                 )
                 if hasattr(gen, "__iter__"):
-                    for response in gen:
+                    for response in gen:  # ty:ignore[not-iterable]
                         if raw:
                             yield cast(str, response)
                         else:

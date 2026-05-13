@@ -213,7 +213,7 @@ class TurboSeek(Provider):
                             clean_chunk = re.sub(r"<[^>]*>", "", content_chunk)
                             if clean_chunk:
                                 streaming_text += clean_chunk
-                                self.last_response.update(dict(text=streaming_text))
+                                self.last_response.update(dict(text=streaming_text))  # ty:ignore[unresolved-attribute]
                                 yield dict(text=clean_chunk)
 
                 if not raw and streaming_text:

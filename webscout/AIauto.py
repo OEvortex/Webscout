@@ -11,7 +11,7 @@ import pkgutil
 import random
 from typing import Any, Dict, Generator, List, Optional, Tuple, Type, Union
 
-from webscout.AIbase import Provider, Response
+from webscout.AIbase import Provider, Response, ResponseType
 from webscout.exceptions import AllProvidersFailure
 
 
@@ -159,12 +159,12 @@ class AUTO(Provider):
 
 
     @property
-    def last_response(self) -> Dict[str, Any]:
+    def last_response(self) -> ResponseType:
         """
         Retrieves the last response dictionary from the successfully used provider.
 
         Returns:
-            dict[str, Any]: The last response dictionary, or an empty dictionary if no provider has been used yet.
+            dict[str, Any] | SearchResponse: The last response, or an empty dictionary if no provider has been used yet.
         """
         return self.provider.last_response if self.provider else {}
 
@@ -479,11 +479,12 @@ class AUTO(Provider):
             optimizer=optimizer,
             conversationally=conversationally,
         )
-        if hasattr(response, "__iter__") and not isinstance(response, (str, bytes, dict)):
+        # handle both Generator and non-streaming returns
+        if isinstance(response, Generator):
             for chunk in response:
                 yield self.get_message(chunk)
-        elif isinstance(response, dict):
-             yield self.get_message(response)
+        elif response is not None:
+            yield self.get_message(response)
 
     def _chat_non_stream(self, prompt: str, optimizer: Optional[str], conversationally: bool) -> str:
         """
@@ -507,7 +508,7 @@ class AUTO(Provider):
             return self.get_message(response)
         return str(response)
 
-    def get_message(self, response: Response) -> str:
+    def get_message(self, response: Any) -> str:
         """
         Extracts the message text from the provider's response dictionary.
 

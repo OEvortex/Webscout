@@ -280,7 +280,7 @@ class AkashGPT(Provider):
             except Exception as e:
                 raise exceptions.FailedToGenerateResponseError(f"An unexpected error occurred during streaming ({type(e).__name__}): {e}")
 
-            self.last_response.update(dict(text=streaming_response)) # message_id is not easily accessible with this stream format
+            self.last_response.update(dict(text=streaming_response)) # message_id is not easily accessible with this stream format  # ty:ignore[unresolved-attribute]
             self.conversation.update_chat_history(
                 prompt, self.get_message(self.last_response)
             )
@@ -322,8 +322,8 @@ class AkashGPT(Provider):
         def for_stream():
             for response in self.ask(
                 prompt, True, optimizer=optimizer, conversationally=conversationally
-            ):
-                yield self.get_message(response)
+            ):  # ty:ignore[not-iterable]
+                yield self.get_message(response)  # ty:ignore[invalid-argument-type]
 
         def for_non_stream():
             return self.get_message(

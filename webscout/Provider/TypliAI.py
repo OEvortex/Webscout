@@ -177,7 +177,7 @@ class TypliAI(Provider):
         optimizer: Optional[str] = None,
         conversationally: bool = False,
         **kwargs: Any,
-    ) -> Union[Dict[str, Any], Generator[Union[str, Dict[str, Any]], None, None]]:
+    ) -> Union[Dict[str, Any], Generator[Union[str, Dict[str, Any]], None, None]]:  # ty:ignore[invalid-method-override]
         """Sends a prompt to the Typli.ai API and returns the response.
 
         Args:
@@ -251,7 +251,7 @@ class TypliAI(Provider):
                         streaming_response += content_chunk
                         yield content_chunk if raw else dict(text=content_chunk)
 
-                self.last_response.update(dict(text=streaming_response))
+                self.last_response.update(dict(text=streaming_response))  # ty:ignore[unresolved-attribute]
 
                 self.conversation.update_chat_history(prompt, self.get_message(self.last_response))
 

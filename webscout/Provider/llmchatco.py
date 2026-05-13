@@ -139,7 +139,7 @@ class LLMChatCo(Provider):
         conversationally: bool = False,
         web_search: bool = False,
         **kwargs: Any,
-    ) -> Union[Dict[str, Any], Generator[Any, None, None], str]:
+    ) -> Union[Dict[str, Any], Generator[Any, None, None], str]:  # ty:ignore[invalid-method-override]
         """Chat with LLMChat.co with streaming capabilities and raw output support using sanitize_stream."""
 
         conversation_prompt = self.conversation.gen_complete_prompt(prompt)

@@ -348,12 +348,12 @@ class Cerebras(Provider):
                     # Update history after stream finishes
                     self.last_response = {"text": full_text}
                     self.conversation.update_chat_history(prompt, full_text)
-                return stream_wrapper()
+                return stream_wrapper()  # ty:ignore[invalid-return-type]
             else:
                 # Non-streaming response is already the full text string
                 self.last_response = {"text": response}
                 self.conversation.update_chat_history(prompt, response)
-                return self.last_response if not raw else json.dumps(self.last_response)
+                return self.last_response if not raw else json.dumps(self.last_response)  # ty:ignore[invalid-return-type]
 
         except Exception as e:
             raise exceptions.FailedToGenerateResponseError(f"Error during request: {e}")
@@ -374,7 +374,7 @@ class Cerebras(Provider):
         if stream:
             # Wrap the generator from ask() to get message text
             def stream_wrapper() -> Generator[str, None, None]:
-                for chunk in response_gen_or_dict:
+                for chunk in response_gen_or_dict:  # ty:ignore[not-iterable]
                     if raw:
                         yield chunk
                     else:

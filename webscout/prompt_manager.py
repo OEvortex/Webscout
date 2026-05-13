@@ -54,7 +54,7 @@ class AwesomePrompts:
         self._max_workers = max_workers
         self.timeout = timeout
         try:
-            self.session = Session(timeout=timeout, impersonate=impersonate)
+            self.session = Session(timeout=timeout, impersonate=impersonate)  # ty:ignore[invalid-argument-type]
         except Exception:
             self.session = Session(timeout=timeout)
         self.local_path.parent.mkdir(parents=True, exist_ok=True)

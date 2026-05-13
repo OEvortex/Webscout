@@ -1,4 +1,4 @@
-from typing import Any, Dict, Generator, List, Optional, Union, cast
+from typing import Any, Dict, Generator, List, Optional, Union
 
 from curl_cffi import requests
 from curl_cffi.requests.exceptions import RequestException
@@ -97,7 +97,7 @@ class PERPLEXED(AISearch):
                     json=payload,
                     stream=True,
                     timeout=self.timeout,
-                    proxies=self.proxies,
+                    proxies=self.proxies,  # ty:ignore[invalid-argument-type]
                 )
                 if not response.ok:
                     raise exceptions.APIConnectionError(
@@ -138,7 +138,7 @@ class PERPLEXED(AISearch):
                     json=payload,
                     stream=False,
                     timeout=self.timeout,
-                    proxies=self.proxies,
+                    proxies=self.proxies,  # ty:ignore[invalid-argument-type]
                 )
                 if not response.ok:
                     raise exceptions.APIConnectionError(

@@ -434,7 +434,7 @@ class Meta(OpenAICompatibleProvider):
         response = self.session.get(
             url="https://www.meta.ai/",
             headers=headers,
-            proxies=self.proxies,
+            proxies=self.proxies,  # ty:ignore[invalid-argument-type]
         )
 
         cookies = {

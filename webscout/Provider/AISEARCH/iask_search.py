@@ -196,10 +196,10 @@ class IAsk(AISearch):
             >>> print(response)
             Climate change refers to...
         """
-        search_mode = cast(ModeType, mode or self.default_mode)
+        search_mode = cast(ModeType, mode or self.default_mode)  # ty:ignore[redundant-cast]
         search_detail_level = cast(
             Optional[DetailLevelType], detail_level or self.default_detail_level
-        )
+        )  # ty:ignore[redundant-cast]
 
         # For non-streaming, run the async search and return the complete response
         if not stream:
@@ -329,7 +329,7 @@ class IAsk(AISearch):
         if not stream:
             buffer = await fetch_answer()
             self.last_response = SearchResponse(buffer)
-            return buffer if raw else self.last_response
+            return buffer if raw else self.last_response  # ty:ignore[invalid-return-type]
 
         # For streaming, create an async generator that yields chunks
         async def process_stream():

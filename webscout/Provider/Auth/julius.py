@@ -214,7 +214,7 @@ class Julius(Provider):
         def for_stream():
             for response in self.ask(
                 prompt, True, raw=raw, optimizer=optimizer, conversationally=conversationally
-            ):
+            ):  # ty:ignore[not-iterable]
                 if raw:
                     yield cast(str, response)
                 else:

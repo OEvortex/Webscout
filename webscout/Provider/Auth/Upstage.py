@@ -187,7 +187,7 @@ class Upstage(Provider):
         optimizer: Optional[str] = None,
         conversationally: bool = False,
         **kwargs: Any,
-    ) -> Union[Dict[str, Any], Generator[Union[Dict[str, Any], str], None, None]]:
+    ) -> Union[Dict[str, Any], Generator[Union[Dict[str, Any], str], None, None]]:  # ty:ignore[invalid-method-override]
         """
         Send a request to the Upstage API.
 

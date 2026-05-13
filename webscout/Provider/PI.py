@@ -324,7 +324,7 @@ class PiAI(Provider):
                 self.conversation.update_chat_history(prompt, full_response)
                 return self.last_response
             else:
-                return full_response
+                return full_response  # ty:ignore[invalid-return-type]
 
     def get_message(self, response: Response) -> str:
         """Retrieves message only from response"""

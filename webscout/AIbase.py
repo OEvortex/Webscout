@@ -10,7 +10,10 @@ from typing import Any, Callable, Dict, Generator, List, Optional, TypeAlias, Un
 
 from litprinter import ic
 
-Response: TypeAlias = Union[Dict[str, Any], Generator[Any, None, None], str]
+# Type alias to allow both dict and SearchResponse for last_response
+ResponseType: TypeAlias = Union[Dict[str, Any], "SearchResponse"]
+# Backward-compatible alias for existing code
+Response = ResponseType
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -174,7 +177,7 @@ class Provider(ABC):
         setattr(cls, "chat", wrapped_chat)
 
     def __init__(self, *args: Any, **kwargs: Any):
-        self._last_response: Dict[str, Any] = {}
+        self._last_response: ResponseType = {}
         self.conversation: Any = None
         self.available_tools = {}
 
@@ -193,11 +196,11 @@ class Provider(ABC):
     # -- last_response property ----------------------------------------- #
 
     @property
-    def last_response(self) -> Dict[str, Any]:
+    def last_response(self) -> ResponseType:
         return self._last_response
 
     @last_response.setter
-    def last_response(self, value: Dict[str, Any]):
+    def last_response(self, value: ResponseType):
         self._last_response = value
 
     # ══════════════════════════════════════════════════════════════════ #
@@ -473,15 +476,20 @@ class Provider(ABC):
         if stream:
 
             def _stream() -> Generator[Any, None, None]:
-                for chunk in self.ask(
+                ask_result = self.ask(
                     prompt,
                     stream=True,
                     raw=raw,
                     optimizer=optimizer,
                     conversationally=conversationally,
                     **kwargs,
-                ):
-                    yield chunk if raw else self.get_message(chunk)
+                )
+                if isinstance(ask_result, Generator):
+                    for chunk in ask_result:
+                        yield chunk if raw else self.get_message(chunk)
+                else:
+                    # Non-streaming result returned even when stream=True
+                    yield ask_result if raw else self.get_message(ask_result)
 
             return _stream()
 
@@ -508,12 +516,12 @@ class Provider(ABC):
         optimizer: Optional[str] = None,
         conversationally: bool = False,
         **kwargs: Any,
-    ) -> Response:
+    ) -> Union[Response, Generator[Response, None, None]]:
         """Make a raw API call and return the provider-specific response."""
         raise NotImplementedError
 
     @abstractmethod
-    def get_message(self, response: Response) -> str:
+    def get_message(self, response: Any) -> str:
         """Extract the text message from a raw response."""
         raise NotImplementedError
 
@@ -591,6 +599,15 @@ class STTProvider(ABC):
 
 class AISearch(ABC):
     """Abstract base class for AI-powered search providers."""
+
+    @property
+    def last_response(self) -> ResponseType:
+        """Last response from search, can be dict or SearchResponse."""
+        return self._last_response
+
+    @last_response.setter
+    def last_response(self, value: ResponseType):
+        self._last_response = value
 
     @abstractmethod
     def search(

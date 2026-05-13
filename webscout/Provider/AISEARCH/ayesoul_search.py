@@ -112,7 +112,7 @@ class AyeSoul(AISearch):
     ) -> None:
         try:
             async with aiohttp.ClientSession(headers=self.headers) as session:
-                async with session.ws_connect(self.url, timeout=self.timeout) as ws:
+                async with session.ws_connect(self.url, timeout=self.timeout) as ws:  # ty:ignore[invalid-argument-type]
                     await ws.send_str(json.dumps({"input": json.dumps(payload)}))
                     temp: Dict[str, list] = {}
                     while True:
@@ -200,7 +200,7 @@ class AyeSoul(AISearch):
                         raise exceptions.APIConnectionError(err)
                 t.join()
 
-            return stream_gen()
+            return stream_gen()  # ty:ignore[invalid-return-type]
 
         async def run_and_get():
             out_q: "queue.Queue[Optional[tuple]]" = queue.Queue()
@@ -242,12 +242,12 @@ class AyeSoul(AISearch):
                 else:
                     text = str(result)
                 self.last_response = SearchResponse(text)
-                return self.last_response
+                return self.last_response  # ty:ignore[invalid-return-type]
 
         def sync_generator():
             buffer = ""
             gen = self._ask(prompt, stream=True, raw=raw, **kwargs)
-            for item in gen:
+            for item in gen:  # ty:ignore[not-iterable]
                 if isinstance(item, dict):
                     final_text = self.get_message(item)
                     self.last_response = SearchResponse(final_text)

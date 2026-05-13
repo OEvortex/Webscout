@@ -221,9 +221,9 @@ class Ayle(Provider):
         )
 
         if stream:
-            return self._ask_stream(prompt, processed_stream, raw)
+            return self._ask_stream(prompt, processed_stream, raw)  # ty:ignore[invalid-return-type]
         else:
-            return self._ask_non_stream(prompt, processed_stream, raw)
+            return self._ask_non_stream(prompt, processed_stream, raw)  # ty:ignore[invalid-return-type]
 
     def _ask_stream(self, prompt: str, processed_stream: Generator, raw: bool) -> Generator:
         streaming_text = ""
@@ -256,7 +256,7 @@ class Ayle(Provider):
                     full_response += content_chunk
         self.last_response = {"text": full_response}
         self.conversation.update_chat_history(prompt, full_response)
-        return self.last_response if not raw else full_response
+        return self.last_response if not raw else full_response  # ty:ignore[invalid-return-type]
 
     def get_message(self, response: Response) -> str:
         if isinstance(response, dict):
