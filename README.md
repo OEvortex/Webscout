@@ -1,5 +1,13 @@
 <div align="center">
   <a href="https://github.com/OEvortex/Webscout">
+    <picture>
+    <!-- When GitHub is in Dark Mode, force a light background canvas directly behind your black SVG logo -->
+      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/OEvortex/Webscout/blob/main/logo.svg" style="background-color: #f8f9fa; padding: 12px; border-radius: 6px; display: inline-block;">
+      <!-- Default Light Mode rendering -->
+      <img src="https://github.com/OEvortex/Webscout/blob/main/logo.svg" alt="WebScout Logo">
+  </picture>
+  </a>
+  <a href="https://github.com/OEvortex/Webscout">
     <img src="https://img.shields.io/badge/WebScout-Ultimate%20Toolkit-blue?style=for-the-badge&logo=python&logoColor=white" alt="WebScout Logo">
   </a>
 
