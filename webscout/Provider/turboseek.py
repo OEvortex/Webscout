@@ -1,3 +1,4 @@
+import html
 import re
 from typing import Any, Dict, Generator, Optional, Union, cast
 
@@ -6,11 +7,10 @@ from curl_cffi.requests import Session
 
 from webscout import exceptions
 from webscout.AIbase import Provider, Response, Tool
-from webscout.AIutel import (  # Import sanitize_stream
+from webscout.AIutel import (
     AwesomePrompts,
     Conversation,
     Optimizers,
-    sanitize_stream,
 )
 from webscout.litagent import LitAgent
 
@@ -113,8 +113,6 @@ class TurboSeek(Provider):
             return ""
 
         # Unescape HTML entities first
-        import html
-
         text = html.unescape(text)
 
         # Headers
@@ -143,14 +141,6 @@ class TurboSeek(Provider):
         text = re.sub(r"<[^>]*>", "", text)
 
         return text
-
-    @staticmethod
-    def _turboseek_extractor(chunk: Any) -> Optional[str]:
-        """Extracts content from TurboSeek stream."""
-        if isinstance(chunk, str):
-            # The API now returns raw HTML chunks
-            return chunk
-        return None
 
     def ask(
         self,
@@ -187,37 +177,34 @@ class TurboSeek(Provider):
                         f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                     )
 
-                streaming_text = ""
-                # The API returns raw HTML chunks now, no "data:" prefix
-                processed_stream = sanitize_stream(
-                    data=response.iter_content(chunk_size=None),
-                    intro_value=None,
-                    to_json=False,
-                    strip_chars="",  # Disable default lstrip to preserve spacing
-                    content_extractor=self._turboseek_extractor,
-                    yield_raw_on_error=True,
-                    raw=raw,
-                )
+                # Accumulate raw bytes directly instead of using sanitize_stream,
+                # which corrupts HTML tags at chunk boundaries during decoding.
+                raw_buffer = b""
+                for chunk in response.iter_content(chunk_size=None):
+                    if chunk:
+                        raw_buffer += chunk
 
-                for content_chunk in processed_stream:
-                    if content_chunk is None:
-                        continue
+                full_html = raw_buffer.decode("utf-8", errors="replace")
 
-                    if raw:
-                        yield content_chunk
-                    else:
-                        if isinstance(content_chunk, str):
-                            # In streaming mode, stripping HTML incrementally is hard.
-                            # We'll just yield the chunk but clean it slightly.
-                            # For full Markdown conversion, use non-streaming or aggregate it.
-                            clean_chunk = re.sub(r"<[^>]*>", "", content_chunk)
-                            if clean_chunk:
-                                streaming_text += clean_chunk
-                                self.last_response.update(dict(text=streaming_text))  # ty:ignore[unresolved-attribute]
-                                yield dict(text=clean_chunk)
+                if raw:
+                    yield full_html
+                else:
+                    final_text = self._html_to_markdown(full_html).strip()
+                    if final_text:
+                        streaming_text = final_text
+                        self.last_response = {"text": streaming_text}
+                        # Yield in word chunks for a streaming-like UX
+                        words = final_text.split()
+                        current = ""
+                        for word in words:
+                            current += word + " "
+                            if len(current) >= 40 or word.endswith((".", "!", "?", "\n")):
+                                yield dict(text=current)
+                                current = ""
+                        if current.strip():
+                            yield dict(text=current)
+                        self.conversation.update_chat_history(prompt, streaming_text)
 
-                if not raw and streaming_text:
-                    self.conversation.update_chat_history(prompt, streaming_text)
             except CurlError as e:
                 raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {e}")
             except Exception as e:

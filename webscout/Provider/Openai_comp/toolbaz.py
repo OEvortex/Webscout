@@ -267,6 +267,7 @@ class Toolbaz(OpenAICompatibleProvider):
         "gpt-oss-120b",
         "o3-mini",
         "gpt-4o",
+        "gpt-4o-latest",
         # xAI
         "grok-4-fast",
         # ToolBaz
@@ -275,9 +276,13 @@ class Toolbaz(OpenAICompatibleProvider):
         # DeepSeek (streaming may fail)
         "deepseek-v3.1",
         "deepseek-v3",
+        "deepseek-r1",
+        # Meta (Facebook)
+        "Llama-4-Maverick",
         # Unfiltered (streaming may fail)
         "midnight-rose",
         "unfiltered_x",
+        "L3-70B-Euryale-v2.1",
     ]
 
     def __init__(self, timeout: int = 30, proxies: dict = {}, browser: str = "chrome"):
