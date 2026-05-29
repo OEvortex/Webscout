@@ -1788,8 +1788,8 @@ class Completions(BaseCompletions):
                     headers=headers,
                     data=json_data,
                     timeout=timeout or self._client.timeout,
-                    proxies=proxies,
-                    impersonate=self._client.impersonation,
+                    proxies=proxies,  # ty: ignore
+                    impersonate=self._client.impersonation,  # ty: ignore
                 )
 
                 # Enhanced rate limit detection
@@ -1990,7 +1990,7 @@ class E2B(OpenAICompatibleProvider):
 
         # Apply proxy configuration if provided
         if self.proxies:
-            self.session.proxies.update(self.proxies)
+            self.session.proxies.update(self.proxies)  # ty: ignore
 
         # Initialize bypass session data
         self._session_rotation_data = {}

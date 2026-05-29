@@ -1491,15 +1491,15 @@ lit_streamer = _sanitize_stream_decorator
 
 # Allow @sanitize_stream and @lit_streamer as decorators
 try:
-    sanitize_stream.__decorator__ = _sanitize_stream_decorator  # type: ignore[attr-defined]
+    sanitize_stream.__decorator__ = _sanitize_stream_decorator  # ty: ignore
 except AttributeError:
     pass
 try:
-    LITSTREAM.__decorator__ = _sanitize_stream_decorator  # type: ignore[attr-defined]
+    LITSTREAM.__decorator__ = _sanitize_stream_decorator  # ty: ignore
 except AttributeError:
     pass
 try:
-    lit_streamer.__decorator__ = _sanitize_stream_decorator  # type: ignore[attr-defined]
+    lit_streamer.__decorator__ = _sanitize_stream_decorator  # ty: ignore
 except AttributeError:
     pass
 def __getattr__(name) -> Any:

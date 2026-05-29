@@ -36,7 +36,7 @@ def command(
     """
 
     def decorator(f: Callable) -> Callable:
-        f._command = {  # type: ignore[attr-defined]
+        f._command = {  # ty: ignore
             "name": name or getattr(f, '__name__', 'unknown'),
             "help": help or f.__doc__,
             "aliases": aliases or [],
@@ -87,7 +87,7 @@ def group(
     """
 
     def decorator(f: Callable) -> Callable:
-        f._group = {  # type: ignore[attr-defined]
+        f._group = {  # ty: ignore
             "name": name or getattr(f, '__name__', 'unknown'),
             "help": help or f.__doc__,
             "chain": chain,
@@ -113,7 +113,7 @@ def pass_context(f: Callable) -> Callable:
             print(f"App: {ctx.cli.name}")
             print(f"Debug: {ctx.debug}")
     """
-    f._pass_context = True  # type: ignore[attr-defined]
+    f._pass_context = True  # ty: ignore
     return f
 
 
@@ -187,9 +187,9 @@ def argument(
 
     def decorator(f: Callable) -> Callable:
         if not hasattr(f, "_arguments"):
-            f._arguments = []  # type: ignore[attr-defined]
+            f._arguments = []  # ty: ignore
 
-        f._arguments.append(  # type: ignore[attr-defined]
+        f._arguments.append(  # ty: ignore
             {
                 "name": name,
                 "type": type,
@@ -228,9 +228,9 @@ def flag(name: str, help: Optional[str] = None, hidden: bool = False) -> Callabl
 
     def decorator(f: Callable) -> Callable:
         if not hasattr(f, "_options"):
-            f._options = []  # type: ignore[attr-defined]
+            f._options = []  # ty: ignore
 
-        f._options.append(  # type: ignore[attr-defined]
+        f._options.append(  # ty: ignore
             {
                 "param_decls": [name],
                 "is_flag": True,

@@ -67,9 +67,9 @@ def option(
 
     def decorator(f: Callable) -> Callable:
         if not hasattr(f, "_options"):
-            f._options = []  # type: ignore[attr-defined]
+            f._options = []  # ty: ignore
 
-        f._options.append(  # type: ignore[attr-defined]
+        f._options.append(  # ty: ignore
             {
                 "param_decls": param_decls,
                 "type": type,
@@ -126,9 +126,9 @@ def envvar(
 
     def decorator(f: Callable) -> Callable:
         if not hasattr(f, "_envvars"):
-            f._envvars = []  # type: ignore[attr-defined]
+            f._envvars = []  # ty: ignore
 
-        f._envvars.append(  # type: ignore[attr-defined]
+        f._envvars.append(  # ty: ignore
             {
                 "name": name,
                 "type": type,
@@ -174,7 +174,7 @@ def config_file(
     """
 
     def decorator(f: Callable) -> Callable:
-        f._config = {  # type: ignore[attr-defined]
+        f._config = {  # ty: ignore
             "path": path,
             "section": section,
             "required": required,
@@ -210,7 +210,7 @@ def version_option(
     """
 
     def decorator(f: Callable) -> Callable:
-        f._version = {  # type: ignore[attr-defined]
+        f._version = {  # ty: ignore
             "version": version,
             "prog_name": prog_name,
             "message": message,
@@ -238,7 +238,7 @@ def help_option(param_decls: Optional[List[str]] = None, help: Optional[str] = N
     """
 
     def decorator(f: Callable) -> Callable:
-        f._help_option = {  # type: ignore[attr-defined]
+        f._help_option = {  # ty: ignore
             "param_decls": param_decls or ["--help", "-h"],
             "help": help or "Show this message and exit.",
         }

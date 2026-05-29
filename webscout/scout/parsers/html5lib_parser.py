@@ -70,9 +70,10 @@ class HTML5Parser:
         # Ensure we are working with a text string
         if isinstance(markup, (bytes, bytearray)):
             try:
-                markup = markup.decode("utf-8")
+                decoded = markup.decode("utf-8")
             except Exception:
-                markup = markup.decode("utf-8", errors="ignore")  # type: ignore[arg-type]
+                decoded = markup.decode("utf-8", errors="ignore")
+            markup = decoded
 
         # Remove HTML comments
         markup = re.sub(r'<!--.*?-->', '', markup, flags=re.DOTALL)

@@ -62,7 +62,7 @@ class Completions(BaseCompletions):
         Creates a model response for the given chat conversation.
         Mimics openai.chat.completions.create.
         """
-        payload = {
+        payload: Dict[str, Any] = {
             "model": model,
             "messages": messages,
             "stream": stream,
@@ -111,7 +111,7 @@ class Completions(BaseCompletions):
                 json=payload,
                 stream=True,
                 timeout=timeout or self._client.timeout,
-                proxies=proxies or getattr(self._client, "proxies", None),
+                proxies=proxies or getattr(self._client, "proxies", None),  # ty: ignore
             )
 
             if not response.ok:
@@ -200,7 +200,7 @@ class Completions(BaseCompletions):
                 headers=self._client.headers,
                 json=payload,
                 timeout=timeout or self._client.timeout,
-                proxies=proxies or getattr(self._client, "proxies", None),
+                proxies=proxies or getattr(self._client, "proxies", None),  # ty: ignore
             )
 
             if not response.ok:

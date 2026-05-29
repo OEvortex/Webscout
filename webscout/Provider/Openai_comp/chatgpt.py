@@ -537,7 +537,7 @@ class Completions(BaseCompletions):
                     }
                 )
 
-            payload = {
+            payload: Dict[str, Any] = {
                 "action": "next",
                 "messages": formatted_messages,
                 "parent_message_id": str(uuid.uuid4()),
@@ -712,7 +712,7 @@ class Completions(BaseCompletions):
                     }
                 )
 
-            payload = {
+            payload: Dict[str, Any] = {
                 "action": "next",
                 "messages": formatted_messages,
                 "parent_message_id": str(uuid.uuid4()),

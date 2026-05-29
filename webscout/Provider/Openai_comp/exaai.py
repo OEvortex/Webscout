@@ -79,7 +79,7 @@ class Completions(BaseCompletions):
         conversation_id = uuid.uuid4().hex[:16]
 
         # Prepare the payload for ExaAI API
-        payload = {"id": conversation_id, "messages": filtered_messages}
+        payload: Dict[str, Any] = {"id": conversation_id, "messages": filtered_messages}
 
         # Add optional parameters if provided
         if max_tokens is not None and max_tokens > 0:
@@ -122,7 +122,7 @@ class Completions(BaseCompletions):
                 json=payload,
                 stream=True,
                 timeout=timeout or self._client.timeout,
-                proxies=proxies or getattr(self._client, "proxies", None),
+                proxies=proxies or getattr(self._client, "proxies", None),  # ty: ignore
             )
 
             # Handle non-200 responses
@@ -249,7 +249,7 @@ class Completions(BaseCompletions):
                 json=payload,
                 stream=True,
                 timeout=timeout or self._client.timeout,
-                proxies=proxies or getattr(self._client, "proxies", None),
+                proxies=proxies or getattr(self._client, "proxies", None),  # ty: ignore
             )
 
             # Handle non-200 responses
