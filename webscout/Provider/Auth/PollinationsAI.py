@@ -10,27 +10,29 @@ from webscout.litagent import LitAgent as Lit
 from webscout.model_fetcher import BackgroundModelFetcher
 
 
-class TextPollinationsAI(Provider):
+class PollinationsAI(Provider):
     """
     A class to interact with the Pollinations AI API.
+    Requires an API key from https://pollinations.ai
+    API endpoint: https://gen.pollinations.ai/v1
     """
 
-    required_auth = False
-    _models_url = "https://text.pollinations.ai/models"
+    required_auth = True
+    _models_url = "https://gen.pollinations.ai/v1/models"
     # Background model fetcher
     _model_fetcher = BackgroundModelFetcher()
 
     # Static list as fallback
     AVAILABLE_MODELS = [
-        "deepseek",
+        "openai",
+        "openai-large",
+        "openai-fast",
+        "openai-reasoning",
+        "openai-audio",
         "gemini",
         "gemini-search",
+        "deepseek",
         "mistral",
-        "openai",
-        "openai-audio",
-        "openai-fast",
-        "openai-large",
-        "openai-reasoning",
         "qwen-coder",
         "roblox-rp",
         "bidara",
@@ -43,6 +45,7 @@ class TextPollinationsAI(Provider):
 
     def __init__(
         self,
+        api_key: str,
         is_conversation: bool = True,
         max_tokens: int = 8096,
         timeout: int = 30,
@@ -56,11 +59,27 @@ class TextPollinationsAI(Provider):
         system_prompt: str = "You are a helpful AI assistant.",
         tools: Optional[list[Tool]] = None,
     ):
-        """Initializes the TextPollinationsAI API client."""
+        """Initializes the PollinationsAI API client.
+        
+        Args:
+            api_key (str): Pollinations API key (required).
+            is_conversation (bool, optional): Flag for chatting conversationally. Defaults to True.
+            max_tokens (int, optional): Maximum number of tokens to generate. Defaults to 8096.
+            timeout (int, optional): Request timeout in seconds. Defaults to 30.
+            intro (str, optional): Conversation introductory prompt. Defaults to None.
+            filepath (str, optional): Path to file containing conversation history. Defaults to None.
+            update_file (bool, optional): Add new prompts and responses to the file. Defaults to True.
+            proxies (dict, optional): Http request proxies. Defaults to {}.
+            history_offset (int, optional): Limit conversation history. Defaults to 10250.
+            act (str|int, optional): Awesome prompt key or index. Defaults to None.
+            model (str, optional): Model name. Defaults to "openai".
+            system_prompt (str, optional): System prompt. Defaults to "You are a helpful AI assistant.".
+            tools (list, optional): Tool definitions for function calling. Defaults to None.
+        """
         # Start background model fetch (non-blocking)
         self._model_fetcher.fetch_async(
-            provider_name="TextPollinationsAI",
-            fetch_func=self.get_models,
+            provider_name="PollinationsAI",
+            fetch_func=lambda: self.get_models(api_key),
             fallback_models=self.AVAILABLE_MODELS,
             timeout=10,
         )
@@ -68,22 +87,20 @@ class TextPollinationsAI(Provider):
         self.session = requests.Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.api_endpoint = "https://text.pollinations.ai/openai"
+        self.api_endpoint = "https://gen.pollinations.ai/v1/chat/completions"
         self.timeout = timeout
         self.last_response = {}
         self.model = model
         self.system_prompt = system_prompt
         self.proxies = proxies
-
-        if model not in self.AVAILABLE_MODELS:
-            # warn or just allow it? allowing it for flexibility
-            pass  # User might know a model we don't
+        self.api_key = api_key
 
         self.headers = {
             "Accept": "*/*",
             "Accept-Language": "en-US,en;q=0.9",
             "User-Agent": Lit().random(),
             "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}",
         }
 
         self.session.headers.update(self.headers)
@@ -117,16 +134,26 @@ class TextPollinationsAI(Provider):
             self.register_tools(tools)
 
     @classmethod
-    def get_models(cls):
+    def get_models(cls, api_key: Optional[str] = None):
         try:
+            headers = {"Accept": "application/json"}
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             response = requests.get(
-                cls._models_url, headers={"Accept": "application/json"}, timeout=10
+                cls._models_url, headers=headers, timeout=10
             )
             if response.status_code == 200:
                 data = response.json()
                 if isinstance(data, list):
                     new_models = [
                         m.get("name") for m in data if isinstance(m, dict) and "name" in m
+                    ]
+                    if new_models:
+                        return new_models
+                elif isinstance(data, dict) and "data" in data:
+                    # OpenAI-compatible models response format
+                    new_models = [
+                        m.get("id") for m in data["data"] if isinstance(m, dict) and "id" in m
                     ]
                     if new_models:
                         return new_models
@@ -275,6 +302,13 @@ class TextPollinationsAI(Provider):
 
 
 if __name__ == "__main__":
+    import os
+
+    API_KEY = os.environ.get("POLLINATIONS_API_KEY", "")
+    if not API_KEY:
+        print("Set POLLINATIONS_API_KEY environment variable to test.")
+        exit(1)
+
     print("-" * 80)
     print(f"{'Model':<50} {'Status':<10} {'Response'}")
     print("-" * 80)
@@ -285,7 +319,7 @@ if __name__ == "__main__":
     for model in test_models:
         try:
             print(f"\r{model:<50} {'Testing...':<10}", end="", flush=True)
-            test_ai = TextPollinationsAI(model=model, timeout=60)
+            test_ai = PollinationsAI(api_key=API_KEY, model=model, timeout=60)
 
             # Non-stream test
             start_response = test_ai.chat("Hello!", stream=False)

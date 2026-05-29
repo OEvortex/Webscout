@@ -16,6 +16,7 @@ from webscout.Provider.Auth import (
     Nvidia,
     OpenAI,
     OpenRouter,
+    PollinationsAI,
     QwenLM,
     Sambanova,
     TogetherAI,
@@ -42,7 +43,6 @@ from webscout.Provider.Netwrck import Netwrck
 from webscout.Provider.PI import PiAI
 from webscout.Provider.searchchat import SearchChatAI
 from webscout.Provider.sonus import SonusAI
-from webscout.Provider.TextPollinationsAI import TextPollinationsAI
 from webscout.Provider.toolbaz import Toolbaz
 from webscout.Provider.turboseek import TurboSeek
 from webscout.Provider.TypliAI import TypliAI
@@ -88,7 +88,7 @@ __all__ = [
     "Sambanova",
     "SearchChatAI",
     "SonusAI",
-    "TextPollinationsAI",
+    "PollinationsAI",
     "TogetherAI",
     "Toolbaz",
     "TurboSeek",

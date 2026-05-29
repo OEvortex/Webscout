@@ -46,7 +46,7 @@ These providers have both standard and OpenAI-compatible implementations, giving
 | 19 | **OIVSCode** | `webscout/Provider/oivscode.py` | `webscout/Provider/Openai_comp/oivscode.py` |
 | 20 | **PI** | `webscout/Provider/PI.py` | `webscout/Provider/Openai_comp/PI.py` |
 | 21 | **Sonus** | `webscout/Provider/sonus.py` | `webscout/Provider/Openai_comp/sonus.py` |
-| 22 | **TextPollinationsAI** | `webscout/Provider/TextPollinationsAI.py` | `webscout/Provider/Openai_comp/textpollinations.py` |
+| 22 | **PollinationsAI** | `webscout/Provider/Auth/PollinationsAI.py` | `webscout/Provider/Openai_comp/textpollinations.py` |
 | 23 | **TogetherAI** | `webscout/Provider/TogetherAI.py` | `webscout/Provider/Openai_comp/TogetherAI.py` |
 | 24 | **Toolbaz** | `webscout/Provider/toolbaz.py` | `webscout/Provider/Openai_comp/toolbaz.py` |
 | 25 | **TwoAI** | `webscout/Provider/TwoAI.py" | `webscout/Provider/Openai_comp/TwoAI.py` |

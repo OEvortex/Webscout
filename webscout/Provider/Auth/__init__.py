@@ -15,6 +15,7 @@ from webscout.Provider.Auth.julius import Julius
 from webscout.Provider.Auth.Nvidia import Nvidia
 from webscout.Provider.Auth.Openai import OpenAI
 from webscout.Provider.Auth.OpenRouter import OpenRouter
+from webscout.Provider.Auth.PollinationsAI import PollinationsAI
 from webscout.Provider.Auth.QwenLM import QwenLM
 from webscout.Provider.Auth.Sambanova import Sambanova
 from webscout.Provider.Auth.TogetherAI import TogetherAI
@@ -38,6 +39,7 @@ __all__ = [
     "Nvidia",
     "OpenAI",
     "OpenRouter",
+    "PollinationsAI",
     "QwenLM",
     "Sambanova",
     "TogetherAI",

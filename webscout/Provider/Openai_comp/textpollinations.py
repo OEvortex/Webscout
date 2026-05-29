@@ -1,9 +1,11 @@
 """
 TextPollinations OpenAI-compatible provider.
-https://text.pollinations.ai/openai
+https://gen.pollinations.ai/v1
+Requires an API key from https://pollinations.ai
 """
 
 import json
+import os
 import time
 import uuid
 from typing import Any, Dict, Generator, List, Optional, Union, cast
@@ -277,12 +279,13 @@ class Chat(BaseChat):
 class TextPollinations(OpenAICompatibleProvider):
     """
     OpenAI-compatible client for TextPollinations API.
-    Provides free access to various models including GPT variants and open-source models.
+    Requires an API key from https://pollinations.ai
+    New API endpoint: https://gen.pollinations.ai/v1
     """
 
-    required_auth = False
+    required_auth = True
 
-    AVAILABLE_MODELS = ["openai", "mistral", "p1", "unity"]
+    AVAILABLE_MODELS = ["openai", "openai-large", "openai-fast", "gemini", "deepseek", "mistral"]
 
     @classmethod
     def get_models(cls, api_key: Optional[str] = None) -> List[str]:
@@ -290,19 +293,30 @@ class TextPollinations(OpenAICompatibleProvider):
         Fetch available models from TextPollinations API.
         """
         try:
+            headers = {"Accept": "application/json"}
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
             response = requests.get(
-                "https://text.pollinations.ai/models",
-                headers={"Accept": "application/json"},
+                "https://gen.pollinations.ai/v1/models",
+                headers=headers,
                 timeout=30,
             )
 
             if response.status_code == 200:
                 data = response.json()
                 if isinstance(data, list):
+                    # Standard list format (e.g., [{"name": "..."}])
                     return [
                         model.get("name")
                         for model in data
                         if isinstance(model, dict) and "name" in model
+                    ]
+                elif isinstance(data, dict) and "data" in data:
+                    # OpenAI-compatible format (e.g., {"data": [{"id": "..."}]})
+                    return [
+                        model.get("id")
+                        for model in data["data"]
+                        if isinstance(model, dict) and "id" in model
                     ]
 
             return cls.AVAILABLE_MODELS
@@ -310,16 +324,22 @@ class TextPollinations(OpenAICompatibleProvider):
         except Exception:
             return cls.AVAILABLE_MODELS
 
-    def __init__(self, timeout: int = 30, proxies: dict = {}):
+    def __init__(self, api_key: str, timeout: int = 30, proxies: dict = {}):
         """
         Initialize the TextPollinations client.
+        
+        Args:
+            api_key (str): Pollinations API key (required).
+            timeout (int): Request timeout in seconds. Defaults to 30.
+            proxies (dict): Proxy configuration. Defaults to {}.
         """
         # Start background model fetch (non-blocking)
         self._start_background_model_fetch()
 
         self.timeout = timeout
-        self.api_endpoint = "https://text.pollinations.ai/openai"
+        self.api_endpoint = "https://gen.pollinations.ai/v1/chat/completions"
         self.proxies = proxies
+        self.api_key = api_key
 
         self.session = requests.Session()
         if proxies:
@@ -333,6 +353,7 @@ class TextPollinations(OpenAICompatibleProvider):
             "Accept-Language": "en-US,en;q=0.9",
             "User-Agent": self.user_agent,
             "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}",
         }
 
         self.session.headers.update(self.headers)
@@ -353,7 +374,12 @@ class TextPollinations(OpenAICompatibleProvider):
 
 
 if __name__ == "__main__":
-    client = TextPollinations()
+    API_KEY = os.environ.get("POLLINATIONS_API_KEY", "")
+    if not API_KEY:
+        print("Set POLLINATIONS_API_KEY environment variable to test.")
+        exit(1)
+
+    client = TextPollinations(api_key=API_KEY)
     if client.models.list():
         print(f"Available models: {client.models.list()}")
         model_to_use = client.models.list()[0]
