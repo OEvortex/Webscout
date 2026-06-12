@@ -143,8 +143,10 @@ class Completions(BaseCompletions):
             finish_reason = None
             usage = None
 
-            for line in response.iter_lines(decode_unicode=True):
+            for line in response.iter_lines():
                 if line:
+                    if isinstance(line, bytes):
+                        line = line.decode("utf-8", errors="replace")
                     if line.startswith("0:"):
                         match = re.search(r'0:"(.*?)"', line)
                         if match:
@@ -262,8 +264,10 @@ class Completions(BaseCompletions):
             full_text = ""
             usage = None
             finish_reason = None
-            for line in response.iter_lines(decode_unicode=True):
+            for line in response.iter_lines():
                 if line:
+                    if isinstance(line, bytes):
+                        line = line.decode("utf-8", errors="replace")
                     if line.startswith("0:"):
                         match = re.search(r'0:"(.*?)"', line)
                         if match:

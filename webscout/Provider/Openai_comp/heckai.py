@@ -55,17 +55,23 @@ class Completions(BaseCompletions):
         # HeckAI works better with a properly formatted conversation
         question = format_prompt(messages, add_special_tokens=True)
 
-        # Prepare the payload for HeckAI API
+        # Prepare the payload for HeckAI API.
+        # Body fields reverse-engineered from heck.ai's Next.js bundle
+        # (`app/[lng]/layout-*.js`):
+        #   - `network` selects between /search and /chat routes
+        #   - `url` is echoed back in the body and tells the backend
+        #     which internal route to dispatch to
         model = self._client.convert_model_name(model)
+        endpoint = "https://api.heckai.weight-wave.com/api/ha/v1/chat"
         payload = {
+            "network": False,
+            "url": endpoint,
             "model": model,
             "question": question,
             "language": self._client.language,
             "sessionId": self._client.session_id,
             "previousQuestion": None,
             "previousAnswer": None,
-            "imgUrls": [],
-            "superSmartMode": False,
         }
 
         request_id = f"chatcmpl-{uuid.uuid4()}"
@@ -101,9 +107,11 @@ class Completions(BaseCompletions):
             streaming_text = []
             in_answer = False
 
-            for line in response.iter_lines(decode_unicode=True):
+            for line in response.iter_lines():
                 if not line:
                     continue
+                if isinstance(line, bytes):
+                    line = line.decode("utf-8", errors="replace")
                 if line.startswith("data: "):
                     data = line[6:]
                 else:
@@ -167,9 +175,11 @@ class Completions(BaseCompletions):
                 proxies=proxies or getattr(self._client, "proxies", None),  # ty:ignore[invalid-argument-type]
             )
             response.raise_for_status()
-            for line in response.iter_lines(decode_unicode=True):
+            for line in response.iter_lines():
                 if not line:
                     continue
+                if isinstance(line, bytes):
+                    line = line.decode("utf-8", errors="replace")
                 if line.startswith("data: "):
                     data = line[6:]
                 else:

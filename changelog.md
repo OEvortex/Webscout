@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026.06.12] - 2026-06-12
+
+### ✨ Added
+- **New Providers**:
+  - `ArtingAI` — port of arting.ai's public chat (`/api/aigc/comprehensive/chat/create-task`). No auth required; any UUID bearer is accepted. Supports `gpt-5`, `gpt-5.1`, `gpt-5.2`, `gpt-4o-mini`, `o4-mini`, `gemini-2.5-pro`.
+  - `AskaiFree` — port of askai.free's chat (`/api/chat/stream`). No auth; per-IP free credits. Schema uses the `modelName` field with display names (`"ChatGPT 4o"`, `"Claude Sonnet 4"`, etc.).
+  - `FreeAI` — port of free.ai's public OpenAI-compatible chat (`api.free.ai/v1/chat/`). No auth (any bearer accepted). Model `qwen7b`.
+  - `OllamaSwarm` — port of gpt4free's OllamaSwarm: 200+ public Ollama instances, parallel probe, per-day disk cache, TTFT-failover. Both normal and OpenAI-compatible variants.
+  - `OperaAria` — port of gpt4free's Opera Aria: anonymous 3-step OAuth, v1 (`aria-legacy`) and v2 (`aria`) endpoints, SSE streaming. Both normal and OpenAI-compatible variants.
+- **Test Runner**: `tests/test_all_providers.py` — live provider test with `--only`, `--timeout`, `--prompt`, `--out`, `--include-auth` flags. No mocks; uses real HTTP against real endpoints.
+
+### 🐛 Fixed
+- **ExaAI** — dropped `decode_unicode=True` from `iter_lines()` to fix streaming parser.
+- **HeckAI** — added `network`, `url`, `files` fields; dropped deprecated `imgUrls`/`superSmartMode`.
+- **LLMChat** — moved endpoint to `https://coderelisher.com/ai/fetch?model=...`.
+- **Apriel** — rewrote for Gradio 5 SSE v3 protocol.
+- **CohereCommand** — rewrote for HuggingChat chat-ui v0.9.4.
+
+### 🚚 Moved to UNFINISHED/
+- Ayle, Elmo, Sonus, LLMChatCo, Meta — both normal and OpenAI-comp variants; their upstream endpoints are dead. Source preserved for future revival. Added `UNFINISHED/README.md` documenting why.
+
 ## [2026.04.07] - 2026-04-07
 
 ### 🔧 Changed

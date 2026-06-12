@@ -184,9 +184,11 @@ class ExaAI(Provider):
                 )
 
             streaming_response = ""
-            # Use sanitize_stream with extract_regexes for Exa AI format
+            # Use sanitize_stream with extract_regexes for Exa AI format.
+            # NOTE: curl_cffi's `iter_lines()` does NOT accept decode_unicode —
+            # passing it raises NotImplementedError from inside the iterator.
             processed_stream = sanitize_stream(
-                data=response.iter_lines(decode_unicode=True),
+                data=response.iter_lines(),
                 intro_value=None,
                 to_json=False,
                 extract_regexes=[r'0:"(.*?)"'],

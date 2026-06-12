@@ -1,10 +1,12 @@
 # This file marks the directory as a Python package.
 # Static imports for all Openai_comp provider modules
+#
+# 2026-06-12: Ayle, Elmo, SonusAI, LLMChatCo, Meta were moved to
+# webscout/Provider/UNFINISHED/ (their upstreams went away).
 
 # Base classes and utilities
 from webscout.Provider.Openai_comp.ai4chat import AI4Chat
 from webscout.Provider.Openai_comp.akashgpt import AkashGPT
-from webscout.Provider.Openai_comp.ayle import Ayle
 from webscout.Provider.Openai_comp.base import (
     BaseChat,
     BaseCompletions,
@@ -33,18 +35,16 @@ from webscout.Provider.Openai_comp.chatgpt import ChatGPT, ChatGPTReversed
 
 # Provider implementations
 from webscout.Provider.Openai_comp.e2b import E2B
-from webscout.Provider.Openai_comp.elmo import Elmo
 from webscout.Provider.Openai_comp.exaai import ExaAI
 from webscout.Provider.Openai_comp.freeassist import FreeAssist
 from webscout.Provider.Openai_comp.heckai import HeckAI
 from webscout.Provider.Openai_comp.ibm import IBM
 from webscout.Provider.Openai_comp.k2think import K2Think
 from webscout.Provider.Openai_comp.llmchat import LLMChat
-from webscout.Provider.Openai_comp.llmchatco import LLMChatCo
-from webscout.Provider.Openai_comp.meta import Meta
 from webscout.Provider.Openai_comp.netwrck import Netwrck
+from webscout.Provider.Openai_comp.OllamaSwarm import OllamaSwarm
+from webscout.Provider.Openai_comp.OperaAria import OperaAria
 from webscout.Provider.Openai_comp.PI import PiAI
-from webscout.Provider.Openai_comp.sonus import SonusAI
 from webscout.Provider.Openai_comp.textpollinations import TextPollinations
 from webscout.Provider.Openai_comp.toolbaz import Toolbaz
 from webscout.Provider.Openai_comp.typliai import TypliAI
@@ -109,21 +109,19 @@ __all__ = [
     "ChatGPTReversed",
     "DeepInfra",
     "E2B",
-    "Elmo",
     "ExaAI",
     "FreeAssist",
-    "Ayle",
     "HuggingFace",
     "Groq",
     "HeckAI",
     "IBM",
     "K2Think",
     "LLMChat",
-    "LLMChatCo",
     "Netwrck",
     "Nvidia",
+    "OllamaSwarm",
     "OpenRouter",
-    "SonusAI",
+    "OperaAria",
     "TextPollinations",
     "Toolbaz",
     "Upstage",
@@ -132,6 +130,5 @@ __all__ = [
     "YEPCHAT",
     "Zenmux",
     "Sambanova",
-    "Meta",
     "TypliAI",
 ]

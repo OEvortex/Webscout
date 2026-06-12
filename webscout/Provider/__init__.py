@@ -1,5 +1,10 @@
 # This file marks the directory as a Python package.
 # Static imports for all Provider modules
+#
+# Providers moved to UNFINISHED/ on 2026-06-12 (their upstreams went away):
+#   Ayle, Elmo, SonusAI, LLMChatCo, Meta
+# See webscout/Provider/UNFINISHED/README.md and
+# BROKEN_PROVIDERS_ANALYSIS.md for the full rationale.
 from webscout.Provider.Auth import (
     AkashGPT,
     Cerebras,
@@ -26,23 +31,23 @@ from webscout.Provider.Auth import (
 )
 from webscout.Provider.ai4chat import AI4Chat
 from webscout.Provider.Apriel import Apriel
-from webscout.Provider.Ayle import Ayle
+from webscout.Provider.ArtingAI import ArtingAI
+from webscout.Provider.AskaiFree import AskaiFree
 from webscout.Provider.CohereCommand import CohereCommand
-from webscout.Provider.elmo import Elmo
 from webscout.Provider.EssentialAI import EssentialAI
 from webscout.Provider.ExaAI import ExaAI
+from webscout.Provider.FreeAI import FreeAI
 from webscout.Provider.HeckAI import HeckAI
 from webscout.Provider.IBM import IBM
 from webscout.Provider.Jadve import JadveOpenAI
 from webscout.Provider.k2think import K2Think
 
 from webscout.Provider.llmchat import LLMChat
-from webscout.Provider.llmchatco import LLMChatCo
-from webscout.Provider.meta import Meta
 from webscout.Provider.Netwrck import Netwrck
+from webscout.Provider.OllamaSwarm import OllamaSwarm
+from webscout.Provider.OperaAria import OperaAria
 from webscout.Provider.PI import PiAI
 from webscout.Provider.searchchat import SearchChatAI
-from webscout.Provider.sonus import SonusAI
 from webscout.Provider.toolbaz import Toolbaz
 from webscout.Provider.turboseek import TurboSeek
 from webscout.Provider.TypliAI import TypliAI
@@ -56,16 +61,17 @@ __all__ = [
     "AI4Chat",
     "AkashGPT",
     "Apriel",
+    "ArtingAI",
+    "AskaiFree",
     "Cerebras",
     "Cohere",
     "CohereCommand",
     "DeepAI",
     "DeepInfra",
     "Falcon",
-    "Elmo",
     "EssentialAI",
     "ExaAI",
-    "Ayle",
+    "FreeAI",
     "GEMINI",
     "GEMINIAPI",
     "GithubChat",
@@ -78,16 +84,15 @@ __all__ = [
     "Julius",
 
     "LLMChat",
-    "LLMChatCo",
-    "Meta",
     "Netwrck",
     "Nvidia",
+    "OllamaSwarm",
     "OpenRouter",
+    "OperaAria",
     "PiAI",
     "QwenLM",
     "Sambanova",
     "SearchChatAI",
-    "SonusAI",
     "PollinationsAI",
     "TogetherAI",
     "Toolbaz",

@@ -220,7 +220,10 @@ class LLMChat(OpenAICompatibleProvider):
     def __init__(self, proxies: dict = {}, timeout: int = 30):
         self.session = Session()
         self.timeout = timeout
-        self.api_endpoint = "https://llmchat.in/inference/stream"
+        # The real chat endpoint is on a separate backend, not llmchat.in.
+        # Reverse-engineered from llmchat.in's Angular bundle (main-JGDFRIBZ.js).
+        # As of 2026-06-12 the upstream returns 0-byte bodies or times out.
+        self.api_endpoint = "https://coderelisher.com/ai/fetch"
         self.proxies = proxies
         if proxies:
             self.session.proxies.update(cast(Any, proxies))

@@ -175,15 +175,30 @@ class HeckAI(Provider):
                 raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
 
         # Payload construction
+        # NOTE: The actual chat endpoint at
+        # https://api.heckai.weight-wave.com/api/ha/v1/chat always responds with
+        # `data: {"message":"No answer"}` for unauthenticated callers. The
+        # field shape below was reverse-engineered from the heck.ai Next.js
+        # bundle (`app/[lng]/layout-*.js`):
+        #   - `network` selects between the /search and /chat routes
+        #   - `url` is echoed back in the body and tells the backend which
+        #     internal route to dispatch to
+        #   - `sessionId` must be a valid UUID (it queries session history)
+        web_search = bool(kwargs.get("web_search", False))
+        endpoint = (
+            "https://api.heckai.weight-wave.com/api/ha/v1/search"
+            if web_search
+            else "https://api.heckai.weight-wave.com/api/ha/v1/chat"
+        )
         payload = {
+            "network": web_search,
+            "url": endpoint,
             "model": self.model,
             "question": conversation_prompt,
             "language": self.language,
             "sessionId": self.session_id,
             "previousQuestion": self.previous_question,
             "previousAnswer": self.previous_answer,
-            "imgUrls": [],
-            "superSmartMode": False,  # Added based on API request data
         }
 
         # Store this message as previous for next request

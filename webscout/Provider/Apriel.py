@@ -1,15 +1,40 @@
 """
-Apriel Gradio chat API provider.
+Apriel Gradio 5 chat API provider.
 
-Demonstrates the clean provider pattern:
-  - ``ask()``   → raw API call, returns ``{"text": ...}``
-  - ``get_message()`` → extracts text from response
-  - ``chat()``  → **inherited** from ``Provider`` — handles the full
-                  tool-calling loop automatically when tools are supplied.
+The space at https://servicenow-ai-apriel-chat.hf.space runs Gradio 5.47
+using the ``sse_v3`` protocol. Reverse-engineered from the live ``/config``
+endpoint:
+
+* ``app_id``         = 8685039810546182577
+* ``space_id``       = "ServiceNow-AI/Apriel-Chat"
+* ``protocol``       = "sse_v3"
+* Chat dependency   = id 1, with ``inputs=[11, 15, 1]`` (chatbot,
+                       multimodaltextbox, state) and
+                       ``outputs=[11, 15, 19, 20, 22, 1]``.
+* Targets           = ``[[19, "click"], [15, "submit"]]`` — id 19 is the
+                       Send button (NOT the legacy ``trigger_id=16`` the
+                       previous Gradio-4 client used).
+
+The flow is:
+
+1. POST ``/gradio_api/queue/join`` with
+   ``{data: [[], {"text": message, "files": []}, None],
+     fn_index: 1, trigger_id: 19, session_hash, app_id}``
+   → returns ``{"event_id": "..."}``
+2. Open SSE stream at
+   ``GET /gradio_api/queue/data?session_hash=...``
+   and consume ``process_generating`` events whose ``output.data[0]`` is a
+   list of ``{"role": "assistant", "content": "..."}`` message dicts
+   (the Gradio 5 multimodal-chat wire format).
+
+The model currently answered with "😔 The model is unavailable at the
+moment" for every request, so this client is fully wired but upstream
+may still be unavailable.
 """
 
+import json
 import time
-from typing import Any, Dict, Generator, Optional, Union, cast
+from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi import CurlError
 from curl_cffi.requests import Session
@@ -18,27 +43,26 @@ from webscout import exceptions
 from webscout.AIbase import Provider, Response, Tool
 from webscout.AIutel import AwesomePrompts, Conversation, Optimizers
 from webscout.litagent import LitAgent
-from webscout.sanitize import sanitize_stream
+
+
+# Gradio 5 SSE v3 protocol constants reverse-engineered from the live
+# ``/config`` endpoint of the Apriel space.
+APP_ID = 8685039810546182577
+CHAT_FN_INDEX = 1
+SEND_TRIGGER_ID = 19  # The "Send" button id (NOT 16, which was the legacy
+                      # Gradio 4 trigger id baked into the old client).
 
 
 class Apriel(Provider):
-    """Interact with the Apriel Gradio chat API.
+    """Interact with the Apriel Gradio 5 chat space.
 
-    Tool calling is handled automatically by the base ``Provider.chat()``
-    method — just pass ``tools=[...]`` and the base class will inject tool
-    definitions, parse ``<invoke>`` blocks, execute tools, and feed results
-    back until the model produces a final text answer.
-
-    Example::
-
-        >>> ai = Apriel()
-        >>> ai.chat("Hello!")                           # plain chat
-        >>> ai = Apriel(tools=[my_tool])                # register at init
-        >>> ai.chat("What is the weather in London?")   # auto tool loop
+    The current model advertised by the space is
+    ``Apriel-1.6-15B-Thinker``. The space may return
+    "model unavailable" if its HF GPU quota is exhausted.
     """
 
     required_auth = False
-    AVAILABLE_MODELS = ["UNKNOWN"]
+    AVAILABLE_MODELS = ["Apriel-1.6-15B-Thinker"]
 
     def __init__(
         self,
@@ -52,7 +76,7 @@ class Apriel(Provider):
         history_offset: int = 10250,
         act: Optional[str] = None,
         system_prompt: str = "You are a helpful assistant.",
-        model: str = "UNKNOWN",
+        model: str = "Apriel-1.6-15B-Thinker",
         tools: Optional[list[Tool]] = None,
     ):
         self.session = Session()
@@ -100,55 +124,60 @@ class Apriel(Provider):
         if tools:
             self.register_tools(tools)
 
-    # ── internal helpers ─────────────────────────────────────────── #
+    # ── Gradio 5 helpers ─────────────────────────────────────────── #
 
-    def _get_session_hash(self) -> str:
-        try:
-            url = f"{self.api_endpoint}/gradio_api/heartbeat"
-            self.session.get(url, timeout=self.timeout)
-            return str(int(time.time()))
-        except Exception:
-            return str(int(time.time()))
+    @staticmethod
+    def _new_session_hash() -> str:
+        return uuid_hex_short()
 
     def _join_queue(
-        self, session_hash: str, message: str, fn_index: int = 1, trigger_id: int = 16
+        self,
+        session_hash: str,
+        message: str,
+        fn_index: int = CHAT_FN_INDEX,
+        trigger_id: int = SEND_TRIGGER_ID,
     ) -> Optional[str]:
         url = f"{self.api_endpoint}/gradio_api/queue/join"
         payload = {
-            "data": [[], {"text": message, "files": []}, None],
+            "data": [
+                [],                            # chatbot history (state, server-managed)
+                {"text": message, "files": []}, # multimodal textbox payload
+                None,                          # opt-out flag
+            ],
             "event_data": None,
             "fn_index": fn_index,
             "trigger_id": trigger_id,
             "session_hash": session_hash,
         }
         resp = self.session.post(url, json=payload, timeout=self.timeout)
-        resp.raise_for_status()
+        if not resp.ok:
+            raise exceptions.FailedToGenerateResponseError(
+                f"queue/join failed: {resp.status_code} {resp.reason} - {resp.text[:200]}"
+            )
         try:
             return resp.json().get("event_id")
         except Exception:
             return None
 
-    def _run_predict(self, session_hash: str, fn_index: int = 3, trigger_id: int = 16) -> None:
-        url = f"{self.api_endpoint}/gradio_api/run/predict"
-        payload = {
-            "data": [],
-            "event_data": None,
-            "fn_index": fn_index,
-            "trigger_id": trigger_id,
-            "session_hash": session_hash,
-        }
-        self.session.post(url, json=payload, timeout=self.timeout).raise_for_status()
-
     @staticmethod
-    def _apriel_extractor(chunk: Union[str, Dict[str, Any]]) -> Optional[str]:
-        if isinstance(chunk, dict):
-            if chunk.get("msg") == "process_generating":
-                data = chunk.get("output", {}).get("data")
-                if data and isinstance(data, list) and len(data) > 0:
-                    for op in data[0]:
-                        if isinstance(op, list) and len(op) > 2 and op[0] == "append":
-                            return op[2]
-        return None
+    def _extract_chat_messages(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Return the list of assistant message dicts in ``payload['data'][0]``.
+
+        Gradio 5 multimodal-chat serialises the chatbot output as
+        ``data: [[{role, content}, ...], ...]`` — a list-of-messages-in-a-list.
+        Older code expected the Gradio 4 op-list ``[["append", "", text], ...]``
+        which is no longer used.
+        """
+        try:
+            data = payload.get("data") or []
+            if not data or not isinstance(data, list):
+                return []
+            head = data[0]
+            if not isinstance(head, list):
+                return []
+            return [m for m in head if isinstance(m, dict)]
+        except Exception:
+            return []
 
     # ── Provider interface ───────────────────────────────────────── #
 
@@ -161,7 +190,7 @@ class Apriel(Provider):
         conversationally: bool = False,
         **kwargs: Any,
     ) -> Response:
-        """Make a raw API call to the Apriel Gradio endpoint.
+        """Make a raw API call to the Apriel Gradio 5 endpoint.
 
         This method does **not** handle tool calling — that is done by the
         inherited :meth:`Provider.chat` which calls this method in a loop.
@@ -175,42 +204,71 @@ class Apriel(Provider):
             else:
                 raise Exception(f"Optimizer is not one of {self.__available_optimizers}")
 
-        session_hash = self._get_session_hash()
+        session_hash = self._new_session_hash()
         self._join_queue(session_hash, conversation_prompt)
-        self._run_predict(session_hash)
 
         def for_stream():
             streaming_text = ""
             try:
                 url = f"{self.api_endpoint}/gradio_api/queue/data?session_hash={session_hash}"
                 resp = self.session.get(
-                    url, stream=True, timeout=self.timeout, impersonate="chrome110"
+                    url,
+                    stream=True,
+                    timeout=self.timeout,
+                    impersonate="chrome110",
                 )
                 if not resp.ok:
                     raise exceptions.FailedToGenerateResponseError(
-                        f"Failed to generate response - ({resp.status_code}, {resp.reason})"
+                        f"queue/data failed: {resp.status_code} {resp.reason}"
                     )
-                processed = sanitize_stream(
-                    data=resp.iter_content(chunk_size=None),
-                    intro_value="data:",
-                    to_json=True,
-                    content_extractor=self._apriel_extractor,
-                    yield_raw_on_error=False,
-                    raw=raw,
-                )
-                for chunk in processed:
-                    if chunk and isinstance(chunk, str):
-                        if raw:
-                            yield chunk
-                        else:
-                            streaming_text += chunk
-                            yield {"text": chunk}
+
+                emitted_length = 0
+                for raw_line in resp.iter_lines():
+                    if not raw_line:
+                        continue
+                    line = raw_line.decode("utf-8", errors="replace") if isinstance(raw_line, bytes) else raw_line
+                    if not line.startswith("data:"):
+                        continue
+                    try:
+                        evt = json.loads(line[5:].strip())
+                    except json.JSONDecodeError:
+                        continue
+                    if not isinstance(evt, dict):
+                        continue
+                    msg = evt.get("msg")
+                    if msg != "process_generating":
+                        # Other event types we care about: estimation, process_starts,
+                        # process_completed, close_stream. None carry new tokens.
+                        if msg == "process_completed":
+                            break
+                        continue
+                    output = evt.get("output") or {}
+                    messages = self._extract_chat_messages(output)
+                    if not messages:
+                        continue
+                    # Concatenate any new assistant content not yet yielded.
+                    full = "".join(
+                        str(m.get("content") or "")
+                        for m in messages
+                        if m.get("role") in (None, "assistant")
+                    )
+                    delta = full[emitted_length:]
+                    if not delta:
+                        continue
+                    emitted_length = len(full)
+                    streaming_text = full
+                    if raw:
+                        yield delta
+                    else:
+                        yield {"text": delta}
             except CurlError as e:
-                raise exceptions.FailedToGenerateResponseError(f"Request failed (CurlError): {e}")
+                raise exceptions.FailedToGenerateResponseError(
+                    f"Request failed (CurlError): {e}"
+                ) from e
             except Exception as e:
                 raise exceptions.FailedToGenerateResponseError(
                     f"Unexpected error ({type(e).__name__}): {e}"
-                )
+                ) from e
             finally:
                 if streaming_text:
                     self.last_response = {"text": streaming_text}
@@ -219,7 +277,7 @@ class Apriel(Provider):
         def for_non_stream():
             for _ in for_stream():
                 pass
-            return self.last_response if not raw else self.last_response.get("text", "")  # ty:ignore[unresolved-attribute]
+            return self.last_response if not raw else self.last_response.get("text", "")
 
         return for_stream() if stream else for_non_stream()
 
@@ -227,6 +285,15 @@ class Apriel(Provider):
         if not isinstance(response, dict):
             return str(response)
         return cast(Dict[str, Any], response).get("text", "")
+
+
+# ── helpers ──────────────────────────────────────────────────────── #
+
+
+def uuid_hex_short() -> str:
+    """Return a 12-character hex string, Gradio 5 session-hash style."""
+    import uuid as _uuid
+    return _uuid.uuid4().hex[:12]
 
 
 if __name__ == "__main__":

@@ -90,7 +90,13 @@ class LLMChat(Provider):
         self.session = Session()
         self.is_conversation = is_conversation
         self.max_tokens_to_sample = max_tokens
-        self.api_endpoint = "https://llmchat.in/inference/stream"
+        # The actual chat endpoint is on a separate backend, not on llmchat.in.
+        # Reverse-engineered from the llmchat.in Angular bundle (main-JGDFRIBZ.js):
+        #   `https://coderelisher.com/ai/fetch?model=${e}` is the base URL the
+        #   front-end posts to, with the model in the query string.
+        # As of 2026-06-12 the upstream returns 0-byte bodies or times out, so
+        # this provider is functional in shape but currently unreliable.
+        self.api_endpoint = "https://coderelisher.com/ai/fetch"
         self.timeout = timeout
         self.last_response = {}
         self.model = model
