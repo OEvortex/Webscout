@@ -26,6 +26,7 @@
     <a href="https://pepy.tech/project/webscout"><img src="https://static.pepy.tech/badge/webscout?style=flat-square" alt="Total Downloads"></a>
     <a href="#"><img src="https://img.shields.io/pypi/pyversions/webscout?style=flat-square&logo=python" alt="Python Version"></a>
     <a href="https://deepwiki.com/OEvortex/Webscout"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
+    <a href="https://readme.cash/c/8vt3o1lwj8"><img src="https://readme.cash/i/8vt3o1lwj8.svg" alt="Sponsor"></a>
   </p>
 </div>
 
