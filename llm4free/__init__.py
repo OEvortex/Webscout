@@ -8,10 +8,10 @@ from llm4free.litagent import LitAgent
 from .models import model
 from .optimizers import *
 from .Provider import *
-from .Provider.AISEARCH import *
-from .Provider.STT import *  # noqa: F403
-from .Provider.TTI import *
-from .Provider.TTS import *
+from .AISEARCH import *
+from .STT import *  # noqa: F403
+from .TTI import *
+from .TTS import *
 from .scout import *
 from .search import *
 from .swiftcli import *
