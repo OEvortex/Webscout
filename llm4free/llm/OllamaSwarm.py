@@ -297,8 +297,26 @@ def _fofa_discover(max_results: int = 50) -> List[str]:
 
 
 def _probe_server(url: str) -> Optional[Tuple[str, List[str]]]:
+    """Probe a server for available models using /v1/models or /api/tags."""
     try:
         with Session() as s:
+            # Try OpenAI-compatible /v1/models endpoint first
+            r = s.get(f"{url}/v1/models", timeout=_PROBE_TIMEOUT)
+            if r.ok:
+                data = r.json()
+                models = []
+                for m in data.get("data", []):
+                    model_id = m.get("id", "")
+                    if model_id and "/attacker/" not in model_id and not model_id.startswith("model-b"):
+                        models.append(model_id)
+                if models:
+                    return url, models
+    except Exception:
+        pass
+    
+    try:
+        with Session() as s:
+            # Fallback to Ollama-native /api/tags endpoint
             r = s.get(f"{url}/api/tags", timeout=_PROBE_TIMEOUT)
         r.raise_for_status()
         models = [
