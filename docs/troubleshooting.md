@@ -17,25 +17,25 @@
 
 ## Installation Issues
 
-### "ModuleNotFoundError: No module named 'webscout'"
+### "ModuleNotFoundError: No module named 'llm4free'"
 
-**Diagnosis:** Webscout is not installed or not in your Python path.
+**Diagnosis:** LLM4Free is not installed or not in your Python path.
 
 **Solutions:**
 
 ```bash
 # 1. Install via pip
-pip install -U webscout
+pip install -U llm4free
 
 # 2. Or use uv (recommended)
-uv add webscout
+uv add llm4free
 
 # 3. If developing locally, install in editable mode
-cd /path/to/Webscout
+cd /path/to/LLM4Free
 pip install -e .
 
 # 4. Verify installation worked
-python -c "import webscout; print(webscout.__version__)"
+python -c "import llm4free; print(llm4free.__version__)"
 ```
 
 ### "pip: command not found"
@@ -54,10 +54,10 @@ python -m ensurepip --upgrade
 
 # 3. Use uv instead (easier)
 curl -LsSf https://astral.sh/uv/install.sh | sh
-uv add webscout
+uv add llm4free
 
 # 4. Use python -m pip instead
-python -m pip install webscout
+python -m pip install llm4free
 ```
 
 ### "Permission denied" during installation
@@ -66,18 +66,18 @@ python -m pip install webscout
 ```bash
 # Run Command Prompt as Administrator
 # Then run
-pip install -U webscout
+pip install -U llm4free
 ```
 
 **Linux/macOS:**
 ```bash
 # Use --user flag to install for current user only
-pip install --user webscout
+pip install --user llm4free
 
 # Or use a virtual environment
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install webscout
+pip install llm4free
 ```
 
 ### "Could not find a version that satisfies the requirement"
@@ -91,14 +91,14 @@ pip install webscout
 python --version
 
 # 2. Install latest version
-pip install --upgrade webscout
+pip install --upgrade llm4free
 
 # 3. Install specific version
-pip install webscout==2024.12.01
+pip install llm4free==2024.12.01
 
 # 4. Clear pip cache and retry
 pip cache purge
-pip install webscout
+pip install llm4free
 ```
 
 ---
@@ -155,7 +155,7 @@ client = OpenAI()  # Will read from environment
 # Windows CMD: set OPENAI_API_KEY=your-key-here
 
 # 4. For providers that don't require auth
-from webscout import Meta
+from llm4free import Meta
 meta = Meta()  # No key needed
 response = meta.chat("Hello")
 ```
@@ -207,7 +207,7 @@ except OSError:
     print("No internet connection")
 
 # 2. Increase timeout
-from webscout import GROQ
+from llm4free import GROQ
 client = GROQ(api_key="key", timeout=60)  # 60 seconds instead of default 30
 
 # 3. Check if server is up
@@ -217,7 +217,7 @@ result = subprocess.run(["ping", "-c", "1", "api.groq.com"],
 print(result.stdout)
 
 # 4. Use a retry mechanism
-from webscout.AIutel import retry
+from llm4free.AIutel import retry
 
 @retry(max_attempts=3, delay=2)
 def safe_chat(prompt):
@@ -235,7 +235,7 @@ response = safe_chat("Hello")
 
 ```python
 # 1. Increase timeout value
-from webscout import OpenAI
+from llm4free import OpenAI
 
 client = OpenAI(
     api_key="key",
@@ -275,7 +275,7 @@ client = OpenAI(
 ```python
 # 1. Add delays between requests
 import time
-from webscout import GROQ
+from llm4free import GROQ
 
 client = GROQ(api_key="key")
 
@@ -330,7 +330,7 @@ print("- GROQ: https://console.groq.com/docs/rate-limits")
 
 ```python
 # 1. Check method names (Python is case-sensitive)
-from webscout import Meta
+from llm4free import Meta
 
 ai = Meta()
 
@@ -364,10 +364,10 @@ help(ai.chat)  # Shows full documentation
 
 ```bash
 # 1. Install with extras for API server
-pip install "webscout[api]"
+pip install "llm4free[api]"
 
 # 2. Install with dev dependencies
-pip install "webscout[dev]"
+pip install "llm4free[dev]"
 
 # 3. Install specific missing packages
 pip install beautifulsoup4
@@ -375,7 +375,7 @@ pip install requests
 pip install curl-cffi
 
 # 4. Check what's installed
-pip list | grep webscout
+pip list | grep llm4free
 ```
 
 ---
@@ -389,7 +389,7 @@ pip list | grep webscout
 **Solutions:**
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 
 client = GROQ(api_key="key")
 
@@ -425,7 +425,7 @@ safe_print_response(response)
 **Solutions:**
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 
 client = GROQ(api_key="key", timeout=120)
 
@@ -465,7 +465,7 @@ else:
     print(f"✓ Normal response time: {duration:.1f}s")
 
 # 2. Use faster models
-from webscout import GROQ
+from llm4free import GROQ
 
 # Slower but more capable
 client = GROQ(api_key="key")
@@ -493,7 +493,7 @@ response = client.chat(
 
 ```python
 # 1. Clear conversation history periodically
-from webscout import Meta
+from llm4free import Meta
 
 ai = Meta(is_conversation=True)
 
@@ -556,7 +556,7 @@ for i in range(0, len(prompts), batch_size):
 **A:** Use the `Client` with automatic fallback:
 
 ```python
-from webscout.client import Client
+from llm4free.client import Client
 
 client = Client()
 
@@ -614,13 +614,13 @@ with open("config.json") as f:
 client = OpenAI(api_key=api_key)
 ```
 
-### Q: How do I use Webscout with asyncio?
+### Q: How do I use LLM4Free with asyncio?
 
-**A:** Webscout is synchronous, but you can use `asyncio` with `run_in_executor`:
+**A:** LLM4Free is synchronous, but you can use `asyncio` with `run_in_executor`:
 
 ```python
 import asyncio
-from webscout import GROQ
+from llm4free import GROQ
 
 async def async_chat(prompt):
     loop = asyncio.get_event_loop()
@@ -657,7 +657,7 @@ response = client.chat(prompt_encoded)
 2. Create a minimal reproducible example:
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 
 client = GROQ(api_key="your-key")
 response = client.chat("Simple test")
@@ -666,7 +666,7 @@ print(response)  # Expected vs actual output
 
 3. Include:
    - Python version: `python --version`
-   - Webscout version: `pip show webscout`
+   - LLM4Free version: `pip show llm4free`
    - Full error traceback
    - Steps to reproduce
 

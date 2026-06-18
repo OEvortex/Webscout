@@ -2,14 +2,14 @@
 
 import unittest
 
-from webscout.server.request_models import (
+from llm4free.server.request_models import (
     ChatCompletionRequest,
     ImagePart,
     ImageURL,
     Message,
     TextPart,
 )
-from webscout.server.request_processing import prepare_provider_params, process_messages
+from llm4free.server.request_processing import prepare_provider_params, process_messages
 
 
 class TestPrepareProviderParams(unittest.TestCase):

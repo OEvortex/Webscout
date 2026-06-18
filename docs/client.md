@@ -1,9 +1,9 @@
-# Webscout Python Client (`webscout/client.py`)
+# LLM4Free Python Client (`llm4free/client.py`)
 
 > Last updated: 2026-03-31  
 > Maintained by: OEvortex
 
-`webscout.client.Client` is the unified Python entry point for Webscout providers. It exposes an OpenAI-style surface for chat completions, image generation, and audio speech synthesis while handling dynamic provider discovery, intelligent model resolution, automatic failover, and per-process provider instance caching.
+`llm4free.client.Client` is the unified Python entry point for LLM4Free providers. It exposes an OpenAI-style surface for chat completions, image generation, and audio speech synthesis while handling dynamic provider discovery, intelligent model resolution, automatic failover, and per-process provider instance caching.
 
 ## Table of Contents
 
@@ -58,14 +58,14 @@ Each namespace (`chat`, `images`, `audio`) maintains its own provider registry, 
 ## Quick Start
 
 ```python
-from webscout.client import Client
+from llm4free.client import Client
 
 client = Client(print_provider_info=True)
 
 # Chat completion with auto provider/model selection
 chat = client.chat.completions.create(
     model="auto",
-    messages=[{"role": "user", "content": "Summarize Webscout in one sentence."}],
+    messages=[{"role": "user", "content": "Summarize LLM4Free in one sentence."}],
 )
 print(chat.choices[0].message.content)
 
@@ -78,7 +78,7 @@ print(image.data[0].url)
 
 # Audio speech generation
 audio_path = client.audio.speech.create(
-    input_text="Hello from Webscout.",
+    input_text="Hello from LLM4Free.",
     model="auto",
     voice="coral",
 )
@@ -132,8 +132,8 @@ client = Client(
 )
 
 # With specific default providers
-from webscout.Provider.Openai_comp.groq import Groq
-from webscout.Provider.TTI.stable import StableDiffusion
+from llm4free.Provider.Openai_comp.groq import Groq
+from llm4free.Provider.TTI.stable import StableDiffusion
 
 client = Client(
     provider=Groq,
@@ -208,7 +208,7 @@ for chunk in client.chat.completions.create(
         print(delta, end="", flush=True)
 
 # With specific provider
-from webscout.Provider.Openai_comp.groq import Groq
+from llm4free.Provider.Openai_comp.groq import Groq
 response = client.chat.completions.create(
     model="llama-3-70b",
     messages=[{"role": "user", "content": "Explain recursion."}],
@@ -274,7 +274,7 @@ response = client.images.generate(
 print(response.data[0].url)
 
 # Using specific provider
-from webscout.Provider.TTI.stable import StableDiffusion
+from llm4free.Provider.TTI.stable import StableDiffusion
 response = client.images.generate(
     prompt="A cat wearing sunglasses",
     provider=StableDiffusion,
@@ -342,7 +342,7 @@ client.audio.speech.create(
 ```python
 # Basic speech
 audio_path = client.audio.speech.create(
-    input_text="Hello from Webscout.",
+    input_text="Hello from LLM4Free.",
     model="auto",
     voice="coral",
 )
@@ -358,7 +358,7 @@ for chunk in client.audio.speech.create(
     pass
 
 # Using specific provider
-from webscout.Provider.TTS.elevenlabs import ElevenlabsTTS
+from llm4free.Provider.TTS.elevenlabs import ElevenlabsTTS
 audio_path = client.audio.speech.create(
     input_text="Hello world",
     provider=ElevenlabsTTS,
@@ -617,7 +617,7 @@ client = Client(
 ### Per-Call Provider Override
 
 ```python
-from webscout.Provider.Openai_comp.groq import Groq
+from llm4free.Provider.Openai_comp.groq import Groq
 
 # Use Groq for this specific call regardless of auto resolution
 response = client.chat.completions.create(
@@ -639,10 +639,10 @@ client = Client(api_key="sk-your-key")
 
 ### Server Functions
 
-The client also exposes server startup functions (requires `webscout[api]`):
+The client also exposes server startup functions (requires `llm4free[api]`):
 
 ```python
-from webscout.client import run_api, start_server
+from llm4free.client import run_api, start_server
 
 # Start the OpenAI-compatible API server
 run_api(host="0.0.0.0", port=8000)
@@ -681,7 +681,7 @@ If the API dependencies are not installed, these functions raise `ImportError`.
 
 4. **Test with specific provider first**:
    ```python
-   from webscout.Provider.Openai_comp.gpt4free import GPT4Free
+   from llm4free.Provider.Openai_comp.gpt4free import GPT4Free
    response = client.chat.completions.create(
        model="gpt-4o-mini",
        messages=[...],
@@ -703,9 +703,9 @@ These module-level functions support the client's provider discovery:
 
 | Function | Description |
 |----------|-------------|
-| `load_openai_providers()` | Dynamically loads all OpenAI-compatible provider classes from `webscout.Provider.Openai_comp`. Returns `(provider_map, auth_required_set)`. |
-| `load_tti_providers()` | Dynamically loads all TTI provider classes from `webscout.Provider.TTI`. Returns `(provider_map, auth_required_set)`. |
-| `load_tts_providers()` | Dynamically loads all TTS provider classes from `webscout.Provider.TTS`. Returns `(provider_map, auth_required_set)`. |
+| `load_openai_providers()` | Dynamically loads all OpenAI-compatible provider classes from `llm4free.Provider.Openai_comp`. Returns `(provider_map, auth_required_set)`. |
+| `load_tti_providers()` | Dynamically loads all TTI provider classes from `llm4free.Provider.TTI`. Returns `(provider_map, auth_required_set)`. |
+| `load_tts_providers()` | Dynamically loads all TTS provider classes from `llm4free.Provider.TTS`. Returns `(provider_map, auth_required_set)`. |
 | `_get_models_safely(provider_cls, client)` | Safely retrieves models from a provider class, handling all exceptions. Uses client cache if available. |
 | `_get_tts_models_safely(provider_cls)` | Retrieves TTS models from `SUPPORTED_MODELS` or `AVAILABLE_MODELS` class attributes. Defaults to `["gpt-4o-mini-tts"]`. |
 | `_normalized_name_set(values)` | Converts a list of provider names to a case-normalized set for exclusion matching. |

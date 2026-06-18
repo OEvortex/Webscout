@@ -1,7 +1,7 @@
 import inspect
 import unittest
 
-import webscout.Provider as ProviderModule
+import llm4free.Provider as ProviderModule
 
 
 class TestProviderDiscovery(unittest.TestCase):
@@ -16,7 +16,7 @@ class TestProviderDiscovery(unittest.TestCase):
 
     def test_provider_inheritance(self):
         """Verify that all providers inherit from the base Provider class."""
-        from webscout.AIbase import Provider as BaseProvider
+        from llm4free.AIbase import Provider as BaseProvider
         provider_all = getattr(ProviderModule, "__all__", [])
         for name in provider_all:
             with self.subTest(provider=name):

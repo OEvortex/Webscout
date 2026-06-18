@@ -1,11 +1,11 @@
-# Webscout - QWEN Context File
+# LLM4Free - QWEN Context File
 
 ## Project Overview
 
-**Webscout** is a comprehensive Python toolkit for web search, AI interaction, and digital utilities. It provides unified access to 90+ AI providers, multiple search engines, text-to-image/speech generation, developer tools, and an OpenAI-compatible API server — all through a single library.
+**LLM4Free** is a comprehensive Python toolkit for web search, AI interaction, and digital utilities. It provides unified access to 90+ AI providers, multiple search engines, text-to-image/speech generation, developer tools, and an OpenAI-compatible API server — all through a single library.
 
 **Key Characteristics:**
-- **Package Name:** `webscout` (PyPI)
+- **Package Name:** `llm4free` (PyPI)
 - **Python Version:** >=3.10
 - **License:** Apache-2.0
 - **Repository:** https://github.com/OEvortex/Webscout
@@ -16,7 +16,7 @@
 The project is organized into several key layers:
 
 ```
-webscout/
+llm4free/
 ├── Provider/          # AI provider implementations (63+ providers)
 │   ├── Openai_comp/   # OpenAI-compatible provider versions
 │   ├── TTI/           # Text-to-Image providers
@@ -57,7 +57,7 @@ uv add <package>
 uv remove <package>
 
 # Run with extra dependencies
-uv run --extra api webscout-server
+uv run --extra api llm4free-server
 uv run --extra dev pytest
 ```
 
@@ -65,40 +65,40 @@ uv run --extra dev pytest
 
 ```bash
 # Show help
-uv run webscout --help
+uv run llm4free --help
 
 # Search the web
-uv run webscout text -k "python programming"
-uv run webscout text -k "climate change" -e bing
-uv run webscout images -k "mountains"
-uv run webscout news -k "AI breakthrough" -t w
+uv run llm4free text -k "python programming"
+uv run llm4free text -k "climate change" -e bing
+uv run llm4free images -k "mountains"
+uv run llm4free news -k "AI breakthrough" -t w
 
 # Weather info
-uv run webscout weather -l "New York"
+uv run llm4free weather -l "New York"
 
 # Translation
-uv run webscout translate -k "Hola" --to en
+uv run llm4free translate -k "Hola" --to en
 
 # Show version
-uv run webscout version
+uv run llm4free version
 ```
 
 ### API Server
 
 ```bash
 # Start the OpenAI-compatible API server
-uv run --extra api webscout-server
-uv run --extra api webscout-server --port 8080 --host 0.0.0.0 --debug
+uv run --extra api llm4free-server
+uv run --extra api llm4free-server --port 8080 --host 0.0.0.0 --debug
 ```
 
 ### Docker
 
 ```bash
 # Build and run
-docker-compose up webscout-api
+docker-compose up llm4free-api
 
 # No-auth profile
-docker-compose -f docker-compose.yml -f docker-compose.no-auth.yml up webscout-api
+docker-compose -f docker-compose.yml -f docker-compose.no-auth.yml up llm4free-api
 ```
 
 ### Testing
@@ -131,10 +131,10 @@ uv run ruff format .
 
 ### Provider Development
 When adding new providers:
-1. Subclass `Provider` from `webscout.AIbase`
+1. Subclass `Provider` from `llm4free.AIbase`
 2. Implement: `ask(prompt, ...)`, `chat(prompt, ...)`, `get_message(response)`
 3. Use consistent CamelCase class names matching filenames
-4. Add static import in `webscout/Provider/__init__.py`
+4. Add static import in `llm4free/Provider/__init__.py`
 5. Prefer `requests.Session` for HTTP clients
 6. Avoid global mutable state
 7. Add tests under `tests/providers/`
@@ -149,7 +149,7 @@ When adding new providers:
 - Validate real response structures, not hardcoded fake data
 
 ### Import Conventions
-- Main package (`webscout/__init__.py`) uses wildcard imports with `# noqa: F403`
+- Main package (`llm4free/__init__.py`) uses wildcard imports with `# noqa: F403`
 - Client is explicitly imported: `from .client import Client`
 - Agent registry exposed as: `from .models import model`
 
@@ -188,8 +188,8 @@ This ensures better integration with VS Code and provides a more reliable workfl
 
 | Command | Module |
 |---------|--------|
-| `webscout` / `WEBS` | `webscout.cli:main` |
-| `webscout-server` / `webscout-serve` | `webscout.server.server:main` |
+| `llm4free` / `LLM4FREE` | `llm4free.cli:main` |
+| `llm4free-server` / `llm4free-serve` | `llm4free.server.server:main` |
 
 ## Documentation
 

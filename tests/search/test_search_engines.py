@@ -1,4 +1,4 @@
-"""Live tests for webscout search engines.
+"""Live tests for llm4free search engines.
 
 These tests exercise the real search providers against the network.
 Run only the live suite with: uv run pytest tests/search/ -m live
@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from webscout.search import (
+from llm4free.search import (
     BingSearch,
     BraveSearch,
     DuckDuckGoSearch,

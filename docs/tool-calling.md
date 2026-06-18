@@ -18,7 +18,7 @@
 
 ## Overview
 
-Webscout provides a built-in tool calling system that lets any provider invoke
+LLM4Free provides a built-in tool calling system that lets any provider invoke
 Python functions during a conversation. The base `Provider` class handles the
 entire loop automatically — you define tools, pass them to the provider, and the
 model decides when to call them.
@@ -37,11 +37,11 @@ model decides when to call them.
 
 ## Creating Tools
 
-Import `Tool` from `webscout.AIbase` and create instances with a name,
+Import `Tool` from `llm4free.AIbase` and create instances with a name,
 description, parameter schema, and an optional implementation function.
 
 ```python
-from webscout.AIbase import Tool
+from llm4free.AIbase import Tool
 
 # 1. Define the Python function that does the work
 def get_weather(city: str, unit: str = "celsius") -> str:
@@ -90,12 +90,12 @@ search_tool = Tool(
 
 ### Option A — at init time (recommended)
 
-Every Webscout provider accepts a `tools` parameter in its constructor. The
+Every LLM4Free provider accepts a `tools` parameter in its constructor. The
 tools are registered automatically.
 
 ```python
-from webscout.Provider.Apriel import Apriel
-from webscout.AIbase import Tool
+from llm4free.Provider.Apriel import Apriel
+from llm4free.AIbase import Tool
 
 def add(a: int, b: int) -> int:
     return a + b
@@ -131,8 +131,8 @@ Once tools are registered you can call `chat()` normally. The base class
 detects the tools and runs the loop automatically.
 
 ```python
-from webscout.Provider.Apriel import Apriel
-from webscout.AIbase import Tool
+from llm4free.Provider.Apriel import Apriel
+from llm4free.AIbase import Tool
 
 def get_weather(city: str) -> str:
     return f"Weather in {city}: Sunny, 25C"
@@ -276,8 +276,8 @@ Each entry in `parameters` is a dict with at least `type` and `description`:
 ### Example 1 — Calculator
 
 ```python
-from webscout.Provider.llmchat import LLMChat
-from webscout.AIbase import Tool
+from llm4free.Provider.llmchat import LLMChat
+from llm4free.AIbase import Tool
 
 def calculate(expression: str) -> str:
     """Safe calculator using eval (demo only)."""
@@ -306,8 +306,8 @@ print(ai.chat("What is 142 * 37?"))
 ### Example 2 — Multiple tools
 
 ```python
-from webscout.Provider.Toolbaz import Toolbaz
-from webscout.AIbase import Tool
+from llm4free.Provider.Toolbaz import Toolbaz
+from llm4free.AIbase import Tool
 import datetime
 
 def get_time() -> str:
@@ -342,8 +342,8 @@ print(ai.chat("What time is it? And give me a random number between 1 and 50."))
 ### Example 3 — Web search stub
 
 ```python
-from webscout.Provider.Ayle import Ayle
-from webscout.AIbase import Tool
+from llm4free.Provider.Ayle import Ayle
+from llm4free.AIbase import Tool
 
 def web_search(query: str, num_results: int = 3) -> str:
     """Stub that simulates a web search."""

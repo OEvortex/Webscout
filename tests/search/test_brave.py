@@ -4,8 +4,8 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from tests.providers.utils import FakeResp
-from webscout.search.engines.brave.base import BraveBase
-from webscout.search.engines.brave.text import BraveTextSearch
+from llm4free.search.engines.brave.base import BraveBase
+from llm4free.search.engines.brave.text import BraveTextSearch
 
 
 class TestBraveBase(unittest.TestCase):
@@ -15,8 +15,8 @@ class TestBraveBase(unittest.TestCase):
 
     fingerprint = {"User-Agent": "test-agent", "Accept-Language": "en-US"}
 
-    with patch("webscout.search.engines.brave.base.Session", return_value=session_mock) as mock_session:
-      with patch("webscout.search.engines.brave.base.LitAgent") as mock_litagent:
+    with patch("llm4free.search.engines.brave.base.Session", return_value=session_mock) as mock_session:
+      with patch("llm4free.search.engines.brave.base.LitAgent") as mock_litagent:
         mock_litagent.return_value.generate_fingerprint.return_value = fingerprint
 
         brave = BraveBase(
@@ -58,7 +58,7 @@ class TestBraveTextSearch(unittest.TestCase):
         searcher = BraveTextSearch(timeout=10)
 
         with patch.object(searcher.session, "get", return_value=FakeResp(text=html)) as mock_get:
-            results = searcher.run("webscout", max_results=1)
+            results = searcher.run("llm4free", max_results=1)
 
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].title, "Example Title")
@@ -66,7 +66,7 @@ class TestBraveTextSearch(unittest.TestCase):
         self.assertEqual(results[0].body, "Example body text")
         mock_get.assert_called_once()
         call_kwargs = mock_get.call_args.kwargs
-        self.assertEqual(call_kwargs["params"]["q"], "webscout")
+        self.assertEqual(call_kwargs["params"]["q"], "llm4free")
         self.assertEqual(call_kwargs["params"]["source"], "web")
         self.assertEqual(call_kwargs["params"]["spellcheck"], "0")
         self.assertEqual(call_kwargs["params"]["offset"], "0")

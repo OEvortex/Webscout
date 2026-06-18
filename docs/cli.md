@@ -1,20 +1,20 @@
-# Webscout CLI Reference
+# LLM4Free CLI Reference
 > Last updated: 2025-12-20
-> Source of truth: [`webscout/cli.py`](../webscout/cli.py)
+> Source of truth: [`llm4free/cli.py`](../llm4free/cli.py)
 
-The Webscout CLI provides a unified interface for multiple search engines. All commands now support an `--engine` (or `-e`) option to switch between providers, with DuckDuckGo (`ddg`) as the default.
+The LLM4Free CLI provides a unified interface for multiple search engines. All commands now support an `--engine` (or `-e`) option to switch between providers, with DuckDuckGo (`ddg`) as the default.
 
 ## 🧭 Getting Started
 
 ```bash
 # List all available commands
-webscout --help
+llm4free --help
 
 # Show CLI version
-webscout version
+llm4free version
 
 # Run a simple search
-webscout text -k "python programming"
+llm4free text -k "python programming"
 ```
 
 The CLI uses **Rich** for beautiful, formatted table outputs and informative panels.
@@ -50,7 +50,7 @@ The CLI uses **Rich** for beautiful, formatted table outputs and informative pan
 The `weather` command provides a current conditions panel and a 5-day forecast.
 
 ```bash
-webscout weather -l "London" -e yahoo
+llm4free weather -l "London" -e yahoo
 ```
 
 ## 🧪 Usage Examples
@@ -58,31 +58,31 @@ webscout weather -l "London" -e yahoo
 ### 1. Multi-Engine Search
 ```bash
 # Default (DuckDuckGo)
-webscout text -k "fastapi tutorial"
+llm4free text -k "fastapi tutorial"
 
 # Using Brave Search
-webscout text -k "fastapi tutorial" -e brave
+llm4free text -k "fastapi tutorial" -e brave
 
 # Using Wikipedia
-webscout text -k "Quantum Physics" -e wikipedia
+llm4free text -k "Quantum Physics" -e wikipedia
 ```
 
 ### 2. Media Search
 ```bash
 # Find images on Bing
-webscout images -k "cyberpunk art" -e bing
+llm4free images -k "cyberpunk art" -e bing
 
 # Find news on Yahoo
-webscout news -k "space exploration" -e yahoo
+llm4free news -k "space exploration" -e yahoo
 ```
 
 ### 3. Utility Commands
 ```bash
 # Translate text via Yahoo
-webscout translate -k "Hola mundo" --to en -e yahoo
+llm4free translate -k "Hola mundo" --to en -e yahoo
 
 # Get suggestions from Yep
-webscout suggestions -q "artificial i" -e yep
+llm4free suggestions -q "artificial i" -e yep
 ```
 
 ## 🛠️ Advanced Options
@@ -95,4 +95,4 @@ Certain commands have specific extras:
 
 - [docs/search.md](search.md) – Technical documentation for the Python Search API.
 - [docs/architecture.md](architecture.md) – How the search module is structured.
-- [docs/client.md](client.md) – Using the unified `Webscout` client.
+- [docs/client.md](client.md) – Using the unified `LLM4Free` client.

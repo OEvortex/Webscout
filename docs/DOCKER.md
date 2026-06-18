@@ -1,6 +1,6 @@
-# Docker Setup for Webscout
+# Docker Setup for LLM4Free
 
-This Docker configuration is designed to work seamlessly when Webscout is installed via pip or git+pip, without requiring any external docker directory or entrypoint scripts. It supports the new enhanced authentication system with no-auth mode for flexible deployment scenarios.
+This Docker configuration is designed to work seamlessly when LLM4Free is installed via pip or git+pip, without requiring any external docker directory or entrypoint scripts. It supports the new enhanced authentication system with no-auth mode for flexible deployment scenarios.
 
 ## Quick Start
 
@@ -8,41 +8,41 @@ This Docker configuration is designed to work seamlessly when Webscout is instal
 
 ```bash
 # Build the image
-docker build -t webscout-api .
+docker build -t llm4free-api .
 
 # Run the container (default port 8000, with authentication)
-docker run -p 8000:8000 webscout-api
+docker run -p 8000:8000 llm4free-api
 
 # Run with no authentication required (great for development/demos)
-docker run -p 8000:8000 -e WEBSCOUT_NO_AUTH=true webscout-api
+docker run -p 8000:8000 -e LLM4FREE_NO_AUTH=true llm4free-api
 
 # Run with no authentication and no rate limiting (maximum openness)
-docker run -p 8000:8000 -e WEBSCOUT_NO_AUTH=true -e WEBSCOUT_NO_RATE_LIMIT=true webscout-api
+docker run -p 8000:8000 -e LLM4FREE_NO_AUTH=true -e LLM4FREE_NO_RATE_LIMIT=true llm4free-api
 
 # Run with custom port (e.g., 7860)
-docker run -p 7860:7860 -e WEBSCOUT_PORT=7860 webscout-api
+docker run -p 7860:7860 -e LLM4FREE_PORT=7860 llm4free-api
 
 # Run with MongoDB support
-docker run -p 8000:8000 -e MONGODB_URL=mongodb://localhost:27017 webscout-api
+docker run -p 8000:8000 -e MONGODB_URL=mongodb://localhost:27017 llm4free-api
 ```
 
 ### Using Docker Compose
 
 ```bash
 # Basic setup (with authentication)
-docker-compose up webscout-api
+docker-compose up llm4free-api
 
 # No-auth mode for development/demos
-docker-compose -f docker-compose.yml -f docker-compose.no-auth.yml up webscout-api
+docker-compose -f docker-compose.yml -f docker-compose.no-auth.yml up llm4free-api
 
 # With custom port
-WEBSCOUT_PORT=7860 docker-compose up webscout-api
+LLM4FREE_PORT=7860 docker-compose up llm4free-api
 
 # Production setup with Gunicorn
-docker-compose --profile production up webscout-api-production
+docker-compose --profile production up llm4free-api-production
 
 # Development setup with hot reload
-docker-compose --profile development up webscout-api-dev
+docker-compose --profile development up llm4free-api-dev
 
 # MongoDB setup with authentication
 docker-compose --profile mongodb up
@@ -74,24 +74,24 @@ make clean
 
 ### Environment Variables
 
-The Webscout server reads the following environment variables at runtime. The server configuration is dynamically determined from code defaults unless explicitly overridden via environment variables.
+The LLM4Free server reads the following environment variables at runtime. The server configuration is dynamically determined from code defaults unless explicitly overridden via environment variables.
 
 #### **Core Server Settings**
-- `WEBSCOUT_HOST` - Server host (default: 0.0.0.0 from ServerConfig)
-- `WEBSCOUT_PORT` - Server port (default: 8000 from ServerConfig)
-- `WEBSCOUT_WORKERS` - Number of worker processes (default: 1)
-- `WEBSCOUT_LOG_LEVEL` - Log level: debug, info, warning, error, critical (default: info)
-- `WEBSCOUT_DEBUG` - Enable debug mode (default: false from ServerConfig)
-- `WEBSCOUT_API_TITLE` - FastAPI app title (default: "Webscout API" from code)
-- `WEBSCOUT_API_DESCRIPTION` - FastAPI app description (default: "OpenAI API compatible interface for various LLM providers" from code)
-- `WEBSCOUT_API_VERSION` - FastAPI app version (default: "0.2.0" from code)
-- `WEBSCOUT_API_DOCS_URL` - FastAPI docs URL (default: /docs from code)
-- `WEBSCOUT_API_REDOC_URL` - FastAPI redoc URL (default: /redoc from code)
-- `WEBSCOUT_API_OPENAPI_URL` - FastAPI OpenAPI URL (default: /openapi.json from code)
+- `LLM4FREE_HOST` - Server host (default: 0.0.0.0 from ServerConfig)
+- `LLM4FREE_PORT` - Server port (default: 8000 from ServerConfig)
+- `LLM4FREE_WORKERS` - Number of worker processes (default: 1)
+- `LLM4FREE_LOG_LEVEL` - Log level: debug, info, warning, error, critical (default: info)
+- `LLM4FREE_DEBUG` - Enable debug mode (default: false from ServerConfig)
+- `LLM4FREE_API_TITLE` - FastAPI app title (default: "LLM4Free API" from code)
+- `LLM4FREE_API_DESCRIPTION` - FastAPI app description (default: "OpenAI API compatible interface for various LLM providers" from code)
+- `LLM4FREE_API_VERSION` - FastAPI app version (default: "0.2.0" from code)
+- `LLM4FREE_API_DOCS_URL` - FastAPI docs URL (default: /docs from code)
+- `LLM4FREE_API_REDOC_URL` - FastAPI redoc URL (default: /redoc from code)
+- `LLM4FREE_API_OPENAPI_URL` - FastAPI OpenAPI URL (default: /openapi.json from code)
 
 #### **Authentication & Security** 🔐
-- `WEBSCOUT_REQUEST_LOGGING` - Enable request logging (default: true from ServerConfig)
-- `WEBSCOUT_API_KEY` - Legacy API key for authentication (optional)
+- `LLM4FREE_REQUEST_LOGGING` - Enable request logging (default: true from ServerConfig)
+- `LLM4FREE_API_KEY` - Legacy API key for authentication (optional)
 
 **Dynamic Configuration**: The server also supports configuring the following programmatically through ServerConfig class:
 - `auth_required` - Authentication required flag (default: false from ServerConfig)
@@ -101,20 +101,20 @@ The Webscout server reads the following environment variables at runtime. The se
 - `request_timeout` - Request timeout in seconds (default: 300 from ServerConfig)
 
 #### **Database Configuration** 🗄️
-- `WEBSCOUT_DATA_DIR` - Data directory for JSON database (default: /app/data from ServerConfig)
+- `LLM4FREE_DATA_DIR` - Data directory for JSON database (default: /app/data from ServerConfig)
 
 #### **Provider Settings**
-- `WEBSCOUT_DEFAULT_PROVIDER` - Default LLM provider (default: ChatGPT from ServerConfig)
-- `WEBSCOUT_BASE_URL` - Base URL for the API (default: None from ServerConfig)
+- `LLM4FREE_DEFAULT_PROVIDER` - Default LLM provider (default: ChatGPT from ServerConfig)
+- `LLM4FREE_BASE_URL` - Base URL for the API (default: None from ServerConfig)
 
 **Legacy Support**: For backward compatibility, the following legacy environment variables are also supported:
-- `PORT` (fallback for `WEBSCOUT_PORT`)
-- `API_KEY` (fallback for `WEBSCOUT_API_KEY`)
-- `DEFAULT_PROVIDER` (fallback for `WEBSCOUT_DEFAULT_PROVIDER`)
-- `BASE_URL` (fallback for `WEBSCOUT_BASE_URL`)
-- `DEBUG` (fallback for `WEBSCOUT_DEBUG`)
+- `PORT` (fallback for `LLM4FREE_PORT`)
+- `API_KEY` (fallback for `LLM4FREE_API_KEY`)
+- `DEFAULT_PROVIDER` (fallback for `LLM4FREE_DEFAULT_PROVIDER`)
+- `BASE_URL` (fallback for `LLM4FREE_BASE_URL`)
+- `DEBUG` (fallback for `LLM4FREE_DEBUG`)
 
-**Note**: When both WEBSCOUT_* and legacy variables are set, WEBSCOUT_* takes precedence.
+**Note**: When both LLM4FREE_* and legacy variables are set, LLM4FREE_* takes precedence.
 
 ### Service Profiles
 
@@ -147,7 +147,7 @@ The setup includes automatic health checks that verify the `/health` endpoint is
 
 ## Security
 
-- Runs as non-root user (`webscout:webscout`)
+- Runs as non-root user (`llm4free:llm4free`)
 - Minimal runtime dependencies
 - Security-optimized container settings
 - **Enhanced authentication system** with API key management 🔑

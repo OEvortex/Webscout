@@ -35,10 +35,10 @@ ZeroArt is a powerful, lightweight Python library for generating ASCII art text 
 
 ## Installation
 
-No installation required. ZeroArt is included with Webscout:
+No installation required. ZeroArt is included with LLM4Free:
 
 ```python
-from webscout import zeroart
+from llm4free import zeroart
 ```
 
 ## Usage
@@ -46,7 +46,7 @@ from webscout import zeroart
 ### Basic ASCII Art
 
 ```python
-from webscout import zeroart
+from llm4free import zeroart
 
 # Generate ASCII art
 art = zeroart.figlet_format("PYTHON", font='block')
@@ -59,7 +59,7 @@ zeroart.print_figlet("CODING", font='slant')
 ### Font Styles
 
 ```python
-from webscout import zeroart
+from llm4free import zeroart
 
 # Different font styles
 print(zeroart.figlet_format("AWESOME", font='block'))      # Block style
@@ -74,7 +74,7 @@ print(zeroart.figlet_format("ISOMETRIC", font='isometric')) # Isometric style
 ### Text Effects
 
 ```python
-from webscout import zeroart
+from llm4free import zeroart
 
 # Rainbow effect - cycles through ANSI colors
 print(zeroart.rainbow("COLORFUL", font='neon'))
@@ -99,7 +99,7 @@ print(wrapped)
 ### Custom Font Class
 
 ```python
-from webscout.zeroart import ZeroArtFont
+from llm4free.zeroart import ZeroArtFont
 
 class CustomFont(ZeroArtFont):
     def __init__(self):

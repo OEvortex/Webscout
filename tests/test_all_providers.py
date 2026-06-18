@@ -1,7 +1,7 @@
 """
 Webscout provider live tester with per-provider timeouts.
 
-Tests every provider in `webscout.Provider.__all__` that does not require an
+Tests every provider in `llm4free.Provider.__all__` that does not require an
 API key, plus optionally auth-required ones if a key is supplied via
 --api-key or --api-keys-file.
 
@@ -47,7 +47,7 @@ from rich.progress import (
 from rich.table import Table
 
 console = Console()
-PROVIDER_MODULE_NAME = "webscout.Provider"
+PROVIDER_MODULE_NAME = "llm4free.Provider"
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -344,7 +344,7 @@ def main() -> int:
 
     # Load module
     provider_mod = importlib.import_module(PROVIDER_MODULE_NAME)
-    aibase_mod = importlib.import_module("webscout.AIbase")
+    aibase_mod = importlib.import_module("llm4free.AIbase")
     base_cls = aibase_mod.Provider
 
     names = list(getattr(provider_mod, "__all__", []))

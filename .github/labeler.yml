@@ -7,6 +7,6 @@ docs:
 tests:
   - '**/test_*.py'
 provider:
-  - 'webscout/Provider/**'
+  - 'llm4free/Provider/**'
 cli:
-  - 'webscout/cli.py'
+  - 'llm4free/cli.py'

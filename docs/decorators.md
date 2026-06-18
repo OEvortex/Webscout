@@ -1,8 +1,8 @@
 # Utility Decorators (`AIutel.py`)
 > Last updated: 2025-11-16
-> Maintained by [Webscout](https://github.com/OEvortex/Webscout)
+> Maintained by [LLM4Free](https://github.com/OEvortex/Webscout)
 
-Webscout's [`AIutel.py`](../webscout/AIutel.py:1) module provides powerful utility decorators for function timing and automatic retry logic. These decorators are designed for robust, flexible, and high-performance function enhancement, supporting both synchronous and asynchronous functions with comprehensive error handling and performance monitoring.
+LLM4Free's [`AIutel.py`](../llm4free/AIutel.py:1) module provides powerful utility decorators for function timing and automatic retry logic. These decorators are designed for robust, flexible, and high-performance function enhancement, supporting both synchronous and asynchronous functions with comprehensive error handling and performance monitoring.
 
 ## Table of Contents
 
@@ -18,12 +18,12 @@ Webscout's [`AIutel.py`](../webscout/AIutel.py:1) module provides powerful utili
 
 ## Core Decorators
 
-### [`timeIt`](../webscout/AIutel.py:12)
+### [`timeIt`](../llm4free/AIutel.py:12)
 
 A versatile timing decorator that measures and displays the execution time of both synchronous and asynchronous functions with colored output.
 
 ```python
-from webscout.AIutel import timeIt
+from llm4free.AIutel import timeIt
 
 @timeIt
 def my_function():
@@ -32,18 +32,18 @@ def my_function():
 ```
 
 **Key Features:**
-- Automatic detection of sync/async functions using [`asyncio.iscoroutinefunction()`](../webscout/AIutel.py:36)
+- Automatic detection of sync/async functions using [`asyncio.iscoroutinefunction()`](../llm4free/AIutel.py:36)
 - High-precision timing with microsecond accuracy
 - Colored terminal output (green bold) for better visibility
-- Preserves function metadata with [`functools.wraps`](../webscout/AIutel.py:20)
+- Preserves function metadata with [`functools.wraps`](../llm4free/AIutel.py:20)
 - Zero-configuration setup
 
-### [`retry`](../webscout/AIutel.py:41)
+### [`retry`](../llm4free/AIutel.py:41)
 
 A configurable retry decorator that automatically retries functions on exceptions with customizable retry count and delay intervals.
 
 ```python
-from webscout.AIutel import retry
+from llm4free.AIutel import retry
 
 @retry(retries=5, delay=2)
 def unreliable_function():
@@ -60,7 +60,7 @@ def unreliable_function():
 
 ## Parameters Reference
 
-### [`timeIt`](../webscout/AIutel.py:12) Parameters
+### [`timeIt`](../llm4free/AIutel.py:12) Parameters
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
@@ -68,7 +68,7 @@ def unreliable_function():
 
 **Returns:** Decorated function with timing capabilities
 
-### [`retry`](../webscout/AIutel.py:41) Parameters
+### [`retry`](../llm4free/AIutel.py:41) Parameters
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -79,7 +79,7 @@ def unreliable_function():
 
 ## Function Signatures
 
-### [`timeIt` Decorator](../webscout/AIutel.py:12)
+### [`timeIt` Decorator](../llm4free/AIutel.py:12)
 
 ```python
 def timeIt(func: Callable) -> Callable:
@@ -90,10 +90,10 @@ def timeIt(func: Callable) -> Callable:
 ```
 
 **Internal Wrappers:**
-- [`sync_wrapper`](../webscout/AIutel.py:21): Handles synchronous functions
-- [`async_wrapper`](../webscout/AIutel.py:29): Handles asynchronous functions
+- [`sync_wrapper`](../llm4free/AIutel.py:21): Handles synchronous functions
+- [`async_wrapper`](../llm4free/AIutel.py:29): Handles asynchronous functions
 
-### [`retry` Decorator](../webscout/AIutel.py:41)
+### [`retry` Decorator](../llm4free/AIutel.py:41)
 
 ```python
 def retry(retries: int = 3, delay: float = 1) -> Callable:
@@ -110,7 +110,7 @@ def retry(retries: int = 3, delay: float = 1) -> Callable:
 ### Basic Function Timing
 
 ```python
-from webscout.AIutel import timeIt
+from llm4free.AIutel import timeIt
 import time
 
 @timeIt
@@ -129,7 +129,7 @@ result = cpu_intensive_task()
 
 ```python
 import asyncio
-from webscout.AIutel import timeIt
+from llm4free.AIutel import timeIt
 
 @timeIt
 async def async_api_call():
@@ -147,7 +147,7 @@ asyncio.run(main())
 ### Basic Retry Logic
 
 ```python
-from webscout.AIutel import retry
+from llm4free.AIutel import retry
 import random
 
 @retry(retries=3, delay=1)
@@ -167,7 +167,7 @@ except ConnectionError as e:
 ### Advanced Retry with Custom Delays
 
 ```python
-from webscout.AIutel import retry
+from llm4free.AIutel import retry
 import requests
 
 @retry(retries=5, delay=2)
@@ -188,7 +188,7 @@ except Exception as e:
 ### Combining Both Decorators
 
 ```python
-from webscout.AIutel import timeIt, retry
+from llm4free.AIutel import timeIt, retry
 
 @timeIt
 @retry(retries=3, delay=0.5)
@@ -209,7 +209,7 @@ result = critical_operation()
 ### Class Method Decoration
 
 ```python
-from webscout.AIutel import timeIt, retry
+from llm4free.AIutel import timeIt, retry
 
 class DataProcessor:
     
@@ -235,7 +235,7 @@ processor.save_to_database(result)
 
 ```python
 import asyncio
-from webscout.AIutel import retry
+from llm4free.AIutel import retry
 
 # Note: Current retry decorator doesn't support async, 
 # but can be used with sync wrapper
@@ -263,7 +263,7 @@ except Exception as e:
 
 ### Exception Propagation
 
-The [`retry`](../webscout/AIutel.py:41) decorator handles exceptions gracefully:
+The [`retry`](../llm4free/AIutel.py:41) decorator handles exceptions gracefully:
 
 1. **Catches all exceptions** during function execution
 2. **Logs attempt information** with exception details
@@ -271,7 +271,7 @@ The [`retry`](../webscout/AIutel.py:41) decorator handles exceptions gracefully:
 4. **Preserves original exception** if all retries fail
 
 ```python
-from webscout.AIutel import retry
+from llm4free.AIutel import retry
 
 @retry(retries=2, delay=0.5)
 def failing_function():
@@ -290,7 +290,7 @@ except ValueError as e:
 ### Custom Exception Handling
 
 ```python
-from webscout.AIutel import retry
+from llm4free.AIutel import retry
 
 class CustomRetryError(Exception):
     pass
@@ -310,7 +310,7 @@ except Exception as e:
 
 ### Timing Accuracy
 
-The [`timeIt`](../webscout/AIutel.py:12) decorator uses [`time.time()`](../webscout/AIutel.py:22) for timing:
+The [`timeIt`](../llm4free/AIutel.py:12) decorator uses [`time.time()`](../llm4free/AIutel.py:22) for timing:
 
 - **Precision**: Microsecond accuracy (6 decimal places)
 - **Overhead**: Minimal timing overhead (~1-2 microseconds)
@@ -320,7 +320,7 @@ The [`timeIt`](../webscout/AIutel.py:12) decorator uses [`time.time()`](../websc
 
 ### Timing Overhead
 
-The [`timeIt`](../webscout/AIutel.py:12) decorator adds minimal overhead:
+The [`timeIt`](../llm4free/AIutel.py:12) decorator adds minimal overhead:
 
 ```python
 # Overhead analysis

@@ -1,6 +1,6 @@
 
                            Version 2.0, March 2025
-                           Webscout License
+                           LLM4Free License
 
    TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
 
@@ -87,7 +87,7 @@
 
       (e) You must include the following attribution notice prominently 
           displayed in any Derivative Works:
-          "Based on Webscout (https://github.com/OE-LUCIFER/webscout)"
+          "Based on LLM4Free (https://github.com/OE-LUCIFER/llm4free)"
 
    5. API Usage and Third-Party Services. When using the APIs and services
       accessed through this Work, you must:
@@ -131,13 +131,13 @@
 
 END OF TERMS AND CONDITIONS
 
-Copyright 2024-2025 Webscout Contributors
+Copyright 2024-2025 LLM4Free Contributors
 
-Licensed under the Webscout License (the "License");
+Licensed under the LLM4Free License (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    https://github.com/OE-LUCIFER/webscout/blob/main/LICENSE.md
+    https://github.com/OE-LUCIFER/llm4free/blob/main/LICENSE.md
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,

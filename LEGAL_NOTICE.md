@@ -26,7 +26,7 @@ Owners of any included sites or services may contact the maintainers to improve 
 
 ## License
 
-This repository is licensed under the Apache License, Version 2.0 with additional terms specific to Webscout's API usage and third-party services.
+This repository is licensed under the Apache License, Version 2.0 with additional terms specific to LLM4Free's API usage and third-party services.
 
 > 📄 The full text of this license is available in the [LICENSE.md](./LICENSE.md) file.
 
@@ -106,7 +106,7 @@ This License does not grant permission to use trade names, trademarks, service m
 ## Privacy Notice
 
 > [!NOTE]
-> Webscout may collect usage data and performance metrics. By using this repository, you acknowledge that:
+> LLM4Free may collect usage data and performance metrics. By using this repository, you acknowledge that:
 >
 > 1. Such data collection will comply with applicable privacy laws
 > 2. You must provide appropriate privacy notices to end users
@@ -147,6 +147,6 @@ If any provision of this notice is found to be unlawful, void, or unenforceable,
 
 - **Last Updated**: April 14, 2025
 - **Version**: 1.2
-- **Document Owner**: Webscout Team
+- **Document Owner**: LLM4Free Team
 </details>
 

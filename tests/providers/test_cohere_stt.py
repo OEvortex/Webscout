@@ -6,8 +6,8 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from webscout.Provider.STT.cohere import CohereSTT
-from webscout.Provider.STT.base import TranscriptionResponse
+from llm4free.Provider.STT.cohere import CohereSTT
+from llm4free.Provider.STT.base import TranscriptionResponse
 
 
 def test_cohere_stt():

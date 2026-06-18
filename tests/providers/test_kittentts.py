@@ -5,7 +5,7 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase, mock
 
-from webscout.Provider.TTS.kittentts import KittenTTS
+from llm4free.Provider.TTS.kittentts import KittenTTS
 
 
 class FakeResponse:
@@ -176,7 +176,7 @@ class TestKittenTTS(TestCase):
     @mock.patch.object(KittenTTS, "_submit_synthesis", side_effect=Exception("API Error"))
     def test_tts_api_error(self, mock_submit):
         """Test TTS handles API errors gracefully."""
-        from webscout import exceptions
+        from llm4free import exceptions
 
         with self.assertRaises(exceptions.FailedToGenerateResponseError):
             self.provider.tts("Hello world")

@@ -1,5 +1,5 @@
 # =============================================================================
-# Multi-stage Dockerfile for Webscout API Server
+# Multi-stage Dockerfile for LLM4Free API Server
 # Optimized for production with security, performance, and size considerations
 # No external docker/ directory required - works with pip/git installations
 # =============================================================================
@@ -10,7 +10,7 @@
 FROM python:3.11-slim as builder
 
 # Set build arguments for flexibility
-ARG WEBSCOUT_VERSION=latest
+ARG LLM4FREE_VERSION=latest
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
 
@@ -36,12 +36,12 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Upgrade pip and install build tools
 RUN pip install --upgrade pip setuptools wheel
 
-# Install webscout with API dependencies
+# Install llm4free with API dependencies
 # Use specific version if provided, otherwise latest
-RUN if [ "$WEBSCOUT_VERSION" = "latest" ]; then \
-        pip install git+https://github.com/OEvortex/Webscout.git#egg=webscout[api]; \
+RUN if [ "$LLM4FREE_VERSION" = "latest" ]; then \
+        pip install git+https://github.com/OEvortex/LLM4Free.git#egg=llm4free[api]; \
     else \
-        pip install git+https://github.com/OEvortex/Webscout.git@${WEBSCOUT_VERSION}#egg=webscout[api]; \
+        pip install git+https://github.com/OEvortex/LLM4Free.git@${LLM4FREE_VERSION}#egg=llm4free[api]; \
     fi
 
 # Install additional production dependencies
@@ -63,18 +63,18 @@ ARG VERSION
 
 LABEL maintainer="OEvortex" \
       org.label-schema.build-date=$BUILD_DATE \
-      org.label-schema.name="webscout-api" \
-      org.label-schema.description="Webscout API Server - OpenAI-compatible LLM proxy" \
-      org.label-schema.url="https://github.com/OEvortex/Webscout" \
+      org.label-schema.name="llm4free-api" \
+      org.label-schema.description="LLM4Free API Server - OpenAI-compatible LLM proxy" \
+      org.label-schema.url="https://github.com/OEvortex/LLM4Free" \
       org.label-schema.vcs-ref=$VCS_REF \
-      org.label-schema.vcs-url="https://github.com/OEvortex/Webscout" \
+      org.label-schema.vcs-url="https://github.com/OEvortex/LLM4Free" \
       org.label-schema.vendor="OEvortex" \
       org.label-schema.version=$VERSION \
       org.label-schema.schema-version="1.0"
 
 # Create non-root user for security
-RUN groupadd --gid 1000 webscout && \
-    useradd --uid 1000 --gid webscout --shell /bin/bash --create-home webscout
+RUN groupadd --gid 1000 llm4free && \
+    useradd --uid 1000 --gid llm4free --shell /bin/bash --create-home llm4free
 
 # Set production environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -86,22 +86,22 @@ ENV PYTHONUNBUFFERED=1 \
     # Performance settings
     MALLOC_ARENA_MAX=2 \
     # Application settings
-    WEBSCOUT_HOST=0.0.0.0 \
-    WEBSCOUT_PORT=8000 \
-    WEBSCOUT_WORKERS=1 \
-    WEBSCOUT_LOG_LEVEL=info \
-    WEBSCOUT_DEBUG=false \
-    WEBSCOUT_DATA_DIR=/app/data \
-    WEBSCOUT_REQUEST_LOGGING=true \
+    LLM4FREE_HOST=0.0.0.0 \
+    LLM4FREE_PORT=8000 \
+    LLM4FREE_WORKERS=1 \
+    LLM4FREE_LOG_LEVEL=info \
+    LLM4FREE_DEBUG=false \
+    LLM4FREE_DATA_DIR=/app/data \
+    LLM4FREE_REQUEST_LOGGING=true \
     # FastAPI metadata
-    WEBSCOUT_API_TITLE="Webscout OpenAI API" \
-    WEBSCOUT_API_DESCRIPTION="OpenAI API compatible interface for various LLM providers" \
-    WEBSCOUT_API_VERSION="0.2.0" \
-    WEBSCOUT_API_DOCS_URL="/docs" \
-    WEBSCOUT_API_REDOC_URL="/redoc" \
-    WEBSCOUT_API_OPENAPI_URL="/openapi.json" \
+    LLM4FREE_API_TITLE="LLM4Free OpenAI API" \
+    LLM4FREE_API_DESCRIPTION="OpenAI API compatible interface for various LLM providers" \
+    LLM4FREE_API_VERSION="0.2.0" \
+    LLM4FREE_API_DOCS_URL="/docs" \
+    LLM4FREE_API_REDOC_URL="/redoc" \
+    LLM4FREE_API_OPENAPI_URL="/openapi.json" \
     # Dynamic configuration defaults
-    WEBSCOUT_CORS_ORIGINS="*"
+    LLM4FREE_CORS_ORIGINS="*"
 
 # Install only runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -120,25 +120,25 @@ COPY --from=builder /opt/venv /opt/venv
 
 # Create application directory and set ownership
 WORKDIR /app
-RUN chown -R webscout:webscout /app
+RUN chown -R llm4free:llm4free /app
 
 # Copy application files (if building from source)
-# COPY --chown=webscout:webscout . /app
+# COPY --chown=llm4free:llm4free . /app
 
 # Create directories for logs and data with proper permissions
 RUN mkdir -p /app/logs /app/data && \
-    chown -R webscout:webscout /app/logs /app/data
+    chown -R llm4free:llm4free /app/logs /app/data
 
 # Switch to non-root user
-USER webscout
+USER llm4free
 
 # Expose port (configurable via environment)
-EXPOSE $WEBSCOUT_PORT
+EXPOSE $LLM4FREE_PORT
 
 # Add health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:${WEBSCOUT_PORT:-8000}/monitor/health || exit 1
+    CMD curl -f http://localhost:${LLM4FREE_PORT:-8000}/monitor/health || exit 1
 
-# Default command - start the webscout API server with new auth system
+# Default command - start the llm4free API server with new auth system
 # Environment variables will be used by the application
-CMD ["python", "-m", "webscout.server.server"]
+CMD ["python", "-m", "llm4free.server.server"]

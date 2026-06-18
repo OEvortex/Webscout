@@ -1,8 +1,8 @@
-# Contributing to Webscout
+# Contributing to LLM4Free
 
 First off, thanks for taking the time to contribute! 🎉
 
-Webscout is an all-in-one Python toolkit, and every contribution helps make it better.
+LLM4Free is an all-in-one Python toolkit, and every contribution helps make it better.
 
 ## Code of Conduct
 
@@ -23,7 +23,7 @@ By participating in this project, you agree to be respectful and constructive in
 
 Open a feature request issue with:
 - A clear description of what you want
-- Why it's useful for Webscout
+- Why it's useful for LLM4Free
 - Any implementation ideas you have
 
 ### 🔧 Pull Requests
@@ -39,8 +39,8 @@ Open a feature request issue with:
 
 ```bash
 # Clone your fork
-git clone https://github.com/YOUR_USERNAME/Webscout.git
-cd Webscout
+git clone https://github.com/YOUR_USERNAME/LLM4Free.git
+cd LLM4Free
 
 # Create virtual environment
 python -m venv venv
@@ -77,8 +77,8 @@ def example_function(param1: str, param2: int) -> bool:
 ## Project Structure
 
 ```
-webscout/
-├── webscout/          # Main source
+llm4free/
+├── llm4free/          # Main source
 │   ├── ai/           # AI model integrations
 │   ├── search/       # Search engine wrappers
 │   ├── utils/        # Shared utilities

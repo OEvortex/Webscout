@@ -1,6 +1,6 @@
 [src]
 exclude = [
-    "webscout/Provider/UNFINISHED/**",
+    "llm4free/Provider/UNFINISHED/**",
     "tests/**"
 ]
 

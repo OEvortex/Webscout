@@ -11,7 +11,7 @@
     <img src="https://img.shields.io/badge/WebScout-Ultimate%20Toolkit-blue?style=for-the-badge&logo=python&logoColor=white" alt="WebScout Logo">
   </a>
 
-  <h1>Webscout</h1>
+  <h1>LLM4Free</h1>
 
   <p><strong>Your All-in-One Python Toolkit for Web Search, AI Interaction, Digital Utilities, and More</strong></p>
 
@@ -21,11 +21,11 @@
 
   <!-- Badges -->
   <p>
-    <a href="https://pypi.org/project/webscout/"><img src="https://img.shields.io/pypi/v/webscout.svg?style=flat-square&logo=pypi&label=PyPI" alt="PyPI Version"></a>
-    <a href="https://pepy.tech/project/webscout"><img src="https://static.pepy.tech/badge/webscout/month?style=flat-square" alt="Monthly Downloads"></a>
-    <a href="https://pepy.tech/project/webscout"><img src="https://static.pepy.tech/badge/webscout?style=flat-square" alt="Total Downloads"></a>
-    <a href="#"><img src="https://img.shields.io/pypi/pyversions/webscout?style=flat-square&logo=python" alt="Python Version"></a>
-    <a href="https://deepwiki.com/OEvortex/Webscout"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
+    <a href="https://pypi.org/project/llm4free/"><img src="https://img.shields.io/pypi/v/llm4free.svg?style=flat-square&logo=pypi&label=PyPI" alt="PyPI Version"></a>
+    <a href="https://pepy.tech/project/llm4free"><img src="https://static.pepy.tech/badge/llm4free/month?style=flat-square" alt="Monthly Downloads"></a>
+    <a href="https://pepy.tech/project/llm4free"><img src="https://static.pepy.tech/badge/llm4free?style=flat-square" alt="Total Downloads"></a>
+    <a href="#"><img src="https://img.shields.io/pypi/pyversions/llm4free?style=flat-square&logo=python" alt="Python Version"></a>
+    <a href="https://deepwiki.com/OEvortex/LLM4Free"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
   </p>
 </div>
 
@@ -53,14 +53,14 @@
 <hr/>
 
 > [!IMPORTANT]
-> Webscout supports three types of compatibility:
+> LLM4Free supports three types of compatibility:
 >
-> - **Native:** Webscout's own native API for maximum flexibility
+> - **Native:** LLM4Free's own native API for maximum flexibility
 > - **OpenAI-Compatible:** Use providers with OpenAI-compatible interfaces
 > - **Local LLMs:** Run local models with OpenAI-compatible servers via [Inferno](docs/inferno.md)
 
 > [!NOTE]
-> Webscout supports 90+ AI providers including: OpenAI, GROQ, Gemini, Meta, DeepInfra, Cohere, Cerebras, HuggingFace, OpenRouter, Nvidia, Sambanova, PerplexityLabs, and many more. See the full [Provider Matrix](Provider.md).
+> LLM4Free supports 90+ AI providers including: OpenAI, GROQ, Gemini, Meta, DeepInfra, Cohere, Cerebras, HuggingFace, OpenRouter, Nvidia, Sambanova, PerplexityLabs, and many more. See the full [Provider Matrix](Provider.md).
 
 <div align="center">
   <p>
@@ -79,7 +79,7 @@
 - **Multi-Engine Search** -- DuckDuckGo, Bing, Brave, Yahoo, Yep, Yandex, Mojeek, Wikipedia. ([Search Docs](docs/search.md))
 - **90+ AI Providers** -- Native, OpenAI-compatible, and local LLM interfaces. ([Architecture](docs/architecture.md))
 - **AI-Powered Search** -- Perplexity, IAsk, Monica, AyeSoul, WebPilotAI. ([Provider Matrix](Provider.md))
-- **OpenAI-Compatible API Server** -- Serve any Webscout provider via OpenAI endpoints. ([Server Docs](docs/openai-api-server.md))
+- **OpenAI-Compatible API Server** -- Serve any LLM4Free provider via OpenAI endpoints. ([Server Docs](docs/openai-api-server.md))
 - **Unified Python Client** -- Auto-failover chat and image generation. ([Client Docs](docs/client.md))
 
 ### Media & Content
@@ -115,32 +115,32 @@
 ### pip (Standard)
 
 ```bash
-pip install -U webscout
+pip install -U llm4free
 
 # With API server support
-pip install -U "webscout[api]"
+pip install -U "llm4free[api]"
 
 # With development tools
-pip install -U "webscout[dev]"
+pip install -U "llm4free[dev]"
 ```
 
 ### uv (Recommended)
 
 ```bash
-uv add webscout
+uv add llm4free
 
 # Run without installing
-uv run webscout --help
+uv run llm4free --help
 
 # Install as global tool
-uv tool install webscout
+uv tool install llm4free
 ```
 
 ### Docker
 
 ```bash
-docker pull OEvortex/webscout:latest
-docker run -it OEvortex/webscout:latest
+docker pull OEvortex/llm4free:latest
+docker run -it OEvortex/llm4free:latest
 ```
 
 See [docs/DOCKER.md](docs/DOCKER.md) for full Docker deployment options including compose profiles.
@@ -152,7 +152,7 @@ See [docs/DOCKER.md](docs/DOCKER.md) for full Docker deployment options includin
 ### AI Chat (No API Key)
 
 ```python
-from webscout import Meta
+from llm4free import Meta
 
 ai = Meta()
 response = ai.chat("Explain quantum computing in simple terms")
@@ -162,7 +162,7 @@ print(response)
 ### Web Search
 
 ```python
-from webscout import DuckDuckGoSearch
+from llm4free import DuckDuckGoSearch
 
 search = DuckDuckGoSearch()
 results = search.text("best practices for API design", max_results=5)
@@ -173,7 +173,7 @@ for result in results:
 ### Image Generation
 
 ```python
-from webscout.Provider.TTI import PollinationsAI
+from llm4free.Provider.TTI import PollinationsAI
 
 gen = PollinationsAI()
 path = gen.generate_image(prompt="A serene mountain landscape at sunset")
@@ -186,16 +186,16 @@ See [docs/getting-started.md](docs/getting-started.md) for the full quick-start 
 
 ## Command Line Interface
 
-Webscout provides a rich CLI powered by [Rich](https://github.com/Textualize/rich) with multi-engine support.
+LLM4Free provides a rich CLI powered by [Rich](https://github.com/Textualize/rich) with multi-engine support.
 
 ```bash
-webscout --help                       # List all commands
-webscout version                      # Show version
-webscout text -k "python programming" # DuckDuckGo search (default)
-webscout images -k "mountains"        # Image search
-webscout news -k "AI breakthrough" -t w  # News from last week
-webscout weather -l "New York"        # Weather info
-webscout translate -k "Hola" --to en  # Translation
+llm4free --help                       # List all commands
+llm4free version                      # Show version
+llm4free text -k "python programming" # DuckDuckGo search (default)
+llm4free images -k "mountains"        # Image search
+llm4free news -k "AI breakthrough" -t w  # News from last week
+llm4free weather -l "New York"        # Weather info
+llm4free translate -k "Hola" --to en  # Translation
 ```
 
 ### Supported Engines
@@ -214,8 +214,8 @@ webscout translate -k "Hola" --to en  # Translation
 
 ```bash
 # Use a specific engine
-webscout text -k "climate change" -e bing
-webscout text -k "quantum physics" -e wikipedia
+llm4free text -k "climate change" -e bing
+llm4free text -k "quantum physics" -e wikipedia
 ```
 
 Full CLI reference: [docs/cli.md](docs/cli.md)
@@ -227,7 +227,7 @@ Full CLI reference: [docs/cli.md](docs/cli.md)
 ### Native Providers (No Auth Required)
 
 ```python
-from webscout import Meta, Toolbaz, LLMChat, SonusAI, Netwrck, PiAI
+from llm4free import Meta, Toolbaz, LLMChat, SonusAI, Netwrck, PiAI
 
 ai = Meta()
 print(ai.chat("What is the capital of France?"))
@@ -236,7 +236,7 @@ print(ai.chat("What is the capital of France?"))
 ### Authenticated Providers
 
 ```python
-from webscout import OpenAI, GROQ, GEMINI, Cohere, DeepInfra
+from llm4free import OpenAI, GROQ, GEMINI, Cohere, DeepInfra
 
 groq = GROQ(api_key="your-key")
 response = groq.chat("Write a Python function to sort a list")
@@ -245,7 +245,7 @@ response = groq.chat("Write a Python function to sort a list")
 ### OpenAI-Compatible Providers
 
 ```python
-from webscout.Provider.OPENAI import ChatGPT, Groq, DeepInfra
+from llm4free.Provider.OPENAI import ChatGPT, Groq, DeepInfra
 
 chatgpt = ChatGPT()  # No auth required
 response = chatgpt.chat.completions.create(
@@ -261,7 +261,7 @@ See [Provider.md](Provider.md) for the complete provider matrix with file locati
 ## Search Engines
 
 ```python
-from webscout import DuckDuckGoSearch, BingSearch, YepSearch, YahooSearch, BraveSearch
+from llm4free import DuckDuckGoSearch, BingSearch, YepSearch, YahooSearch, BraveSearch
 
 # DuckDuckGo
 ddg = DuckDuckGoSearch()
@@ -283,7 +283,7 @@ Search docs: [docs/search.md](docs/search.md)
 ## Text-to-Image
 
 ```python
-from webscout.Provider.TTI import PollinationsAI, TogetherImage
+from llm4free.Provider.TTI import PollinationsAI, TogetherImage
 
 # PollinationsAI
 poll = PollinationsAI()
@@ -301,7 +301,7 @@ TTI docs: [docs/getting-started.md#image-generation](docs/getting-started.md#ima
 ## Text-to-Speech
 
 ```python
-from webscout.Provider.TTS import ElevenlabsTTS, ParlerTTS
+from llm4free.Provider.TTS import ElevenlabsTTS, ParlerTTS
 
 tts = ElevenlabsTTS()
 tts.text_to_speech("Hello, world!", voice="alloy")
@@ -313,14 +313,14 @@ TTS model registry: [docs/models.md](docs/models.md)
 
 ## OpenAI-Compatible API Server
 
-Run a local FastAPI server that serves any Webscout provider through standard OpenAI endpoints.
+Run a local FastAPI server that serves any LLM4Free provider through standard OpenAI endpoints.
 
 ```bash
 # Start the server
-webscout-server
+llm4free-server
 
 # Custom config
-webscout-server --port 8080 --host 0.0.0.0 --debug
+llm4free-server --port 8080 --host 0.0.0.0 --debug
 ```
 
 ### Use with the OpenAI Python Client
@@ -340,8 +340,8 @@ print(response.choices[0].message.content)
 ### Docker Deployment
 
 ```bash
-docker-compose up webscout-api
-docker-compose -f docker-compose.yml -f docker-compose.no-auth.yml up webscout-api
+docker-compose up llm4free-api
+docker-compose -f docker-compose.yml -f docker-compose.no-auth.yml up llm4free-api
 ```
 
 Full server docs: [docs/openai-api-server.md](docs/openai-api-server.md) | Docker: [docs/DOCKER.md](docs/DOCKER.md)
@@ -353,14 +353,14 @@ Full server docs: [docs/openai-api-server.md](docs/openai-api-server.md) | Docke
 The unified `Client` class provides auto-failover across providers with smart model resolution.
 
 ```python
-from webscout.client import Client
+from llm4free.client import Client
 
 client = Client(print_provider_info=True)
 
 # Auto provider + model selection
 resp = client.chat.completions.create(
     model="auto",
-    messages=[{"role": "user", "content": "Summarize Webscout."}]
+    messages=[{"role": "user", "content": "Summarize LLM4Free."}]
 )
 print(resp.choices[0].message.content)
 
@@ -386,11 +386,11 @@ Client docs: [docs/client.md](docs/client.md)
 
 ## Tool Calling
 
-Webscout has a built-in tool calling system that works with any provider.
+LLM4Free has a built-in tool calling system that works with any provider.
 
 ```python
-from webscout.Provider.Apriel import Apriel
-from webscout.AIbase import Tool
+from llm4free.Provider.Apriel import Apriel
+from llm4free.AIbase import Tool
 
 def get_weather(city: str) -> str:
     return f"Weather in {city}: Sunny, 25C"
@@ -415,7 +415,7 @@ Tool calling docs: [docs/tool-calling.md](docs/tool-calling.md)
 Enumerate available models across all providers.
 
 ```python
-from webscout import model
+from llm4free import model
 
 # All LLM models
 all_models = model.llm.list()
@@ -495,5 +495,5 @@ Apache-2.0. See [LICENSE.md](LICENSE.md).
 <hr/>
 
 <div align="center">
-  <p>Made with by the Webscout team</p>
+  <p>Made with by the LLM4Free team</p>
 </div>

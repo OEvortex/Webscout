@@ -5,8 +5,8 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
-from webscout.search.engines.dogpile import Dogpile
-from webscout.search.results import TextResult
+from llm4free.search.engines.dogpile import Dogpile
+from llm4free.search.results import TextResult
 
 
 class TestDogpile(unittest.TestCase):

@@ -1,1 +1,1 @@
-"""Tests for webscout search engines."""
+"""Tests for llm4free search engines."""

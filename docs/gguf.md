@@ -89,7 +89,7 @@
 <p>The GGUF Converter is included with the WebScout package:</p>
 
 ```bash
-pip install -U webscout
+pip install -U llm4free
 ```
 </div>
 
@@ -100,7 +100,7 @@ pip install -U webscout
 The simplest way to convert a model is with the default settings:
 
 ```bash
-python -m webscout.Extra.gguf convert -m "organization/model-name"
+python -m llm4free.Extra.gguf convert -m "organization/model-name"
 ```
 
 This will:
@@ -119,7 +119,7 @@ This will:
 The full command syntax is:
 
 ```
-python -m webscout.Extra.gguf convert [OPTIONS]
+python -m llm4free.Extra.gguf convert [OPTIONS]
 ```
 
 | Option | Description | Default |
@@ -151,13 +151,13 @@ Choose the base output precision before quantization:
 
 ```bash
 # Use bfloat16 (good for models trained with bf16)
-python -m webscout.Extra.gguf convert -m "organization/model-name" -o "bf16"
+python -m llm4free.Extra.gguf convert -m "organization/model-name" -o "bf16"
 
 # Use auto-detection based on model's tensor types
-python -m webscout.Extra.gguf convert -m "organization/model-name" -o "auto"
+python -m llm4free.Extra.gguf convert -m "organization/model-name" -o "auto"
 
 # Use 8-bit quantization directly
-python -m webscout.Extra.gguf convert -m "organization/model-name" -o "q8_0"
+python -m llm4free.Extra.gguf convert -m "organization/model-name" -o "q8_0"
 ```
 </p>
 </details>
@@ -169,7 +169,7 @@ python -m webscout.Extra.gguf convert -m "organization/model-name" -o "q8_0"
 Apply multiple quantization methods at once:
 
 ```bash
-python -m webscout.Extra.gguf convert -m "organization/model-name" -q "q4_k_m,q5_k_m"
+python -m llm4free.Extra.gguf convert -m "organization/model-name" -q "q4_k_m,q5_k_m"
 ```
 
 This will create two versions of the model with different quantization methods.
@@ -183,7 +183,7 @@ This will create two versions of the model with different quantization methods.
 Convert models without downloading the full weights to disk:
 
 ```bash
-python -m webscout.Extra.gguf convert -m "organization/model-name" --remote
+python -m llm4free.Extra.gguf convert -m "organization/model-name" --remote
 ```
 
 This downloads only config and tokenizer files, streaming tensor data directly from HuggingFace.
@@ -198,7 +198,7 @@ Useful for systems with limited disk space.
 Convert and upload the model to your Hugging Face account:
 
 ```bash
-python -m webscout.Extra.gguf convert -m "organization/model-name" -u "your-username" -t "your-token"
+python -m llm4free.Extra.gguf convert -m "organization/model-name" -u "your-username" -t "your-token"
 ```
 
 This will create a new repository in your account named `model-name-GGUF` containing the converted model.
@@ -212,7 +212,7 @@ This will create a new repository in your account named `model-name-GGUF` contai
 Use importance matrix for more efficient quantization:
 
 ```bash
-python -m webscout.Extra.gguf convert -m "organization/model-name" -i --train-data "train_data.txt" -q "iq4_nl"
+python -m llm4free.Extra.gguf convert -m "organization/model-name" -i --train-data "train_data.txt" -q "iq4_nl"
 ```
 
 Importance matrix helps focus more bits on weights that matter most for the model's performance.
@@ -227,13 +227,13 @@ Split large models for easier distribution:
 
 ```bash
 # Split by number of tensors
-python -m webscout.Extra.gguf convert -m "organization/model-name" -s --split-max-tensors 256
+python -m llm4free.Extra.gguf convert -m "organization/model-name" -s --split-max-tensors 256
 
 # Split by file size (supports K, M, G units)
-python -m webscout.Extra.gguf convert -m "organization/model-name" -s --split-max-size "2G"
+python -m llm4free.Extra.gguf convert -m "organization/model-name" -s --split-max-size "2G"
 
 # Preview split plan without writing files
-python -m webscout.Extra.gguf convert -m "organization/model-name" -s --split-max-size "2G" --dry-run
+python -m llm4free.Extra.gguf convert -m "organization/model-name" -s --split-max-size "2G" --dry-run
 ```
 
 This is useful for very large models that may be difficult to distribute as a single file.
@@ -393,7 +393,7 @@ If no acceleration is available, the converter will use CPU-only mode.
 <p>
 
 ```bash
-python -m webscout.Extra.gguf convert \
+python -m llm4free.Extra.gguf convert \
     -m "mistralai/Mistral-7B-Instruct-v0.2" \
     -q "q4_k_m" \
     -o "f16" \
@@ -410,7 +410,7 @@ This will convert Mistral-7B to q4_k_m quantization and upload it to your Huggin
 <p>
 
 ```bash
-python -m webscout.Extra.gguf convert \
+python -m llm4free.Extra.gguf convert \
     -m "meta-llama/Meta-Llama-3-8B" \
     -o "bf16" \
     -q "q4_k_m,q5_k_m,q6_k"
@@ -425,7 +425,7 @@ This will create three versions of the model starting from bf16 base.
 <p>
 
 ```bash
-python -m webscout.Extra.gguf convert \
+python -m llm4free.Extra.gguf convert \
     -m "mistralai/Mistral-7B-Instruct-v0.2" \
     -q "iq4_nl,iq3_m" \
     -i \
@@ -441,7 +441,7 @@ This will create two IQ-quantized versions using importance matrix for better qu
 <p>
 
 ```bash
-python -m webscout.Extra.gguf convert \
+python -m llm4free.Extra.gguf convert \
     -m "meta-llama/Meta-Llama-3-8B" \
     --remote \
     -q "q4_k_m"
@@ -457,7 +457,7 @@ Convert without downloading full model weights (streams from HuggingFace).
 
 ```bash
 # Preview the split plan first
-python -m webscout.Extra.gguf convert \
+python -m llm4free.Extra.gguf convert \
     -m "meta-llama/Llama-2-70b-chat-hf" \
     -q "q4_k_m" \
     -s \
@@ -465,7 +465,7 @@ python -m webscout.Extra.gguf convert \
     --dry-run
 
 # Then actually perform the split
-python -m webscout.Extra.gguf convert \
+python -m llm4free.Extra.gguf convert \
     -m "meta-llama/Llama-2-70b-chat-hf" \
     -q "q4_k_m" \
     -s \
@@ -603,16 +603,16 @@ The converter uses the latest llama.cpp features including:
     <a href="https://github.com/ggerganov/llama.cpp">🚀 Powered by llama.cpp</a>
   </p>
   
-  <p>Made with ❤️ by the Webscout team</p>
+  <p>Made with ❤️ by the LLM4Free team</p>
 </div>
 
 <!-- Auto-generated developer documentation summary -->
 ## Developer Notes (auto-generated)
 
-This section was appended by an automated documentation task for `webscout/Extra/gguf.py` and summarizes the module's structure and usage:
+This section was appended by an automated documentation task for `llm4free/Extra/gguf.py` and summarizes the module's structure and usage:
 
 - Provides ModelConverter for HF->GGUF conversion, quantization, optional imatrix and splitting.
 - Includes robust llama.cpp build orchestration, cross-platform hardware detection, and Hugging Face upload helpers.
 - CLI entrypoint: `gguf convert` exposing options such as `--quantization`, `--outtype`, `--use-imatrix`, `--split-model`, and upload credentials.
 
-For more details, see the rest of this document and inspect `webscout/Extra/gguf.py` source directly.
+For more details, see the rest of this document and inspect `llm4free/Extra/gguf.py` source directly.

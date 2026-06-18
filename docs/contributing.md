@@ -1,4 +1,4 @@
-# Contributing to Webscout
+# Contributing to LLM4Free
 
 > **Last updated:** 2026-01-24  
 > **Type:** Developer Guide  
@@ -6,7 +6,7 @@
 
 ## Welcome!
 
-Thank you for considering contributing to Webscout. This guide will help you get started with development and ensure your contributions meet our quality standards.
+Thank you for considering contributing to LLM4Free. This guide will help you get started with development and ensure your contributions meet our quality standards.
 
 ## Table of Contents
 
@@ -36,8 +36,8 @@ Thank you for considering contributing to Webscout. This guide will help you get
 # Visit: https://github.com/OEvortex/Webscout
 
 # 2. Clone your fork
-git clone https://github.com/YOUR-USERNAME/Webscout.git
-cd Webscout
+git clone https://github.com/YOUR-USERNAME/LLM4Free.git
+cd LLM4Free
 
 # 3. Add upstream remote
 git remote add upstream https://github.com/OEvortex/Webscout.git
@@ -96,8 +96,8 @@ pip install ruff ty
 # Check Python version
 python --version
 
-# Check Webscout import
-python -c "import webscout; print(webscout.__version__)"
+# Check LLM4Free import
+python -c "import llm4free; print(llm4free.__version__)"
 
 # Check tools
 ruff --version
@@ -271,8 +271,8 @@ from typing import Any, Dict, Optional
 import requests
 from curl_cffi.requests import Session
 
-from webscout.AIbase import Provider
-from webscout import exceptions
+from llm4free.AIbase import Provider
+from llm4free import exceptions
 ```
 
 ### Naming Conventions
@@ -322,7 +322,7 @@ Create `tests/providers/test_yourprovider.py`:
 import unittest
 from unittest.mock import patch, MagicMock
 
-from webscout.Provider.YourProvider import YourProvider
+from llm4free.Provider.YourProvider import YourProvider
 
 
 class TestYourProvider(unittest.TestCase):
@@ -331,7 +331,7 @@ class TestYourProvider(unittest.TestCase):
         """Setup test fixtures."""
         self.provider = YourProvider(api_key="test-key")
     
-    @patch('webscout.Provider.YourProvider.Session.post')
+    @patch('llm4free.Provider.YourProvider.Session.post')
     def test_chat_basic(self, mock_post):
         """Test basic chat functionality."""
         mock_response = MagicMock()
@@ -344,7 +344,7 @@ class TestYourProvider(unittest.TestCase):
         response = self.provider.chat("Hello")
         self.assertEqual(response, "Test response")
     
-    @patch('webscout.Provider.YourProvider.Session.post')
+    @patch('llm4free.Provider.YourProvider.Session.post')
     def test_chat_streaming(self, mock_post):
         """Test streaming responses."""
         mock_response = MagicMock()
@@ -373,10 +373,10 @@ Aim for at least 80% coverage:
 
 ```bash
 # Run tests with coverage
-uv run pytest --cov=webscout tests/
+uv run pytest --cov=llm4free tests/
 
 # Generate coverage report
-uv run pytest --cov=webscout --cov-report=html tests/
+uv run pytest --cov=llm4free --cov-report=html tests/
 # Open htmlcov/index.html to view report
 ```
 
@@ -394,7 +394,7 @@ uv run ruff check .
 uv run ruff check . --fix
 
 # Check specific file
-uv run ruff check webscout/Provider/MyProvider.py
+uv run ruff check llm4free/Provider/MyProvider.py
 
 # Format code
 uv run ruff format .
@@ -407,7 +407,7 @@ uv run ruff format .
 uv run ty check .
 
 # Check specific file
-uv run ty check webscout/Provider/MyProvider.py
+uv run ty check llm4free/Provider/MyProvider.py
 ```
 
 ### Quality Checklist
@@ -428,7 +428,7 @@ uv run ty check .
 uv run pytest
 
 # 5. Check coverage
-uv run pytest --cov=webscout tests/
+uv run pytest --cov=llm4free tests/
 
 # All should pass ✓
 ```
@@ -513,8 +513,8 @@ git rebase upstream/main
    ```
 
 2. **Create PR on GitHub:**
-   - Base: `OEvortex/Webscout` main
-   - Compare: `YOUR-USERNAME/Webscout` your-branch
+   - Base: `OEvortex/LLM4Free` main
+   - Compare: `YOUR-USERNAME/LLM4Free` your-branch
    - Title: Brief description
    - Description: Details about changes
 
@@ -609,7 +609,7 @@ Include runnable examples:
 
 ```python
 # ✓ Good - complete, runnable example
-from webscout import GROQ
+from llm4free import GROQ
 
 client = GROQ(api_key="your-key")
 response = client.chat("What is machine learning?")
@@ -639,9 +639,9 @@ Use relative paths:
 
 Follow the structure in [AGENTS.md](../AGENTS.md):
 
-- Provider implementations go in `webscout/Provider/`
-- Search engines go in `webscout/search/`
-- Utilities go in `webscout/Extra/`
+- Provider implementations go in `llm4free/Provider/`
+- Search engines go in `llm4free/search/`
+- Utilities go in `llm4free/Extra/`
 - Tests go in `tests/providers/`
 - Documentation goes in `docs/`
 
@@ -672,4 +672,4 @@ Follow the structure in [AGENTS.md](../AGENTS.md):
 9. ✅ Respond to review comments
 10. ✅ Celebrate your contribution! 🎉
 
-Thank you for contributing to Webscout!
+Thank you for contributing to LLM4Free!

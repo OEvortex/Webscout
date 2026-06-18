@@ -8,7 +8,7 @@ Set HUGGINGFACE_API_KEY environment variable to run these tests.
 import os
 import pytest
 
-from webscout.Provider.Auth.HuggingFace import HuggingFace
+from llm4free.Provider.Auth.HuggingFace import HuggingFace
 
 
 # Skip all tests in this module if no API key is available

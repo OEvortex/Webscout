@@ -5,7 +5,7 @@
 > Build Beautiful Command-Line Applications at Light Speed
 
 [![Python 3.8+](https://img.shields.io/badge/Python-3.8+-blue.svg?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org)
-[![PyPI version](https://img.shields.io/badge/View_on-PyPI-orange.svg?style=for-the-badge&logo=pypi&logoColor=white)](https://pypi.org/project/webscout/)
+[![PyPI version](https://img.shields.io/badge/View_on-PyPI-orange.svg?style=for-the-badge&logo=pypi&logoColor=white)](https://pypi.org/project/llm4free/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 
 
@@ -29,13 +29,13 @@
 ## 📦 Installation
 
 ```bash
-pip install -U webscout
+pip install -U llm4free
 ```
 
 ## 🚀 Quick Start
 
 ```python
-from webscout.swiftcli import CLI, option, table_output
+from llm4free.swiftcli import CLI, option, table_output
 
 app = CLI("myapp", version="1.0.0")
 
@@ -252,7 +252,7 @@ async def fetch_data():
 ### Plugin System
 
 ```python
-from webscout.swiftcli import Plugin
+from llm4free.swiftcli import Plugin
 
 class MetricsPlugin(Plugin):
     def __init__(self):
@@ -369,7 +369,7 @@ def process(config: str, verbose: int, format: str):
 
 2. **Structured Error Handling**
    ```python
-   from webscout.swiftcli import CLIError
+   from llm4free.swiftcli import CLIError
    
    @app.command()
    def risky():
@@ -409,9 +409,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-Made with ❤️ by the [Webscout](https://github.com/OEvortex/Webscout) team
+Made with ❤️ by the [LLM4Free](https://github.com/OEvortex/Webscout) team
 
-[![GitHub stars](https://img.shields.io/github/stars/OEvortex/Webscout?style=social)](https://github.com/OEvortex/Webscout)
+[![GitHub stars](https://img.shields.io/github/stars/OEvortex/LLM4Free?style=social)](https://github.com/OEvortex/Webscout)
 
 </div>
 

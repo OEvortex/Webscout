@@ -9,52 +9,52 @@ services:
   # -----------------------------------------------------------------------------
   # Override main service for no-auth mode
   # -----------------------------------------------------------------------------
-  webscout-api:
+  llm4free-api:
     environment:
       # Enable no-auth mode for development/demos
       # Note: These environment variables may not be fully supported by the server yet
       # Server currently defaults to no authentication
-      - WEBSCOUT_LOG_LEVEL=debug
-      - WEBSCOUT_DEBUG=true
-      - WEBSCOUT_REQUEST_LOGGING=true
+      - LLM4FREE_LOG_LEVEL=debug
+      - LLM4FREE_DEBUG=true
+      - LLM4FREE_REQUEST_LOGGING=true
       # FastAPI metadata
-      - WEBSCOUT_API_TITLE=Webscout OpenAI API
-      - WEBSCOUT_API_DESCRIPTION=OpenAI API compatible interface for various LLM providers with enhanced authentication
-      - WEBSCOUT_API_VERSION=0.2.0
-      - WEBSCOUT_API_DOCS_URL=/docs
-      - WEBSCOUT_API_REDOC_URL=/redoc
-      - WEBSCOUT_API_OPENAPI_URL=/openapi.json
+      - LLM4FREE_API_TITLE=LLM4Free OpenAI API
+      - LLM4FREE_API_DESCRIPTION=OpenAI API compatible interface for various LLM providers with enhanced authentication
+      - LLM4FREE_API_VERSION=0.2.0
+      - LLM4FREE_API_DOCS_URL=/docs
+      - LLM4FREE_API_REDOC_URL=/redoc
+      - LLM4FREE_API_OPENAPI_URL=/openapi.json
 
     # Add labels for easy identification
     labels:
-      - "webscout.mode=no-auth"
-      - "webscout.description=No authentication required - development/demo mode"
+      - "llm4free.mode=no-auth"
+      - "llm4free.description=No authentication required - development/demo mode"
 
   # -----------------------------------------------------------------------------
   # Override production service for no-auth mode (not recommended)
   # -----------------------------------------------------------------------------
-  webscout-api-production:
+  llm4free-api-production:
     environment:
       # WARNING: Only use no-auth in production if you understand the security implications
       # Note: These environment variables may not be fully supported by the server yet
-      - WEBSCOUT_LOG_LEVEL=info
-      - WEBSCOUT_REQUEST_LOGGING=true
+      - LLM4FREE_LOG_LEVEL=info
+      - LLM4FREE_REQUEST_LOGGING=true
 
     labels:
-      - "webscout.mode=no-auth-production"
-      - "webscout.warning=No authentication - use with caution in production"
+      - "llm4free.mode=no-auth-production"
+      - "llm4free.warning=No authentication - use with caution in production"
 
   # -----------------------------------------------------------------------------
   # Override development service for no-auth mode
   # -----------------------------------------------------------------------------
-  webscout-api-dev:
+  llm4free-api-dev:
     environment:
       # Perfect for development
       # Note: Authentication settings may not be fully supported by the server yet
-      - WEBSCOUT_LOG_LEVEL=debug
-      - WEBSCOUT_DEBUG=true
-      - WEBSCOUT_REQUEST_LOGGING=true
+      - LLM4FREE_LOG_LEVEL=debug
+      - LLM4FREE_DEBUG=true
+      - LLM4FREE_REQUEST_LOGGING=true
 
     labels:
-      - "webscout.mode=no-auth-dev"
-      - "webscout.description=Development mode with no authentication"
+      - "llm4free.mode=no-auth-dev"
+      - "llm4free.description=Development mode with no authentication"

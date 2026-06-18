@@ -1,8 +1,8 @@
-# 🚀 Webscout Awesome Prompts Manager
+# 🚀 LLM4Free Awesome Prompts Manager
 > Last updated: 2025-12-20
-> Maintained by [Webscout](https://github.com/OEvortex/Webscout)
+> Maintained by [LLM4Free](https://github.com/OEvortex/Webscout)
 
-Webscout's Awesome Prompts Manager provides a comprehensive system for managing and utilizing AI personas and specialized prompts. This module offers optimized prompt retrieval, caching, and management capabilities for enhanced AI interactions.
+LLM4Free's Awesome Prompts Manager provides a comprehensive system for managing and utilizing AI personas and specialized prompts. This module offers optimized prompt retrieval, caching, and management capabilities for enhanced AI interactions.
 
 ## Table of Contents
 
@@ -16,12 +16,12 @@ Webscout's Awesome Prompts Manager provides a comprehensive system for managing 
 
 ## Core Components
 
-### [`prompt_manager.py`](../webscout/prompt_manager.py:1)
+### [`prompt_manager.py`](../llm4free/prompt_manager.py:1)
 
 The main prompt management module that provides comprehensive prompt handling capabilities.
 
 ```python
-from webscout.prompt_manager import AwesomePrompts
+from llm4free.prompt_manager import AwesomePrompts
 
 # Initialize the prompt manager
 prompt_manager = AwesomePrompts()
@@ -41,12 +41,12 @@ print(prompt)
 
 ## Prompt Manager
 
-### [`AwesomePrompts` Class](../webscout/prompt_manager.py:22)
+### [`AwesomePrompts` Class](../llm4free/prompt_manager.py:22)
 
 The main class for managing awesome prompts with caching and optimization.
 
 ```python
-from webscout.prompt_manager import AwesomePrompts
+from llm4free.prompt_manager import AwesomePrompts
 
 # Initialize with default settings
 prompt_manager = AwesomePrompts()
@@ -78,7 +78,7 @@ custom_manager = AwesomePrompts(
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `repo_url` | `str` | `"https://raw.githubusercontent.com/OEvortex/prompts/main/prompt.json"` | URL to fetch prompts from |
-| `local_path` | `Optional[str]` | `~/.webscout/awesome-prompts.json` | Where to save prompts locally |
+| `local_path` | `Optional[str]` | `~/.llm4free/awesome-prompts.json` | Where to save prompts locally |
 | `auto_update` | `bool` | `True` | Auto update prompts on initialization |
 | `timeout` | `int` | `10` | Timeout for HTTP requests in seconds |
 | `impersonate` | `str` | `"chrome110"` | Browser profile for curl_cffi |
@@ -90,7 +90,7 @@ custom_manager = AwesomePrompts(
 ### Basic Usage
 
 ```python
-from webscout.prompt_manager import AwesomePrompts
+from llm4free.prompt_manager import AwesomePrompts
 
 # Initialize the prompt manager
 prompt_manager = AwesomePrompts()
@@ -153,11 +153,11 @@ advanced_manager = AwesomePrompts(
 advanced_manager.update_prompts_from_online(force=True)
 ```
 
-### Using with Webscout Providers
+### Using with LLM4Free Providers
 
 ```python
-from webscout.Provider import ChatGPT
-from webscout.prompt_manager import AwesomePrompts
+from llm4free.Provider import ChatGPT
+from llm4free.prompt_manager import AwesomePrompts
 
 # Initialize both components
 prompt_manager = AwesomePrompts()
@@ -521,11 +521,11 @@ prompt_manager.show_acts(search="developer")
 
 ## Integration Guide
 
-### With Webscout Providers
+### With LLM4Free Providers
 
 ```python
-from webscout.Provider import ChatGPT
-from webscout.prompt_manager import AwesomePrompts
+from llm4free.Provider import ChatGPT
+from llm4free.prompt_manager import AwesomePrompts
 
 # Initialize components
 prompt_manager = AwesomePrompts()
@@ -549,7 +549,7 @@ print(response)
 
 ```python
 from fastapi import FastAPI, HTTPException
-from webscout.prompt_manager import AwesomePrompts
+from llm4free.prompt_manager import AwesomePrompts
 
 app = FastAPI()
 prompt_manager = AwesomePrompts()
@@ -573,7 +573,7 @@ async def list_prompts(search: str = None, limit: int = 50):
 
 ```python
 import click
-from webscout.prompt_manager import AwesomePrompts
+from llm4free.prompt_manager import AwesomePrompts
 
 @click.group()
 def cli():
@@ -607,7 +607,7 @@ if __name__ == '__main__':
 
 ```python
 import pytest
-from webscout.prompt_manager import AwesomePrompts
+from llm4free.prompt_manager import AwesomePrompts
 
 @pytest.fixture
 def prompt_manager():
@@ -649,7 +649,7 @@ def test_add_and_delete_prompt(prompt_manager):
 
 ```python
 import asyncio
-from webscout.prompt_manager import AwesomePrompts
+from llm4free.prompt_manager import AwesomePrompts
 
 async def process_prompts_async():
     """Example of using prompts in async context"""
@@ -697,7 +697,7 @@ for result in results:
 # Production configuration
 production_manager = AwesomePrompts(
     repo_url="https://your-company.com/production-prompts.json",
-    local_path="/var/lib/webscout/prompts.json",
+    local_path="/var/lib/llm4free/prompts.json",
     auto_update=True,
     cache_size=512,
     timeout=30,
@@ -729,4 +729,4 @@ test_manager = AwesomePrompts(
   </p>
 </div>
 
-*This documentation covers the comprehensive functionality of the [`webscout.prompt_manager`](../webscout/prompt_manager.py:1) module. For the most up-to-date information, refer to the source code and inline documentation.*
+*This documentation covers the comprehensive functionality of the [`llm4free.prompt_manager`](../llm4free/prompt_manager.py:1) module. For the most up-to-date information, refer to the source code and inline documentation.*

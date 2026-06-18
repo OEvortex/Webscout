@@ -5,7 +5,7 @@ from unittest import TestCase, mock
 
 from curl_cffi.requests.exceptions import RequestException
 
-from webscout.Provider.AISEARCH.openresearcher import OpenResearcher
+from llm4free.Provider.AISEARCH.openresearcher import OpenResearcher
 
 
 class FakeResponse:
@@ -149,7 +149,7 @@ class TestOpenResearcher(TestCase):
     )
     def test_search_api_error(self, mock_submit):
         """Test search handles API errors gracefully."""
-        from webscout import exceptions
+        from llm4free import exceptions
 
         with self.assertRaises(exceptions.APIConnectionError):
             self.provider.search("What is AI?")

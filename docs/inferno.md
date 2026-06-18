@@ -1,6 +1,6 @@
 # Inferno LLM Integration
 > Last updated: 2025-11-16
-> Maintained by [Webscout](https://github.com/OEvortex/Webscout)
+> Maintained by [LLM4Free](https://github.com/OEvortex/Webscout)
 
 Inferno is a local LLM server designed to run Large Language Models (LLMs) on your hardware, offering an intuitive Command Line Interface (CLI) and an OpenAI/Ollama-compatible API. It supports various cutting-edge models and provides features for model management, quantization, and GPU acceleration.
 
@@ -76,9 +76,9 @@ Hardware requirements are crucial for optimal performance:
 
 Inferno provides RAM usage estimates for different quantization types to help users manage resources.
 
-## Integration with Webscout
+## Integration with LLM4Free
 
-While Inferno is now a standalone package, it provides OpenAI-compatible APIs that work seamlessly with Webscout's OpenAI-compatible providers. You can use Inferno-hosted local models through Webscout's unified interface.
+While Inferno is now a standalone package, it provides OpenAI-compatible APIs that work seamlessly with LLM4Free's OpenAI-compatible providers. You can use Inferno-hosted local models through LLM4Free's unified interface.
 
 Inferno's API compatibility makes it easy to integrate with popular AI frameworks:
 - **OpenAI API Compatibility:** Inferno exposes OpenAI-compatible API endpoints at `http://localhost:8000/v1` (default port). This includes endpoints for chat completions, text completions, and embeddings

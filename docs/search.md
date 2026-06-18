@@ -1,14 +1,14 @@
-# Webscout Search Module
+# LLM4Free Search Module
 
 > Last updated: 2026-03-30
-> Source: [`webscout/search/`](../webscout/search/)
+> Source: [`llm4free/search/`](../llm4free/search/)
 
-Webscout's search module provides unified access to 9 search engines through a consistent Python API and CLI. All engines return typed result dataclasses that support both attribute and dict-style access.
+LLM4Free's search module provides unified access to 9 search engines through a consistent Python API and CLI. All engines return typed result dataclasses that support both attribute and dict-style access.
 
 ## Quick Start
 
 ```python
-from webscout import DuckDuckGoSearch
+from llm4free import DuckDuckGoSearch
 
 search = DuckDuckGoSearch()
 results = search.text("python programming", max_results=5)
@@ -33,7 +33,7 @@ for r in results:
 ## Imports
 
 ```python
-from webscout.search import (
+from llm4free.search import (
     DuckDuckGoSearch,  # Full-featured: text, images, videos, news, maps, translate, weather, answers, suggestions
     BingSearch,        # Text, images, news, suggestions
     BraveSearch,       # Text, images, videos, news, suggestions
@@ -51,7 +51,7 @@ from webscout.search import (
 All main interfaces (`DuckDuckGoSearch`, `BingSearch`, `BraveSearch`, `YahooSearch`) return typed dataclasses. `YepSearch` returns `dict` objects. Low-level engines (`Mojeek`, `Dogpile`, `Wikipedia`, `Yandex`) return `TextResult`.
 
 ```python
-from webscout.search.results import TextResult, ImagesResult, VideosResult, NewsResult
+from llm4free.search.results import TextResult, ImagesResult, VideosResult, NewsResult
 
 # Both access styles work:
 result.title      # attribute
@@ -114,7 +114,7 @@ result['url']     # alias for href
 The most feature-complete engine. Privacy-focused, no tracking.
 
 ```python
-from webscout import DuckDuckGoSearch
+from llm4free import DuckDuckGoSearch
 
 ddg = DuckDuckGoSearch()
 ```
@@ -216,7 +216,7 @@ results = ddg.suggestions("python prog", region="wt-wt")
 ## Bing
 
 ```python
-from webscout import BingSearch
+from llm4free import BingSearch
 
 bing = BingSearch()
 ```
@@ -268,7 +268,7 @@ results = bing.suggestions(
 Privacy-focused modern search engine.
 
 ```python
-from webscout import BraveSearch
+from llm4free import BraveSearch
 
 brave = BraveSearch()
 ```
@@ -326,7 +326,7 @@ results = brave.suggestions(
 ## Yahoo
 
 ```python
-from webscout import YahooSearch
+from llm4free import YahooSearch
 
 yahoo = YahooSearch()
 ```
@@ -388,7 +388,7 @@ results = yahoo.suggestions("web dev", region="us")
 Privacy-focused, fast search.
 
 ```python
-from webscout import YepSearch
+from llm4free import YepSearch
 
 yep = YepSearch()
 ```
@@ -430,7 +430,7 @@ These engines only support text search and are accessed via their `run()` method
 Independent European search engine, privacy-first.
 
 ```python
-from webscout.search import Mojeek
+from llm4free.search import Mojeek
 
 mojeek = Mojeek()
 results = mojeek.run("privacy tools", region="us-en", max_results=5)
@@ -441,7 +441,7 @@ results = mojeek.run("privacy tools", region="us-en", max_results=5)
 Metasearch engine aggregating results from multiple sources.
 
 ```python
-from webscout.search import Dogpile
+from llm4free.search import Dogpile
 
 dogpile = Dogpile()
 results = dogpile.run("python tutorials", max_results=10)
@@ -452,7 +452,7 @@ results = dogpile.run("python tutorials", max_results=10)
 Encyclopedia search returning article summaries.
 
 ```python
-from webscout.search import Wikipedia
+from llm4free.search import Wikipedia
 
 wiki = Wikipedia()
 results = wiki.run("Quantum Computing", region="us-en", max_results=3)
@@ -465,7 +465,7 @@ for r in results:
 Global search engine with strong parsing.
 
 ```python
-from webscout.search import Yandex
+from llm4free.search import Yandex
 
 yandex = Yandex()
 results = yandex.run("machine learning", max_results=5)
@@ -479,24 +479,24 @@ The CLI uses `--engine` (`-e`) to select the backend. DuckDuckGo is the default.
 
 ```bash
 # Text search
-webscout text -k "python programming"
-webscout text -k "python programming" -e brave
-webscout text -k "quantum physics" -e wikipedia
+llm4free text -k "python programming"
+llm4free text -k "python programming" -e brave
+llm4free text -k "quantum physics" -e wikipedia
 
 # Image search
-webscout images -k "cyberpunk art" -e bing
+llm4free images -k "cyberpunk art" -e bing
 
 # News
-webscout news -k "space exploration" -e yahoo
+llm4free news -k "space exploration" -e yahoo
 
 # Weather
-webscout weather -l "London"
+llm4free weather -l "London"
 
 # Suggestions
-webscout suggestions -q "artificial i" -e yep
+llm4free suggestions -q "artificial i" -e yep
 
 # Translate
-webscout translate -k "Hola mundo" --to en
+llm4free translate -k "Hola mundo" --to en
 ```
 
 See [cli.md](cli.md) for the full CLI reference.
@@ -508,7 +508,7 @@ See [cli.md](cli.md) for the full CLI reference.
 ### Extract URLs
 
 ```python
-from webscout import DuckDuckGoSearch
+from llm4free import DuckDuckGoSearch
 
 search = DuckDuckGoSearch()
 results = search.text("api design", max_results=5)
@@ -562,7 +562,7 @@ with open("results.json", "w") as f:
 ## Multi-Engine Search
 
 ```python
-from webscout import DuckDuckGoSearch, BingSearch, BraveSearch
+from llm4free import DuckDuckGoSearch, BingSearch, BraveSearch
 
 def search_all(query, max_results=5):
     engines = [DuckDuckGoSearch(), BingSearch(), BraveSearch()]
@@ -590,7 +590,7 @@ for r in results:
 ### Summarize Results
 
 ```python
-from webscout import DuckDuckGoSearch, Meta
+from llm4free import DuckDuckGoSearch, Meta
 
 search = DuckDuckGoSearch()
 results = search.text("quantum computing", max_results=3)
@@ -604,7 +604,7 @@ print(summary)
 ### Research Assistant
 
 ```python
-from webscout import DuckDuckGoSearch, Meta
+from llm4free import DuckDuckGoSearch, Meta
 
 def research(query: str):
     search = DuckDuckGoSearch()
@@ -628,7 +628,7 @@ research("how does photosynthesis work")
 ### News Analysis
 
 ```python
-from webscout import DuckDuckGoSearch, GROQ
+from llm4free import DuckDuckGoSearch, GROQ
 
 search = DuckDuckGoSearch()
 news = search.news("artificial intelligence", max_results=3)
@@ -644,7 +644,7 @@ print(analysis)
 ## Error Handling
 
 ```python
-from webscout import DuckDuckGoSearch
+from llm4free import DuckDuckGoSearch
 
 try:
     search = DuckDuckGoSearch()
@@ -672,8 +672,8 @@ for query in ["python", "javascript", "rust"]:
 Extend `BaseSearchEngine` to add a new engine:
 
 ```python
-from webscout.search.base import BaseSearchEngine
-from webscout.search.results import TextResult
+from llm4free.search.base import BaseSearchEngine
+from llm4free.search.results import TextResult
 
 class MyEngine(BaseSearchEngine[TextResult]):
     name = "myengine"

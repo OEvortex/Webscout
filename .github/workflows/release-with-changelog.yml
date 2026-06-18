@@ -41,7 +41,7 @@ jobs:
           if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ inputs.version }}" ]; then
             VERSION="${{ inputs.version }}"
           else
-            VERSION=$(grep -oP '__version__ = "\K[^"]*' webscout/version.py)
+            VERSION=$(grep -oP '__version__ = "\K[^"]*' llm4free/version.py)
           fi
           # Normalize version: strip leading 'v' or 'V' if user provided it
           VERSION="${VERSION#v}"
@@ -196,7 +196,7 @@ jobs:
             echo "" >> RELEASE_NOTES.md
             echo "### 📦 Installation" >> RELEASE_NOTES.md
             echo '```bash' >> RELEASE_NOTES.md
-            echo "pip install --upgrade webscout==$VERSION" >> RELEASE_NOTES.md
+            echo "pip install --upgrade llm4free==$VERSION" >> RELEASE_NOTES.md
             echo '```' >> RELEASE_NOTES.md
           fi
           
@@ -271,7 +271,7 @@ jobs:
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: prNumber,
-                  body: `🎉 This PR is included in [v${version}](https://github.com/${context.repo.owner}/${context.repo.repo}/releases/tag/v${version})!\n\nInstall it with:\n\`\`\`bash\npip install --upgrade webscout==${version}\n\`\`\``
+                  body: `🎉 This PR is included in [v${version}](https://github.com/${context.repo.owner}/${context.repo.repo}/releases/tag/v${version})!\n\nInstall it with:\n\`\`\`bash\npip install --upgrade llm4free==${version}\n\`\`\``
                 });
                 console.log(`Commented on PR #${prNumber}`);
               } catch (error) {

@@ -34,8 +34,8 @@ jobs:
         run: |
           if [ -d tests ]; then
             pytest
-          elif [ -f webscout/Provider/UNFINISHED/test_lmarena.py ]; then
-            python webscout/Provider/UNFINISHED/test_lmarena.py
+          elif [ -f llm4free/Provider/UNFINISHED/test_lmarena.py ]; then
+            python llm4free/Provider/UNFINISHED/test_lmarena.py
           else
             echo "No tests found, skipping tests"
           fi

@@ -34,7 +34,7 @@ body:
     attributes:
       label: Affected Files/Components
       description: If known, please list the files or components in this repository that reference your site/service.
-      placeholder: "e.g., webscout/Provider/YourSite.py"
+      placeholder: "e.g., llm4free/Provider/YourSite.py"
     validations:
       required: false
 

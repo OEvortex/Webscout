@@ -3,8 +3,8 @@ requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "webscout"
-# Using dynamic version from webscout.version
+name = "llm4free"
+# Using dynamic version from llm4free.version
 dynamic = ["version"]
 description = "Search for anything using Google, DuckDuckGo, phind.com, Contains AI models, can transcribe yt videos, temporary email and phone number generation, has TTS support, webai (terminal gpt and open interpreter) and offline LLMs and more"
 readme = "README.md"
@@ -65,10 +65,10 @@ dependencies = [
 ]
 
 [project.scripts]
-WEBS = "webscout.cli:main"
-webscout = "webscout.cli:main"
-webscout-server = "webscout.server.server:main"  
-webscout-serve = "webscout.server.server:main"
+WEBS = "llm4free.cli:main"
+llm4free = "llm4free.cli:main"
+llm4free-server = "llm4free.server.server:main"  
+llm4free-serve = "llm4free.server.server:main"
 
 [project.urls]
 Source = "https://github.com/OEvortex/Webscout"
@@ -102,7 +102,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["webscout"]
+source = ["llm4free"]
 branch = true
 omit = ["tests/*", "*/__pycache__/*", "*/site-packages/*"]
 
@@ -126,16 +126,16 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["."]  # Specifies the root directory for packages (project root)
-include = ["webscout*"]  # Tells find_packages to include only 'webscout' and its subpackages
+include = ["llm4free*"]  # Tells find_packages to include only 'llm4free' and its subpackages
 exclude = ["__pycache__", "*.pyc"]  # Excludes common non-package directories/files
 namespaces = true  # Enables automatic discovery of namespace packages
 
 [tool.setuptools.dynamic]
-version = {attr = "webscout.version.__version__"}
+version = {attr = "llm4free.version.__version__"}
 
 [tool.setuptools.package-data]
 "*" = ["*.md", "*.txt", "*.yaml", "*.yml", "*.py", "*.html", "*.css", "*.js", "*.json", "*.png", "*.jpg", "*.jpeg", "*.gif", "*.svg"]
-"webscout" = ["*"]
+"llm4free" = ["*"]
 
 [tool.ruff]
 line-length = 100

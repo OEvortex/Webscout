@@ -1,13 +1,13 @@
-# Model Registry (`webscout/models.py`)
+# Model Registry (`llm4free/models.py`)
 > Last updated: 2025-12-20  
-> Maintained by: Webscout Core Team
+> Maintained by: LLM4Free Core Team
 
-`webscout/models.py` exposes a lightweight discovery layer so you can inspect the Large Language Model (LLM), Text-to-Speech (TTS), and Text-to-Image (TTI) offerings that ship with Webscout. The registry powers documentation examples (README, docs/search.md, etc.) and is useful when building UI selectors or performing health checks across providers.
+`llm4free/models.py` exposes a lightweight discovery layer so you can inspect the Large Language Model (LLM), Text-to-Speech (TTS), and Text-to-Image (TTI) offerings that ship with LLM4Free. The registry powers documentation examples (README, docs/search.md, etc.) and is useful when building UI selectors or performing health checks across providers.
 
 ## 📦 Public API
 
 ```python
-from webscout import model
+from llm4free import model
 
 model.llm.list()       # Dict[str, List[str]] mapping provider -> models
 model.llm.get("Groq")  # List[str] of Groq models
@@ -21,11 +21,11 @@ model.tti.list()       # Dict[str, List[str]] for image providers
 model.tti.providers()  # Detailed metadata per TTI provider
 ```
 
-The object exported from `webscout/__init__.py` is a singleton that contains `llm`, `tts`, and `tti` namespaces.
+The object exported from `llm4free/__init__.py` is a singleton that contains `llm`, `tts`, and `tti` namespaces.
 
 ## 🧠 How It Works
 
-- Uses `pkgutil.iter_modules` to walk through `webscout/Provider` (for LLMs), `webscout/Provider/TTS`, and `webscout/Provider/TTI`.
+- Uses `pkgutil.iter_modules` to walk through `llm4free/Provider` (for LLMs), `llm4free/Provider/TTS`, and `llm4free/Provider/TTI`.
 - Detects classes derived from the relevant base class (`Provider`, `TTSProvider`, `BaseImages`).
 - Prefers provider-defined metadata (e.g., `AVAILABLE_MODELS`, `get_models()`, `all_voices`). Sets are converted to lists for JSON friendliness.
 - Collects additional metadata such as docstrings, supported parameters, and module names.
@@ -33,7 +33,7 @@ The object exported from `webscout/__init__.py` is a singleton that contains `ll
 ## 🧾 Example Usage
 
 ```python
-from webscout import model
+from llm4free import model
 from rich import print
 
 summary = model.llm.summary()

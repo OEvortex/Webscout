@@ -40,7 +40,7 @@ Streaming:     Word → by → word → as → it → arrives
 ### Simple Streaming Example
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 
 client = GROQ(api_key="your-groq-api-key")
 
@@ -69,7 +69,7 @@ Libraries aplenty to choose from too.
 ### Streaming vs Non-Streaming
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 import time
 
 client = GROQ(api_key="your-api-key")
@@ -98,7 +98,7 @@ print(f"\nTime: {elapsed:.1f}s")
 ### GROQ Streaming
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 
 client = GROQ(api_key="your-groq-api-key")
 
@@ -110,7 +110,7 @@ print()
 ### OpenAI Streaming
 
 ```python
-from webscout import OpenAI
+from llm4free import OpenAI
 
 client = OpenAI(api_key="sk-your-openai-api-key")
 
@@ -122,7 +122,7 @@ print()
 ### Check if Streaming is Supported
 
 ```python
-from webscout import Meta, GROQ
+from llm4free import Meta, GROQ
 import types
 
 def check_streaming(provider, prompt: str):
@@ -149,7 +149,7 @@ check_streaming(GROQ(api_key="key"), "Hello")
 ### Collect Into a String
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 
 client = GROQ(api_key="your-api-key")
 
@@ -165,7 +165,7 @@ print(full_response)
 ### Count Words in Real-Time
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 
 client = GROQ(api_key="your-api-key")
 
@@ -180,7 +180,7 @@ print(f"\n\nTotal words: {word_count}")
 ### Collect Words Into a List
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 
 client = GROQ(api_key="your-api-key")
 
@@ -196,7 +196,7 @@ print(f"Total: {len(words)} words")
 ### Process and Filter Chunks
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 
 client = GROQ(api_key="your-api-key")
 
@@ -219,7 +219,7 @@ print("\n")
 ### Save to File While Streaming
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 from datetime import datetime
 
 client = GROQ(api_key="your-api-key")
@@ -246,7 +246,7 @@ with open(filename, "r") as f:
 ### Save Multiple Streams
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 import json
 from datetime import datetime
 
@@ -286,7 +286,7 @@ print("\n\nAll responses saved to responses.json")
 ### Handle Interrupted Streams
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 
 client = GROQ(api_key="your-api-key", timeout=60)
 
@@ -313,7 +313,7 @@ except Exception as e:
 ### Timeout Per Chunk
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 import time
 
 client = GROQ(api_key="your-api-key")
@@ -351,7 +351,7 @@ pip install tqdm
 ```
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 from tqdm import tqdm
 import time
 
@@ -377,7 +377,7 @@ print()
 ### Stream with Highlighting
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 
 client = GROQ(api_key="your-api-key")
 
@@ -402,7 +402,7 @@ print()
 ### Stream Multiple Responses in Parallel
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 from threading import Thread
 
 client = GROQ(api_key="your-api-key")
@@ -445,7 +445,7 @@ for prompt, response in zip(prompts, responses):
 ## Real-World Example: Chatbot with Streaming
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 import sys
 
 def streaming_chatbot():
@@ -508,7 +508,7 @@ if not isinstance(response, types.GeneratorType):
 
 **Solution:**
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 
 client = GROQ(api_key="your-api-key")
 
@@ -530,7 +530,7 @@ else:
 
 **Solution:**
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 
 client = GROQ(api_key="your-api-key", timeout=120)
 

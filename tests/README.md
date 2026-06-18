@@ -1,6 +1,6 @@
-# Webscout Testing Suite
+# LLM4Free Testing Suite
 
-This directory contains the testing suite for the Webscout project.
+This directory contains the testing suite for the LLM4Free project.
 
 ## 🧪 Unit Tests (Mocked)
 

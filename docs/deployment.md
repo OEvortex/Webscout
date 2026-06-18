@@ -6,7 +6,7 @@
 
 ## Overview
 
-Webscout can be deployed in multiple ways:
+LLM4Free can be deployed in multiple ways:
 
 - **Docker** — Containerized deployment (recommended)
 - **Docker Compose** — Multi-service orchestration
@@ -32,52 +32,52 @@ Webscout can be deployed in multiple ways:
 
 ```bash
 # Latest version
-docker pull oevortex/webscout:latest
+docker pull oevortex/llm4free:latest
 
 # Specific version
-docker pull oevortex/webscout:2024.12.01
+docker pull oevortex/llm4free:2024.12.01
 
 # Latest slim version (smaller)
-docker pull oevortex/webscout:slim
+docker pull oevortex/llm4free:slim
 ```
 
 ### Run Container
 
 ```bash
 # Interactive mode
-docker run -it oevortex/webscout:latest
+docker run -it oevortex/llm4free:latest
 
 # With API key mounted
 docker run -it \
   -e OPENAI_API_KEY="your-api-key" \
-  oevortex/webscout:latest
+  oevortex/llm4free:latest
 
 # With port forwarding (for API server)
 docker run -it \
   -p 8000:8000 \
   -e OPENAI_API_KEY="your-api-key" \
-  oevortex/webscout:latest \
-  webscout-server
+  oevortex/llm4free:latest \
+  llm4free-server
 ```
 
 ### Build Custom Image
 
 ```dockerfile
-FROM oevortex/webscout:latest
+FROM oevortex/llm4free:latest
 
 # Add custom requirements
 RUN pip install additional-package
 
 # Set default command
-CMD ["webscout", "--help"]
+CMD ["llm4free", "--help"]
 ```
 
 ```bash
 # Build
-docker build -t my-webscout .
+docker build -t my-llm4free .
 
 # Run
-docker run -it my-webscout
+docker run -it my-llm4free
 ```
 
 ---
@@ -92,9 +92,9 @@ Create `docker-compose.yml`:
 version: '3.8'
 
 services:
-  webscout:
-    image: oevortex/webscout:latest
-    container_name: webscout-app
+  llm4free:
+    image: oevortex/llm4free:latest
+    container_name: llm4free-app
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - GROQ_API_KEY=${GROQ_API_KEY}
@@ -105,17 +105,17 @@ services:
     stdin_open: true
     tty: true
 
-  webscout-server:
-    image: oevortex/webscout:latest
-    container_name: webscout-api
-    command: webscout-server --host 0.0.0.0 --port 8001
+  llm4free-server:
+    image: oevortex/llm4free:latest
+    container_name: llm4free-api
+    command: llm4free-server --host 0.0.0.0 --port 8001
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - GROQ_API_KEY=${GROQ_API_KEY}
     ports:
       - "8001:8001"
     depends_on:
-      - webscout
+      - llm4free
 ```
 
 ### Run Compose Stack
@@ -131,7 +131,7 @@ EOF
 docker-compose up -d
 
 # View logs
-docker-compose logs -f webscout-server
+docker-compose logs -f llm4free-server
 
 # Stop services
 docker-compose down
@@ -141,13 +141,13 @@ docker-compose down
 
 ```yaml
 services:
-  webscout-server:
-    image: oevortex/webscout:latest
+  llm4free-server:
+    image: oevortex/llm4free:latest
     command: >
-      webscout-server
+      llm4free-server
       --host 0.0.0.0
       --port 8001
-      --api-key gsk_webscout_prod_12345
+      --api-key gsk_llm4free_prod_12345
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
     ports:
@@ -160,31 +160,31 @@ services:
 
 ### What It Does
 
-Runs a FastAPI server that proxies any Webscout provider through OpenAI-compatible endpoints.
+Runs a FastAPI server that proxies any LLM4Free provider through OpenAI-compatible endpoints.
 
 ```
-Your App → webscout-server (OpenAI API) → Any Webscout Provider
+Your App → llm4free-server (OpenAI API) → Any LLM4Free Provider
 ```
 
 ### Start Server
 
 ```bash
 # Simple start
-webscout-server
+llm4free-server
 
 # With custom host/port
-webscout-server --host 0.0.0.0 --port 8001
+llm4free-server --host 0.0.0.0 --port 8001
 
 # With debug mode
-webscout-server --debug
+llm4free-server --debug
 
 # With API key requirement
-webscout-server --api-key your-secret-key
+llm4free-server --api-key your-secret-key
 ```
 
 ### Configure Providers
 
-Create `webscout_config.json`:
+Create `llm4free_config.json`:
 
 ```json
 {
@@ -207,7 +207,7 @@ Create `webscout_config.json`:
 ```python
 from openai import OpenAI
 
-# Point to your Webscout server
+# Point to your LLM4Free server
 client = OpenAI(
     api_key="any-key-or-gsk_...",
     base_url="http://localhost:8000/v1"
@@ -287,9 +287,9 @@ COHERE_API_KEY=co_your-cohere-key
 GEMINI_API_KEY=your-gemini-key
 
 # Server Configuration
-WEBSCOUT_HOST=0.0.0.0
-WEBSCOUT_PORT=8000
-WEBSCOUT_DEBUG=false
+LLM4FREE_HOST=0.0.0.0
+LLM4FREE_PORT=8000
+LLM4FREE_DEBUG=false
 
 # Timeout settings
 REQUEST_TIMEOUT=30
@@ -311,7 +311,7 @@ load_dotenv()
 
 ### Configuration File
 
-Create `webscout.yaml`:
+Create `llm4free.yaml`:
 
 ```yaml
 server:
@@ -371,12 +371,12 @@ echo ".env" >> .gitignore
 
 ```yaml
 # In nginx config
-limit_req_zone $binary_remote_addr zone=webscout:10m rate=10r/s;
+limit_req_zone $binary_remote_addr zone=llm4free:10m rate=10r/s;
 
 server {
     location / {
-        limit_req zone=webscout burst=20 nodelay;
-        proxy_pass http://webscout:8000;
+        limit_req zone=llm4free burst=20 nodelay;
+        proxy_pass http://llm4free:8000;
     }
 }
 ```
@@ -448,13 +448,13 @@ session.mount("https://", adapter)
 ```yaml
 # docker-compose with multiple instances
 services:
-  webscout-1:
-    image: oevortex/webscout:latest
+  llm4free-1:
+    image: oevortex/llm4free:latest
     ports:
       - "8001:8000"
   
-  webscout-2:
-    image: oevortex/webscout:latest
+  llm4free-2:
+    image: oevortex/llm4free:latest
     ports:
       - "8002:8000"
   
@@ -474,24 +474,24 @@ services:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: webscout-deployment
+  name: llm4free-deployment
 
 spec:
   replicas: 3
   
   selector:
     matchLabels:
-      app: webscout
+      app: llm4free
   
   template:
     metadata:
       labels:
-        app: webscout
+        app: llm4free
     
     spec:
       containers:
-      - name: webscout
-        image: oevortex/webscout:latest
+      - name: llm4free
+        image: oevortex/llm4free:latest
         ports:
         - containerPort: 8000
         
@@ -499,7 +499,7 @@ spec:
         - name: GROQ_API_KEY
           valueFrom:
             secretKeyRef:
-              name: webscout-secrets
+              name: llm4free-secrets
               key: groq-api-key
         
         resources:
@@ -519,10 +519,10 @@ spec:
 
 ```bash
 # Check if server is running
-docker ps | grep webscout
+docker ps | grep llm4free
 
 # Check logs
-docker logs webscout-api
+docker logs llm4free-api
 
 # Verify port is open
 netstat -tulpn | grep 8000
@@ -539,7 +539,7 @@ echo $GROQ_API_KEY
 echo $OPENAI_API_KEY
 
 # Check in Docker
-docker exec webscout-api env | grep -i api
+docker exec llm4free-api env | grep -i api
 
 # Set in docker-compose
 environment:
@@ -550,11 +550,11 @@ environment:
 
 ```bash
 # Monitor container memory
-docker stats webscout-api
+docker stats llm4free-api
 
 # Limit memory in docker-compose
 services:
-  webscout:
+  llm4free:
     mem_limit: 1g
 ```
 

@@ -14,7 +14,7 @@ This section contains practical, production-ready code examples organized by use
 
 ### Chat & Conversation
 
-Learn how to use Webscout for AI chat interactions:
+Learn how to use LLM4Free for AI chat interactions:
 
 - **[Basic Chat](basic-chat.md)** — Simple question-answer examples
 - **[Streaming Responses](streaming-responses.md)** — Real-time response generation
@@ -52,7 +52,7 @@ For experienced developers:
 
 ### Integration Patterns
 
-Connect Webscout with other systems:
+Connect LLM4Free with other systems:
 
 - **[FastAPI Integration](fastapi-integration.md)** — Build web APIs
 - **[CLI Applications](cli-applications.md)** — Command-line tools
@@ -65,7 +65,7 @@ Connect Webscout with other systems:
 ### Simplest Chat Example
 
 ```python
-from webscout import Meta
+from llm4free import Meta
 
 # Initialize (no API key needed)
 ai = Meta()
@@ -78,7 +78,7 @@ print(response)
 ### With API Key
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 
 # Initialize with your API key
 client = GROQ(api_key="your-groq-api-key")
@@ -91,7 +91,7 @@ print(response)
 ### With Streaming
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 
 client = GROQ(api_key="your-groq-api-key")
 
@@ -104,7 +104,7 @@ for chunk in client.chat("Write a haiku", stream=True):
 
 ## 📖 Learning Path
 
-**New to Webscout?** Follow this sequence:
+**New to LLM4Free?** Follow this sequence:
 
 1. **[Basic Chat](basic-chat.md)** — Learn the fundamentals
 2. **[Streaming Responses](streaming-responses.md)** — Handle long responses
@@ -182,10 +182,10 @@ python your_script.py
 
 ```python
 # Install in notebook (if needed)
-!pip install webscout
+!pip install llm4free
 
 # Import and use
-from webscout import GROQ
+from llm4free import GROQ
 
 client = GROQ(api_key="your-key")
 response = client.chat("Hello")
@@ -196,7 +196,7 @@ print(response)
 
 ```python
 # save_as: my_chat_module.py
-from webscout import Meta
+from llm4free import Meta
 
 def ask_question(question: str) -> str:
     ai = Meta()
@@ -228,7 +228,7 @@ python my_chat_module.py
 ### Pattern 1: Simple Request-Response
 
 ```python
-from webscout import Meta
+from llm4free import Meta
 
 question = "What is machine learning?"
 ai = Meta()
@@ -239,8 +239,8 @@ print(f"Q: {question}\nA: {answer}")
 ### Pattern 2: Error Handling
 
 ```python
-from webscout import GROQ
-from webscout.exceptions import AIProviderError
+from llm4free import GROQ
+from llm4free.exceptions import AIProviderError
 
 try:
     client = GROQ(api_key="key")
@@ -254,7 +254,7 @@ except Exception as e:
 ### Pattern 3: Streaming with Progress
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 
 client = GROQ(api_key="key")
 print("Generating response...")
@@ -267,7 +267,7 @@ print()  # Newline at end
 ### Pattern 4: Batch Processing
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 
 client = GROQ(api_key="key")
 questions = ["Q1?", "Q2?", "Q3?"]
@@ -336,7 +336,7 @@ Have a great example? Contribute it!
 ## FAQ
 
 **Q: Can I use these examples commercially?**
-A: Yes, they're under the same license as Webscout.
+A: Yes, they're under the same license as LLM4Free.
 
 **Q: What if an example doesn't work?**
 A: Check [Troubleshooting](../troubleshooting.md) or open an issue.

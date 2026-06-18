@@ -1,8 +1,8 @@
 <div align="center">
-  <h1>☀️ Webscout Weather Toolkit</h1>
+  <h1>☀️ LLM4Free Weather Toolkit</h1>
   
   > Last updated: 2025-11-16  
-  > Maintained by [Webscout](https://github.com/OEvortex/Webscout)
+  > Maintained by [LLM4Free](https://github.com/OEvortex/Webscout)
   <p><strong>Comprehensive weather data retrieval and visualization tools</strong></p>
   
   <!-- Badges -->
@@ -14,7 +14,7 @@
 </div>
 
 > [!NOTE]
-> Webscout's Weather Toolkit provides powerful tools to retrieve and display weather information in various formats, including structured data and ASCII art visualization.
+> LLM4Free's Weather Toolkit provides powerful tools to retrieve and display weather information in various formats, including structured data and ASCII art visualization.
 
 ## 📋 Table of Contents
 
@@ -27,10 +27,10 @@
 
 ## 🚀 Installation
 
-The Weather Toolkit is included in the Webscout package. Install or update Webscout to get access:
+The Weather Toolkit is included in the LLM4Free package. Install or update LLM4Free to get access:
 
 ```bash
-pip install -U webscout
+pip install -U llm4free
 ```
 
 ## 🌡️ Current Weather Data
@@ -38,7 +38,7 @@ pip install -U webscout
 Retrieve structured current weather information for any location worldwide.
 
 ```python
-from webscout.Extra import weather
+from llm4free.Extra import weather
 
 # Get weather for a specific location
 forecast = weather.get("London")
@@ -62,7 +62,7 @@ if forecast.current_condition:
 Access detailed forecast information for today and upcoming days.
 
 ```python
-from webscout.Extra import weather
+from llm4free.Extra import weather
 
 forecast = weather.get("Tokyo")
 
@@ -99,7 +99,7 @@ if forecast.days and len(forecast.days) > 2:
 Retrieve weather information as visually appealing ASCII art.
 
 ```python
-from webscout.Extra import weather_ascii
+from llm4free.Extra import weather_ascii
 
 # Get ASCII art weather 
 result = weather_ascii.get("Paris")
@@ -263,8 +263,8 @@ weather_ascii.get("Moscow", days=5)
 Implement proper error handling for robust applications:
 
 ```python
-from webscout.Extra import weather
-from webscout.exceptions import APIError
+from llm4free.Extra import weather
+from llm4free.exceptions import APIError
 
 try:
     forecast = weather.get("London")

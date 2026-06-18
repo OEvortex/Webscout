@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase, mock
 
-from webscout.Provider.TTS.luxtts import LuxTTS
+from llm4free.Provider.TTS.luxtts import LuxTTS
 
 
 class FakeResponse:
@@ -144,7 +144,7 @@ class TestLuxTTS(TestCase):
     @mock.patch.object(LuxTTS, "_submit_inference", side_effect=Exception("API Error"))
     def test_tts_api_error(self, mock_submit):
         """Test TTS handles API errors gracefully."""
-        from webscout import exceptions
+        from llm4free import exceptions
 
         with self.assertRaises(exceptions.FailedToGenerateResponseError):
             self.provider.tts("Hello world")

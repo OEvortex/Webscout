@@ -1,4 +1,4 @@
-site_name: Webscout Documentation
+site_name: LLM4Free Documentation
 site_description: Your All-in-One Python Toolkit for Web Search, AI Interaction, Digital Utilities, and More
 site_author: OEvortex
 site_url: https://oevortex.github.io/Webscout/
@@ -156,4 +156,4 @@ extra:
   version:
     provider: mike
 
-copyright: Copyright &copy; 2024-2026 Webscout Contributors
+copyright: Copyright &copy; 2024-2026 LLM4Free Contributors

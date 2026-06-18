@@ -88,7 +88,7 @@ jobs:
           RELEASE_TYPE="${{ needs.determine-release-type.outputs.release_type }}"
           
           # Get current version from version.py
-          CURRENT_VERSION=$(grep -oP '__version__ = "\K[^"]*' webscout/version.py)
+          CURRENT_VERSION=$(grep -oP '__version__ = "\K[^"]*' llm4free/version.py)
           echo "Current version: $CURRENT_VERSION"
           
           # Generate date-based version (YYYY.MM.DD format)
@@ -155,8 +155,8 @@ jobs:
         run: |
           NEW_VERSION="${{ needs.check-version.outputs.new_version }}"
           echo "Updating version to $NEW_VERSION"
-          sed -i.bak "s/__version__ = \"[^\"]*\"/__version__ = \"$NEW_VERSION\"/" webscout/version.py
-          cat webscout/version.py
+          sed -i.bak "s/__version__ = \"[^\"]*\"/__version__ = \"$NEW_VERSION\"/" llm4free/version.py
+          cat llm4free/version.py
 
       - name: Build package
         run: |
@@ -177,7 +177,7 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add webscout/version.py
+          git add llm4free/version.py
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
@@ -190,9 +190,9 @@ jobs:
           RELEASE_TYPE="${{ needs.check-version.outputs.release_type }}"
           VERSION="${{ needs.check-version.outputs.new_version }}"
           if [ "$RELEASE_TYPE" == "beta" ]; then
-            echo "✅ Successfully published webscout BETA version $VERSION to PyPI!"
+            echo "✅ Successfully published llm4free BETA version $VERSION to PyPI!"
           else
-            echo "✅ Successfully published webscout STABLE version $VERSION to PyPI!"
+            echo "✅ Successfully published llm4free STABLE version $VERSION to PyPI!"
           fi
           echo "📝 A release with detailed changelog will be created automatically by the release workflow"
 

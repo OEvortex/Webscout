@@ -1,8 +1,8 @@
-# Webscout - Unified AI & Search Framework
+# LLM4Free - Unified AI & Search Framework
 
 > **Enterprise-grade Python toolkit for AI chat, web search, image generation, and beyond**
 
-Welcome to Webscout's comprehensive documentation! Whether you're looking to integrate AI into your application, deploy a search service, or build custom providers, you're in the right place.
+Welcome to LLM4Free's comprehensive documentation! Whether you're looking to integrate AI into your application, deploy a search service, or build custom providers, you're in the right place.
 
 ---
 
@@ -11,18 +11,18 @@ Welcome to Webscout's comprehensive documentation! Whether you're looking to int
 ### Installation
 ```bash
 # Using pip (recommended for beginners)
-pip install webscout
+pip install llm4free
 
 # Using uv (recommended for developers)
-uv pip install webscout
+uv pip install llm4free
 
 # Using Docker
-docker pull oevortex/webscout:latest
+docker pull oevortex/llm4free:latest
 ```
 
 ### Your First Chat (30 seconds)
 ```python
-from webscout import Meta
+from llm4free import Meta
 
 ai = Meta()
 response = ai.chat("What is Python?")
@@ -87,7 +87,7 @@ print(response)
 
 ```python
 # 🤖 Multi-Provider AI Chat
-from webscout import Meta, OpenAI, GROQ
+from llm4free import Meta, OpenAI, GROQ
 
 # Free option - no API key needed
 ai = Meta()
@@ -98,7 +98,7 @@ ai = OpenAI(api_key="sk-...")
 ai = GROQ(api_key="...")
 
 # Automatic failover across providers
-from webscout.client import Client
+from llm4free.client import Client
 client = Client()
 response = client.chat.completions.create(
     model="auto",
@@ -109,20 +109,20 @@ print(response.choices[0].message.content)
 
 ```python
 # 🔍 Web Search Integration
-from webscout import DuckDuckGo
+from llm4free import DuckDuckGo
 
 engine = DuckDuckGo()
 results = engine.search("AI trends 2025")
 
 # Or use with AI for powerful research
-from webscout import Meta
+from llm4free import Meta
 ai = Meta()
 research = ai.search("Latest AI developments")
 ```
 
 ```python
 # 🖼️ Image Generation
-from webscout import StableDiffusion
+from llm4free import StableDiffusion
 
 generator = StableDiffusion(api_key="...")
 image = generator.generate_image("Beautiful sunset")
@@ -130,7 +130,7 @@ image = generator.generate_image("Beautiful sunset")
 
 ```python
 # ⚡ Streaming Responses
-from webscout import GROQ
+from llm4free import GROQ
 
 ai = GROQ(api_key="...")
 for chunk in ai.chat("Write a story", stream=True):
@@ -141,7 +141,7 @@ for chunk in ai.chat("Write a story", stream=True):
 
 ## 📊 Supported Providers
 
-Webscout supports **90+ AI providers**, including:
+LLM4Free supports **90+ AI providers**, including:
 
 | Category | Providers |
 |----------|-----------|
@@ -210,7 +210,7 @@ Troubleshooting
 
 | Resource | Link |
 |----------|------|
-| 📦 PyPI Package | https://pypi.org/project/webscout |
+| 📦 PyPI Package | https://pypi.org/project/llm4free |
 | 📍 GitHub Repository | https://github.com/OEvortex/Webscout |
 | 🐛 Issue Tracker | https://github.com/OEvortex/Webscout/issues |
 | 💬 GitHub Discussions | https://github.com/OEvortex/Webscout/discussions |
@@ -235,7 +235,7 @@ Troubleshooting
 ## 🆘 Need Help?
 
 ### Documentation
-- 🆕 **New to Webscout?** → [Getting Started](getting-started.md)
+- 🆕 **New to LLM4Free?** → [Getting Started](getting-started.md)
 - 💻 **API Questions?** → [API Reference](api-reference.md)
 - 🔧 **Setup Issues?** → [Troubleshooting](troubleshooting.md)
 - 🏗️ **Architecture?** → [Architecture Guide](architecture.md)
@@ -247,7 +247,7 @@ Troubleshooting
 
 ---
 
-## ✅ What Can You Do With Webscout?
+## ✅ What Can You Do With LLM4Free?
 
 ✨ **Chat with AI**
 - Multi-provider support with automatic failover
@@ -290,12 +290,12 @@ Troubleshooting
 
 ### Installation (1 minute)
 ```bash
-pip install webscout
+pip install llm4free
 ```
 
 ### First Example (1 minute)
 ```python
-from webscout import Meta
+from llm4free import Meta
 print(Meta().chat("Hello, world!"))
 ```
 
@@ -321,7 +321,7 @@ print(Meta().chat("Hello, world!"))
 
 ## 📜 License
 
-Webscout is released under the MIT License. See [LICENSE.md](../LICENSE.md) for details.
+LLM4Free is released under the MIT License. See [LICENSE.md](../LICENSE.md) for details.
 
 ---
 
@@ -334,4 +334,4 @@ Webscout is released under the MIT License. See [LICENSE.md](../LICENSE.md) for 
 ---
 
 *Last updated: January 24, 2026*  
-*[GitHub](https://github.com/OEvortex/Webscout) | [PyPI](https://pypi.org/project/webscout) | [Documentation](DOCUMENTATION_INDEX.md)*
+*[GitHub](https://github.com/OEvortex/Webscout) | [PyPI](https://pypi.org/project/llm4free) | [Documentation](DOCUMENTATION_INDEX.md)*

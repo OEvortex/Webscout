@@ -1,6 +1,6 @@
 # Scout: Advanced HTML Parser & Web Crawler
 > Last updated: 2025-11-16
-> Maintained by [Webscout](https://github.com/OEvortex/Webscout)
+> Maintained by [LLM4Free](https://github.com/OEvortex/Webscout)
 
 **🚀 The Most Advanced HTML Parser & Web Crawler for AI/LLM Data Collection**
 
@@ -31,7 +31,7 @@ Scout is an ultra-powerful, enterprise-grade HTML parsing and web crawling libra
 - [Quick Start](#-quick-start)
 - [Features](#-features)
 - [Advanced Usage](#-advanced-usage)
-- [Webscout Integration](#-webscout-integration)
+- [LLM4Free Integration](#-llm4free-integration)
 - [API Reference](#-api-reference)
 - [Dependencies](#-dependencies)
 - [Supported Python Versions](#-supported-python-versions)
@@ -40,10 +40,10 @@ Scout is an ultra-powerful, enterprise-grade HTML parsing and web crawling libra
 
 ## 📦 Installation
 
-Scout is included with Webscout:
+Scout is included with LLM4Free:
 
 ```bash
-pip install webscout
+pip install llm4free
 ```
 
 Or install the latest version from GitHub:
@@ -57,7 +57,7 @@ pip install git+https://github.com/OEvortex/Webscout.git
 ### Basic Parsing
 
 ```python
-from webscout.scout import Scout
+from llm4free.scout import Scout
 
 # Parse HTML content
 html_content = """
@@ -86,7 +86,7 @@ print(links.attrs('href'))  # Output: ['https://example.com']
 ### Web Crawling
 
 ```python
-from webscout.scout import ScoutCrawler
+from llm4free.scout import ScoutCrawler
 
 # Crawl a website with default settings
 crawler = ScoutCrawler('https://example.com')  # Default: max_pages=50
@@ -111,7 +111,7 @@ for page in crawled_pages:
 ### Text Analysis
 
 ```python
-from webscout.scout import Scout
+from llm4free.scout import Scout
 
 # Parse a webpage
 html = """<div><h1>Climate Change</h1><p>Email us at info@example.com or call 555-123-4567.</p>
@@ -250,7 +250,7 @@ print(f"Tables: {semantics['tables']['count']}")
 Scout includes a powerful concurrent web crawler for fetching and analyzing multiple pages:
 
 ```python
-from webscout.scout import ScoutCrawler
+from llm4free.scout import ScoutCrawler
 
 # Create a crawler with default settings
 crawler = ScoutCrawler('https://example.com')  # Default: max_pages=50
@@ -301,7 +301,7 @@ pretty_html = scout.prettify()
 Scout's search methods return a `ScoutSearchResult` object with powerful methods for processing results:
 
 ```python
-from webscout.scout import Scout
+from llm4free.scout import Scout
 
 scout = Scout(html_content)
 
@@ -327,7 +327,7 @@ analysis = paragraphs.analyze_text()
 ### URL Handling and Analysis
 
 ```python
-from webscout.scout import Scout
+from llm4free.scout import Scout
 
 scout = Scout(html_content)
 
@@ -342,7 +342,7 @@ for link in links:
 ### Metadata Extraction
 
 ```python
-from webscout.scout import Scout
+from llm4free.scout import Scout
 
 scout = Scout(html_content)
 
@@ -357,7 +357,7 @@ print(f"Twitter Card: {metadata['twitter_metadata']}")
 ### Content Hashing and Caching
 
 ```python
-from webscout.scout import Scout
+from llm4free.scout import Scout
 
 scout = Scout(html_content)
 
@@ -372,11 +372,11 @@ if not scout.cache('parsed_data'):
 cached_data = scout.cache('parsed_data')
 ```
 
-## 🔗 Webscout Integration
+## 🔗 LLM4Free Integration
 
-Scout is deeply integrated into Webscout's search engines, providing powerful HTML parsing capabilities without external dependencies.
+Scout is deeply integrated into LLM4Free's search engines, providing powerful HTML parsing capabilities without external dependencies.
 
-### Why Scout in Webscout?
+### Why Scout in LLM4Free?
 
 - **Zero Dependencies**: No need to install lxml separately for basic HTML parsing
 - **Enhanced Features**: Advanced CSS selectors, text analysis, web crawling, and more
@@ -387,7 +387,7 @@ Scout is deeply integrated into Webscout's search engines, providing powerful HT
 The search engines leverage Scout's powerful CSS selector capabilities:
 
 ```python
-from webscout.scout import Scout
+from llm4free.scout import Scout
 
 # Parse HTML response
 html = response.text
@@ -420,7 +420,7 @@ Scout's CSS selector engine supports:
 Beyond CSS selectors, Scout provides many other useful methods:
 
 ```python
-from webscout.scout import Scout
+from llm4free.scout import Scout
 
 soup = Scout(html)
 
@@ -512,7 +512,7 @@ Please make sure to update tests as appropriate.
 ---
 
 <div align="center">
-  <p>Made with ❤️ by the Webscout team</p>
+  <p>Made with ❤️ by the LLM4Free team</p>
   <p>
     <a href="https://github.com/OEvortex/Webscout">GitHub</a> •
     <a href="https://github.com/OEvortex/Webscout/wiki">Documentation</a> •

@@ -4,7 +4,7 @@
 > **Level:** Beginner  
 > **Time to learn:** 5 minutes
 
-Simple question-answer patterns with Webscout providers.
+Simple question-answer patterns with LLM4Free providers.
 
 ---
 
@@ -23,7 +23,7 @@ Simple question-answer patterns with Webscout providers.
 ### No API Key Needed
 
 ```python
-from webscout import Meta
+from llm4free import Meta
 
 # Initialize the provider
 ai = Meta()
@@ -46,7 +46,7 @@ and visual perception...
 ### With an API Key
 
 ```python
-from webscout import OpenAI
+from llm4free import OpenAI
 
 # Initialize with your API key
 client = OpenAI(api_key="sk-your-openai-api-key-here")
@@ -65,7 +65,7 @@ print(response)
 ### Provider 1: GROQ (Fast & Free Tier)
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 
 # Initialize - get key from https://console.groq.com/keys
 client = GROQ(api_key="gsk_your-groq-api-key-here")
@@ -86,7 +86,7 @@ for question in questions:
 ### Provider 2: Google Gemini
 
 ```python
-from webscout import GEMINI
+from llm4free import GEMINI
 
 # Initialize - get key from https://ai.google.dev/
 client = GEMINI(api_key="your-gemini-api-key-here")
@@ -99,7 +99,7 @@ print(response)
 ### Provider 3: Cohere
 
 ```python
-from webscout import Cohere
+from llm4free import Cohere
 
 # Initialize - get key from https://dashboard.cohere.com/
 client = Cohere(api_key="your-cohere-api-key-here")
@@ -112,7 +112,7 @@ print(response)
 ### Provider 4: OpenRouter (Multiple Models)
 
 ```python
-from webscout import OpenRouter
+from llm4free import OpenRouter
 
 # Initialize - get key from https://openrouter.ai/
 client = OpenRouter(api_key="your-openrouter-api-key-here")
@@ -132,7 +132,7 @@ print(response)
 ### Control Response Length
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 
 client = GROQ(api_key="your-api-key")
 
@@ -154,7 +154,7 @@ print("Long:", long)
 ### Control Creativity (Temperature)
 
 ```python
-from webscout import OpenAI
+from llm4free import OpenAI
 
 client = OpenAI(api_key="your-api-key")
 
@@ -176,7 +176,7 @@ print("Creative:", creative)
 ### Use System Prompts
 
 ```python
-from webscout import Meta
+from llm4free import Meta
 
 # The library doesn't directly support custom system prompts,
 # but you can engineer your prompt:
@@ -197,7 +197,7 @@ print(response)
 ### Save to File
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 from datetime import datetime
 
 client = GROQ(api_key="your-api-key")
@@ -230,7 +230,7 @@ print(f"Conversation saved to {filename}")
 
 ```python
 import json
-from webscout import Meta
+from llm4free import Meta
 
 ai = Meta()
 
@@ -267,7 +267,7 @@ with open("conversation.json", "r", encoding="utf-8") as f:
 ### Maintain Context
 
 ```python
-from webscout import Meta
+from llm4free import Meta
 
 # Enable conversation mode to maintain context
 ai = Meta(is_conversation=True)
@@ -294,7 +294,7 @@ print(f"AI: {response2}\n")
 ### Find the Best Provider for Your Task
 
 ```python
-from webscout import Meta, GROQ, OpenAI
+from llm4free import Meta, GROQ, OpenAI
 
 # Simulate having different API keys
 providers = {
@@ -326,8 +326,8 @@ for name, init_provider in providers.items():
 ### Safe Chat with Error Handling
 
 ```python
-from webscout import GROQ
-from webscout.exceptions import AIProviderError
+from llm4free import GROQ
+from llm4free.exceptions import AIProviderError
 
 def safe_chat(question: str, api_key: str) -> str:
     """
@@ -370,13 +370,13 @@ print(result)
 ## Example: Build a Simple Q&A Bot
 
 ```python
-from webscout import Meta
+from llm4free import Meta
 
 def main():
-    """Simple Q&A bot using Webscout."""
+    """Simple Q&A bot using LLM4Free."""
     
     print("=" * 60)
-    print("Welcome to Webscout Q&A Bot")
+    print("Welcome to LLM4Free Q&A Bot")
     print("Type 'quit' or 'exit' to stop")
     print("=" * 60)
     
@@ -415,7 +415,7 @@ python bot.py
 **Sample interaction:**
 ```
 ==========================================
-Welcome to Webscout Q&A Bot
+Welcome to LLM4Free Q&A Bot
 Type 'quit' or 'exit' to stop
 ==========================================
 
@@ -433,11 +433,11 @@ Goodbye!
 
 ## Common Issues
 
-### Issue: "ModuleNotFoundError: No module named 'webscout'"
+### Issue: "ModuleNotFoundError: No module named 'llm4free'"
 
 **Fix:**
 ```bash
-pip install -U webscout
+pip install -U llm4free
 ```
 
 ### Issue: "401 Unauthorized" with API key

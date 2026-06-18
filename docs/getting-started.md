@@ -1,4 +1,4 @@
-# Getting Started with Webscout
+# Getting Started with LLM4Free
 
 > **Last updated:** 2026-01-24  
 > **Status:** Current & maintained  
@@ -21,46 +21,46 @@
 
 ```bash
 # Basic installation
-pip install -U webscout
+pip install -U llm4free
 
 # With OpenAI-compatible API server
-pip install -U "webscout[api]"
+pip install -U "llm4free[api]"
 
 # Development installation
-pip install -U "webscout[dev]"
+pip install -U "llm4free[dev]"
 ```
 
 ### Option 2: Using uv (Recommended)
 
-[UV](https://github.com/astral-sh/uv) is a fast Python package manager that Webscout fully supports:
+[UV](https://github.com/astral-sh/uv) is a fast Python package manager that LLM4Free fully supports:
 
 ```bash
-# Install Webscout with uv
-uv add webscout
+# Install LLM4Free with uv
+uv add llm4free
 
 # Or install as a global tool
-uv tool install webscout
+uv tool install llm4free
 
 # Run immediately without installing
-uv run webscout --help
+uv run llm4free --help
 ```
 
 ### Option 3: Docker
 
 ```bash
 # Pull and run the official Docker image
-docker pull OEvortex/webscout:latest
-docker run -it OEvortex/webscout:latest
+docker pull OEvortex/llm4free:latest
+docker run -it OEvortex/llm4free:latest
 ```
 
 ### Verify Installation
 
 ```bash
 # Check version
-webscout version
+llm4free version
 
 # List available commands
-webscout --help
+llm4free --help
 ```
 
 ---
@@ -69,10 +69,10 @@ webscout --help
 
 ### Simple Chat (No API Key Required)
 
-Many Webscout providers work without authentication. Here's a quick example:
+Many LLM4Free providers work without authentication. Here's a quick example:
 
 ```python
-from webscout import Meta
+from llm4free import Meta
 
 # Initialize the provider
 ai = Meta()
@@ -92,7 +92,7 @@ Quantum computing is a type of computing that uses quantum bits...
 If you have an OpenAI API key:
 
 ```python
-from webscout import OpenAI
+from llm4free import OpenAI
 
 # Initialize with your API key
 client = OpenAI(api_key="sk-your-api-key-here")
@@ -106,19 +106,19 @@ print(response)
 
 ```python
 # GROQ - Fast inference
-from webscout import GROQ
+from llm4free import GROQ
 groq = GROQ(api_key="your-groq-api-key")
 response = groq.chat("Write a Python function to sort a list")
 print(response)
 
 # Cohere - Powerful language model
-from webscout import Cohere
+from llm4free import Cohere
 cohere = Cohere(api_key="your-cohere-api-key")
 response = cohere.chat("Summarize the theory of relativity")
 print(response)
 
 # Google Gemini
-from webscout import GEMINI
+from llm4free import GEMINI
 gemini = GEMINI(api_key="your-gemini-api-key")
 response = gemini.chat("What is machine learning?")
 print(response)
@@ -129,7 +129,7 @@ print(response)
 For longer responses, stream them in real-time:
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 
 client = GROQ(api_key="your-groq-api-key")
 
@@ -149,22 +149,22 @@ for chunk in response:
 
 ```bash
 # Basic text search
-webscout text -k "python programming"
+llm4free text -k "python programming"
 
 # Image search
-webscout images -k "mountain landscape"
+llm4free images -k "mountain landscape"
 
 # News search
-webscout news -k "AI breakthrough"
+llm4free news -k "AI breakthrough"
 
 # Weather
-webscout weather -l "New York"
+llm4free weather -l "New York"
 ```
 
 ### Search with Python
 
 ```python
-from webscout import DuckDuckGoSearch
+from llm4free import DuckDuckGoSearch
 
 # Initialize
 search = DuckDuckGoSearch()
@@ -181,7 +181,7 @@ for result in results:
 ### Using Different Search Engines
 
 ```python
-from webscout import BingSearch, YepSearch, YahooSearch
+from llm4free import BingSearch, YepSearch, YahooSearch
 
 # Bing
 bing = BingSearch()
@@ -203,7 +203,7 @@ results = yahoo.text("python frameworks")
 ### Text-to-Image Basics
 
 ```python
-from webscout.Provider.TTI import Pollinations
+from llm4free.Provider.TTI import Pollinations
 
 # Initialize
 image_generator = Pollinations()
@@ -220,7 +220,7 @@ print(f"Image saved to: {image_path}")
 ### Using Different TTI Providers
 
 ```python
-from webscout.Provider.TTI import Together, MiraGic
+from llm4free.Provider.TTI import Together, MiraGic
 
 # Together AI
 together = Together()
@@ -235,18 +235,18 @@ image = miragic.generate_image("A robot playing chess")
 
 ## Common Issues
 
-### Issue: "ModuleNotFoundError: No module named 'webscout'"
+### Issue: "ModuleNotFoundError: No module named 'llm4free'"
 
 **Solution:**
 ```bash
 # Ensure the package is installed
-pip install -U webscout
+pip install -U llm4free
 
 # Or if using uv
-uv add webscout
+uv add llm4free
 
 # If developing locally
-cd /path/to/Webscout
+cd /path/to/LLM4Free
 pip install -e .
 ```
 
@@ -270,7 +270,7 @@ client = OpenAI(api_key=" sk-your-key ") # Extra spaces!
 **Solution:**
 ```python
 import time
-from webscout import GROQ
+from llm4free import GROQ
 
 client = GROQ(api_key="your-api-key")
 
@@ -285,7 +285,7 @@ for i in range(10):
 
 **Solution:**
 ```python
-from webscout import OpenAI
+from llm4free import OpenAI
 
 # Increase timeout from default 30 seconds
 client = OpenAI(
@@ -304,7 +304,7 @@ except Exception as e:
 
 **Solution:**
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 
 client = GROQ(api_key="your-api-key")
 
@@ -335,7 +335,7 @@ else:
 
 1. **Conversational AI** — Maintain multi-turn conversations
    ```python
-   from webscout import Meta
+   from llm4free import Meta
    
    ai = Meta(is_conversation=True)
    ai.chat("Hello, what's your name?")
@@ -344,7 +344,7 @@ else:
 
 2. **Web Search Integration** — Combine search with AI
    ```python
-   from webscout import DuckDuckGoSearch, Meta
+   from llm4free import DuckDuckGoSearch, Meta
    
    search = DuckDuckGoSearch()
    results = search.text("latest AI news")
@@ -353,10 +353,10 @@ else:
    response = ai.chat(f"Summarize this news: {results[0]['body']}")
    ```
 
-3. **CLI Interface** — Use Webscout from terminal
+3. **CLI Interface** — Use LLM4Free from terminal
    ```bash
-   webscout text -k "python tips and tricks"
-   webscout images -k "nature photography" --size large
+   llm4free text -k "python tips and tricks"
+   llm4free images -k "nature photography" --size large
    ```
 
 ### 🔧 Customize Your Setup
@@ -373,34 +373,34 @@ else:
 
 ```bash
 # Interactive chat (if supported by provider)
-webscout chat
+llm4free chat
 
 # Show available AI providers
-webscout providers list
+llm4free providers list
 ```
 
 ### Search Commands
 
 ```bash
 # DuckDuckGo (default)
-webscout text -k "search term"
-webscout images -k "search term"
-webscout news -k "search term"
+llm4free text -k "search term"
+llm4free images -k "search term"
+llm4free news -k "search term"
 
 # Alternative engines
-webscout bing_text -k "search term"
-webscout yep_text -k "search term"
-webscout yahoo_text -k "search term"
+llm4free bing_text -k "search term"
+llm4free yep_text -k "search term"
+llm4free yahoo_text -k "search term"
 ```
 
 ### Utility Commands
 
 ```bash
 # Show version
-webscout version
+llm4free version
 
 # Help for specific command
-webscout text --help
+llm4free text --help
 ```
 
 ---
@@ -410,7 +410,7 @@ webscout text --help
 ### VSCode
 
 1. Install Python extension
-2. Select your Python interpreter (where you installed Webscout)
+2. Select your Python interpreter (where you installed LLM4Free)
 3. Create a `.code-workspace` file:
 
 ```json
@@ -427,14 +427,14 @@ webscout text --help
 1. **File → Settings → Project → Python Interpreter**
 2. Click the gear icon and select **Add...**
 3. Choose **Existing Environment** and select your Python interpreter
-4. Webscout should now autocomplete and provide IntelliSense
+4. LLM4Free should now autocomplete and provide IntelliSense
 
 ---
 
 ## Summary
 
 You're now ready to:
-- ✅ Use Webscout for chat and search
+- ✅ Use LLM4Free for chat and search
 - ✅ Generate images
 - ✅ Integrate with your projects
 - ✅ Troubleshoot basic issues

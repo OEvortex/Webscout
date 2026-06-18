@@ -389,18 +389,18 @@ uninstall()
 
 ---
 
-## 🔗 Integration with Webscout
+## 🔗 Integration with LLM4Free
 
-LitPrinter is deeply integrated into the Webscout ecosystem and used throughout the codebase.
+LitPrinter is deeply integrated into the LLM4Free ecosystem and used throughout the codebase.
 
-### Usage in Webscout
+### Usage in LLM4Free
 - **Provider debugging**: Used for debugging provider implementations and API calls
 - **CLI output**: Powers the rich command-line interface with styled output
 - **Search result formatting**: Formats search results with panels and styled content
 - **Error reporting**: Enhanced tracebacks for better debugging of issues
 
 ### Benefits of Integration
-- **Unified styling**: Consistent look and feel across all Webscout components
+- **Unified styling**: Consistent look and feel across all LLM4Free components
 - **Zero dependencies**: No need to install separate debugging libraries
 - **Enhanced debugging**: Better error messages and variable inspection throughout the ecosystem
 
@@ -467,7 +467,7 @@ Contributions are welcome! Please:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-See [Webscout contributing guidelines](https://github.com/OEvortex/Webscout/blob/main/CONTRIBUTING.md) for details.
+See [LLM4Free contributing guidelines](https://github.com/OEvortex/Webscout/blob/main/CONTRIBUTING.md) for details.
 
 ---
 
@@ -481,7 +481,7 @@ LitPrinter is released under the MIT License. See [LICENSE](https://github.com/O
   <p>Made with ❤️ by OEvortex</p>
   <p>
     <a href="https://github.com/OEvortex/litprinter">GitHub</a> •
-    <a href="https://github.com/OEvortex/Webscout">Webscout</a> •
+    <a href="https://github.com/OEvortex/Webscout">LLM4Free</a> •
     <a href="https://pypi.org/project/litprinter/">PyPI</a>
   </p>
 </div>

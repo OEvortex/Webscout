@@ -9,9 +9,9 @@ import os
 import pytest
 from typing import cast
 
-from webscout.Provider.Auth.Openai import OpenAI
-from webscout.Provider.Openai_comp.utils import ChatCompletion
-from webscout.exceptions import FailedToGenerateResponseError
+from llm4free.Provider.Auth.Openai import OpenAI
+from llm4free.Provider.Openai_comp.utils import ChatCompletion
+from llm4free.exceptions import FailedToGenerateResponseError
 
 
 # Skip all tests in this module if no API key is available
@@ -68,7 +68,7 @@ class TestOpenAI:
 
     def test_chat_completion_with_tools(self):
         """Test chat completion with tool calling."""
-        from webscout.AIbase import Tool
+        from llm4free.AIbase import Tool
         
         tools = [
             Tool(

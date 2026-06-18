@@ -1,6 +1,6 @@
 # LitAgent: The Advanced User Agent Generator
 > Last updated: 2025-12-19
-> Maintained by [Webscout](https://github.com/OEvortex/Webscout)
+> Maintained by [LLM4Free](https://github.com/OEvortex/Webscout)
 
 **🚀 Powerful, modern user agent generator to keep your requests fresh and undetectable!**
 
@@ -39,10 +39,10 @@ LitAgent is a high-performance, enterprise-grade user agent generation and manag
 
 ## 📦 Installation
 
-LitAgent is included with Webscout:
+LitAgent is included with LLM4Free:
 
 ```bash
-pip install webscout
+pip install llm4free
 ```
 
 Or install the latest version from GitHub:
@@ -54,7 +54,7 @@ pip install git+https://github.com/OEvortex/Webscout.git
 ## 🚀 Quick Start
 
 ```python
-from webscout import LitAgent
+from llm4free import LitAgent
 
 # Create a LitAgent instance
 agent = LitAgent()
@@ -204,7 +204,7 @@ Contributions are welcome! Please follow these steps:
 ---
 
 <div align="center">
-  <p>Made with ❤️ by the Webscout team</p>
+  <p>Made with ❤️ by the LLM4Free team</p>
   <p>
     <a href="https://github.com/OEvortex/Webscout">GitHub</a> •
     <a href="https://github.com/OEvortex/Webscout/wiki">Documentation</a> •

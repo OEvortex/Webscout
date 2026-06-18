@@ -1,0 +1,449 @@
+"""
+Request processing utilities for the LLM4Free API.
+"""
+
+import json
+import time
+import uuid
+from typing import Any, Dict, List, Optional
+
+from fastapi.responses import StreamingResponse
+from litprinter import ic
+from starlette.status import HTTP_422_UNPROCESSABLE_CONTENT, HTTP_500_INTERNAL_SERVER_ERROR
+
+from llm4free.Provider.Openai_comp.utils import (
+    ChatCompletion,
+    ChatCompletionMessage,
+    Choice,
+    CompletionUsage,
+)
+
+# from .simple_logger import log_api_request, get_client_ip, generate_request_id
+from .config import AppConfig
+from .exceptions import APIError, clean_text
+from .request_models import ChatCompletionRequest, Message
+
+
+def get_client_ip(request) -> str:
+    """Extract client IP address from request."""
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+
+    real_ip = request.headers.get("X-Real-IP")
+    if real_ip:
+        return real_ip.strip()
+
+    return getattr(request.client, "host", "unknown")
+
+
+def generate_request_id() -> str:
+    """Generate a unique request ID."""
+    return str(uuid.uuid4())
+
+
+async def log_api_request(
+    request_id: str,
+    ip_address: str,
+    model: str,
+    question: str,
+    answer: str,
+    **kwargs
+) -> bool:
+    """Convenience function to log API requests."""
+    ic(f"Request {request_id}: model={model}, ip={ip_address}")
+    return True
+
+
+async def log_request(request_id: str, ip_address: str, model_used: str, question: str,
+                     answer: str, response_time_ms: int, status_code: int = 200,
+                     error_message: Optional[str] = None, provider: Optional[str] = None, request_obj=None):
+    """Log API request."""
+    try:
+        # Use simple logger if request logging is enabled
+        if AppConfig.request_logging_enabled:
+            user_agent = None
+            if request_obj:
+                user_agent = request_obj.headers.get("user-agent")
+
+            await log_api_request(
+                request_id=request_id,
+                ip_address=ip_address,
+                model=model_used,
+                question=question,
+                answer=answer,
+                provider=provider,
+                processing_time_ms=response_time_ms,
+                error=error_message,
+                user_agent=user_agent
+            )
+    except Exception as e:
+        ic.configureOutput(prefix='ERROR| ')
+        ic(f"Failed to log request {request_id}: {e}")
+        # Don't raise exception to avoid breaking the main request flow
+
+
+def process_messages(messages: List[Message]) -> List[Dict[str, Any]]:
+    """Process and validate chat messages."""
+    processed_messages = []
+
+    for i, msg_in in enumerate(messages):
+        try:
+            message_dict_out: Dict[str, Any] = {"role": msg_in.role}
+
+            if msg_in.content is None:
+                message_dict_out["content"] = None
+            elif isinstance(msg_in.content, str):
+                message_dict_out["content"] = msg_in.content
+            else:  # List[MessageContentParts]
+                message_dict_out["content"] = [
+                    part.model_dump(exclude_none=True) for part in msg_in.content
+                ]
+
+            if msg_in.name:
+                message_dict_out["name"] = msg_in.name
+
+            processed_messages.append(message_dict_out)
+
+        except Exception as e:
+            raise APIError(
+                f"Invalid message at index {i}: {str(e)}",
+                HTTP_422_UNPROCESSABLE_CONTENT,
+                "invalid_request_error",
+                param=f"messages[{i}]"
+            )
+
+    return processed_messages
+
+
+def prepare_provider_params(chat_request: ChatCompletionRequest, model_name: str,
+                          processed_messages: List[Dict[str, Any]],
+                          provider_name: Optional[str] = None) -> Dict[str, Any]:
+    """Prepare parameters for the provider."""
+    provider_name_normalized = provider_name or ""
+
+    def normalize_text_messages(messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Normalize message content to plain text for text-only providers."""
+        normalized_messages: List[Dict[str, Any]] = []
+
+        for message in messages:
+            normalized_message = dict(message)
+            content = normalized_message.get("content")
+
+            if content is None:
+                normalized_message["content"] = ""
+            elif isinstance(content, str):
+                normalized_message["content"] = content
+            elif isinstance(content, list):
+                text_parts: List[str] = []
+                for part in content:
+                    if isinstance(part, str):
+                        text_parts.append(part)
+                    elif isinstance(part, dict):
+                        if isinstance(part.get("text"), str):
+                            text_parts.append(part["text"])
+                normalized_message["content"] = "".join(text_parts)
+            elif isinstance(content, dict) and isinstance(content.get("text"), str):
+                normalized_message["content"] = content["text"]
+            else:
+                normalized_message["content"] = str(content)
+
+            normalized_messages.append(normalized_message)
+
+        return normalized_messages
+
+    use_text_only_compat = provider_name_normalized in {"Toolbaz", "TypliAI"}
+    messages = normalize_text_messages(processed_messages) if use_text_only_compat else processed_messages
+
+    params = {
+        "model": model_name,
+        "messages": messages,
+        "stream": bool(chat_request.stream),
+    }
+
+    # Add optional parameters if present
+    optional_params = (
+        ["temperature", "max_tokens", "top_p"]
+        if use_text_only_compat
+        else [
+            "temperature",
+            "max_tokens",
+            "top_p",
+            "presence_penalty",
+            "frequency_penalty",
+            "stop",
+            "user",
+        ]
+    )
+
+    for param in optional_params:
+        value = getattr(chat_request, param, None)
+        if value is not None:
+            params[param] = value
+
+    return params
+
+
+async def handle_streaming_response(provider: Any, params: Dict[str, Any], request_id: str,
+                                  ip_address: str, question: str, model_name: str, start_time: float,
+                                  provider_name: Optional[str] = None, request_obj=None) -> StreamingResponse:
+    """Handle streaming chat completion response."""
+    collected_content = []
+
+    async def streaming():
+        nonlocal collected_content
+        try:
+            ic.configureOutput(prefix='DEBUG| ')
+            ic(f"Starting streaming response for request {request_id}")
+            completion_stream = provider.chat.completions.create(**params)
+
+            # Check if it's iterable (generator, iterator, or other iterable types)
+            if hasattr(completion_stream, '__iter__') and not isinstance(completion_stream, (str, bytes, dict)):
+                try:
+                    for chunk in completion_stream:
+                        # Standardize chunk format before sending
+                        model_dump = getattr(chunk, 'model_dump', None)
+                        model_dict = getattr(chunk, 'dict', None)
+                        if model_dump and callable(model_dump):  # Pydantic v2
+                            chunk_data = model_dump(exclude_none=True)
+                        elif model_dict and callable(model_dict):  # Pydantic v1
+                            chunk_data = model_dict(exclude_none=True)
+                        elif isinstance(chunk, dict):
+                            chunk_data = chunk
+                        else:
+                            chunk_data = chunk
+
+                        # Clean text content in the chunk to remove control characters
+                        if isinstance(chunk_data, dict) and 'choices' in chunk_data:
+                            for choice in chunk_data.get('choices', []):
+                                if isinstance(choice, dict):
+                                    # Handle delta for streaming
+                                    if 'delta' in choice and isinstance(choice['delta'], dict) and 'content' in choice['delta']:
+                                        content = choice['delta']['content']
+                                        if content:
+                                            collected_content.append(content)
+                                        choice['delta']['content'] = clean_text(content)
+                                    # Handle message for non-streaming
+                                    elif 'message' in choice and isinstance(choice['message'], dict) and 'content' in choice['message']:
+                                        content = choice['message']['content']
+                                        if content:
+                                            collected_content.append(content)
+                                        choice['message']['content'] = clean_text(content)
+
+                        yield f"data: {json.dumps(chunk_data, ensure_ascii=False)}\n\n"
+                except TypeError as te:
+                    ic.configureOutput(prefix='ERROR| ')
+                    ic(f"Error iterating over completion_stream: {te}")
+                    # Fall back to treating as non-generator response
+                    model_dump = getattr(completion_stream, 'model_dump', None)
+                    model_dict = getattr(completion_stream, 'dict', None)
+                    if model_dump and callable(model_dump):
+                        response_data = model_dump(exclude_none=True)
+                    elif model_dict and callable(model_dict):
+                        response_data = model_dict(exclude_none=True)
+                    else:
+                        response_data = completion_stream
+
+                    # Clean text content in the response
+                    if isinstance(response_data, dict) and 'choices' in response_data:
+                        for choice in response_data.get('choices', []):
+                            if isinstance(choice, dict):
+                                if 'delta' in choice and isinstance(choice['delta'], dict) and 'content' in choice['delta']:
+                                    content = choice['delta']['content']
+                                    if content:
+                                        collected_content.append(content)
+                                    choice['delta']['content'] = clean_text(content)
+                                elif 'message' in choice and isinstance(choice['message'], dict) and 'content' in choice['message']:
+                                    content = choice['message']['content']
+                                    if content:
+                                        collected_content.append(content)
+                                    choice['message']['content'] = clean_text(content)
+
+                    yield f"data: {json.dumps(response_data, ensure_ascii=False)}\n\n"
+            else:  # Non-generator response
+                model_dump = getattr(completion_stream, 'model_dump', None)
+                model_dict = getattr(completion_stream, 'dict', None)
+                if model_dump and callable(model_dump):
+                    response_data = model_dump(exclude_none=True)
+                elif model_dict and callable(model_dict):
+                    response_data = model_dict(exclude_none=True)
+                else:
+                    response_data = completion_stream
+
+                # Clean text content in the response
+                if isinstance(response_data, dict) and 'choices' in response_data:
+                    for choice in response_data.get('choices', []):
+                        if isinstance(choice, dict):
+                            if 'delta' in choice and isinstance(choice['delta'], dict) and 'content' in choice['delta']:
+                                content = choice['delta']['content']
+                                if content:
+                                    collected_content.append(content)
+                                choice['delta']['content'] = clean_text(content)
+                            elif 'message' in choice and isinstance(choice['message'], dict) and 'content' in choice['message']:
+                                content = choice['message']['content']
+                                if content:
+                                    collected_content.append(content)
+                                choice['message']['content'] = clean_text(content)
+
+                yield f"data: {json.dumps(response_data, ensure_ascii=False)}\n\n"
+
+        except Exception as e:
+            ic.configureOutput(prefix='ERROR| ')
+            ic(f"Error in streaming response for request {request_id}: {e}")
+            error_message = clean_text(str(e))
+            error_data = {
+                "error": {
+                    "message": error_message,
+                    "type": "server_error",
+                    "code": "streaming_error"
+                }
+            }
+            yield f"data: {json.dumps(error_data, ensure_ascii=False)}\n\n"
+
+            # Log error request
+            response_time_ms = int((time.time() - start_time) * 1000)
+            await log_request(
+                request_id=request_id,
+                ip_address=ip_address,
+                model_used=model_name,
+                question=question,
+                answer="",
+                response_time_ms=response_time_ms,
+                status_code=500,
+                error_message=error_message,
+                provider=provider_name,
+                request_obj=request_obj
+            )
+        finally:
+            yield "data: [DONE]\n\n"
+
+            # Log successful streaming request
+            if collected_content:
+                answer = "".join(collected_content)
+                response_time_ms = int((time.time() - start_time) * 1000)
+                await log_request(
+                    request_id=request_id,
+                    ip_address=ip_address,
+                    model_used=model_name,
+                    question=question,
+                    answer=answer,
+                    response_time_ms=response_time_ms,
+                    status_code=200,
+                    provider=provider_name,
+                    request_obj=request_obj
+                )
+
+    return StreamingResponse(streaming(), media_type="text/event-stream")
+
+
+async def handle_non_streaming_response(provider: Any, params: Dict[str, Any],
+                                      request_id: str, start_time: float, ip_address: str,
+                                      question: str, model_name: str, provider_name: Optional[str] = None,
+                                      request_obj=None) -> Dict[str, Any]:
+    """Handle non-streaming chat completion response."""
+    try:
+        ic.configureOutput(prefix='DEBUG| ')
+        ic(f"Starting non-streaming response for request {request_id}")
+        completion = provider.chat.completions.create(**params)
+
+        if completion is None:
+            # Return a valid OpenAI-compatible error response
+            error_response = ChatCompletion(
+                id=request_id,
+                created=int(time.time()),
+                model=params.get("model", "unknown"),
+                choices=[Choice(
+                    index=0,
+                    message=ChatCompletionMessage(role="assistant", content="No response generated."),
+                    finish_reason="error"
+                )],
+                usage=CompletionUsage(prompt_tokens=0, completion_tokens=0, total_tokens=0)
+            ).model_dump(exclude_none=True)
+
+            # Log error request
+            response_time_ms = int((time.time() - start_time) * 1000)
+            await log_request(
+                request_id=request_id,
+                ip_address=ip_address,
+                model_used=model_name,
+                question=question,
+                answer="No response generated.",
+                response_time_ms=response_time_ms,
+                status_code=500,
+                error_message="No response generated from provider",
+                provider=provider_name,
+                request_obj=request_obj
+            )
+
+            return error_response
+
+        # Standardize response format
+        if hasattr(completion, "model_dump"):  # Pydantic v2
+            response_data = completion.model_dump(exclude_none=True)
+        elif hasattr(completion, "dict"):  # Pydantic v1
+            response_data = completion.dict(exclude_none=True)
+        elif isinstance(completion, dict):
+            response_data = completion
+        else:
+            raise APIError(
+                "Invalid response format from provider",
+                HTTP_500_INTERNAL_SERVER_ERROR,
+                "provider_error"
+            )
+
+        # Extract answer from response and clean text content
+        answer = ""
+        if isinstance(response_data, dict) and 'choices' in response_data:
+            for choice in response_data.get('choices', []):
+                if isinstance(choice, dict) and 'message' in choice:
+                    if isinstance(choice['message'], dict) and 'content' in choice['message']:
+                        content = choice['message']['content']
+                        if content:
+                            answer = content
+                        choice['message']['content'] = clean_text(content)
+
+        elapsed = time.time() - start_time
+        response_time_ms = int(elapsed * 1000)
+        ic.configureOutput(prefix='INFO| ')
+        ic(f"Completed non-streaming request {request_id} in {elapsed:.2f}s")
+
+        # Log successful request
+        await log_request(
+            request_id=request_id,
+            ip_address=ip_address,
+            model_used=model_name,
+            question=question,
+            answer=answer,
+            response_time_ms=response_time_ms,
+            status_code=200,
+            provider=provider_name,
+            request_obj=request_obj
+        )
+
+        return response_data
+
+    except Exception as e:
+        ic.configureOutput(prefix='ERROR| ')
+        ic(f"Error in non-streaming response for request {request_id}: {e}")
+        error_message = clean_text(str(e))
+
+        # Log error request
+        response_time_ms = int((time.time() - start_time) * 1000)
+        await log_request(
+            request_id=request_id,
+            ip_address=ip_address,
+            model_used=model_name,
+            question=question,
+            answer="",
+            response_time_ms=response_time_ms,
+            status_code=500,
+            error_message=error_message,
+            provider=provider_name,
+            request_obj=request_obj
+        )
+
+        raise APIError(
+            f"Provider error: {error_message}",
+            HTTP_500_INTERNAL_SERVER_ERROR,
+            "provider_error"
+        )

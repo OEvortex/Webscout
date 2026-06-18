@@ -8,15 +8,15 @@ from rich.live import Live
 from rich.panel import Panel
 from rich.table import Table
 
-import webscout.Provider
-from webscout.AIbase import Provider as BaseProvider
-from webscout.Provider import __all__ as PROVIDER_ALL
+import llm4free.Provider
+from llm4free.AIbase import Provider as BaseProvider
+from llm4free.Provider import __all__ as PROVIDER_ALL
 
 console = Console()
 
 def list_providers():
     # Access the module directly from sys.modules to avoid shadowing
-    provider_module = sys.modules['webscout.Provider']
+    provider_module = sys.modules['llm4free.Provider']
     console.print(f"[yellow]DEBUG: PROVIDER_ALL has {len(PROVIDER_ALL)} items[/yellow]")
     console.print(f"[yellow]DEBUG: provider_module is {provider_module}[/yellow]")
     table = Table(title="Webscout Providers")
@@ -35,7 +35,7 @@ def list_providers():
     console.print(table)
 
 def run_provider(provider_name, model=None, prompt="Say 'Hello World' in one word", stream=False, api_key=None):
-    provider_module = sys.modules['webscout.Provider']
+    provider_module = sys.modules['llm4free.Provider']
     provider_cls = getattr(provider_module, provider_name, None)
     if not provider_cls:
         console.print(f"[red]Provider {provider_name} not found.[/red]")
@@ -94,7 +94,7 @@ def run_provider(provider_name, model=None, prompt="Say 'Hello World' in one wor
         console.print(traceback.format_exc())
 
 def run_all_providers(api_keys=None, prompt="Say 'Hello World' in one word"):
-    provider_module = sys.modules['webscout.Provider']
+    provider_module = sys.modules['llm4free.Provider']
     results = []
 
     console.print(f"[yellow]Testing all {len(PROVIDER_ALL)} providers...[/yellow]")
@@ -154,7 +154,7 @@ def run_all_providers(api_keys=None, prompt="Say 'Hello World' in one word"):
     console.print(table)
 
 def run_provider_models(provider_name, api_key=None, prompt="Say 'Hello World' in one word"):
-    provider_module = sys.modules['webscout.Provider']
+    provider_module = sys.modules['llm4free.Provider']
     provider_cls = getattr(provider_module, provider_name, None)
     if not provider_cls:
         console.print(f"[red]Provider {provider_name} not found.[/red]")

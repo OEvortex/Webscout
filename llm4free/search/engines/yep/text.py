@@ -1,0 +1,102 @@
+from __future__ import annotations
+
+import json
+from typing import List, Optional
+from urllib.parse import urlencode
+
+from llm4free.search.results import TextResult
+
+from .base import YepBase
+
+
+class YepSearch(YepBase):
+    name = "yep"
+    category = "text"
+    def run(self, *args, **kwargs) -> List[TextResult]:
+        keywords = args[0] if args else kwargs.get("keywords")
+        region = args[1] if len(args) > 1 else kwargs.get("region", "all")
+        safesearch = args[2] if len(args) > 2 else kwargs.get("safesearch", "moderate")
+        max_results = args[3] if len(args) > 3 else kwargs.get("max_results")
+
+        safe_search_map = {
+            "on": "on",
+            "moderate": "moderate",
+            "off": "off"
+        }
+        safe_setting = safe_search_map.get(safesearch.lower(), "moderate")
+
+        params = {
+            "client": "web",
+            "gl": region,
+            "limit": str(max_results) if max_results else "10",
+            "no_correct": "false",
+            "q": keywords,
+            "safeSearch": safe_setting,
+            "type": "web"
+        }
+
+        url = f"{self.base_url}?{urlencode(params)}"
+        try:
+            response = self.session.get(url)
+            response.raise_for_status()
+            # Handle gzip-compressed response from Yep API
+            raw_text = self._decompress_response(response.content)
+            raw_results = json.loads(raw_text)
+
+            formatted_results = self.format_results(raw_results)
+
+            if max_results:
+                return formatted_results[:max_results]
+            return formatted_results
+        except Exception as e:
+            resp = getattr(e, 'response', None)
+            if resp is not None:
+                 raise Exception(f"Yep search failed with status {resp.status_code}: {str(e)}")
+            else:
+                 raise Exception(f"Yep search failed: {str(e)}")
+
+    def format_results(self, raw_results: dict) -> List[TextResult]:
+        formatted_results = []
+
+        if not raw_results or len(raw_results) < 2:
+            return formatted_results
+
+        results = raw_results[1].get('results', [])
+
+        for result in results:
+            formatted_result = TextResult(
+                title=self._remove_html_tags(result.get("title", "")),
+                href=result.get("url", ""),
+                body=self._remove_html_tags(result.get("snippet", ""))
+            )
+
+            formatted_results.append(formatted_result)
+
+        return formatted_results
+
+    def _remove_html_tags(self, text: str) -> str:
+        result = ""
+        in_tag = False
+
+        for char in text:
+            if char == '<':
+                in_tag = True
+            elif char == '>':
+                in_tag = False
+            elif not in_tag:
+                result += char
+
+        replacements = {
+            '&nbsp;': ' ',
+            '&amp;': '&',
+            '&lt;': '<',
+            '&gt;': '>',
+            '&quot;': '"',
+            '&apos;': "'",
+        }
+
+        for entity, replacement in replacements.items():
+            result = result.replace(entity, replacement)
+
+        return result.strip()
+

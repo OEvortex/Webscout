@@ -1,8 +1,8 @@
 # 🚀 GitAPI: GitHub Data Extraction Module
 > Last updated: 2025-12-20
-> Maintained by [Webscout](https://github.com/OEvortex/Webscout)
+> Maintained by [LLM4Free](https://github.com/OEvortex/Webscout)
 
-Webscout's GitAPI module provides a powerful, lightweight GitHub data extraction toolkit within the Webscout Python package. It offers comprehensive tools for retrieving GitHub repository, user, organization, gist, and trending data without requiring authentication for public data access.
+LLM4Free's GitAPI module provides a powerful, lightweight GitHub data extraction toolkit within the LLM4Free Python package. It offers comprehensive tools for retrieving GitHub repository, user, organization, gist, and trending data without requiring authentication for public data access.
 
 ## Table of Contents
 
@@ -16,15 +16,15 @@ Webscout's GitAPI module provides a powerful, lightweight GitHub data extraction
 
 ## Core Components
 
-### [`gitapi.py`](../webscout/Extra/GitToolkit/gitapi/__init__.py:1)
+### [`gitapi.py`](../llm4free/Extra/GitToolkit/gitapi/__init__.py:1)
 
 The main GitHub API module that provides comprehensive GitHub data extraction capabilities.
 
 ```python
-from webscout.Extra.GitToolkit.gitapi import Repository, User, GitSearch, Gist, Organization, Trending
+from llm4free.Extra.GitToolkit.gitapi import Repository, User, GitSearch, Gist, Organization, Trending
 
 # Initialize and use GitHub data extraction
-repo = Repository("OE-LUCIFER", "Webscout")
+repo = Repository("OE-LUCIFER", "LLM4Free")
 info = repo.get_info()
 print(f"Stars: {info['stargazers_count']}")
 ```
@@ -84,16 +84,16 @@ print(f"Stars: {info['stargazers_count']}")
 
 ## Installation
 
-Install as part of the Webscout package:
+Install as part of the LLM4Free package:
 
 ```bash
-pip install webscout
+pip install llm4free
 ```
 
 Or install with UV package manager:
 
 ```bash
-uv add webscout
+uv add llm4free
 ```
 
 ## Quick Examples
@@ -101,9 +101,9 @@ uv add webscout
 ### Repository Operations
 
 ```python
-from webscout.Extra.GitToolkit.gitapi import Repository
+from llm4free.Extra.GitToolkit.gitapi import Repository
 
-repo = Repository("OE-LUCIFER", "Webscout")
+repo = Repository("OE-LUCIFER", "LLM4Free")
 
 # Get basic info
 info = repo.get_info()
@@ -125,7 +125,7 @@ print(f"Commits ahead: {diff['ahead_by']}")
 ### User Operations
 
 ```python
-from webscout.Extra.GitToolkit.gitapi import User
+from llm4free.Extra.GitToolkit.gitapi import User
 
 user = User("OE-LUCIFER")
 
@@ -142,12 +142,12 @@ for account in socials:
 ### Search Operations
 
 ```python
-from webscout.Extra.GitToolkit.gitapi import GitSearch
+from llm4free.Extra.GitToolkit.gitapi import GitSearch
 
 search = GitSearch()
 
 # Search repositories
-repos = search.search_repositories("webscout language:python stars:>100")
+repos = search.search_repositories("llm4free language:python stars:>100")
 print(f"Found {repos['total_count']} repos")
 
 # Search users
@@ -163,7 +163,7 @@ for topic in topics['items'][:5]:
 ### Gist Operations
 
 ```python
-from webscout.Extra.GitToolkit.gitapi import Gist
+from llm4free.Extra.GitToolkit.gitapi import Gist
 
 gist = Gist()
 
@@ -180,7 +180,7 @@ print(f"Files: {list(data['files'].keys())}")
 ### Organization Operations
 
 ```python
-from webscout.Extra.GitToolkit.gitapi import Organization
+from llm4free.Extra.GitToolkit.gitapi import Organization
 
 org = Organization("microsoft")
 
@@ -198,7 +198,7 @@ for repo in repos:
 ### Trending
 
 ```python
-from webscout.Extra.GitToolkit.gitapi import Trending
+from llm4free.Extra.GitToolkit.gitapi import Trending
 
 trending = Trending()
 
@@ -315,7 +315,7 @@ The `Trending` class provides access to GitHub trending data.
 GitAPI includes comprehensive error handling for GitHub API interactions.
 
 ```python
-from webscout.Extra.GitToolkit.gitapi import Repository, NotFoundError, RateLimitError
+from llm4free.Extra.GitToolkit.gitapi import Repository, NotFoundError, RateLimitError
 
 try:
     repo = Repository("nonexistent", "repo")
@@ -341,14 +341,14 @@ except Exception as e:
 
 ## Integration Guide
 
-### With Webscout Providers
+### With LLM4Free Providers
 
 ```python
-from webscout.Extra.GitToolkit.gitapi import Repository
-from webscout.Provider import ChatGPT
+from llm4free.Extra.GitToolkit.gitapi import Repository
+from llm4free.Provider import ChatGPT
 
 # Get repository data
-repo = Repository("OE-LUCIFER", "Webscout")
+repo = Repository("OE-LUCIFER", "LLM4Free")
 repo_info = repo.get_info()
 
 # Use with AI provider
@@ -361,7 +361,7 @@ print(response)
 
 ```python
 from fastapi import FastAPI, HTTPException
-from webscout.Extra.GitToolkit.gitapi import Repository, NotFoundError
+from llm4free.Extra.GitToolkit.gitapi import Repository, NotFoundError
 
 app = FastAPI()
 
@@ -389,12 +389,12 @@ async def get_repo_info(owner: str, repo: str):
 
 ```python
 import asyncio
-from webscout.Extra.GitToolkit.gitapi import Repository
+from llm4free.Extra.GitToolkit.gitapi import Repository
 
 async def get_multiple_repos():
     """Get information from multiple repositories asynchronously"""
     repos = [
-        ("OE-LUCIFER", "Webscout"),
+        ("OE-LUCIFER", "LLM4Free"),
         ("python", "cpython"),
         ("django", "django")
     ]
@@ -427,10 +427,10 @@ for data in repo_data:
 
 ```python
 import pandas as pd
-from webscout.Extra.GitToolkit.gitapi import Repository, GitSearch
+from llm4free.Extra.GitToolkit.gitapi import Repository, GitSearch
 
 # Get repository statistics
-repo = Repository("OE-LUCIFER", "Webscout")
+repo = Repository("OE-LUCIFER", "LLM4Free")
 contributors = repo.get_contributors()
 
 # Convert to DataFrame
@@ -448,7 +448,7 @@ print(contributors_df.sort_values("contributions", ascending=False).head(5))
 
 # Search and analyze repositories
 search = GitSearch()
-results = search.search_repositories("webscout language:python")
+results = search.search_repositories("llm4free language:python")
 
 repos_df = pd.DataFrame([
     {
@@ -460,7 +460,7 @@ repos_df = pd.DataFrame([
     for r in results["items"]
 ])
 
-print(f"\nWebscout-related repositories:")
+print(f"\nLLM4Free-related repositories:")
 print(repos_df.sort_values("stars", ascending=False).head(10))
 ```
 
@@ -468,7 +468,7 @@ print(repos_df.sort_values("stars", ascending=False).head(10))
 
 ```python
 import click
-from webscout.Extra.GitToolkit.gitapi import Repository, User, GitSearch
+from llm4free.Extra.GitToolkit.gitapi import Repository, User, GitSearch
 
 @click.group()
 def cli():
@@ -545,14 +545,14 @@ if __name__ == '__main__':
 
 ```python
 # For production use with authentication
-from webscout.Extra.GitToolkit.gitapi import Repository
+from llm4free.Extra.GitToolkit.gitapi import Repository
 
 # Initialize with authentication (if needed)
 repo = Repository("owner", "repo", token="your_github_token")
 
 # Use with retry logic for resilience
 import time
-from webscout.Extra.GitToolkit.gitapi import RateLimitError
+from llm4free.Extra.GitToolkit.gitapi import RateLimitError
 
 max_retries = 3
 retry_delay = 60  # seconds
@@ -574,9 +574,9 @@ for attempt in range(max_retries):
 ### Custom Query Parameters
 
 ```python
-from webscout.Extra.GitToolkit.gitapi import Repository
+from llm4free.Extra.GitToolkit.gitapi import Repository
 
-repo = Repository("OE-LUCIFER", "Webscout")
+repo = Repository("OE-LUCIFER", "LLM4Free")
 
 # Get commits with custom parameters
 commits = repo.get_commits(
@@ -598,10 +598,10 @@ issues = repo.get_issues(
 ### Data Transformation
 
 ```python
-from webscout.Extra.GitToolkit.gitapi import Repository
+from llm4free.Extra.GitToolkit.gitapi import Repository
 import json
 
-repo = Repository("OE-LUCIFER", "Webscout")
+repo = Repository("OE-LUCIFER", "LLM4Free")
 
 # Get repository data and transform it
 def transform_repo_data(repo_data):
@@ -635,11 +635,11 @@ print(json.dumps(transformed, indent=2))
 ### Integration with Other Tools
 
 ```python
-from webscout.Extra.GitToolkit.gitapi import Repository
-from webscout.sanitize import sanitize_stream
+from llm4free.Extra.GitToolkit.gitapi import Repository
+from llm4free.sanitize import sanitize_stream
 
 # Get repository README and process it
-repo = Repository("OE-LUCIFER", "Webscout")
+repo = Repository("OE-LUCIFER", "LLM4Free")
 readme = repo.get_readme()
 
 # Clean and process the README content
@@ -662,4 +662,4 @@ for line in clean_content:
   </p>
 </div>
 
-*This documentation covers the comprehensive functionality of the [`webscout.Extra.GitToolkit.gitapi`](../webscout/Extra/GitToolkit/gitapi/__init__.py:1) module. For the most up-to-date information, refer to the source code and inline documentation.*
+*This documentation covers the comprehensive functionality of the [`llm4free.Extra.GitToolkit.gitapi`](../llm4free/Extra/GitToolkit/gitapi/__init__.py:1) module. For the most up-to-date information, refer to the source code and inline documentation.*

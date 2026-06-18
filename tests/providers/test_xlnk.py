@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from unittest import TestCase, mock
 
-from webscout.Provider.TTS.xlnk import XLNKTTS
+from llm4free.Provider.TTS.xlnk import XLNKTTS
 
 
 class FakeResponse:
@@ -143,7 +143,7 @@ class TestXLNKTTS(TestCase):
     @mock.patch.object(XLNKTTS, "_submit_generation", side_effect=Exception("API Error"))
     def test_tts_api_error(self, mock_submit):
         """Test TTS handles API errors gracefully."""
-        from webscout import exceptions
+        from llm4free import exceptions
 
         with self.assertRaises(exceptions.FailedToGenerateResponseError):
             self.provider.tts("Hello world")

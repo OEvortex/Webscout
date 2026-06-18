@@ -8,9 +8,9 @@ Set GROQ_API_KEY environment variable to run these tests.
 import os
 import pytest
 
-from webscout.Provider.Auth.Groq import GROQ
-from webscout.Provider.Openai_comp.utils import ChatCompletion
-from webscout.exceptions import FailedToGenerateResponseError
+from llm4free.Provider.Auth.Groq import GROQ
+from llm4free.Provider.Openai_comp.utils import ChatCompletion
+from llm4free.exceptions import FailedToGenerateResponseError
 
 
 # Skip all tests in this module if no API key is available
@@ -57,7 +57,7 @@ class TestGROQ:
 
     def test_chat_completion_with_tools(self):
         """Test chat completion with tool calling."""
-        from webscout.AIbase import Tool
+        from llm4free.AIbase import Tool
         
         tools = [
             Tool(

@@ -1,5 +1,5 @@
 # =============================================================================
-# Docker Compose Configuration for Webscout API Server
+# Docker Compose Configuration for LLM4Free API Server
 # Provides multiple deployment scenarios and configurations
 # =============================================================================
 
@@ -7,63 +7,63 @@ version: '3.8'
 
 services:
   # -----------------------------------------------------------------------------
-  # Main Webscout API Server
+  # Main LLM4Free API Server
   # -----------------------------------------------------------------------------
-  webscout-api:
+  llm4free-api:
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        - WEBSCOUT_VERSION=latest
+        - LLM4FREE_VERSION=latest
         - BUILD_DATE=${BUILD_DATE:-}
         - VCS_REF=${VCS_REF:-}
         - VERSION=${VERSION:-latest}
-    image: webscout-api:latest
-    container_name: webscout-api
+    image: llm4free-api:latest
+    container_name: llm4free-api
     restart: unless-stopped
 
     # Environment configuration
     environment:
       # Server settings
-      - WEBSCOUT_HOST=0.0.0.0
-      - WEBSCOUT_PORT=8000
-      - WEBSCOUT_WORKERS=1
-      - WEBSCOUT_LOG_LEVEL=info
+      - LLM4FREE_HOST=0.0.0.0
+      - LLM4FREE_PORT=8000
+      - LLM4FREE_WORKERS=1
+      - LLM4FREE_LOG_LEVEL=info
       # FastAPI metadata
-      - WEBSCOUT_API_TITLE=Webscout OpenAI API
-      - WEBSCOUT_API_DESCRIPTION=OpenAI API compatible interface for various LLM providers
-      - WEBSCOUT_API_VERSION=0.2.0
-      - WEBSCOUT_API_DOCS_URL=/docs
-      - WEBSCOUT_API_REDOC_URL=/redoc
-      - WEBSCOUT_API_OPENAPI_URL=/openapi.json
-      - WEBSCOUT_DATA_DIR=/app/data
+      - LLM4FREE_API_TITLE=LLM4Free OpenAI API
+      - LLM4FREE_API_DESCRIPTION=OpenAI API compatible interface for various LLM providers
+      - LLM4FREE_API_VERSION=0.2.0
+      - LLM4FREE_API_DOCS_URL=/docs
+      - LLM4FREE_API_REDOC_URL=/redoc
+      - LLM4FREE_API_OPENAPI_URL=/openapi.json
+      - LLM4FREE_DATA_DIR=/app/data
 
       # Authentication and rate limiting settings
       # Note: These may not be fully supported by the server yet
       # Authentication is currently disabled by default in the server
 
       # Optional API configuration
-      # - WEBSCOUT_DEFAULT_PROVIDER=ChatGPT
-      # - WEBSCOUT_BASE_URL=/api/v1
+      # - LLM4FREE_DEFAULT_PROVIDER=ChatGPT
+      # - LLM4FREE_BASE_URL=/api/v1
 
       # Debug mode
-      - WEBSCOUT_DEBUG=false
-      - WEBSCOUT_REQUEST_LOGGING=true
+      - LLM4FREE_DEBUG=false
+      - LLM4FREE_REQUEST_LOGGING=true
 
       # Advanced settings
-      - WEBSCOUT_CORS_ORIGINS=*
+      - LLM4FREE_CORS_ORIGINS=*
 
     # Port mapping
     ports:
-      - "${WEBSCOUT_PORT:-8000}:${WEBSCOUT_PORT:-8000}"
+      - "${LLM4FREE_PORT:-8000}:${LLM4FREE_PORT:-8000}"
 
     # Volume mounts for persistence
     volumes:
-      - webscout-logs:/app/logs
-      - webscout-data:/app/data
+      - llm4free-logs:/app/logs
+      - llm4free-data:/app/data
 
     # Override default command for enhanced auth system
-    command: ["python", "-m", "webscout.server.server"]
+    command: ["python", "-m", "llm4free.server.server"]
 
     # Health check configuration
     healthcheck:
@@ -98,51 +98,51 @@ services:
   # -----------------------------------------------------------------------------
   # Production setup with Gunicorn (alternative configuration)
   # -----------------------------------------------------------------------------
-  webscout-api-production:
+  llm4free-api-production:
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        - WEBSCOUT_VERSION=latest
-    image: webscout-api:latest
-    container_name: webscout-api-prod
+        - LLM4FREE_VERSION=latest
+    image: llm4free-api:latest
+    container_name: llm4free-api-prod
     restart: unless-stopped
     profiles:
       - production
 
     environment:
-      - WEBSCOUT_HOST=0.0.0.0
-      - WEBSCOUT_PORT=8000
-      - WEBSCOUT_WORKERS=4  # More workers for production
-      - WEBSCOUT_LOG_LEVEL=warning
-      - WEBSCOUT_DEBUG=false
-      - WEBSCOUT_DATA_DIR=/app/data
+      - LLM4FREE_HOST=0.0.0.0
+      - LLM4FREE_PORT=8000
+      - LLM4FREE_WORKERS=4  # More workers for production
+      - LLM4FREE_LOG_LEVEL=warning
+      - LLM4FREE_DEBUG=false
+      - LLM4FREE_DATA_DIR=/app/data
 
       # Authentication settings (production defaults)
       # Note: These may not be fully supported by the server yet
       # Server currently defaults to no authentication
 
       # Security and performance
-      - WEBSCOUT_CORS_ORIGINS=*
-      - WEBSCOUT_REQUEST_LOGGING=true
+      - LLM4FREE_CORS_ORIGINS=*
+      - LLM4FREE_REQUEST_LOGGING=true
 
     ports:
-      - "${WEBSCOUT_PORT:-8000}:${WEBSCOUT_PORT:-8000}"
+      - "${LLM4FREE_PORT:-8000}:${LLM4FREE_PORT:-8000}"
 
     volumes:
-      - webscout-logs:/app/logs
-      - webscout-data:/app/data
+      - llm4free-logs:/app/logs
+      - llm4free-data:/app/data
 
     command: [
       "gunicorn",
-      "--bind", "0.0.0.0:${WEBSCOUT_PORT:-8000}",
+      "--bind", "0.0.0.0:${LLM4FREE_PORT:-8000}",
       "--workers", "4",
       "--worker-class", "uvicorn.workers.UvicornWorker",
       "--log-level", "warning",
       "--access-logfile", "/app/logs/access.log",
       "--error-logfile", "/app/logs/error.log",
       "--preload",
-      "webscout.server.server:create_app"
+      "llm4free.server.server:create_app"
     ]
 
     deploy:
@@ -157,47 +157,47 @@ services:
   # -----------------------------------------------------------------------------
   # Development setup with hot reload
   # -----------------------------------------------------------------------------
-  webscout-api-dev:
+  llm4free-api-dev:
     build:
       context: .
       dockerfile: Dockerfile
       target: builder  # Use builder stage for development
       args:
-        - WEBSCOUT_VERSION=latest
-    image: webscout-api:dev
-    container_name: webscout-api-dev
+        - LLM4FREE_VERSION=latest
+    image: llm4free-api:dev
+    container_name: llm4free-api-dev
     restart: unless-stopped
     profiles:
       - development
 
     environment:
-      - WEBSCOUT_HOST=0.0.0.0
-      - WEBSCOUT_PORT=8000
-      - WEBSCOUT_WORKERS=1
-      - WEBSCOUT_LOG_LEVEL=debug
-      - WEBSCOUT_DEBUG=true
-      - WEBSCOUT_DATA_DIR=/app/data
+      - LLM4FREE_HOST=0.0.0.0
+      - LLM4FREE_PORT=8000
+      - LLM4FREE_WORKERS=1
+      - LLM4FREE_LOG_LEVEL=debug
+      - LLM4FREE_DEBUG=true
+      - LLM4FREE_DATA_DIR=/app/data
 
       # Development settings
       # Note: Authentication settings may not be fully supported by the server yet
-      - WEBSCOUT_CORS_ORIGINS=*
-      - WEBSCOUT_REQUEST_LOGGING=true
+      - LLM4FREE_CORS_ORIGINS=*
+      - LLM4FREE_REQUEST_LOGGING=true
 
     ports:
-      - "${WEBSCOUT_PORT:-8000}:${WEBSCOUT_PORT:-8000}"
+      - "${LLM4FREE_PORT:-8000}:${LLM4FREE_PORT:-8000}"
 
     volumes:
       - .:/app  # Mount source code for development
-      - webscout-logs:/app/logs
-      - webscout-data:/app/data
+      - llm4free-logs:/app/logs
+      - llm4free-data:/app/data
 
     command: [
       "uvicorn",
       "--host", "0.0.0.0",
-      "--port", "${WEBSCOUT_PORT:-8000}",
+      "--port", "${LLM4FREE_PORT:-8000}",
       "--reload",
       "--log-level", "debug",
-      "webscout.server.server:create_app"
+      "llm4free.server.server:create_app"
     ]
 
   # -----------------------------------------------------------------------------
@@ -206,7 +206,7 @@ services:
   # -----------------------------------------------------------------------------
   nginx:
     image: nginx:alpine
-    container_name: webscout-nginx
+    container_name: llm4free-nginx
     restart: unless-stopped
     profiles:
       - nginx
@@ -220,10 +220,10 @@ services:
       # Mount your own nginx configuration file
       # - ./nginx.conf:/etc/nginx/nginx.conf:ro
       # - ./ssl:/etc/nginx/ssl:ro
-      - webscout-logs:/var/log/nginx
+      - llm4free-logs:/var/log/nginx
 
     depends_on:
-      - webscout-api
+      - llm4free-api
 
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/monitor/health"]
@@ -237,7 +237,7 @@ services:
   # -----------------------------------------------------------------------------
   prometheus:
     image: prom/prometheus:latest
-    container_name: webscout-prometheus
+    container_name: llm4free-prometheus
     restart: unless-stopped
     profiles:
       - monitoring
@@ -260,9 +260,9 @@ services:
 # Named volumes for data persistence
 # =============================================================================
 volumes:
-  webscout-logs:
+  llm4free-logs:
     driver: local
-  webscout-data:
+  llm4free-data:
     driver: local
   prometheus-data:
     driver: local
@@ -272,5 +272,5 @@ volumes:
 # =============================================================================
 networks:
   default:
-    name: webscout-network
+    name: llm4free-network
     driver: bridge

@@ -9,7 +9,7 @@ Set GEMINI_COOKIE_FILE environment variable to run these tests.
 import os
 import pytest
 
-from webscout.Provider.Auth.Gemini import GEMINI
+from llm4free.Provider.Auth.Gemini import GEMINI
 
 
 # Skip all tests in this module if no cookie file is available

@@ -6,7 +6,7 @@
 
 ## Overview
 
-This guide teaches you how to create custom providers for Webscout, enabling integration with new AI services or local models.
+This guide teaches you how to create custom providers for LLM4Free, enabling integration with new AI services or local models.
 
 ### Two Provider Types
 
@@ -43,14 +43,14 @@ AIbase.Provider (Abstract)
 
 ### Step 1: Create the Provider File
 
-Create `webscout/Provider/YourProvider.py`:
+Create `llm4free/Provider/YourProvider.py`:
 
 ```python
 from typing import Any, Dict, Generator, Optional, Union
 
 from curl_cffi.requests import Session
-from webscout.AIbase import Provider, Response
-from webscout import exceptions
+from llm4free.AIbase import Provider, Response
+from llm4free import exceptions
 
 
 class YourProvider(Provider):
@@ -183,10 +183,10 @@ class YourProvider(Provider):
 
 ### Step 3: Register Your Provider
 
-Edit `webscout/Provider/__init__.py` and add:
+Edit `llm4free/Provider/__init__.py` and add:
 
 ```python
-from webscout.Provider.YourProvider import YourProvider
+from llm4free.Provider.YourProvider import YourProvider
 
 # At the end of __all__ export list
 __all__ = [
@@ -203,7 +203,7 @@ Create `tests/providers/test_yourprovider.py`:
 import unittest
 from unittest.mock import MagicMock, patch
 
-from webscout.Provider.YourProvider import YourProvider
+from llm4free.Provider.YourProvider import YourProvider
 
 
 class TestYourProvider(unittest.TestCase):
@@ -213,7 +213,7 @@ class TestYourProvider(unittest.TestCase):
         self.api_key = "test-api-key"
         self.provider = YourProvider(api_key=self.api_key)
     
-    @patch('webscout.Provider.YourProvider.Session.post')
+    @patch('llm4free.Provider.YourProvider.Session.post')
     def test_chat(self, mock_post):
         """Test basic chat functionality."""
         # Mock API response
@@ -228,7 +228,7 @@ class TestYourProvider(unittest.TestCase):
         response = self.provider.chat("Hello")
         self.assertEqual(response, "Hello, World!")
     
-    @patch('webscout.Provider.YourProvider.Session.post')
+    @patch('llm4free.Provider.YourProvider.Session.post')
     def test_streaming(self, mock_post):
         """Test streaming response."""
         mock_response = MagicMock()
@@ -257,7 +257,7 @@ For services that use OpenAI-like APIs:
 ### Step 1: Understand the Base Class
 
 ```python
-from webscout.Provider.Openai_comp.base import OpenAICompatibleProvider
+from llm4free.Provider.Openai_comp.base import OpenAICompatibleProvider
 
 class YourOpenAIProvider(OpenAICompatibleProvider):
     """
@@ -309,7 +309,7 @@ class YourOpenAIProvider(OpenAICompatibleProvider):
         """
         Create a chat completion using OpenAI-compatible format.
         """
-        from webscout.Provider.Openai_comp.utils import ChatCompletion
+        from llm4free.Provider.Openai_comp.utils import ChatCompletion
         
         url = f"{self.base_url}/chat/completions"
         
@@ -476,7 +476,7 @@ Edit `Provider.md` and add:
 ```markdown
 ### YourProvider
 
-**Location:** `webscout/Provider/YourProvider.py`
+**Location:** `llm4free/Provider/YourProvider.py`
 
 **Description:** Brief description of what it does
 
@@ -486,7 +486,7 @@ Edit `Provider.md` and add:
 
 **Example:**
 ```python
-from webscout import YourProvider
+from llm4free import YourProvider
 provider = YourProvider(api_key="your-key")
 response = provider.chat("Hello")
 ```

@@ -1,8 +1,8 @@
-# OpenAI-Compatible API Server (`webscout.server`)
+# OpenAI-Compatible API Server (`llm4free.server`)
 > Last updated: 2025-12-20
-> Maintained by [Webscout](https://github.com/OEvortex/Webscout)
+> Maintained by [LLM4Free](https://github.com/OEvortex/Webscout)
 
-Webscout's [`webscout.server`](../webscout/server/__init__.py:1) module provides a comprehensive OpenAI-compatible API server that serves AI models in OpenAI-compatible API format, making it usable wherever OpenAI API is expected. This server allows you to use any supported Webscout provider with tools and applications designed for OpenAI's API. The server exposes the same providers available in the Webscout Python client (`client.py`) through HTTP endpoints, enabling integration with any OpenAI-compatible application. For client-side integrations, see [docs/client.md](client.md).
+LLM4Free's [`llm4free.server`](../llm4free/server/__init__.py:1) module provides a comprehensive OpenAI-compatible API server that serves AI models in OpenAI-compatible API format, making it usable wherever OpenAI API is expected. This server allows you to use any supported LLM4Free provider with tools and applications designed for OpenAI's API. The server exposes the same providers available in the LLM4Free Python client (`client.py`) through HTTP endpoints, enabling integration with any OpenAI-compatible application. For client-side integrations, see [docs/client.md](client.md).
 
 ## Table of Contents
 
@@ -19,12 +19,12 @@ Webscout's [`webscout.server`](../webscout/server/__init__.py:1) module provides
 
 ## Core Components
 
-### [`server.py`](../webscout/server/server.py:1)
+### [`server.py`](../llm4free/server/server.py:1)
 
 The main server module that creates and configures the FastAPI application with OpenAI-compatible endpoints.
 
 ```python
-from webscout.server.server import create_app, run_api, start_server
+from llm4free.server.server import create_app, run_api, start_server
 
 # Create FastAPI app
 app = create_app()
@@ -43,12 +43,12 @@ start_server(port=8000, host="0.0.0.0")
 
 ## Server Configuration
 
-### [`ServerConfig`](../webscout/server/config.py:22)
+### [`ServerConfig`](../llm4free/server/config.py:22)
 
 Centralized configuration management for the API server.
 
 ```python
-from webscout.server.config import ServerConfig
+from llm4free.server.config import ServerConfig
 
 config = ServerConfig()
 config.update(
@@ -75,12 +75,12 @@ config.update(
 
 ## Provider Management
 
-### [`providers.py`](../webscout/server/providers.py:1)
+### [`providers.py`](../llm4free/server/providers.py:1)
 
 Automatic provider discovery and management system with intelligent model resolution. The server dynamically discovers all OpenAI-compatible and TTI providers that don't require authentication.
 
 ```python
-from webscout.server.providers import (
+from llm4free.server.providers import (
     initialize_provider_map,
     initialize_tti_provider_map,
     resolve_provider_and_model,
@@ -101,7 +101,7 @@ provider = get_provider_instance(provider_class)
 ```
 
 **Key Features:**
-- Discovers providers automatically at startup from `webscout.Provider.OPENAI`
+- Discovers providers automatically at startup from `llm4free.Provider.OPENAI`
 - Initializes only providers with `required_auth=False`
 - Creates provider instance cache to avoid reinitialization overhead
 - Supports both chat completion and text-to-image provider discovery
@@ -219,13 +219,13 @@ The server provides a comprehensive CLI with environment variable support. The s
 
 ```bash
 # Basic startup
-webscout-server
+llm4free-server
 
 # Custom configuration
-webscout-server --port 8080 --host 127.0.0.1 --debug
+llm4free-server --port 8080 --host 127.0.0.1 --debug
 
 # Production settings
-webscout-server --port 8000 --host 0.0.0.0 --workers 4 --log-level info
+llm4free-server --port 8000 --host 0.0.0.0 --workers 4 --log-level info
 ```
 
 **CLI Options:**
@@ -240,7 +240,7 @@ webscout-server --port 8000 --host 0.0.0.0 --workers 4 --log-level info
 ### Programmatic Startup
 
 ```python
-from webscout.server import start_server, run_api
+from llm4free.server import start_server, run_api
 
 # Simple startup with defaults
 start_server()
@@ -270,13 +270,13 @@ run_api(
 
 ```bash
 # Using Python module directly
-python -m webscout.server.server
+python -m llm4free.server.server
 
 # Using Python module with arguments
-python -m webscout.server.server --port 8080 --debug
+python -m llm4free.server.server --port 8080 --debug
 
 # Direct execution
-python webscout/server/server.py --host localhost --port 9000
+python llm4free/server/server.py --host localhost --port 9000
 ```
 
 ### Docker Deployment
@@ -285,16 +285,16 @@ The server includes comprehensive Docker support with multiple deployment profil
 
 ```bash
 # Basic Docker deployment
-docker run -p 8000:8000 webscout-api
+docker run -p 8000:8000 llm4free-api
 
 # With custom configuration
-docker run -p 8080:8080 -e WEBSCOUT_PORT=8080 -e WEBSCOUT_LOG_LEVEL=debug webscout-api
+docker run -p 8080:8080 -e LLM4FREE_PORT=8080 -e LLM4FREE_LOG_LEVEL=debug llm4free-api
 
 # Using Docker Compose
-docker-compose up webscout-api
+docker-compose up llm4free-api
 
 # Production deployment with Gunicorn
-docker-compose --profile production up webscout-api-production
+docker-compose --profile production up llm4free-api-production
 ```
 
 For detailed Docker deployment instructions, see [DOCKER.md](../DOCKER.md).
@@ -432,28 +432,28 @@ The server supports comprehensive environment variable configuration through bot
 
 ```bash
 # Server settings
-export WEBSCOUT_HOST="0.0.0.0"          # Server host address (default: 0.0.0.0)
-export WEBSCOUT_PORT="8000"             # Server port (default: 8000)
-export WEBSCOUT_WORKERS="1"             # Number of worker processes (default: 1)
-export WEBSCOUT_LOG_LEVEL="info"        # Log level: debug, info, warning, error (default: info)
-export WEBSCOUT_DEBUG="false"           # Enable debug mode (default: false)
+export LLM4FREE_HOST="0.0.0.0"          # Server host address (default: 0.0.0.0)
+export LLM4FREE_PORT="8000"             # Server port (default: 8000)
+export LLM4FREE_WORKERS="1"             # Number of worker processes (default: 1)
+export LLM4FREE_LOG_LEVEL="info"        # Log level: debug, info, warning, error (default: info)
+export LLM4FREE_DEBUG="false"           # Enable debug mode (default: false)
 
 # Optional API configuration
-export WEBSCOUT_DEFAULT_PROVIDER="ChatGPT"  # Default provider (default: ChatGPT)
-export WEBSCOUT_BASE_URL="/api/v1"          # Base URL for API (optional)
-export WEBSCOUT_DATA_DIR="/app/data"        # Data directory (default: /app/data)
+export LLM4FREE_DEFAULT_PROVIDER="ChatGPT"  # Default provider (default: ChatGPT)
+export LLM4FREE_BASE_URL="/api/v1"          # Base URL for API (optional)
+export LLM4FREE_DATA_DIR="/app/data"        # Data directory (default: /app/data)
 
 # API Metadata (for documentation)
-export WEBSCOUT_API_TITLE="Webscout OpenAI API"                    # API title
-export WEBSCOUT_API_DESCRIPTION="OpenAI API compatible interface for various LLM providers"  # API description
-export WEBSCOUT_API_VERSION="0.2.0"           # API version
-export WEBSCOUT_API_DOCS_URL="/docs"          # Documentation URL (default: /docs)
-export WEBSCOUT_API_REDOC_URL="/redoc"        # ReDoc URL (default: /redoc)
-export WEBSCOUT_API_OPENAPI_URL="/openapi.json"  # OpenAPI spec URL (default: /openapi.json)
+export LLM4FREE_API_TITLE="LLM4Free OpenAI API"                    # API title
+export LLM4FREE_API_DESCRIPTION="OpenAI API compatible interface for various LLM providers"  # API description
+export LLM4FREE_API_VERSION="0.2.0"           # API version
+export LLM4FREE_API_DOCS_URL="/docs"          # Documentation URL (default: /docs)
+export LLM4FREE_API_REDOC_URL="/redoc"        # ReDoc URL (default: /redoc)
+export LLM4FREE_API_OPENAPI_URL="/openapi.json"  # OpenAPI spec URL (default: /openapi.json)
 
 # Advanced configuration
-export WEBSCOUT_REQUEST_LOGGING="true"        # Enable request logging (default: true)
-export WEBSCOUT_CORS_ORIGINS="*"              # CORS allowed origins (default: "*")
+export LLM4FREE_REQUEST_LOGGING="true"        # Enable request logging (default: true)
+export LLM4FREE_CORS_ORIGINS="*"              # CORS allowed origins (default: "*")
 ```
 
 ### Configuration Priority
@@ -467,12 +467,12 @@ For a complete list of supported environment variables and Docker deployment opt
 
 ## Error Handling
 
-### [`APIError`](../webscout/server/exceptions.py:26)
+### [`APIError`](../llm4free/server/exceptions.py:26)
 
 Comprehensive error handling with OpenAI-compatible error responses.
 
 ```python
-from webscout.server.exceptions import APIError
+from llm4free.server.exceptions import APIError
 from starlette.status import HTTP_400_BAD_REQUEST
 
 # Raise API error
@@ -542,10 +542,10 @@ The server provides comprehensive exception handling with detailed error respons
 The server includes custom UI elements and documentation features:
 
 ### Landing Page
-The root endpoint (`/`) serves a custom landing page with information about the Webscout API server and available features.
+The root endpoint (`/`) serves a custom landing page with information about the LLM4Free API server and available features.
 
 ### API Documentation
-- `/docs`: Custom Swagger UI with Webscout branding and GitHub footer
+- `/docs`: Custom Swagger UI with LLM4Free branding and GitHub footer
 - `/redoc`: ReDoc documentation interface
 - `/openapi.json`: OpenAPI specification
 
@@ -558,7 +558,7 @@ The documentation includes a custom CSS theme and a footer linking to the GitHub
 Since the server provides fully OpenAI-compatible APIs, you can replace OpenAI API URLs in existing applications:
 
 1. **Update base URL**: Change from `https://api.openai.com/v1` to `http://your-server:8000/v1`
-2. **Model names**: Use Webscout provider/model format (e.g., "ChatGPT/gpt-4o", "Toolbaz/grok-4.1-fast")
+2. **Model names**: Use LLM4Free provider/model format (e.g., "ChatGPT/gpt-4o", "Toolbaz/grok-4.1-fast")
 3. **API key**: API key is not required but may be expected by some clients
 
 ### Client Compatibility
@@ -582,7 +582,7 @@ When using provider/model pairs:
 If you encounter issues, check the server logs for detailed error messages. You can increase the log level to `debug` for more verbose output:
 
 ```bash
-webscout-server --log-level debug
+llm4free-server --log-level debug
 ```
 
 Common issues include:
@@ -593,8 +593,8 @@ Common issues include:
 
 For Docker-related issues, check container logs:
 ```bash
-docker logs webscout-api
-docker-compose logs webscout-api
+docker logs llm4free-api
+docker-compose logs llm4free-api
 ```
 
-*This documentation covers the comprehensive functionality of the [`webscout.server`](../webscout/server/__init__.py:1) module. For the most up-to-date information, refer to the source code and inline documentation.*
+*This documentation covers the comprehensive functionality of the [`llm4free.server`](../llm4free/server/__init__.py:1) module. For the most up-to-date information, refer to the source code and inline documentation.*

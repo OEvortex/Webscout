@@ -22,7 +22,7 @@
 The base class for all AI providers. Do not use this directly; instead, use the specific provider implementations.
 
 ```python
-from webscout.AIbase import Provider
+from llm4free.AIbase import Provider
 ```
 
 **Key attributes:**
@@ -69,7 +69,7 @@ def ask(
         AIProviderError: If the provider encounters an error
     
     Example:
-        >>> from webscout import Meta
+        >>> from llm4free import Meta
         >>> ai = Meta()
         >>> response = ai.ask("Hello")
         >>> print(response)
@@ -103,7 +103,7 @@ def chat(
         str | Generator[str, None, None]: The message response
     
     Example:
-        >>> from webscout import GROQ
+        >>> from llm4free import GROQ
         >>> client = GROQ(api_key="YOUR_KEY")
         >>> response = client.chat("Explain machine learning")
         >>> print(response)
@@ -166,7 +166,7 @@ client.chat(
 ### Streaming Examples
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 
 client = GROQ(api_key="your-api-key")
 
@@ -190,7 +190,7 @@ full_text = collect_stream(client.chat("Your prompt", stream=True))
 ### Conversation Management
 
 ```python
-from webscout import Meta
+from llm4free import Meta
 
 # Enable conversation mode to maintain context
 ai = Meta(is_conversation=True)
@@ -210,10 +210,10 @@ print(response2)
 
 ### Unified Client
 
-The `webscout.client` module provides a unified interface for interacting with all providers.
+The `llm4free.client` module provides a unified interface for interacting with all providers.
 
 ```python
-from webscout.client import Client
+from llm4free.client import Client
 
 # Create client
 client = Client()
@@ -268,7 +268,7 @@ For a complete list, see [Provider Documentation](../Provider.md)
 Base exception for provider-related errors.
 
 ```python
-from webscout.exceptions import AIProviderError
+from llm4free.exceptions import AIProviderError
 
 try:
     response = ai.chat("prompt")
@@ -279,8 +279,8 @@ except AIProviderError as e:
 ### Common Error Scenarios
 
 ```python
-from webscout import OpenAI
-from webscout.exceptions import AIProviderError
+from llm4free import OpenAI
+from llm4free.exceptions import AIProviderError
 
 client = OpenAI(api_key="invalid-key")
 
@@ -347,7 +347,7 @@ message = {
 ### Basic Chat
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 
 # Initialize
 client = GROQ(api_key="your-groq-api-key")
@@ -363,7 +363,7 @@ print(response)
 ### Multi-turn Conversation
 
 ```python
-from webscout import Meta
+from llm4free import Meta
 
 ai = Meta(is_conversation=True)
 
@@ -380,7 +380,7 @@ print(response)
 ### Image Generation
 
 ```python
-from webscout.Provider.TTI import Pollinations
+from llm4free.Provider.TTI import Pollinations
 
 generator = Pollinations()
 
@@ -396,8 +396,8 @@ print(f"Image saved to: {image_path}")
 ### Error Handling
 
 ```python
-from webscout import OpenAI
-from webscout.exceptions import AIProviderError
+from llm4free import OpenAI
+from llm4free.exceptions import AIProviderError
 
 client = OpenAI(api_key="your-key")
 
@@ -414,8 +414,8 @@ except Exception as e:
 ### With Decorators
 
 ```python
-from webscout import GROQ
-from webscout.AIutel import retry
+from llm4free import GROQ
+from llm4free.AIutel import retry
 
 @retry(max_attempts=3, delay=2)
 def chat_with_retry(prompt: str) -> str:
@@ -433,7 +433,7 @@ response = chat_with_retry("Your prompt here")
 ### Fallback to Multiple Providers
 
 ```python
-from webscout import GROQ, OpenAI, Meta
+from llm4free import GROQ, OpenAI, Meta
 
 def chat_with_fallback(prompt: str) -> str:
     providers = [
@@ -455,7 +455,7 @@ def chat_with_fallback(prompt: str) -> str:
 ### Batch Processing
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 
 client = GROQ(api_key="your-key")
 prompts = ["What is AI?", "Explain ML", "Define DL"]
@@ -473,7 +473,7 @@ for prompt in prompts:
 ### Streaming with Progress
 
 ```python
-from webscout import GROQ
+from llm4free import GROQ
 import sys
 
 client = GROQ(api_key="your-key")
