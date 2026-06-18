@@ -94,32 +94,37 @@ class _LLMModels:
             Dictionary mapping provider names to their available models
         """
         provider_models = {}
-        provider_package = importlib.import_module("llm4free.Provider")
-
-        for _, module_name, _ in pkgutil.iter_modules(provider_package.__path__):
+        provider_packages = ["llm4free.llm", "llm4free.AISEARCH", "llm4free.STT"]
+        
+        for package_name in provider_packages:
             try:
-                module = importlib.import_module(f"llm4free.{module_name}")
-                for attr_name in dir(module):
-                    attr = getattr(module, attr_name)
-                    if isinstance(attr, type) and issubclass(attr, Provider) and attr != Provider:
-                        get_models = getattr(attr, "get_models", None)
-                        available_models = getattr(attr, "AVAILABLE_MODELS", None)
-                        if get_models and callable(get_models):
-                            try:
-                                models = get_models()
-                                if isinstance(models, set):
-                                    models = list(models)
-                                provider_models[attr_name] = cast(List[str], models)
-                            except Exception:
-                                provider_models[attr_name] = []
-                        elif available_models is not None:
-                            # Convert any sets to lists to ensure serializability
-                            models = available_models
-                            if isinstance(models, set):
-                                models = list(models)
-                            provider_models[attr_name] = cast(List[str], models)
-                        else:
-                            provider_models[attr_name] = []
+                package = importlib.import_module(package_name)
+                for _, module_name, _ in pkgutil.iter_modules(package.__path__):
+                    try:
+                        module = importlib.import_module(f"{package_name}.{module_name}")
+                        for attr_name in dir(module):
+                            attr = getattr(module, attr_name)
+                            if isinstance(attr, type) and issubclass(attr, Provider) and attr != Provider:
+                                get_models = getattr(attr, "get_models", None)
+                                available_models = getattr(attr, "AVAILABLE_MODELS", None)
+                                if get_models and callable(get_models):
+                                    try:
+                                        models = get_models()
+                                        if isinstance(models, set):
+                                            models = list(models)
+                                        provider_models[attr_name] = cast(List[str], models)
+                                    except Exception:
+                                        provider_models[attr_name] = []
+                                elif available_models is not None:
+                                    # Convert any sets to lists to ensure serializability
+                                    models = available_models
+                                    if isinstance(models, set):
+                                        models = list(models)
+                                    provider_models[attr_name] = cast(List[str], models)
+                                else:
+                                    provider_models[attr_name] = []
+                    except Exception:
+                        pass
             except Exception:
                 pass
 
@@ -133,68 +138,73 @@ class _LLMModels:
             Dictionary mapping provider names to detailed provider information
         """
         provider_details = {}
-        provider_package = importlib.import_module("llm4free.Provider")
-
-        for _, module_name, _ in pkgutil.iter_modules(provider_package.__path__):
+        provider_packages = ["llm4free.llm", "llm4free.AISEARCH", "llm4free.STT"]
+        
+        for package_name in provider_packages:
             try:
-                module = importlib.import_module(f"llm4free.{module_name}")
-                for attr_name in dir(module):
-                    attr = getattr(module, attr_name)
-                    if isinstance(attr, type) and issubclass(attr, Provider) and attr != Provider:
-                        # Get available models
-                        models = []
-                        get_models = getattr(attr, "get_models", None)
-                        available_models = getattr(attr, "AVAILABLE_MODELS", None)
-                        if get_models and callable(get_models):
-                            try:
-                                fetched_models = get_models()
-                                if isinstance(fetched_models, set):
-                                    models = list(fetched_models)
-                                elif isinstance(fetched_models, (list, tuple)):
-                                    models = list(fetched_models)
-                                else:
-                                    models = [str(fetched_models)] if fetched_models else []
-                            except Exception:
+                package = importlib.import_module(package_name)
+                for _, module_name, _ in pkgutil.iter_modules(package.__path__):
+                    try:
+                        module = importlib.import_module(f"{package_name}.{module_name}")
+                        for attr_name in dir(module):
+                            attr = getattr(module, attr_name)
+                            if isinstance(attr, type) and issubclass(attr, Provider) and attr != Provider:
+                                # Get available models
                                 models = []
-                        elif available_models is not None:
-                            if isinstance(available_models, set):
-                                models = list(available_models)
-                            elif isinstance(available_models, (list, tuple)):
-                                models = list(available_models)
-                            else:
-                                models = [str(available_models)]
+                                get_models = getattr(attr, "get_models", None)
+                                available_models = getattr(attr, "AVAILABLE_MODELS", None)
+                                if get_models and callable(get_models):
+                                    try:
+                                        fetched_models = get_models()
+                                        if isinstance(fetched_models, set):
+                                            models = list(fetched_models)
+                                        elif isinstance(fetched_models, (list, tuple)):
+                                            models = list(fetched_models)
+                                        else:
+                                            models = [str(fetched_models)] if fetched_models else []
+                                    except Exception:
+                                        models = []
+                                elif available_models is not None:
+                                    if isinstance(available_models, set):
+                                        models = list(available_models)
+                                    elif isinstance(available_models, (list, tuple)):
+                                        models = list(available_models)
+                                    else:
+                                        models = [str(available_models)]
 
-                        # Sort models
-                        models = sorted(models)
+                                # Sort models
+                                models = sorted(models)
 
-                        # Get supported parameters (common OpenAI-compatible parameters)
-                        supported_params = [
-                            "model",
-                            "messages",
-                            "max_tokens",
-                            "temperature",
-                            "top_p",
-                            "presence_penalty",
-                            "frequency_penalty",
-                            "stop",
-                            "stream",
-                            "user",
-                        ]
+                                # Get supported parameters (common OpenAI-compatible parameters)
+                                supported_params = [
+                                    "model",
+                                    "messages",
+                                    "max_tokens",
+                                    "temperature",
+                                    "top_p",
+                                    "presence_penalty",
+                                    "frequency_penalty",
+                                    "stop",
+                                    "stream",
+                                    "user",
+                                ]
 
-                        # Get additional metadata
-                        metadata = {}
-                        if hasattr(attr, "__doc__") and attr.__doc__:
-                            metadata["description"] = attr.__doc__.strip().split("\n")[0]
+                                # Get additional metadata
+                                metadata = {}
+                                if hasattr(attr, "__doc__") and attr.__doc__:
+                                    metadata["description"] = attr.__doc__.strip().split("\n")[0]
 
-                        provider_details[attr_name] = {
-                            "name": attr_name,
-                            "class": attr.__name__,
-                            "module": module_name,
-                            "models": models,
-                            "parameters": supported_params,
-                            "model_count": len(models),
-                            "metadata": metadata,
-                        }
+                                provider_details[attr_name] = {
+                                    "name": attr_name,
+                                    "class": attr.__name__,
+                                    "module": module_name,
+                                    "models": models,
+                                    "parameters": supported_params,
+                                    "model_count": len(models),
+                                    "metadata": metadata,
+                                }
+                    except Exception:
+                        pass
             except Exception:
                 pass
 

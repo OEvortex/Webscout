@@ -47,7 +47,7 @@ from rich.progress import (
 from rich.table import Table
 
 console = Console()
-PROVIDER_MODULE_NAME = "llm4free.Provider"
+PROVIDER_PACKAGES = ["llm4free.llm", "llm4free.AISEARCH", "llm4free.STT", "llm4free.TTI", "llm4free.TTS"]
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -342,12 +342,26 @@ def main() -> int:
 
     default_key = api_keys.get("default")
 
-    # Load module
-    provider_mod = importlib.import_module(PROVIDER_MODULE_NAME)
+    # Load modules from all provider packages
+    provider_classes = {}
     aibase_mod = importlib.import_module("llm4free.AIbase")
     base_cls = aibase_mod.Provider
-
-    names = list(getattr(provider_mod, "__all__", []))
+    
+    for package_name in PROVIDER_PACKAGES:
+        try:
+            package = importlib.import_module(package_name)
+            all_exports = getattr(package, "__all__", [])
+            for name in all_exports:
+                try:
+                    cls = getattr(package, name)
+                    if inspect.isclass(cls) and issubclass(cls, base_cls):
+                        provider_classes[name] = cls
+                except AttributeError:
+                    pass
+        except Exception:
+            pass
+    
+    names = list(provider_classes.keys())
     if args.only:
         wanted = {n.strip() for n in args.only.split(",") if n.strip()}
         names = [n for n in names if n in wanted]
@@ -370,7 +384,7 @@ def main() -> int:
     with progress:
         task = progress.add_task("testing", total=len(names))
         for name in names:
-            cls = getattr(provider_mod, name, None)
+            cls = provider_classes.get(name)
             if cls is None:
                 results.append(ProviderResult(
                     name=name, status=INIT_FAILED, auth_required=False,

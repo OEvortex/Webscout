@@ -17,12 +17,12 @@ from llm4free.exceptions import AllProvidersFailure
 
 def load_providers() -> Tuple[Dict[str, Type[Provider]], set]:
     """
-    Dynamically loads all Provider classes from the `llm4free.Provider` package.
+    Dynamically loads all Provider classes from llm4free packages.
 
-    This function iterates through the modules in the `llm4free.Provider` package,
-    imports each module, and inspects its attributes to identify classes that
-    inherit from the `Provider` base class. It also identifies providers that
-    require special authentication parameters.
+    This function iterates through the modules in the llm4free.llm, llm4free.AISEARCH,
+    llm4free.STT, llm4free.TTI, and llm4free.TTS packages, imports each module,
+    and inspects its attributes to identify classes that inherit from the Provider base class.
+    It also identifies providers that require special authentication parameters.
 
     Returns:
         Tuple[Dict[str, Type[Provider]], set]: A tuple containing two elements:
@@ -31,26 +31,32 @@ def load_providers() -> Tuple[Dict[str, Type[Provider]], set]:
     """
     provider_map: Dict[str, Type[Provider]] = {}
     api_key_providers: set = set()
-    provider_package = importlib.import_module("llm4free.Provider")
-
-    for _, module_name, _ in pkgutil.iter_modules(provider_package.__path__):
+    
+    provider_packages = ["llm4free.llm", "llm4free.AISEARCH", "llm4free.STT", "llm4free.TTI", "llm4free.TTS"]
+    
+    for package_name in provider_packages:
         try:
-            module = importlib.import_module(f"llm4free.{module_name}")
-            for attr_name in dir(module):
-                attr = getattr(module, attr_name)
-                if isinstance(attr, type) and issubclass(attr, Provider) and attr != Provider:
-                    p_name = attr_name.upper()
-                    provider_map[p_name] = attr
+            package = importlib.import_module(package_name)
+            for _, module_name, _ in pkgutil.iter_modules(package.__path__):
+                try:
+                    module = importlib.import_module(f"{package_name}.{module_name}")
+                    for attr_name in dir(module):
+                        attr = getattr(module, attr_name)
+                        if isinstance(attr, type) and issubclass(attr, Provider) and attr != Provider:
+                            p_name = attr_name.upper()
+                            provider_map[p_name] = attr
 
-                    if hasattr(attr, "required_auth") and attr.required_auth:
-                        api_key_providers.add(p_name)
-                    else:
-                        try:
-                            sig = inspect.signature(attr.__init__).parameters
-                            if any(k in sig for k in ('api_key', 'cookie_file', 'cookie_path', 'access_token')):
+                            if hasattr(attr, "required_auth") and attr.required_auth:
                                 api_key_providers.add(p_name)
-                        except (ValueError, TypeError):
-                            pass
+                            else:
+                                try:
+                                    sig = inspect.signature(attr.__init__).parameters
+                                    if any(k in sig for k in ('api_key', 'cookie_file', 'cookie_path', 'access_token')):
+                                        api_key_providers.add(p_name)
+                                except (ValueError, TypeError):
+                                    pass
+                except Exception:
+                    pass
         except Exception:
             pass
     return provider_map, api_key_providers

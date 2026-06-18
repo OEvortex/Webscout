@@ -139,7 +139,6 @@ __all__ = [
     "Upstage",
     "WiseCat",
     "Writecream",
-    "YEPCHAT",
     "Zenmux",
     "Sambanova",
     "TypliAI",
