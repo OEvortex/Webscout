@@ -18,19 +18,50 @@ from llm4free.llm.utils import (
     Choice,
     ChoiceDelta,
     CompletionUsage,
-    count_tokens,
     format_prompt,
 )
 
 from llm4free.litagent import LitAgent
 
-APP_ID = 8685039810546182577
 CHAT_FN_INDEX = 1
 SEND_TRIGGER_ID = 19
+MODEL_NAME = "Apriel-1.6-15B-Thinker"
 
 
 def uuid_hex_short() -> str:
     return uuid.uuid4().hex[:12]
+
+
+def _extract_full_text(data_head: list) -> str:
+    """Extract full assistant content from a list of message dicts."""
+    return "".join(
+        str(m.get("content") or "")
+        for m in data_head
+        if isinstance(m, dict) and m.get("role") in (None, "assistant")
+    )
+
+
+def _process_differential_ops(ops: list, message_contents: Dict[int, str]) -> str:
+    """Process Gradio 5.x differential update operations and return combined full text."""
+    for op in ops:
+        if not isinstance(op, list) or len(op) < 3:
+            continue
+        cmd = op[0]
+        if cmd != "append":
+            continue
+        field_path = op[1]
+        text = op[2]
+        if (
+            isinstance(field_path, list)
+            and len(field_path) >= 2
+            and field_path[1] == "content"
+            and isinstance(text, str)
+        ):
+            msg_idx = field_path[0]
+            message_contents[msg_idx] = message_contents.get(msg_idx, "") + text
+    return "".join(
+        message_contents.get(i, "") for i in sorted(message_contents.keys())
+    )
 
 
 class Completions(BaseCompletions):
@@ -86,6 +117,7 @@ class Completions(BaseCompletions):
                 raise IOError(f"Apriel stream failed: {resp.status_code}")
 
             emitted_length = 0
+            message_contents: Dict[int, str] = {}
             for raw_line in resp.iter_lines():
                 if not raw_line:
                     continue
@@ -100,6 +132,23 @@ class Completions(BaseCompletions):
                     continue
                 msg = evt.get("msg")
                 if msg == "process_completed":
+                    output = evt.get("output") or {}
+                    data = output.get("data") or []
+                    if data and isinstance(data[0], list):
+                        full = _extract_full_text(data[0])
+                        if full and len(full) > emitted_length:
+                            delta_text = full[emitted_length:]
+                            if delta_text:
+                                emitted_length = len(full)
+                                delta = ChoiceDelta(content=delta_text)
+                                choice = Choice(index=0, delta=delta, finish_reason=None)
+                                chunk = ChatCompletionChunk(
+                                    id=request_id,
+                                    choices=[choice],
+                                    created=created_time,
+                                    model=MODEL_NAME,
+                                )
+                                yield chunk
                     break
                 if msg != "process_generating":
                     continue
@@ -110,25 +159,24 @@ class Completions(BaseCompletions):
                 head = data[0]
                 if not isinstance(head, list):
                     continue
-                messages = [m for m in head if isinstance(m, dict)]
-                full = "".join(
-                    str(m.get("content") or "")
-                    for m in messages
-                    if m.get("role") in (None, "assistant")
-                )
+
+                if head and isinstance(head[0], dict):
+                    full = _extract_full_text(head)
+                else:
+                    full = _process_differential_ops(head, message_contents)
+
                 delta_text = full[emitted_length:]
-                if not delta_text:
-                    continue
-                emitted_length = len(full)
-                delta = ChoiceDelta(content=delta_text)
-                choice = Choice(index=0, delta=delta, finish_reason=None)
-                chunk = ChatCompletionChunk(
-                    id=request_id,
-                    choices=[choice],
-                    created=created_time,
-                    model="Apriel-1.6-15B-Thinker",
-                )
-                yield chunk
+                if delta_text:
+                    emitted_length = len(full)
+                    delta = ChoiceDelta(content=delta_text)
+                    choice = Choice(index=0, delta=delta, finish_reason=None)
+                    chunk = ChatCompletionChunk(
+                        id=request_id,
+                        choices=[choice],
+                        created=created_time,
+                        model=MODEL_NAME,
+                    )
+                    yield chunk
 
             delta = ChoiceDelta(content=None)
             choice = Choice(index=0, delta=delta, finish_reason="stop")
@@ -136,7 +184,7 @@ class Completions(BaseCompletions):
                 id=request_id,
                 choices=[choice],
                 created=created_time,
-                model="Apriel-1.6-15B-Thinker",
+                model=MODEL_NAME,
             )
             yield chunk
         except CurlError as e:
@@ -163,7 +211,7 @@ class Completions(BaseCompletions):
                 id=request_id,
                 choices=[choice],
                 created=created_time,
-                model="Apriel-1.6-15B-Thinker",
+                model=MODEL_NAME,
                 usage=usage,
             )
             return completion
@@ -178,7 +226,7 @@ class Chat(BaseChat):
 
 class Apriel(OpenAICompatibleProvider):
     required_auth = False
-    AVAILABLE_MODELS = ["Apriel-1.6-15B-Thinker"]
+    AVAILABLE_MODELS = [MODEL_NAME]
 
     def __init__(self, timeout: int = 30):
         self.timeout = timeout
@@ -197,7 +245,7 @@ class Apriel(OpenAICompatibleProvider):
         self.session.headers.update(self.headers)
         self.chat = Chat(self)
 
-    def _join_queue(self, session_hash: str, message: str) -> Optional[str]:
+    def _join_queue(self, session_hash: str, message: str) -> None:
         url = f"{self.api_endpoint}/gradio_api/queue/join"
         payload = {
             "data": [
@@ -213,10 +261,6 @@ class Apriel(OpenAICompatibleProvider):
         resp = self.session.post(url, json=payload, timeout=self.timeout)
         if not resp.ok:
             raise IOError(f"queue/join failed: {resp.status_code}")
-        try:
-            return resp.json().get("event_id")
-        except Exception:
-            return None
 
     @property
     def models(self) -> SimpleModelList:

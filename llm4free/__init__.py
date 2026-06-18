@@ -1,12 +1,10 @@
 # llm4free/__init__.py
 
-from .AIauto import *  # noqa: F403
 from .AIutel import *  # noqa: F403
 from .client import Client
 from .Extra import *  # noqa: F403
 from llm4free.litagent import LitAgent
 from .models import model
-from .optimizers import *
 from .llm import *
 from .AISEARCH import *
 from .STT import *  # noqa: F403

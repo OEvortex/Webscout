@@ -3,9 +3,6 @@ import time
 
 # --- Utility Decorators ---
 from typing import Callable, Optional
-
-from .conversation import Conversation  # noqa: E402,F401
-from .optimizers import Optimizers  # noqa: E402,F401
 from .prompt_manager import AwesomePrompts  # noqa: E402,F401
 from .sanitize import *  # noqa: E402, F401, F403
 

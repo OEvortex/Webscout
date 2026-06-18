@@ -1,7 +1,7 @@
 # This file marks the directory as a Python package.
 # Static imports for all llm provider modules
 #
-# 2026-06-12: Ayle, Elmo, SonusAI, LLMChatCo, Meta were moved to
+# 2026-06-12: Ayle, Elmo, SonusAI, Meta were moved to
 # llm4free/Provider/UNFINISHED/ (their upstreams went away).
 
 # Base classes and utilities
@@ -70,7 +70,6 @@ from llm4free.llm.apriel import Apriel
 from llm4free.llm.artingai import ArtingAI
 from llm4free.llm.essentialai import EssentialAI
 from llm4free.llm.freeai import FreeAI
-from llm4free.llm.jadve import JadveOpenAI
 from llm4free.llm.turboseek import TurboSeek
 from llm4free.llm.wisecat import WiseCat
 from llm4free.llm.writecream import Writecream
@@ -109,7 +108,6 @@ __all__ = [
     "DeepAI",
     "EssentialAI",
     "FreeAI",
-    "JadveOpenAI",
     "TurboSeek",
     "PiAI",
     "TogetherAI",

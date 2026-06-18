@@ -188,6 +188,9 @@ class ArtingAI(OpenAICompatibleProvider):
         "gpt-4o-mini",
         "o4-mini",
         "gemini-2.5-pro",
+        "gemini-3-pro-preview",
+        "deepseek-chat",
+        "deepseek-reasoner",
     ]
 
     def __init__(self, timeout: int = 30):

@@ -17,10 +17,14 @@ from llm4free.llm.utils import (
     Choice,
     ChoiceDelta,
     CompletionUsage,
-    format_prompt,
+    count_tokens,
 )
 
 from llm4free.litagent import LitAgent
+
+BOLD = "\033[1m"
+RED = "\033[91m"
+RESET = "\033[0m"
 
 
 class Completions(BaseCompletions):
@@ -42,10 +46,10 @@ class Completions(BaseCompletions):
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
         model = self._client.convert_model_name(model)
 
-        payload = {
+        payload: Dict[str, Any] = {
             "model": model,
             "messages": messages,
-            "stream": True,
+            "stream": stream,
         }
 
         request_id = f"chatcmpl-{uuid.uuid4()}"
@@ -70,10 +74,6 @@ class Completions(BaseCompletions):
         try:
             response = self._client.session.post(
                 self._client.url,
-                headers={
-                    "Authorization": "Bearer ***",
-                    "Content-Type": "application/json",
-                },
                 json=payload,
                 stream=True,
                 timeout=timeout or self._client.timeout,
@@ -82,7 +82,6 @@ class Completions(BaseCompletions):
             )
             response.raise_for_status()
 
-            streaming_text = []
             for raw_line in response.iter_lines():
                 if raw_line is None:
                     continue
@@ -95,8 +94,9 @@ class Completions(BaseCompletions):
                 if payload_str == "[DONE]":
                     break
                 try:
-                    evt = __import__("json").loads(payload_str)
-                except __import__("json").JSONDecodeError:
+                    import json
+                    evt = json.loads(payload_str)
+                except json.JSONDecodeError:
                     continue
                 choices = evt.get("choices") or []
                 if not choices:
@@ -105,7 +105,6 @@ class Completions(BaseCompletions):
                 text = delta.get("content")
                 if not text:
                     continue
-                streaming_text.append(text)
                 delta_obj = ChoiceDelta(content=text)
                 choice = Choice(index=0, delta=delta_obj, finish_reason=None)
                 chunk = ChatCompletionChunk(
@@ -118,13 +117,12 @@ class Completions(BaseCompletions):
 
             delta = ChoiceDelta(content=None)
             choice = Choice(index=0, delta=delta, finish_reason="stop")
-            chunk = ChatCompletionChunk(
+            yield ChatCompletionChunk(
                 id=request_id,
                 choices=[choice],
                 created=created_time,
                 model=model,
             )
-            yield chunk
         except CurlError as e:
             raise IOError(f"FreeAI request failed: {e}") from e
 
@@ -138,13 +136,8 @@ class Completions(BaseCompletions):
         proxies: Optional[Dict[str, str]] = None,
     ) -> ChatCompletion:
         try:
-            payload["stream"] = False
             response = self._client.session.post(
                 self._client.url,
-                headers={
-                    "Authorization": "Bearer ***",
-                    "Content-Type": "application/json",
-                },
                 json=payload,
                 timeout=timeout or self._client.timeout,
                 proxies=cast(Any, proxies or getattr(self._client, "proxies", None)),
@@ -154,35 +147,24 @@ class Completions(BaseCompletions):
             data = response.json()
             full_text = data.get("choices", [{}])[0].get("message", {}).get("content", "")
 
-            prompt_tokens = len(messages_to_text(payload.get("messages", [])).split())
-            completion_tokens = len(full_text.split())
-            total_tokens = prompt_tokens + completion_tokens
+            prompt_tokens = count_tokens(str(payload.get("messages", "")))
+            completion_tokens = count_tokens(full_text)
             usage = CompletionUsage(
                 prompt_tokens=prompt_tokens,
                 completion_tokens=completion_tokens,
-                total_tokens=total_tokens,
+                total_tokens=prompt_tokens + completion_tokens,
             )
             message = ChatCompletionMessage(role="assistant", content=full_text)
             choice = Choice(index=0, message=message, finish_reason="stop")
-            completion = ChatCompletion(
+            return ChatCompletion(
                 id=request_id,
                 choices=[choice],
                 created=created_time,
                 model=model,
                 usage=usage,
             )
-            return completion
         except Exception as e:
             raise IOError(f"FreeAI request failed: {e}") from e
-
-
-def messages_to_text(messages: List[Dict[str, str]]) -> str:
-    parts = []
-    for m in messages:
-        role = m.get("role", "user")
-        content = m.get("content", "")
-        parts.append(f"{role}: {content}")
-    return "\n".join(parts)
 
 
 class Chat(BaseChat):
@@ -192,9 +174,50 @@ class Chat(BaseChat):
 
 class FreeAI(OpenAICompatibleProvider):
     required_auth = False
-    AVAILABLE_MODELS = ["qwen7b"]
+    AVAILABLE_MODELS = [
+        "qwen7b",
+        "qwen3-8b",
+        "deepseek-r1",
+        "deepseek-r1-7b",
+        "mistral",
+        "qwen/qwen3-8b",
+        "deepseek/deepseek-chat-v3-0324",
+        "deepseek/deepseek-r1",
+        "openai/gpt-4o-mini",
+        "openai/gpt-4.1-nano",
+        "openai/gpt-4.1-mini",
+        "openai/gpt-4.1",
+        "openai/gpt-5",
+        "openai/gpt-5-mini",
+        "openai/gpt-5-nano",
+        "openai/o4-mini",
+        "anthropic/claude-haiku-4.5",
+        "anthropic/claude-sonnet-4.6",
+        "anthropic/claude-opus-4.6",
+        "google/gemini-2.5-flash",
+        "google/gemini-2.5-pro",
+        "google/gemini-3.1-flash-lite",
+        "google/gemini-3-flash-preview",
+        "meta-llama/llama-4-scout",
+        "meta-llama/llama-4-maverick",
+        "meta-llama/llama-3.3-70b-instruct",
+        "mistralai/mistral-small-3.2-24b-instruct",
+        "mistralai/mistral-large-2411",
+        "qwen/qwen2.5-72b-instruct",
+        "qwen/qwen3-32b",
+        "qwen/qwen3-235b-a22b",
+        "deepseek/deepseek-v3-0324",
+        "deepseek/deepseek-v3.1",
+        "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+        "cohere/command-a",
+        "x-ai/grok-4.3",
+        "z-ai/glm-5",
+        "minimax/minimax-m3",
+        "qwen/qwen3.7-plus",
+        "stepfun/step-3.7-flash",
+    ]
 
-    def __init__(self, timeout: int = 30):
+    def __init__(self, timeout: int = 60):
         self.timeout = timeout
         self.url = "https://api.free.ai/v1/chat/"
         self.proxies = {}
@@ -212,6 +235,12 @@ class FreeAI(OpenAICompatibleProvider):
     def convert_model_name(self, model: str) -> str:
         if model in self.AVAILABLE_MODELS:
             return model
+        for available_model in self.AVAILABLE_MODELS:
+            if model.lower() in available_model.lower():
+                return available_model
+        print(
+            f"{BOLD}Warning: Model '{model}' not found, using default 'qwen7b'{RESET}"
+        )
         return "qwen7b"
 
     @property
@@ -226,7 +255,7 @@ if __name__ == "__main__":
 
     for model in FreeAI.AVAILABLE_MODELS:
         try:
-            client = FreeAI(timeout=60)
+            client = FreeAI(timeout=300)
             response = client.chat.completions.create(
                 model=model,
                 messages=[{"role": "user", "content": "Say 'Hello' in one word"}],

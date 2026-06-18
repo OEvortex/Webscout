@@ -233,8 +233,6 @@ Here's the consolidated list — 130+ free AI sites, no login required. Compiled
 - https://github.com/aviaryan/awesome-no-login-web-apps (general no-login)
 - https://github.com/OuterSpacee/free-ai-apis (100+ APIs, 15 cats)
 
-**Privacy gold**: OptiPix.art, Wordcast.app, EarScribe.app, Quick-TTS.com — run 100% in browser, your data never leaves.
-
-**Watch out**: most "free AI image" sites are wrappers around Pollinations or Stable Horde — quality varies, daily caps exist, and "unlimited" usually means "rate-limited per IP". Treat prompts as public.
-
-Want me to save this as a markdown file, or fetch a specific category deeper?
+https://freechat.org/chat
+https://imagegpt.org/
+https://quillbot.com/ai-chat

@@ -1,3 +1,4 @@
+from llm4free.llm.akashgpt import AVAILABLE_MODELS
 import json
 import time
 import uuid
@@ -221,13 +222,21 @@ class Netwrck(OpenAICompatibleProvider):
     required_auth = False
 
     AVAILABLE_MODELS = [
-        "thedrummer/valkyrie-49b-v1",
         "thedrummer/skyfall-36b-v2",
+        "thedrummer/valkyrie-49b-v1",
         "sao10k/l3-euryale-70b",
         "deepseek/deepseek-chat",
         "deepseek/deepseek-r1",
+        "minimax/minimax-m2.5",
         "gryphe/mythomax-l2-13b",
+        "neversleep/llama-3.1-lumimaid-8b",
+        "neversleep/llama-3.1-lumimaid-70b",
         "nvidia/llama-3.1-nemotron-70b-instruct",
+    ]
+
+    AUTH_REQUIRED_MODELS = [
+        "openai/gpt-5.4-mini",
+        "x-ai/grok-4",
     ]
 
     # Default greeting used by Netwrck
@@ -239,6 +248,7 @@ class Netwrck(OpenAICompatibleProvider):
         temperature: float = 0.7,
         top_p: float = 0.8,
         system_prompt: str = "You are a helpful assistant.",
+        api_key: Optional[str] = None,
     ):
         """
         Initialize the Netwrck client.
@@ -248,11 +258,13 @@ class Netwrck(OpenAICompatibleProvider):
             temperature: Temperature for response generation.
             top_p: Top-p sampling parameter.
             system_prompt: System prompt to use for the conversation.
+            api_key: Optional API key for auth-required models (gpt-5.4-mini, grok-4).
         """
         self.timeout = timeout
         self.temperature = temperature
         self.top_p = top_p
         self.system_prompt = system_prompt
+        self.api_key = api_key
 
         # Initialize LitAgent for user agent generation
         agent = LitAgent()
@@ -266,6 +278,10 @@ class Netwrck(OpenAICompatibleProvider):
             "referer": "https://netwrck.com/",
             "user-agent": agent.random(),
         }
+
+        if api_key:
+            self.headers["X-API-Key"] = api_key
+            self.headers["Authorization"] = f"Bearer {api_key}"
 
         self.session = requests.Session()
         self.session.headers.update(self.headers)
@@ -318,8 +334,15 @@ class Netwrck(OpenAICompatibleProvider):
         if model in self.AVAILABLE_MODELS:
             return model
 
+        if model in self.AUTH_REQUIRED_MODELS:
+            if not self.api_key:
+                print(
+                    f"{BOLD}Warning: Model '{model}' requires authentication. Set api_key parameter.{RESET}"
+                )
+            return model
+
         # Try to find a matching model
-        for available_model in self.AVAILABLE_MODELS:
+        for available_model in self.AVAILABLE_MODELS + self.AUTH_REQUIRED_MODELS:
             if model.lower() in available_model.lower():
                 return available_model
 
@@ -331,7 +354,7 @@ class Netwrck(OpenAICompatibleProvider):
 
     @property
     def models(self) -> SimpleModelList:
-        return SimpleModelList(type(self).AVAILABLE_MODELS)
+        return SimpleModelList(type(self).AVAILABLE_MODELS + type(self).AUTH_REQUIRED_MODELS)
 
 
 # Simple test if run directly
@@ -340,8 +363,8 @@ if __name__ == "__main__":
     print(f"{'Model':<50} {'Status':<10} {'Response'}")
     print("-" * 80)
 
-    # Test a subset of models to avoid excessive API calls
-    test_models = ["deepseek/deepseek-r1", "deepseek/deepseek-chat", "gryphe/mythomax-l2-13b"]
+    # Test all models (free + auth-required)
+    test_models = Netwrck.AVAILABLE_MODELS + Netwrck.AUTH_REQUIRED_MODELS
 
     for model in test_models:
         try:

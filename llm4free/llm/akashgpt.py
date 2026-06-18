@@ -41,10 +41,8 @@ def _akash_extractor(chunk: Union[str, Dict[str, Any]]) -> Optional[str]:
         match = re.search(r'0:"(.*?)"', chunk)
         if match:
             # Decode potential unicode escapes like \u00e9
-            content = match.group(1).encode().decode("unicode_escape")
-            return content.replace("\\\\", "\\").replace(
-                '\\"', '"'
-            )  # Handle escaped backslashes and quotes
+            content = match.group(1).encode().decode("unicode_escape", errors="replace")
+            return content.replace("\\", "\\").replace("\\""", '"')
     return None
 
 
@@ -165,7 +163,7 @@ class Completions(BaseCompletions):
                         # Extract content from 0:"content" format
                         content = line[3:-1]  # Remove 0:" and "
                         # Decode escaped characters
-                        content = content.encode().decode('unicode_escape')
+                        content = content.encode().decode('unicode_escape', errors='replace')
 
                         # Calculate delta (new content since last chunk)
                         delta_content = content[len(full_content):] if content.startswith(full_content) else content
@@ -386,7 +384,6 @@ class AkashGPT(OpenAICompatibleProvider):
             "accept-encoding": "gzip, deflate, br, zstd",
             "accept-language": "en-US,en;q=0.9,en-IN;q=0.8",
             "content-type": "application/json",
-            "cookie": "cookie-consent=accepted; _ga=GA1.1.411212745.1768894804; cf_clearance=kUAFsdi8masn4kzDg.g3pDEYmIefkuN4kPT8kAmC.wI-1769979385-1.2.1.1-5i01zppXtcir7LNZjhp.JiQVGEU.ewcNSRnrhdm9uvnuqvgkv_IQmUI0ec9vI7u9kBibnMuKYvteTdmlMyCxXr9RUlhS5hT8MW860slfcjsTbzzsgk7os0LGu9yfVzbZfHm5Qeoo_FFF4ckJz_gnSxKkF0QVzAOv6uwGvICLvv3hNyzgzWV.sEJJi6Fx8dSlze5u5StYbYhbRD97W3rDMpqDyIQBTF8Ts3jh_2keQxA; _ga_LFRGN2J2RV=GS2.1.s1769979388$o2$g0$t1769979388$j60$l0$h0; session_token=ffe05badc451a5f1571a2cd85a5205f650cb2549a6c805162c27d18cc64d5ab7",
             "dnt": "1",
             "origin": "https://chat.akash.network",
             "priority": "u=1, i",

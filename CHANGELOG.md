@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026.06.18] - 2026-06-18
+
+### ✨ Added
+- **ArtingAI** — Added 3 new models discovered by reverse-engineering site JS: `gemini-3-pro-preview`, `deepseek-chat` (DeepSeek R1), `deepseek-reasoner` (DeepSeek V3). All 9 models verified working.
+- `docs/Prompts/` — New prompt collection directory.
+
+### 🐛 Fixed
+- **Apriel** — Rewrote SSE parser for Gradio 5.x SSE v3 differential update protocol. Streaming tokens are now delivered as `["append", [msg_idx, "content"], "text"]` operations; previously only the initial full-message-list format was handled, causing empty responses.
+- **FreeAssist** — Removed `decode_unicode=True` from `curl_cffi` `iter_lines()` (raises `NotImplementedError`); deduplicated streaming logic (`_create_non_stream` now consumes `_create_stream` generator); fixed `proxies` type mismatch with `cast(Any, proxies)`.
+- **LLMChat** — Changed API endpoint from dead `https://coderelisher.com/ai/fetch` to `https://llmchat.in/inference/stream`; added dual response format parsing (OpenAI-compatible delta vs. `{"response":"..."}` for Deepseek R1); forwarded `temperature`/`top_p` to payload.
+- **AI4Chat** — Updated model list from 178 to 277 entries based on `data-name` attributes scraped from `https://www.ai4chat.co/models`. All existing keys preserved, 99 new models appended.
+
+### 🗑️ Removed
+- **Elmo** — Deleted dead provider (file removed).
+- **Ayle** — Deleted dead provider (file removed).
+- **Jadve** — Deleted dead provider (file removed).
+- **LLMChatCo** — Deleted dead provider (file removed).
+- **Provider.md** — Deleted stale documentation file.
+- **docs/compose/plans/2026-06-18-rename-webscout-to-llm4free.md** — Deleted old plan document.
+- **optimizers.py** — Deleted stale module.
+- **conversation.py** — Deleted stale module.
+- **AIauto.py** — Deleted stale module.
+
 ## [2026.06.12] - 2026-06-12
 
 ### ✨ Added

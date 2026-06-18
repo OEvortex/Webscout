@@ -1,12 +1,11 @@
 import json
 import time
+import urllib.parse
 import uuid
 from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi.requests import Session
 
-# Import LitAgent for user agent generation
-# Import base classes and utility structures
 from llm4free.llm.base import (
     BaseChat,
     BaseCompletions,
@@ -41,17 +40,26 @@ class Completions(BaseCompletions):
         proxies: Optional[dict] = None,
         **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
-        # In this case, we pass messages directly to the API
         request_id = f"chatcmpl-{uuid.uuid4()}"
         created_time = int(time.time())
 
+        payload: Dict[str, Any] = {
+            "messages": messages,
+            "max_tokens": max_tokens or 2048,
+            "stream": True,
+        }
+        if temperature is not None:
+            payload["temperature"] = temperature
+        if top_p is not None:
+            payload["top_p"] = top_p
+
         if stream:
             return self._create_streaming(
-                request_id, created_time, model, messages, max_tokens, timeout, proxies
+                request_id, created_time, model, payload, timeout, proxies
             )
         else:
             return self._create_non_streaming(
-                request_id, created_time, model, messages, max_tokens, timeout, proxies
+                request_id, created_time, model, payload, timeout, proxies
             )
 
     def _create_streaming(
@@ -59,17 +67,16 @@ class Completions(BaseCompletions):
         request_id: str,
         created_time: int,
         model: str,
-        messages: List[Dict[str, str]],
-        max_tokens: Optional[int],
+        payload: Dict[str, Any],
         timeout: Optional[int],
         proxies: Optional[dict],
     ) -> Generator[ChatCompletionChunk, None, None]:
         try:
-            prompt_tokens = count_tokens(json.dumps(messages))
-            completion_tokens = 0
+            prompt_tokens = count_tokens(json.dumps(payload.get("messages", [])))
+            full_content = ""
 
-            url = f"{self._client.api_endpoint}?model={model}"
-            payload = {"messages": messages, "max_tokens": max_tokens or 2048, "stream": True}
+            encoded_model = urllib.parse.quote(model, safe="")
+            url = f"{self._client.api_endpoint}?model={encoded_model}"
 
             response = self._client.session.post(
                 url,
@@ -80,10 +87,9 @@ class Completions(BaseCompletions):
             )
             response.raise_for_status()
 
-            full_content = ""
             for line in response.iter_lines():
                 if line:
-                    line = line.decode("utf-8")
+                    line = line.decode("utf-8", errors="replace")
                     if line.startswith("data: "):
                         data_str = line[6:]
                         if data_str.strip() == "[DONE]":
@@ -91,11 +97,20 @@ class Completions(BaseCompletions):
 
                         try:
                             data = json.loads(data_str)
-                            content = data.get("response", "")
+
+                            # Handle OpenAI-compatible format: {"choices":[{"delta":{"content":"..."}}]}
+                            content = ""
+                            choices = data.get("choices")
+                            if choices and isinstance(choices, list) and len(choices) > 0:
+                                delta = choices[0].get("delta", {})
+                                content = delta.get("content", "") or ""
+
+                            # Handle simple format: {"response":"..."}
+                            if not content:
+                                content = data.get("response", "") or ""
+
                             if content:
                                 full_content += content
-                                completion_tokens += 1
-
                                 delta = ChoiceDelta(content=content, role="assistant")
                                 choice = Choice(index=0, delta=delta, finish_reason=None)
                                 chunk = ChatCompletionChunk(
@@ -108,7 +123,6 @@ class Completions(BaseCompletions):
                         except json.JSONDecodeError:
                             continue
 
-            # Final chunk
             delta = ChoiceDelta(content=None)
             choice = Choice(index=0, delta=delta, finish_reason="stop")
             final_chunk = ChatCompletionChunk(
@@ -130,17 +144,16 @@ class Completions(BaseCompletions):
         request_id: str,
         created_time: int,
         model: str,
-        messages: List[Dict[str, str]],
-        max_tokens: Optional[int],
+        payload: Dict[str, Any],
         timeout: Optional[int],
         proxies: Optional[dict],
     ) -> ChatCompletion:
         try:
             full_content = ""
-            prompt_tokens = count_tokens(json.dumps(messages))
+            prompt_tokens = count_tokens(json.dumps(payload.get("messages", [])))
 
             for chunk in self._create_streaming(
-                request_id, created_time, model, messages, max_tokens, timeout, proxies
+                request_id, created_time, model, payload, timeout, proxies
             ):
                 if chunk.choices[0].delta and chunk.choices[0].delta.content:
                     full_content += chunk.choices[0].delta.content
@@ -193,6 +206,9 @@ class LLMChat(OpenAICompatibleProvider):
         "@cf/mistral/mistral-7b-instruct-v0.1-vllm",
         "@cf/mistral/mistral-7b-instruct-v0.2-lora",
         "@cf/mistralai/mistral-small-3.1-24b-instruct",
+        "@cf/moonshotai/kimi-k2.5",
+        "@cf/moonshotai/kimi-k2.7-code",
+        "@cf/nvidia/nemotron-3-120b-a12b",
         "@cf/openchat/openchat-3.5-0106",
         "@cf/qwen/qwen1.5-0.5b-chat",
         "@cf/qwen/qwen1.5-1.8b-chat",
@@ -203,6 +219,8 @@ class LLMChat(OpenAICompatibleProvider):
         "@cf/qwen/qwq-32b",
         "@cf/tiiuae/falcon-7b-instruct",
         "@cf/tinyllama/tinyllama-1.1b-chat-v1.0",
+        "@cf/zai-org/glm-4.7-flash",
+        "@cf/zai-org/glm-5.2",
         "@hf/google/gemma-7b-it",
         "@hf/meta-llama/meta-llama-3-8b-instruct",
         "@hf/mistral/mistral-7b-instruct-v0.2",
@@ -220,10 +238,7 @@ class LLMChat(OpenAICompatibleProvider):
     def __init__(self, proxies: dict = {}, timeout: int = 30):
         self.session = Session()
         self.timeout = timeout
-        # The real chat endpoint is on a separate backend, not llmchat.in.
-        # Reverse-engineered from llmchat.in's Angular bundle (main-JGDFRIBZ.js).
-        # As of 2026-06-12 the upstream returns 0-byte bodies or times out.
-        self.api_endpoint = "https://coderelisher.com/ai/fetch"
+        self.api_endpoint = "https://llmchat.in/inference/stream"
         self.proxies = proxies
         if proxies:
             self.session.proxies.update(cast(Any, proxies))
@@ -244,14 +259,24 @@ class LLMChat(OpenAICompatibleProvider):
 
 if __name__ == "__main__":
     client = LLMChat()
-    response = client.chat.completions.create(
-        model="@cf/meta/llama-3.1-70b-instruct",
+
+    print("=== Streaming ===")
+    gen_response = client.chat.completions.create(
+        model="@cf/ibm-granite/granite-4.0-h-micro",
         messages=[{"role": "user", "content": "Say 'Hello' in one word"}],
         stream=True,
     )
-    for chunk in response:
-        if hasattr(chunk, "choices") and chunk.choices:
-            choices = cast(Any, chunk.choices)
-            delta = choices[0].delta
-            if delta and hasattr(delta, "content") and delta.content:
-                print(delta.content, end="", flush=True)
+    for chunk in cast(Generator[ChatCompletionChunk, None, None], gen_response):
+        if chunk.choices[0].delta and chunk.choices[0].delta.content:
+            print(chunk.choices[0].delta.content, end="", flush=True)
+    print()
+
+    print("=== Non-Streaming ===")
+    nl_response = client.chat.completions.create(
+        model="@cf/ibm-granite/granite-4.0-h-micro",
+        messages=[{"role": "user", "content": "Say 'Hello' in one word"}],
+        stream=False,
+    )
+    nl = cast(ChatCompletion, nl_response)
+    print(nl.choices[0].message.content if nl.choices[0].message else "")
+    print(f"Usage: {nl.usage}")

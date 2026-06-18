@@ -91,7 +91,7 @@ class Completions(BaseCompletions):
                 json=payload,
                 stream=True,
                 timeout=timeout or self._client.timeout,
-                proxies=proxies,  # ty:ignore[invalid-argument-type]
+                proxies=cast(Any, proxies),
             )
             response.raise_for_status()
 
@@ -99,7 +99,7 @@ class Completions(BaseCompletions):
             completion_tokens = 0
             total_tokens = 0
 
-            for line in response.iter_lines(decode_unicode=True):
+            for line in response.iter_lines():
                 if not line:
                     continue
 
@@ -114,13 +114,12 @@ class Completions(BaseCompletions):
                 else:
                     json_str = line
 
-                if json_str == "[DONE]":
+                if json_str.strip() == "[DONE]":
                     break
 
                 try:
                     data = json.loads(json_str)
 
-                    # Extract usage if present
                     usage_data = data.get("usage", {})
                     if usage_data:
                         prompt_tokens = usage_data.get("prompt_tokens", prompt_tokens)
@@ -128,41 +127,28 @@ class Completions(BaseCompletions):
                         total_tokens = usage_data.get("total_tokens", total_tokens)
 
                     choices = data.get("choices")
-                    if not choices and choices is not None:
+                    if not choices:
                         continue
 
-                    choice_data = choices[0] if choices else {}
+                    choice_data = choices[0]
                     delta_data = choice_data.get("delta", {})
                     finish_reason = choice_data.get("finish_reason")
 
-                    # Get content
-                    content_piece = None
-                    role = None
-                    tool_calls = None
-
-                    if delta_data:
-                        content_piece = delta_data.get("content")
-                        role = delta_data.get("role")
-                        tool_calls = delta_data.get("tool_calls")
-                    else:
-                        message_d = choice_data.get("message", {})
-                        role = message_d.get("role")
-                        content_piece = message_d.get("content")
-                        tool_calls = message_d.get("tool_calls")
+                    content_piece = delta_data.get("content")
+                    role = delta_data.get("role")
+                    tool_calls = delta_data.get("tool_calls")
 
                     if content_piece and not usage_data:
                         completion_tokens += 1
                         total_tokens = prompt_tokens + completion_tokens
 
                     delta = ChoiceDelta(content=content_piece, role=role, tool_calls=tool_calls)
-
                     choice = Choice(
                         index=choice_data.get("index", 0),
                         delta=delta,
                         finish_reason=finish_reason,
                         logprobs=choice_data.get("logprobs"),
                     )
-
                     chunk = ChatCompletionChunk(
                         id=data.get("id", request_id),
                         choices=[choice],
@@ -170,39 +156,32 @@ class Completions(BaseCompletions):
                         model=data.get("model", model),
                         system_fingerprint=data.get("system_fingerprint"),
                     )
-
                     chunk.usage = {
                         "prompt_tokens": prompt_tokens,
                         "completion_tokens": completion_tokens,
                         "total_tokens": total_tokens,
-                        "estimated_cost": None,
                     }
-
                     yield chunk
 
                 except json.JSONDecodeError:
                     continue
 
-            # Final chunk with finish_reason="stop"
-            delta = ChoiceDelta(content=None, role=None, tool_calls=None)
-            choice = Choice(index=0, delta=delta, finish_reason="stop", logprobs=None)
+            delta = ChoiceDelta(content=None)
+            choice = Choice(index=0, delta=delta, finish_reason="stop")
             chunk = ChatCompletionChunk(
                 id=request_id,
                 choices=[choice],
                 created=created_time,
                 model=model,
-                system_fingerprint=None,
             )
             chunk.usage = {
                 "prompt_tokens": prompt_tokens,
                 "completion_tokens": completion_tokens,
                 "total_tokens": total_tokens,
-                "estimated_cost": None,
             }
             yield chunk
 
         except Exception as e:
-            print(f"Error during FreeAssist stream request: {e}")
             raise IOError(f"FreeAssist request failed: {e}") from e
 
     def _create_non_stream(
@@ -214,81 +193,33 @@ class Completions(BaseCompletions):
         timeout: Optional[int] = None,
         proxies: Optional[Dict[str, str]] = None,
     ) -> ChatCompletion:
-        """Handle non-streaming response from FreeAssist API (collects SSE stream)."""
+        """Handle non-streaming response by aggregating the SSE stream."""
         try:
-            # FreeAssist always returns SSE format, so we stream and aggregate
-            response = self._client.session.post(
-                self._client.base_url,
-                headers=self._client.headers,
-                json=payload,
-                stream=True,
-                timeout=timeout or self._client.timeout,
-                proxies=proxies,  # ty:ignore[invalid-argument-type]
-            )
-            response.raise_for_status()
-
             full_content = ""
-            prompt_tokens = 0
-            completion_tokens = 0
-            total_tokens = 0
             response_model = model
+            final_usage = None
 
-            for line in response.iter_lines(decode_unicode=True):
-                if not line:
-                    continue
+            for chunk in self._create_stream(
+                request_id, created_time, model, payload, timeout, proxies
+            ):
+                if chunk.choices[0].delta and chunk.choices[0].delta.content:
+                    full_content += chunk.choices[0].delta.content
+                if chunk.usage:
+                    final_usage = chunk.usage
 
-                if isinstance(line, bytes):
-                    try:
-                        line = line.decode("utf-8")
-                    except Exception:
-                        continue
-
-                if line.startswith("data: "):
-                    json_str = line[6:]
-                else:
-                    json_str = line
-
-                if json_str == "[DONE]":
-                    break
-
-                try:
-                    data = json.loads(json_str)
-
-                    # Extract usage if present
-                    usage_data = data.get("usage", {})
-                    if usage_data:
-                        prompt_tokens = usage_data.get("prompt_tokens", prompt_tokens)
-                        completion_tokens = usage_data.get("completion_tokens", completion_tokens)
-                        total_tokens = usage_data.get("total_tokens", total_tokens)
-
-                    choices = data.get("choices")
-                    if not choices and choices is not None:
-                        continue
-
-                    choice_data = choices[0] if choices else {}
-                    delta_data = choice_data.get("delta", {})
-                    content = delta_data.get("content", "")
-
-                    if content:
-                        full_content += content
-
-                    # Get model from response
-                    if data.get("model"):
-                        response_model = data.get("model")
-                except json.JSONDecodeError:
-                    continue
+            if final_usage:
+                usage = CompletionUsage(
+                    prompt_tokens=final_usage.get("prompt_tokens", 0),
+                    completion_tokens=final_usage.get("completion_tokens", 0),
+                    total_tokens=final_usage.get("total_tokens", 0),
+                )
+            else:
+                usage = CompletionUsage(prompt_tokens=0, completion_tokens=0, total_tokens=0)
 
             message = ChatCompletionMessage(role="assistant", content=full_content)
-
             choice = Choice(index=0, message=message, finish_reason="stop")
 
-            usage = CompletionUsage(
-                prompt_tokens=prompt_tokens,
-                completion_tokens=completion_tokens,
-                total_tokens=total_tokens,
-            )
-
-            completion = ChatCompletion(
+            return ChatCompletion(
                 id=request_id,
                 choices=[choice],
                 created=created_time,
@@ -296,10 +227,7 @@ class Completions(BaseCompletions):
                 usage=usage,
             )
 
-            return completion
-
         except Exception as e:
-            print(f"Error during FreeAssist non-stream request: {e}")
             raise IOError(f"FreeAssist request failed: {e}") from e
 
 
@@ -341,8 +269,12 @@ class FreeAssist(OpenAICompatibleProvider):
     AVAILABLE_MODELS = [
         "google/gemini-2.5-flash-lite",
         "google/gemini-2.5-flash",
+        "google/gemini-2.5-pro",
         "openai/gpt-5-nano",
         "openai/gpt-5-mini",
+        "openai/gpt-5",
+        "anthropic/claude-sonnet-4-5",
+        "anthropic/claude-opus-4-1-20250805",
     ]
 
     def __init__(

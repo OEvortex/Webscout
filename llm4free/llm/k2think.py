@@ -26,6 +26,14 @@ class Completions(BaseCompletions):
     def __init__(self, client: "K2Think"):
         self._client = client
 
+    @staticmethod
+    def _strip_thinking(text: str) -> str:
+        marker = "</think>"
+        idx = text.rfind(marker)
+        if idx != -1:
+            return text[idx + len(marker):].lstrip()
+        return text
+
     def create(
         self,
         *,
@@ -39,15 +47,9 @@ class Completions(BaseCompletions):
         proxies: Optional[Dict[str, str]] = None,
         **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
-        """
-        Creates a model response for the given chat conversation.
-        Mimics openai.chat.completions.create
-        """
-        # Generate a unique request ID
         request_id = f"chatcmpl-{uuid.uuid4().hex}"
         created_time = int(time.time())
 
-        # Prepare the payload for K2Think API
         payload = {
             "stream": stream,
             "model": model,
@@ -56,7 +58,6 @@ class Completions(BaseCompletions):
             "features": {"web_search": False},
         }
 
-        # Handle streaming response
         if stream:
             return self._handle_streaming_response(
                 request_id, created_time, model, payload, timeout, proxies
@@ -75,7 +76,6 @@ class Completions(BaseCompletions):
         timeout: Optional[int] = None,
         proxies: Optional[Dict[str, str]] = None,
     ) -> Generator[ChatCompletionChunk, None, None]:
-        """Handle streaming response from K2Think API"""
         try:
             response = self._client.session.post(
                 self._client.chat_endpoint,
@@ -85,64 +85,54 @@ class Completions(BaseCompletions):
             )
             response.raise_for_status()
 
-            streaming_text = ""
-
-            streaming_text = ""
-            previous_content = ""
+            full_content = ""
+            sent_length = 0
 
             for line in response.iter_lines(decode_unicode=False):
-                if line:
-                    if isinstance(line, bytes):
-                        line = line.decode("utf-8")
-                    if line.startswith("data: "):
-                        json_str = line[6:]
-                        if json_str == "[DONE]":
-                            break
-                        try:
-                            data = json.loads(json_str)
+                if not line:
+                    continue
+                if isinstance(line, bytes):
+                    line = line.decode("utf-8")
+                if not line.startswith("data: "):
+                    continue
 
-                            # Handle K2Think's custom streaming format
-                            if "content" in data and "done" not in data:
-                                current_content = data["content"]
-                                # Extract the new content since last chunk
-                                if len(current_content) > len(previous_content):
-                                    new_content = current_content[len(previous_content):]
-                                    if new_content:
-                                        streaming_text += new_content
-                                        previous_content = current_content
+                json_str = line[6:]
+                if json_str == "[DONE]":
+                    break
 
-                                        delta = ChoiceDelta(content=new_content, role="assistant")
-                                        choice = Choice(
-                                            index=0,
-                                            delta=delta,
-                                            finish_reason=None,
-                                        )
+                try:
+                    data = json.loads(json_str)
+                except json.JSONDecodeError:
+                    continue
 
-                                        chunk = ChatCompletionChunk(
-                                            id=request_id,
-                                            choices=[choice],
-                                            created=created_time,
-                                            model=model,
-                                        )
+                if "done" in data and data.get("done"):
+                    final_content = data.get("content", full_content)
+                    cleaned = self._strip_thinking(final_content)
+                    if len(cleaned) > sent_length:
+                        new_text = cleaned[sent_length:]
+                        sent_length = len(cleaned)
+                        delta = ChoiceDelta(content=new_text, role="assistant")
+                        choice = Choice(index=0, delta=delta, finish_reason=None)
+                        yield ChatCompletionChunk(
+                            id=request_id,
+                            choices=[choice],
+                            created=created_time,
+                            model=model,
+                        )
+                    break
 
-                                        yield chunk
-                            elif "done" in data and data.get("done"):
-                                # Final chunk
-                                break
-
-                        except json.JSONDecodeError:
-                            continue
+                if "content" in data:
+                    full_content = data["content"]
 
             # Final chunk with finish_reason="stop"
-            delta = ChoiceDelta(content=None, role=None)
+            delta = ChoiceDelta(content=None)
             choice = Choice(index=0, delta=delta, finish_reason="stop")
-            chunk = ChatCompletionChunk(
+            yield ChatCompletionChunk(
                 id=request_id,
                 choices=[choice],
                 created=created_time,
                 model=model,
             )
-            yield chunk
 
         except Exception as e:
             raise IOError(f"K2Think streaming request failed: {e}") from e
@@ -156,7 +146,6 @@ class Completions(BaseCompletions):
         timeout: Optional[int] = None,
         proxies: Optional[Dict[str, str]] = None,
     ) -> ChatCompletion:
-        """Handle non-streaming response from K2Think API"""
         try:
             response = self._client.session.post(
                 self._client.chat_endpoint,
@@ -173,18 +162,15 @@ class Completions(BaseCompletions):
             choices = []
             for choice_d in choices_data:
                 message_d = choice_d.get("message")
-                if not message_d and "delta" in choice_d:
-                    delta = choice_d["delta"]
-                    message_d = {
-                        "role": delta.get("role", "assistant"),
-                        "content": delta.get("content", ""),
-                    }
                 if not message_d:
                     message_d = {"role": "assistant", "content": ""}
 
+                raw_content = message_d.get("content", "")
+                cleaned_content = self._strip_thinking(raw_content)
+
                 message = ChatCompletionMessage(
                     role=message_d.get("role", "assistant"),
-                    content=message_d.get("content", "")
+                    content=cleaned_content,
                 )
                 choice = Choice(
                     index=choice_d.get("index", 0),
@@ -199,15 +185,13 @@ class Completions(BaseCompletions):
                 total_tokens=usage_data.get("total_tokens", 0),
             )
 
-            completion = ChatCompletion(
+            return ChatCompletion(
                 id=request_id,
                 choices=choices,
                 created=created_time,
                 model=data.get("model", model),
                 usage=usage,
             )
-
-            return completion
 
         except Exception as e:
             raise IOError(f"K2Think request failed: {e}") from e
@@ -261,23 +245,12 @@ class K2Think(OpenAICompatibleProvider):
             "Accept": self.fingerprint["accept"],
             "Accept-Language": self.fingerprint["accept_language"],
             "Content-Type": "application/json",
-            "Cache-Control": "no-cache",
             "Origin": "https://www.k2think.ai",
-            "Pragma": "no-cache",
             "Referer": "https://www.k2think.ai/guest",
-            "Sec-Fetch-Dest": "empty",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-origin",
             "User-Agent": self.fingerprint.get("user_agent", ""),
             "Sec-CH-UA": self.fingerprint.get("sec_ch_ua", ""),
             "Sec-CH-UA-Mobile": "?0",
             "Sec-CH-UA-Platform": f'"{self.fingerprint.get("platform", "")}"',
-            "X-Forwarded-For": self.fingerprint.get("x-forwarded-for", ""),
-            "X-Real-IP": self.fingerprint.get("x-real-ip", ""),
-            "X-Client-IP": self.fingerprint.get("x-client-ip", ""),
-            "Forwarded": self.fingerprint.get("forwarded", ""),
-            "X-Forwarded-Proto": self.fingerprint.get("x-forwarded-proto", ""),
-            "X-Request-Id": self.fingerprint.get("x-request-id", ""),
         })
 
         # Set proxies if provided
@@ -313,16 +286,32 @@ class K2Think(OpenAICompatibleProvider):
 
 # Example usage
 if __name__ == "__main__":
-    # Test the provider
     client = K2Think()
+    messages = [
+        {"role": "user", "content": "Say hello in one word"},
+    ]
+
+    print("=== Non-streaming ===")
     response = client.chat.completions.create(
         model="MBZUAI-IFM/K2-Think-v2",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": "Hello! How are you today?"},
-        ],
+        messages=messages,
+        stream=False,
     )
-    if isinstance(response, ChatCompletion):
-        message = response.choices[0].message
-        if message:
-            print(message.content)
+    if isinstance(response, ChatCompletion) and response.choices:
+        msg = response.choices[0].message
+        if msg:
+            print(msg.content)
+
+    print("\n=== Streaming ===")
+    stream = client.chat.completions.create(
+        model="MBZUAI-IFM/K2-Think-v2",
+        messages=messages,
+        stream=True,
+    )
+    if hasattr(stream, "__iter__"):
+        for chunk in stream:
+            if isinstance(chunk, ChatCompletionChunk) and chunk.choices:
+                delta = chunk.choices[0].delta
+                if delta and delta.content:
+                    print(delta.content, end="", flush=True)
+        print()

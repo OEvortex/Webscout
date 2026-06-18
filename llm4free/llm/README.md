@@ -35,7 +35,6 @@ Currently, the following providers are implemented with OpenAI-compatible interf
 - WiseCat
 - ExaAI
 - TypeGPT
-- LLMChatCo
 - YEPCHAT
 - HeckAI
 - IBM
@@ -528,53 +527,6 @@ for chunk in stream:
 print()  # Add a newline at the end
 ```
 
-### Basic Usage with LLMChatCo
-
-```python
-from llm4free.client import LLMChatCo
-
-# Initialize the client
-client = LLMChatCo()
-
-# Create a completion (non-streaming)
-response = client.chat.completions.create(
-    model="gemini-flash-2.0",  # Default model
-    messages=[
-        {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": "Tell me about Python programming."}
-    ],
-    temperature=0.7
-)
-
-# Print the response
-print(response.choices[0].message.content)
-```
-
-### Streaming with LLMChatCo
-
-```python
-from llm4free.client import LLMChatCo
-
-# Initialize the client
-client = LLMChatCo()
-
-# Create a streaming completion
-stream = client.chat.completions.create(
-    model="gemini-flash-2.0",
-    messages=[
-        {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": "Write a short poem about programming."}
-    ],
-    stream=True
-)
-
-# Process the streaming response
-for chunk in stream:
-    if chunk.choices[0].delta.content:
-        print(chunk.choices[0].delta.content, end="", flush=True)
-print()  # Add a newline at the end
-```
-
 ### Basic Usage with YEPCHAT
 
 ```python
@@ -876,7 +828,6 @@ Want to add a new OpenAI-compatible provider? Follow these steps:
 - [ExaAI Website](https://o3minichat.exa.ai/)
 - [Sambanova Website](https://sambanova.ai/)
 - [DeepInfra Website](https://deepinfra.com/)
-- [LLMChatCo Website](https://llmchat.co/)
 - [Yep.com Website](https://yep.com/)
 - [HeckAI Website](https://heck.ai/)
 - [SonusAI Website](https://chat.sonus.ai/)
