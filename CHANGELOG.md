@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### ✨ Added
 - **ArtingAI** — Added 3 new models discovered by reverse-engineering site JS: `gemini-3-pro-preview`, `deepseek-chat` (DeepSeek R1), `deepseek-reasoner` (DeepSeek V3). All 9 models verified working.
+- **GptFree** — New OpenAI-compatible provider converted from gpt4free (`g4f/Provider/GptFree.py`). Uses Firebase anonymous auth + Cloud Functions streaming endpoint (`gptfree-2.cloudfunctions.net/agent_stream`). Supports message history, multimodal image inputs, and SSE streaming.
 - `docs/Prompts/` — New prompt collection directory.
 
 ### 🐛 Fixed

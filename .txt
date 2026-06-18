@@ -2,53 +2,6 @@ Here's the consolidated list — 130+ free AI sites, no login required. Compiled
 
 ---
 
-## 💬 CHAT / LLM (40 sites)
-
-| # | Site | URL | Notes |
-|---|---|---|---|
-| 1 | Duck.ai | https://duck.ai | Best privacy. GPT-4o, Claude, Llama, Mistral. Anonymized, not used for training |
-| 2 | HuggingChat | https://huggingface.co/chat | Multiple open-source models, no login |
-| 3 | Microsoft Copilot | https://copilot.microsoft.com | GPT-5, unlimited, 1 image/day |
-| 4 | ChatGPT (guest) | https://chatgpt.com | Temporary chat, no signup for basic |
-| 5 | Perplexity (guest) | https://perplexity.ai | Web search + citations. 3 Pro searches/day |
-| 6 | Le Chat (Mistral) | https://chat.mistral.ai | 10 msgs/24h |
-| 7 | Grok | https://grok.com | 3 msgs/2h |
-| 8 | Gemini | https://gemini.google.com | 5-10 prompts/day, fast model |
-| 9 | Meta AI | https://meta.ai | Llama 4, unlimited |
-| 10 | Venice | https://venice.ai | Private, uncensored options |
-| 11 | Andi | https://andi.com | Search-style answers |
-| 12 | Brave Leo | https://brave.com/leo/ | Inside Brave browser |
-| 13 | Phind | https://phind.com | For devs, Phind-70B |
-| 14 | Perchance Chat | https://perchance.org/ai-chat | Unlimited, roleplay/story focus |
-| 15 | You.com | https://you.com | Guest mode, multimodal |
-| 16 | Pi.ai | https://pi.ai | Inflection-2.5, unlimited |
-| 17 | Google AI Mode | https://google.com (AI Mode) | Inside Google Search |
-| 18 | Baidu ERNIE | https://yiyan.baidu.com | Chinese, no signup |
-| 19 | LMArena | https://lmarena.ai | 40+ models, unlimited |
-| 20 | GPT for Free / g4f | https://g4f.dev | 200+ local models, unlimited |
-| 21 | FlowGPT | https://flowgpt.com | Community GPTs |
-| 22 | Pollinations Chat | https://pollinations.ai | Open source |
-| 23 | SharedChat | https://sharedchat.cn | GPT-4o, o3, o4-mini |
-| 24 | Netfly | https://free.netfly.top | GPT-4o-mini, unlimited |
-| 25 | AI365VIP | https://chat.ai365vip.com | GPT-4o, unlimited |
-| 26 | Heck.ai | https://heck.ai | Multi-model, 50/day |
-| 27 | FreeGPT.es | https://freegpt.es | GPT-4o, DeepSeek, Grok |
-| 28 | fuckicoding link | https://link.fuckicoding.com | Multiple, generous |
-| 29 | Umint AI | https://umint-ai.hf.space | GPT-4o-mini, DeepSeek, Phi |
-| 30 | Mirexa | https://mirexa.vercel.app | Multi-model, uncensored "evil" mode |
-| 31 | Kaily | https://kaily.ai | PDF/website chat, no signup |
-| 32 | Uncensored.chat | https://uncensored.chat | NSFW-ok, no login |
-| 33 | Chat100.ai | https://chat100.ai | GPT-4o, Claude 3.5 |
-| 34 | Lumio AI | https://app.lumioai.tech | 7+ models, reasonable limits |
-| 35 | SurfSense | https://surfsense.com/free | Multi-model, 500k tokens |
-| 36 | DeepInfra Chat | https://deepinfra.com/chat | Kimi K2, GLM 4.5, Llama 4 |
-| 37 | Sur (Pollinations) | https://sur.pollinations.ai | OpenAI/Claude/Mistral via pollinations |
-| 38 | Free-ai-online | https://www.free-ai-online.com | Unlimited, no caps |
-| 39 | Chat2 Free2GPT | https://chat2.free2gpt.com | Gemini + many |
-| 40 | LiteAI | https://liteai (via Pollinations) | Chat + image |
-
----
-
 ## 🎨 IMAGE GENERATION (38 sites)
 
 | # | Site | URL | Notes |

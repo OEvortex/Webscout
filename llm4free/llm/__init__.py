@@ -73,6 +73,7 @@ from llm4free.llm.freeai import FreeAI
 from llm4free.llm.turboseek import TurboSeek
 from llm4free.llm.wisecat import WiseCat
 from llm4free.llm.writecream import Writecream
+from llm4free.llm.gptfree import GptFree
 
 # List of all exported names
 __all__ = [
@@ -140,4 +141,5 @@ __all__ = [
     "Zenmux",
     "Sambanova",
     "TypliAI",
+    "GptFree",
 ]
