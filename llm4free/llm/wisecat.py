@@ -56,13 +56,13 @@ class Completions(BaseCompletions):
 
         # Add optional parameters if provided
         if max_tokens is not None and max_tokens > 0:
-            payload["max_tokens"] = max_tokens
+            payload["max_tokens"] = max_tokens  # ty:ignore[invalid-assignment]
 
         if temperature is not None:
-            payload["temperature"] = temperature
+            payload["temperature"] = temperature  # ty:ignore[invalid-assignment]
 
         if top_p is not None:
-            payload["top_p"] = top_p
+            payload["top_p"] = top_p  # ty:ignore[invalid-assignment]
 
         # Add any additional parameters
         payload.update(kwargs)
@@ -107,12 +107,10 @@ class Completions(BaseCompletions):
                 if line:
                     decoded_line = line.decode("utf-8").strip()
 
-                    # WiseCat uses a different format, so we need to extract the content
-                    match = re.search(r'0:"(.*?)"', decoded_line)
-                    if match:
-                        content = match.group(1)
-
-                        # Format the content (replace escaped newlines and unicode escapes)
+                    # Parse content lines (format: 0:"content")
+                    content_match = re.match(r'^0:"(.*)"$', decoded_line)
+                    if content_match:
+                        content = content_match.group(1)
                         content = self._client.format_text(content)
 
                         # Update token counts
@@ -134,30 +132,25 @@ class Completions(BaseCompletions):
                             system_fingerprint=None,
                         )
 
-                        # Convert chunk to dict using Pydantic's API
-                        if hasattr(chunk, "model_dump"):
-                            chunk_dict = chunk.model_dump(exclude_none=True)
-                        else:
-                            chunk_dict = chunk.dict(exclude_none=True)
-
-                        # Add usage information to match OpenAI format
-                        usage_dict = {
-                            "prompt_tokens": prompt_tokens,
-                            "completion_tokens": completion_tokens,
-                            "total_tokens": total_tokens,
-                            "estimated_cost": None,
-                        }
-
-                        chunk_dict["usage"] = usage_dict
-
-                        # Return the chunk object for internal processing
                         yield chunk
+                        continue
+
+                    # Parse usage lines (format: e:{...} or d:{...})
+                    usage_match = re.match(r'^[ed]:(\{.*\})$', decoded_line)
+                    if usage_match:
+                        try:
+                            import json
+                            usage_data = json.loads(usage_match.group(1))
+                            if "usage" in usage_data:
+                                prompt_tokens = usage_data["usage"].get("promptTokens", prompt_tokens)
+                                completion_tokens = usage_data["usage"].get("completionTokens", completion_tokens)
+                                total_tokens = prompt_tokens + completion_tokens
+                        except Exception:
+                            pass
 
             # Final chunk with finish_reason="stop"
             delta = ChoiceDelta(content=None, role=None, tool_calls=None)
-
             choice = Choice(index=0, delta=delta, finish_reason="stop", logprobs=None)
-
             chunk = ChatCompletionChunk(
                 id=request_id,
                 choices=[choice],
@@ -174,14 +167,12 @@ class Completions(BaseCompletions):
                 "prompt_tokens": prompt_tokens,
                 "completion_tokens": completion_tokens,
                 "total_tokens": total_tokens,
-                "estimated_cost": None,
             }
 
             yield chunk
 
         except Exception as e:
-            print(f"Error during WiseCat stream request: {e}")
-            raise IOError(f"WiseCat request failed: {e}") from e
+            raise IOError(f"WiseCat stream request failed: {e}") from e
 
     def _create_non_stream(
         self, request_id: str, created_time: int, model: str, payload: Dict[str, Any]
@@ -203,25 +194,37 @@ class Completions(BaseCompletions):
                     f"Failed to generate response - ({response.status_code}, {response.reason}) - {response.text}"
                 )
 
-            # Collect the full response
+            # Collect the full response and usage info
             full_text = ""
+            prompt_tokens = 0
+            completion_tokens = 0
+
             for line in response.iter_lines():
                 if line:
                     decoded_line = line.decode("utf-8").strip()
-                    match = re.search(r'0:"(.*?)"', decoded_line)
-                    if match:
-                        content = match.group(1)
-                        full_text += content
 
-            # Format the text (replace escaped newlines)
+                    # Parse content lines
+                    content_match = re.match(r'^0:"(.*)"$', decoded_line)
+                    if content_match:
+                        full_text += content_match.group(1)
+                        continue
+
+                    # Parse usage lines
+                    usage_match = re.match(r'^[ed]:(\{.*\})$', decoded_line)
+                    if usage_match:
+                        try:
+                            import json
+                            usage_data = json.loads(usage_match.group(1))
+                            if "usage" in usage_data:
+                                prompt_tokens = usage_data["usage"].get("promptTokens", prompt_tokens)
+                                completion_tokens = usage_data["usage"].get("completionTokens", completion_tokens)
+                        except Exception:
+                            pass
+
+            # Format the text
             full_text = self._client.format_text(full_text)
 
-            # Estimate token counts
-            prompt_tokens = 0
-            for msg in payload.get("messages", []):
-                prompt_tokens += count_tokens(msg.get("content", ""))
-
-            completion_tokens = count_tokens(full_text)
+            # Calculate total tokens
             total_tokens = prompt_tokens + completion_tokens
 
             # Create the message object
@@ -249,7 +252,6 @@ class Completions(BaseCompletions):
             return completion
 
         except Exception as e:
-            print(f"Error during WiseCat non-stream request: {e}")
             raise IOError(f"WiseCat request failed: {e}") from e
 
 
@@ -312,18 +314,18 @@ class WiseCat(OpenAICompatibleProvider):
             Formatted text
         """
         try:
-            # Handle unicode escaping and quote unescaping
-            text = text.encode().decode("unicode_escape")
-            text = text.replace("\\\\", "\\").replace('\\"', '"')
+            # Handle common escape sequences
+            text = text.replace("\\n", "\n")
+            text = text.replace("\\t", "\t")
+            text = text.replace('\\"', '"')
+            text = text.replace("\\\\", "\\")
 
-            # Remove timing information
+            # Remove timing information like (0.3s) or (125ms)
             text = re.sub(r"\(\d+\.?\d*s\)", "", text)
             text = re.sub(r"\(\d+\.?\d*ms\)", "", text)
 
-            return text
-        except Exception as e:
-            # If any error occurs, return the original text
-            print(f"Warning: Error formatting text: {e}")
+            return text.strip()
+        except Exception:
             return text
 
     def convert_model_name(self, model: str) -> str:
