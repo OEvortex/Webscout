@@ -15,8 +15,6 @@ from .search import (
     Mojeek,
     Wikipedia,
     YahooSearch,
-    Yandex,
-    YepSearch,
 )
 from .swiftcli import CLI, option
 from .version import __version__
@@ -31,9 +29,7 @@ ENGINES: Dict[str, Union[Type[BaseSearch], Type[BaseSearchEngine]]] = {
     "yahoo": YahooSearch,
     "brave": BraveSearch,
     "mojeek": Mojeek,
-    "yandex": Yandex,
     "wikipedia": Wikipedia,
-    "yep": YepSearch,
 }
 
 

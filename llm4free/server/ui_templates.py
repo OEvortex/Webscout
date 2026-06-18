@@ -777,7 +777,7 @@ LANDING_PAGE_HTML = """
                     </div>
                     <h3 class="feature-title">Multi-Engine Web Search</h3>
                     <p class="feature-description">
-                        Search across DuckDuckGo, Bing, Brave, Yahoo, Yandex, Mojeek, and Wikipedia with AI-powered search integration.
+                        Search across DuckDuckGo, Bing, Brave, Yahoo, Mojeek, and Wikipedia with AI-powered search integration.
                     </p>
                 </div>
 

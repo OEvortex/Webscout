@@ -23,13 +23,13 @@ The CLI uses **Rich** for beautiful, formatted table outputs and informative pan
 
 | Command | Description | Supported Engines |
 |---------|-------------|-------------------|
-| `text` | General web search | `ddg`, `bing`, `yahoo`, `brave`, `mojeek`, `yandex`, `wikipedia`, `yep` |
-| `images` | Image search | `ddg`, `bing`, `yahoo`, `yep` |
+| `text` | General web search | `ddg`, `bing`, `yahoo`, `brave`, `mojeek`, `wikipedia` |
+| `images` | Image search | `ddg`, `bing`, `yahoo` |
 | `videos` | Video search | `ddg`, `yahoo` |
 | `news` | News search | `ddg`, `bing`, `yahoo` |
 | `weather` | Weather information | `ddg`, `yahoo` |
 | `answers` | Instant answers | `ddg`, `yahoo` |
-| `suggestions`| Query autocomplete | `ddg`, `bing`, `yahoo`, `yep` |
+| `suggestions`| Query autocomplete | `ddg`, `bing`, `yahoo` |
 | `translate` | Text translation | `ddg`, `yahoo` |
 | `maps` | POI / Location search | `ddg`, `yahoo` |
 | `search` | Shortcut for `text` | Use as a general unified command |
@@ -81,8 +81,8 @@ llm4free news -k "space exploration" -e yahoo
 # Translate text via Yahoo
 llm4free translate -k "Hola mundo" --to en -e yahoo
 
-# Get suggestions from Yep
-llm4free suggestions -q "artificial i" -e yep
+# Get suggestions from DuckDuckGo
+llm4free suggestions -q "artificial i" -e ddg
 ```
 
 ## 🛠️ Advanced Options

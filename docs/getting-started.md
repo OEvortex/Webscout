@@ -181,15 +181,11 @@ for result in results:
 ### Using Different Search Engines
 
 ```python
-from llm4free import BingSearch, YepSearch, YahooSearch
+from llm4free import BingSearch, YahooSearch
 
 # Bing
 bing = BingSearch()
 results = bing.text("climate change solutions")
-
-# Yep (privacy-focused)
-yep = YepSearch()
-results = yep.text("machine learning")
 
 # Yahoo
 yahoo = YahooSearch()
@@ -389,7 +385,7 @@ llm4free news -k "search term"
 
 # Alternative engines
 llm4free bing_text -k "search term"
-llm4free yep_text -k "search term"
+llm4free brave_text -k "search term"
 llm4free yahoo_text -k "search term"
 ```
 

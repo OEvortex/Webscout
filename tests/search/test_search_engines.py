@@ -14,8 +14,6 @@ from llm4free.search import (
     Mojeek,
     Wikipedia,
     YahooSearch,
-    Yandex,
-    YepSearch,
 )
 
 # Live tests require network access and are enabled through the ``live`` marker.
@@ -184,32 +182,6 @@ class TestYahoo:
         assert isinstance(results, list)
 
 
-class TestYep:
-    """Tests for Yep search engine."""
-
-    @live_test
-    def test_text_search(self):
-        """Test Yep text search."""
-        yep = YepSearch()
-        results = yep.text("python", max_results=2)
-        assert isinstance(results, list)
-        assert len(results) >= 1
-
-    @live_test
-    def test_images_search(self):
-        """Test Yep images search."""
-        yep = YepSearch()
-        results = yep.images("python logo", max_results=2)
-        assert isinstance(results, list)
-
-    @live_test
-    def test_suggestions(self):
-        """Test Yep suggestions."""
-        yep = YepSearch()
-        results = yep.suggestions("python")
-        assert isinstance(results, list)
-
-
 class TestStandaloneEngines:
     """Tests for standalone search engines."""
 
@@ -228,15 +200,6 @@ class TestStandaloneEngines:
         results = wiki.search("python")
         assert isinstance(results, list)
         assert len(results) >= 1
-
-    @live_test
-    def test_yandex_search(self):
-        """Test Yandex search."""
-        yandex = Yandex()
-        results = yandex.search("python")
-        assert isinstance(results, list)
-        # Yandex may return empty results due to geo-blocking
-
 
 class TestNotImplemented:
     """Test that unimplemented methods raise NotImplementedError."""
@@ -283,32 +246,4 @@ class TestNotImplemented:
         with pytest.raises(NotImplementedError):
             brave.translate("test")
 
-    def test_yep_videos_not_implemented(self):
-        """Yep videos should raise NotImplementedError."""
-        yep = YepSearch()
-        with pytest.raises(NotImplementedError):
-            yep.videos("test")
 
-    def test_yep_news_not_implemented(self):
-        """Yep news should raise NotImplementedError."""
-        yep = YepSearch()
-        with pytest.raises(NotImplementedError):
-            yep.news("test")
-
-    def test_yep_answers_not_implemented(self):
-        """Yep answers should raise NotImplementedError."""
-        yep = YepSearch()
-        with pytest.raises(NotImplementedError):
-            yep.answers("test")
-
-    def test_yep_maps_not_implemented(self):
-        """Yep maps should raise NotImplementedError."""
-        yep = YepSearch()
-        with pytest.raises(NotImplementedError):
-            yep.maps("test")
-
-    def test_yep_translate_not_implemented(self):
-        """Yep translate should raise NotImplementedError."""
-        yep = YepSearch()
-        with pytest.raises(NotImplementedError):
-            yep.translate("test")

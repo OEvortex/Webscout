@@ -14,6 +14,8 @@ All notable changes to this project will be documented in this file.
 - **FreeAssist** — Removed `decode_unicode=True` from `curl_cffi` `iter_lines()` (raises `NotImplementedError`); deduplicated streaming logic (`_create_non_stream` now consumes `_create_stream` generator); fixed `proxies` type mismatch with `cast(Any, proxies)`.
 - **LLMChat** — Changed API endpoint from dead `https://coderelisher.com/ai/fetch` to `https://llmchat.in/inference/stream`; added dual response format parsing (OpenAI-compatible delta vs. `{"response":"..."}` for Deepseek R1); forwarded `temperature`/`top_p` to payload.
 - **AI4Chat** — Updated model list from 178 to 277 entries based on `data-name` attributes scraped from `https://www.ai4chat.co/models`. All existing keys preserved, 99 new models appended.
+- **Wikipedia** — Fixed default region `"en-us"`→`"us-en"` (was generating `us.wikipedia.org` which fails DNS); `limit=1`→`limit=max_results` (was returning only 1 result regardless of `max_results`).
+- **search/`__init__.py`** — Updated docstring from "Webscout" to "LLM4Free".
 
 ### 🗑️ Removed
 - **Elmo** — Deleted dead provider (file removed).
@@ -25,6 +27,10 @@ All notable changes to this project will be documented in this file.
 - **optimizers.py** — Deleted stale module.
 - **conversation.py** — Deleted stale module.
 - **AIauto.py** — Deleted stale module.
+- **Dogpile** — Removed dead search engine (Next.js SPA, results rendered client-side via JS).
+- **Yandex** — Removed dead search engine (SmartCaptcha blocks all automated requests).
+- **Yep** — Removed dead search engine (`api.yep.com` returns HTTP 501 — server retired API).
+
 
 ## [2026.06.12] - 2026-06-12
 

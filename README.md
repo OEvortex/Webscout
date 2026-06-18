@@ -73,7 +73,7 @@
 
 ### Search & AI
 
-- **Multi-Engine Search** -- DuckDuckGo, Bing, Brave, Yahoo, Yep, Yandex, Mojeek, Wikipedia. ([Search Docs](docs/search.md))
+- **Multi-Engine Search** -- DuckDuckGo, Bing, Brave, Yahoo, Mojeek, Wikipedia. ([Search Docs](docs/search.md))
 - **40+ AI Providers** -- All OpenAI-compatible for easy switching. ([Architecture](docs/architecture.md))
 - **AI-Powered Search** -- Perplexity, IAsk, Monica, AyeSoul, WebPilotAI.
 - **OpenAI-Compatible API Server** -- Serve any LLM4Free provider via OpenAI endpoints. ([Server Docs](docs/openai-api-server.md))
@@ -202,11 +202,11 @@ llm4free translate -k "Hola" --to en  # Translation
 
 | Category     | Engines                                                        |
 | ------------ | -------------------------------------------------------------- |
-| `text`       | `ddg`, `bing`, `brave`, `yahoo`, `yep`, `mojeek`, `dogpile`, `wikipedia`, `yandex` |
-| `images`     | `ddg`, `bing`, `brave`, `yahoo`, `yep`                        |
+| `text`       | `ddg`, `bing`, `brave`, `yahoo`, `mojeek`, `wikipedia` |
+| `images`     | `ddg`, `bing`, `brave`, `yahoo`                               |
 | `videos`     | `ddg`, `brave`, `yahoo`                                        |
 | `news`       | `ddg`, `bing`, `brave`, `yahoo`                                |
-| `suggestions`| `ddg`, `bing`, `brave`, `yahoo`, `yep`                         |
+| `suggestions`| `ddg`, `bing`, `brave`, `yahoo`                                |
 | `weather`    | `ddg`, `yahoo`                                                 |
 | `answers`    | `ddg`                                                          |
 | `translate`  | `ddg`                                                          |
@@ -286,7 +286,7 @@ See [llm4free/llm/](llm4free/llm/) for all available provider implementations.
 ## Search Engines
 
 ```python
-from llm4free import DuckDuckGoSearch, BingSearch, YepSearch, YahooSearch, BraveSearch
+from llm4free import DuckDuckGoSearch, BingSearch, YahooSearch, BraveSearch
 
 # DuckDuckGo
 ddg = DuckDuckGoSearch()

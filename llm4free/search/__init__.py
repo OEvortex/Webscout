@@ -1,4 +1,4 @@
-"""Webscout search module - unified search interfaces."""
+"""LLM4Free search module - unified search interfaces."""
 
 from .base import BaseSearch, BaseSearchEngine
 from .bing_main import BingSearch
@@ -7,9 +7,7 @@ from .duckduckgo_main import DuckDuckGoSearch
 
 # Import new search engines
 from .engines.mojeek import Mojeek
-from .engines.dogpile import Dogpile
 from .engines.wikipedia import Wikipedia
-from .engines.yandex import Yandex
 
 # Import result models
 from .results import (
@@ -20,7 +18,6 @@ from .results import (
     VideosResult,
 )
 from .yahoo_main import YahooSearch
-from .yep_main import YepSearch
 
 __all__ = [
     # Base classes
@@ -30,14 +27,11 @@ __all__ = [
     # Main search interfaces
     "BraveSearch",
     "DuckDuckGoSearch",
-    "YepSearch",
     "BingSearch",
     "YahooSearch",
 
     # Individual engines
     "Mojeek",
-    "Dogpile",
-    "Yandex",
     "Wikipedia",
 
     # Result models

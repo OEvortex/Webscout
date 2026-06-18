@@ -3,7 +3,7 @@
 > Last updated: 2026-03-30
 > Source: [`llm4free/search/`](../llm4free/search/)
 
-LLM4Free's search module provides unified access to 9 search engines through a consistent Python API and CLI. All engines return typed result dataclasses that support both attribute and dict-style access.
+LLM4Free's search module provides unified access to search engines through a consistent Python API and CLI. All engines return typed result dataclasses that support both attribute and dict-style access.
 
 ## Quick Start
 
@@ -20,11 +20,11 @@ for r in results:
 
 | Category     | Engines                                                        |
 | ------------ | -------------------------------------------------------------- |
-| `text`       | DuckDuckGo, Bing, Brave, Yahoo, Yep, Mojeek, Dogpile, Wikipedia, Yandex |
-| `images`     | DuckDuckGo, Bing, Brave, Yahoo, Yep                            |
+| `text`       | DuckDuckGo, Bing, Brave, Yahoo, Mojeek, Wikipedia |
+| `images`     | DuckDuckGo, Bing, Brave, Yahoo                               |
 | `videos`     | DuckDuckGo, Brave, Yahoo                                       |
 | `news`       | DuckDuckGo, Bing, Brave, Yahoo                                 |
-| `suggestions`| DuckDuckGo, Bing, Brave, Yahoo, Yep                            |
+| `suggestions`| DuckDuckGo, Bing, Brave, Yahoo                               |
 | `weather`    | DuckDuckGo, Yahoo                                              |
 | `answers`    | DuckDuckGo                                                     |
 | `translate`  | DuckDuckGo                                                     |
@@ -38,17 +38,14 @@ from llm4free.search import (
     BingSearch,        # Text, images, news, suggestions
     BraveSearch,       # Text, images, videos, news, suggestions
     YahooSearch,       # Text, images, videos, news, suggestions, weather
-    YepSearch,         # Text, images, suggestions
     Mojeek,            # Text only
-    Dogpile,           # Text only
     Wikipedia,         # Text only (encyclopedia)
-    Yandex,            # Text only
 )
 ```
 
 ## Result Types
 
-All main interfaces (`DuckDuckGoSearch`, `BingSearch`, `BraveSearch`, `YahooSearch`) return typed dataclasses. `YepSearch` returns `dict` objects. Low-level engines (`Mojeek`, `Dogpile`, `Wikipedia`, `Yandex`) return `TextResult`.
+All main interfaces (`DuckDuckGoSearch`, `BingSearch`, `BraveSearch`, `YahooSearch`) return typed dataclasses. Low-level engines (`Mojeek`, `Wikipedia`) return `TextResult`.
 
 ```python
 from llm4free.search.results import TextResult, ImagesResult, VideosResult, NewsResult
@@ -436,17 +433,6 @@ mojeek = Mojeek()
 results = mojeek.run("privacy tools", region="us-en", max_results=5)
 ```
 
-### Dogpile
-
-Metasearch engine aggregating results from multiple sources.
-
-```python
-from llm4free.search import Dogpile
-
-dogpile = Dogpile()
-results = dogpile.run("python tutorials", max_results=10)
-```
-
 ### Wikipedia
 
 Encyclopedia search returning article summaries.
@@ -458,17 +444,6 @@ wiki = Wikipedia()
 results = wiki.run("Quantum Computing", region="us-en", max_results=3)
 for r in results:
     print(f"{r['title']}: {r['body'][:200]}")
-```
-
-### Yandex
-
-Global search engine with strong parsing.
-
-```python
-from llm4free.search import Yandex
-
-yandex = Yandex()
-results = yandex.run("machine learning", max_results=5)
 ```
 
 ---
@@ -493,7 +468,7 @@ llm4free news -k "space exploration" -e yahoo
 llm4free weather -l "London"
 
 # Suggestions
-llm4free suggestions -q "artificial i" -e yep
+llm4free suggestions -q "artificial i"
 
 # Translate
 llm4free translate -k "Hola mundo" --to en
@@ -744,24 +719,14 @@ results = engine.run("test query", max_results=5)
 | `suggestions` | `(keywords, region="us")`                            | `List[str]`           |
 | `weather`     | `(keywords)`                                         | `List[dict]`          |
 
-### YepSearch
-
-| Method        | Signature                                            | Returns          |
-| ------------- | ---------------------------------------------------- | ---------------- |
-| `text`        | `(keywords, region="all", safesearch="moderate", max_results=None)` | `List[Dict]`  |
-| `images`      | `(keywords, region="all", safesearch="moderate", max_results=None)` | `List[Dict]`  |
-| `suggestions` | `(keywords, region="all")`                           | `List[str]`      |
-
-### Low-Level Engines (Mojeek, Dogpile, Wikipedia, Yandex)
+### Low-Level Engines (Mojeek, Wikipedia)
 
 All share the same `run()` pattern:
 
 | Engine    | `run()` Signature                                         | Returns           |
 | --------- | --------------------------------------------------------- | ----------------- |
 | `Mojeek`  | `(*args, **kwargs)` — delegates to `search()`             | `List[TextResult]`|
-| `Dogpile` | `(keywords, region="us-en", safesearch="moderate", max_results=None, pages=1)` | `List[TextResult]`|
 | `Wikipedia`| `(*args, **kwargs)` — delegates to `search()`            | `List[TextResult]`|
-| `Yandex`  | `(*args, **kwargs)` — delegates to `search()`             | `List[TextResult]`|
 
 ---
 

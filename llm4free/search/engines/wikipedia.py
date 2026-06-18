@@ -25,13 +25,15 @@ class Wikipedia(BaseSearchEngine[TextResult]):
         self, query: str, region: str, safesearch: str, timelimit: str | None, page: int = 1, **kwargs: Any
     ) -> dict[str, Any]:
         """Build a payload for the search request."""
-        _country, lang = region.lower().split("-")
+        parts = region.lower().split("-")
+        lang = parts[1] if len(parts) > 1 else parts[0]
         encoded_query = quote(query)
+        limit = kwargs.get("max_results", 10)
         self.search_url = (
-            f"https://{lang}.wikipedia.org/w/api.php?action=opensearch&profile=fuzzy&limit=1&search={encoded_query}"
+            f"https://{lang}.wikipedia.org/w/api.php?action=opensearch&profile=fuzzy&limit={limit}&search={encoded_query}"
         )
         payload: dict[str, Any] = {}
-        self.lang = lang  # used in extract_results
+        self.lang = lang
         return payload
 
     def extract_results(self, html_text: str) -> list[TextResult]:
@@ -67,7 +69,7 @@ class Wikipedia(BaseSearchEngine[TextResult]):
         keywords = args[0] if args else kwargs.get("keywords")
         if keywords is None:
             keywords = ""
-        region = args[1] if len(args) > 1 else kwargs.get("region", "en-us")
+        region = args[1] if len(args) > 1 else kwargs.get("region", "us-en")
         safesearch = args[2] if len(args) > 2 else kwargs.get("safesearch", "moderate")
         max_results = args[3] if len(args) > 3 else kwargs.get("max_results")
 

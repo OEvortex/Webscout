@@ -25,7 +25,6 @@ from .duckduckgo import (
     DuckDuckGoWeather,
 )
 from .mojeek import Mojeek
-from .dogpile import Dogpile
 from .wikipedia import Wikipedia
 from .yahoo import (
     YahooImages,
@@ -35,26 +34,20 @@ from .yahoo import (
     YahooText,
     YahooVideos,
 )
-from .yandex import Yandex
-from .yep import YepBase, YepImages, YepSuggestions, YepTextSearch
 
 # Engine categories mapping
 ENGINES = {
     "text": {
         "brave": BraveTextSearch,
         "mojeek": Mojeek,
-        "dogpile": Dogpile,
-        "yandex": Yandex,
         "bing": BingTextSearch,
         "duckduckgo": DuckDuckGoTextSearch,
-        "yep": YepTextSearch,
         "yahoo": YahooText,
     },
     "images": {
         "bing": BingImagesSearch,
         "brave": BraveImages,
         "duckduckgo": DuckDuckGoImages,
-        "yep": YepImages,
         "yahoo": YahooImages,
     },
     "videos": {
@@ -72,7 +65,6 @@ ENGINES = {
         "brave": BraveSuggestions,
         "bing": BingSuggestionsSearch,
         "duckduckgo": DuckDuckGoSuggestions,
-        "yep": YepSuggestions,
         "yahoo": YahooSuggestions,
     },
     "answers": {
@@ -97,9 +89,7 @@ __all__ = [
     "BraveNews",
     "BraveSuggestions",
     "Mojeek",
-    "Dogpile",
     "Wikipedia",
-    "Yandex",
     "BingBase",
     "BingTextSearch",
     "BingImagesSearch",
@@ -115,10 +105,6 @@ __all__ = [
     "DuckDuckGoMaps",
     "DuckDuckGoTranslate",
     "DuckDuckGoWeather",
-    "YepBase",
-    "YepTextSearch",
-    "YepImages",
-    "YepSuggestions",
     "YahooSearchEngine",
     "YahooText",
     "YahooImages",
