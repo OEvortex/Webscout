@@ -10,6 +10,7 @@ from llm4free.llm.Auth.huggingface import HuggingFace
 from llm4free.llm.Auth.nvidia import Nvidia
 from llm4free.llm.Auth.openrouter import OpenRouter
 from llm4free.llm.Auth.sambanova import Sambanova
+from llm4free.llm.Auth.textpollinations import TextPollinations
 from llm4free.llm.Auth.upstage import Upstage
 from llm4free.llm.Auth.zenmux import Zenmux
 
@@ -24,6 +25,7 @@ __all__ = [
     "Nvidia",
     "OpenRouter",
     "Sambanova",
+    "TextPollinations",
     "Upstage",
     "Zenmux",
 ]

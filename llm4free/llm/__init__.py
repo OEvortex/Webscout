@@ -45,7 +45,7 @@ from llm4free.llm.netwrck import Netwrck
 from llm4free.llm.OllamaSwarm import OllamaSwarm
 from llm4free.llm.OperaAria import OperaAria
 from llm4free.llm.PI import PiAI
-from llm4free.llm.textpollinations import TextPollinations
+from llm4free.llm.Auth.textpollinations import TextPollinations
 from llm4free.llm.toolbaz import Toolbaz
 from llm4free.llm.typliai import TypliAI
 from llm4free.llm.utils import (

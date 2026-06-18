@@ -273,7 +273,7 @@ class WiseCat(OpenAICompatibleProvider):
     """
 
     required_auth = False
-    _base_models = ["chat-model-small", "chat-model-large", "chat-model-reasoning"]
+    _base_models = ["chat-model-small"]
     # Create AVAILABLE_MODELS as a list with the format "WiseCat/model"
     AVAILABLE_MODELS = [f"WiseCat/{model}" for model in _base_models]
     # Create a mapping dictionary for internal use
@@ -338,8 +338,8 @@ class WiseCat(OpenAICompatibleProvider):
             model_raw = model
         if f"WiseCat/{model_raw}" in self.AVAILABLE_MODELS:
             return model_raw
-        print(f"Warning: Unknown model '{model}'. Using 'chat-model-large' instead.")
-        return "chat-model-large"
+        print(f"Warning: Unknown model '{model}'. Using 'chat-model-small' instead.")
+        return self._base_models[0]  # Default to the first model in _base_models
 
     @property
     def models(self) -> SimpleModelList:

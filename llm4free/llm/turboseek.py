@@ -189,7 +189,7 @@ class Chat(BaseChat):
 
 class TurboSeek(OpenAICompatibleProvider):
     required_auth = False
-    AVAILABLE_MODELS = ["Llama 3.1 70B"]
+    AVAILABLE_MODELS = ["gpt-oss"]
 
     def __init__(self, timeout: int = 30):
         self.timeout = timeout

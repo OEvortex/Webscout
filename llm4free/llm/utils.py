@@ -365,7 +365,7 @@ def count_tokens(text_or_messages: Any) -> int:
     Returns:
         int: Number of tokens.
     """
-    import tiktoken  # ty:ignore[unresolved-import]
+    import tiktoken
     if isinstance(text_or_messages, str):
         enc = tiktoken.encoding_for_model("gpt-4o")
         return len(enc.encode(text_or_messages))
