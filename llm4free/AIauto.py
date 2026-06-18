@@ -35,7 +35,7 @@ def load_providers() -> Tuple[Dict[str, Type[Provider]], set]:
 
     for _, module_name, _ in pkgutil.iter_modules(provider_package.__path__):
         try:
-            module = importlib.import_module(f"llm4free.Provider.{module_name}")
+            module = importlib.import_module(f"llm4free.{module_name}")
             for attr_name in dir(module):
                 attr = getattr(module, attr_name)
                 if isinstance(attr, type) and issubclass(attr, Provider) and attr != Provider:

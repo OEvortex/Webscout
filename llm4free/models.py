@@ -7,7 +7,7 @@ from llm4free.AIbase import Provider, TTSProvider
 # Import TTI base class
 BaseImages = None
 try:
-    from llm4free.Provider.TTI.base import BaseImages as BaseImagesClass
+    from llm4free.TTI.base import BaseImages as BaseImagesClass
     BaseImages = BaseImagesClass
     TTI_AVAILABLE = True
 except ImportError:
@@ -98,7 +98,7 @@ class _LLMModels:
 
         for _, module_name, _ in pkgutil.iter_modules(provider_package.__path__):
             try:
-                module = importlib.import_module(f"llm4free.Provider.{module_name}")
+                module = importlib.import_module(f"llm4free.{module_name}")
                 for attr_name in dir(module):
                     attr = getattr(module, attr_name)
                     if isinstance(attr, type) and issubclass(attr, Provider) and attr != Provider:
@@ -137,7 +137,7 @@ class _LLMModels:
 
         for _, module_name, _ in pkgutil.iter_modules(provider_package.__path__):
             try:
-                module = importlib.import_module(f"llm4free.Provider.{module_name}")
+                module = importlib.import_module(f"llm4free.{module_name}")
                 for attr_name in dir(module):
                     attr = getattr(module, attr_name)
                     if isinstance(attr, type) and issubclass(attr, Provider) and attr != Provider:
@@ -270,12 +270,12 @@ class _TTSModels:
 
         try:
             # Import the TTS package specifically
-            tts_package = importlib.import_module("llm4free.Provider.TTS")
+            tts_package = importlib.import_module("llm4free.TTS")
 
             # Iterate through TTS modules
             for _, module_name, _ in pkgutil.iter_modules(tts_package.__path__):
                 try:
-                    module = importlib.import_module(f"llm4free.Provider.TTS.{module_name}")
+                    module = importlib.import_module(f"llm4free.TTS.{module_name}")
                     for attr_name in dir(module):
                         attr = getattr(module, attr_name)
                         if (
@@ -378,11 +378,11 @@ class _TTIModels:
             return {}
 
         provider_models = {}
-        tti_package = importlib.import_module("llm4free.Provider.TTI")
+        tti_package = importlib.import_module("llm4free.TTI")
 
         for _, module_name, _ in pkgutil.iter_modules(tti_package.__path__):
             try:
-                module = importlib.import_module(f"llm4free.Provider.TTI.{module_name}")
+                module = importlib.import_module(f"llm4free.TTI.{module_name}")
                 for attr_name in dir(module):
                     attr = getattr(module, attr_name)
                     if (
@@ -413,11 +413,11 @@ class _TTIModels:
             return {}
 
         provider_details = {}
-        tti_package = importlib.import_module("llm4free.Provider.TTI")
+        tti_package = importlib.import_module("llm4free.TTI")
 
         for _, module_name, _ in pkgutil.iter_modules(tti_package.__path__):
             try:
-                module = importlib.import_module(f"llm4free.Provider.TTI.{module_name}")
+                module = importlib.import_module(f"llm4free.TTI.{module_name}")
                 for attr_name in dir(module):
                     attr = getattr(module, attr_name)
                     if (

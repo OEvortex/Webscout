@@ -8,8 +8,8 @@ Set GROQ_API_KEY environment variable to run these tests.
 import os
 import pytest
 
-from llm4free.Provider.Auth.Groq import GROQ
-from llm4free.Provider.Openai_comp.utils import ChatCompletion
+from llm4free.Auth.Groq import GROQ
+from llm4free.Openai_comp.utils import ChatCompletion
 from llm4free.exceptions import FailedToGenerateResponseError
 
 

@@ -28,26 +28,26 @@ from typing import (
     cast,
 )
 
-from llm4free.Provider.llm.base import (
+from llm4free.llm.base import (
     BaseChat,
     BaseCompletions,
     OpenAICompatibleProvider,
     Tool,
 )
-from llm4free.Provider.llm.utils import (
+from llm4free.llm.utils import (
     ChatCompletion,
     ChatCompletionChunk,
 )
-from llm4free.Provider.TTI.base import BaseImages, TTICompatibleProvider
-from llm4free.Provider.TTI.utils import ImageResponse
-from llm4free.Provider.TTS.base import BaseTTSProvider
+from llm4free.TTI.base import BaseImages, TTICompatibleProvider
+from llm4free.TTI.utils import ImageResponse
+from llm4free.TTS.base import BaseTTSProvider
 
 
 def load_openai_providers() -> Tuple[Dict[str, Type[OpenAICompatibleProvider]], Set[str]]:
     """
     Dynamically loads all OpenAI-compatible provider classes from the llm module.
 
-    Scans the llm4free.Provider.llm package and imports all subclasses of
+    Scans the llm4free.llm package and imports all subclasses of
     OpenAICompatibleProvider. Excludes base classes, utility modules, and private classes.
 
     Returns:
@@ -66,7 +66,7 @@ def load_openai_providers() -> Tuple[Dict[str, Type[OpenAICompatibleProvider]], 
         True
     """
     return _load_providers(
-        "llm4free.Provider.llm",
+        "llm4free.llm",
         OpenAICompatibleProvider,
         ("base", "utils", "pydantic", "__"),
     )
@@ -76,7 +76,7 @@ def load_tti_providers() -> Tuple[Dict[str, Type[TTICompatibleProvider]], Set[st
     """
     Dynamically loads all TTI (Text-to-Image) provider classes from the TTI module.
 
-    Scans the llm4free.Provider.TTI package and imports all subclasses of
+    Scans the llm4free.TTI package and imports all subclasses of
     TTICompatibleProvider. Excludes base classes, utility modules, and private classes.
 
     Returns:
@@ -94,14 +94,14 @@ def load_tti_providers() -> Tuple[Dict[str, Type[TTICompatibleProvider]], Set[st
         >>> print('Stable Diffusion' in auth_required)
         False
     """
-    return _load_providers("llm4free.Provider.TTI", TTICompatibleProvider, ("base", "utils", "__"))
+    return _load_providers("llm4free.TTI", TTICompatibleProvider, ("base", "utils", "__"))
 
 
 def load_tts_providers() -> Tuple[Dict[str, Type[BaseTTSProvider]], Set[str]]:
     """
     Dynamically loads all TTS provider classes from the TTS module.
 
-    Scans the llm4free.Provider.TTS package and imports all subclasses of
+    Scans the llm4free.TTS package and imports all subclasses of
     BaseTTSProvider. Excludes base classes, utility modules, and private classes.
 
     Returns:
@@ -109,7 +109,7 @@ def load_tts_providers() -> Tuple[Dict[str, Type[BaseTTSProvider]], Set[str]]:
         - A dictionary mapping TTS provider class names to their class objects.
         - A set of provider names that require API authentication.
     """
-    return _load_providers("llm4free.Provider.TTS", BaseTTSProvider, ("base", "utils", "__"))
+    return _load_providers("llm4free.TTS", BaseTTSProvider, ("base", "utils", "__"))
 
 
 def _get_models_safely(provider_cls: type, client: Optional["Client"] = None) -> List[str]:
@@ -137,7 +137,7 @@ def _get_models_safely(provider_cls: type, client: Optional["Client"] = None) ->
     Examples:
         >>> from llm4free.client import _get_models_safely, Client
         >>> client = Client()
-        >>> from llm4free.Provider.llm.some_provider import SomeProvider
+        >>> from llm4free.llm.some_provider import SomeProvider
         >>> models = _get_models_safely(SomeProvider, client)
         >>> print(models)
         ['gpt-4', 'gpt-3.5-turbo']
@@ -970,7 +970,7 @@ class ClientImages(BaseImages):
             >>> print(response.data[0].url)
 
             >>> # Using specific provider
-            >>> from llm4free.Provider.TTI.stable import StableDiffusion
+            >>> from llm4free.TTI.stable import StableDiffusion
             >>> response = client.images.generate(
             ...     prompt="A cat wearing sunglasses",
             ...     provider=StableDiffusion
@@ -1327,8 +1327,8 @@ class Client:
             ... )
 
             >>> # With specific default providers
-            >>> from llm4free.Provider.llm.groq import Groq
-            >>> from llm4free.Provider.TTI.stable import StableDiffusion
+            >>> from llm4free.llm.groq import Groq
+            >>> from llm4free.TTI.stable import StableDiffusion
             >>> client = Client(
             ...     provider=Groq,
             ...     image_provider=StableDiffusion

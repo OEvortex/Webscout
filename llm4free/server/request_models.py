@@ -6,7 +6,7 @@ from typing import Dict, List, Literal, Optional, Union
 from pydantic import ConfigDict
 
 try:
-    from llm4free.Provider.llm.pydantic_imports import BaseModel, Field
+    from llm4free.llm.pydantic_imports import BaseModel, Field
 except ImportError:
     from pydantic import BaseModel, Field
 

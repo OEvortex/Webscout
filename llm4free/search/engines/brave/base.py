@@ -6,7 +6,7 @@ from typing import Any, cast
 
 from curl_cffi.requests import Session
 
-from ....litagent import LitAgent
+from llm4free.litagent import LitAgent
 
 
 class BraveBase:

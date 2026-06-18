@@ -52,9 +52,9 @@ def initialize_provider_map() -> None:
     try:
         import importlib
         # Ensure llm is loaded in sys.modules
-        importlib.import_module("llm4free.Provider.llm")
-        module = sys.modules["llm4free.Provider.llm"]
-        from llm4free.Provider.llm.base import OpenAICompatibleProvider, SimpleModelList
+        importlib.import_module("llm4free.llm")
+        module = sys.modules["llm4free.llm"]
+        from llm4free.llm.base import OpenAICompatibleProvider, SimpleModelList
 
         provider_count = 0
         model_count = 0
@@ -99,9 +99,9 @@ def initialize_tti_provider_map() -> None:
     try:
         import importlib
         # Ensure TTI is loaded in sys.modules
-        importlib.import_module("llm4free.Provider.TTI")
-        module = sys.modules["llm4free.Provider.TTI"]
-        from llm4free.Provider.TTI.base import TTICompatibleProvider
+        importlib.import_module("llm4free.TTI")
+        module = sys.modules["llm4free.TTI"]
+        from llm4free.TTI.base import TTICompatibleProvider
 
         provider_count = 0
         model_count = 0
@@ -146,9 +146,9 @@ def initialize_tts_provider_map() -> None:
     try:
         import importlib
         # Ensure TTS is loaded in sys.modules
-        importlib.import_module("llm4free.Provider.TTS")
-        module = sys.modules["llm4free.Provider.TTS"]
-        from llm4free.Provider.TTS.base import BaseTTSProvider
+        importlib.import_module("llm4free.TTS")
+        module = sys.modules["llm4free.TTS"]
+        from llm4free.TTS.base import BaseTTSProvider
 
         provider_count = 0
         model_count = 0

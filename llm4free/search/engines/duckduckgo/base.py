@@ -22,7 +22,7 @@ except ImportError:
     document_fromstring = None # type: ignore
 
 from ....exceptions import RatelimitE, TimeoutE, WebscoutE
-from ....litagent import LitAgent
+from llm4free.litagent import LitAgent
 from ....utils import (
     _extract_vqd,
     _normalize,

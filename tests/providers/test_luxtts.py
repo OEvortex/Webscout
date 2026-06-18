@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase, mock
 
-from llm4free.Provider.TTS.luxtts import LuxTTS
+from llm4free.TTS.luxtts import LuxTTS
 
 
 class FakeResponse:

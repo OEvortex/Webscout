@@ -9,8 +9,8 @@ import os
 import pytest
 from typing import cast
 
-from llm4free.Provider.Auth.Openai import OpenAI
-from llm4free.Provider.Openai_comp.utils import ChatCompletion
+from llm4free.Auth.Openai import OpenAI
+from llm4free.Openai_comp.utils import ChatCompletion
 from llm4free.exceptions import FailedToGenerateResponseError
 
 

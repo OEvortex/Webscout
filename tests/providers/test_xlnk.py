@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from unittest import TestCase, mock
 
-from llm4free.Provider.TTS.xlnk import XLNKTTS
+from llm4free.TTS.xlnk import XLNKTTS
 
 
 class FakeResponse:

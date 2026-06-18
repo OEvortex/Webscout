@@ -5,7 +5,7 @@ from unittest import TestCase, mock
 
 from curl_cffi.requests.exceptions import RequestException
 
-from llm4free.Provider.AISEARCH.openresearcher import OpenResearcher
+from llm4free.AISEARCH.openresearcher import OpenResearcher
 
 
 class FakeResponse:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from curl_cffi.requests import Session
 
-from ....litagent import LitAgent
+from llm4free.litagent import LitAgent
 
 
 class BingBase:

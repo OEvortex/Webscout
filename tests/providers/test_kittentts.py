@@ -5,7 +5,7 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase, mock
 
-from llm4free.Provider.TTS.kittentts import KittenTTS
+from llm4free.TTS.kittentts import KittenTTS
 
 
 class FakeResponse:

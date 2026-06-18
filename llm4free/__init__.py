@@ -4,7 +4,7 @@ from .AIauto import *  # noqa: F403
 from .AIutel import *  # noqa: F403
 from .client import Client
 from .Extra import *  # noqa: F403
-from .litagent import LitAgent
+from llm4free.litagent import LitAgent
 from .models import model
 from .optimizers import *
 from .Provider import *

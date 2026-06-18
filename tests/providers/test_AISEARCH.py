@@ -9,7 +9,7 @@ import aiohttp
 
 from tests.providers.utils import FakeResp
 
-from llm4free.Provider.AISEARCH import (
+from llm4free.AISEARCH import (
     AyeSoul,
     IAsk,
     Monica,
@@ -69,7 +69,7 @@ class TestAISEARCHProviders(unittest.TestCase):
         self.assertIn("Paragraph", out)
         self.assertIn("https://example.com", out)
 
-    @patch("llm4free.Provider.AISEARCH.iask_search.AsyncSession")
+    @patch("llm4free.AISEARCH.iask_search.AsyncSession")
     def test_iask_search_non_stream(self, mock_async_session):
         # Mock async HTTP session and response
         response = MagicMock()
@@ -90,7 +90,7 @@ class TestAISEARCHProviders(unittest.TestCase):
         self.assertIsInstance(result, SearchResponse)
         self.assertIn("Answer", str(result))
 
-    @patch("llm4free.Provider.AISEARCH.iask_search.AsyncSession")
+    @patch("llm4free.AISEARCH.iask_search.AsyncSession")
     def test_iask_search_stream(self, mock_async_session):
         response = MagicMock()
         response.status_code = 200
@@ -111,7 +111,7 @@ class TestAISEARCHProviders(unittest.TestCase):
         result = "".join(str(x) for x in cast(GeneratorType[Any, Any, Any], gen))
         self.assertIn("Answer", result)
 
-    @patch("llm4free.Provider.AISEARCH.monica_search.requests.Session.post")
+    @patch("llm4free.AISEARCH.monica_search.requests.Session.post")
     def test_monica_search_non_stream(self, mock_post):
         # Simulate a response with JSON content
         payload = b'{"text":"Hello"}'
@@ -122,7 +122,7 @@ class TestAISEARCHProviders(unittest.TestCase):
         self.assertIsInstance(result, SearchResponse)
         self.assertIn("Hello", str(result))
 
-    @patch("llm4free.Provider.AISEARCH.monica_search.requests.Session.post")
+    @patch("llm4free.AISEARCH.monica_search.requests.Session.post")
     def test_monica_search_stream(self, mock_post):
         payload_chunks = [b'{"text":"He"}', b'{"text":"llo"}']
         mock_post.return_value = FakeStreamResp(iter_bytes=payload_chunks)
@@ -133,7 +133,7 @@ class TestAISEARCHProviders(unittest.TestCase):
         result = "".join(str(x) for x in cast(GeneratorType[Any, Any, Any], gen))
         self.assertIn("Hello", result)
 
-    @patch("llm4free.Provider.AISEARCH.webpilotai_search.requests.Session.post")
+    @patch("llm4free.AISEARCH.webpilotai_search.requests.Session.post")
     def test_webpilotai_search_non_stream(self, mock_post):
         payload = b'{"data":{"content":"Hi"}}'
         mock_post.return_value = FakeStreamResp(content=payload)
@@ -143,7 +143,7 @@ class TestAISEARCHProviders(unittest.TestCase):
         self.assertIsInstance(result, SearchResponse)
         self.assertIn("Hi", str(result))
 
-    @patch("llm4free.Provider.AISEARCH.webpilotai_search.requests.Session.post")
+    @patch("llm4free.AISEARCH.webpilotai_search.requests.Session.post")
     def test_webpilotai_search_stream(self, mock_post):
         payload_chunks = [b'{"data":{"content":"He"}}', b'{"data":{"content":"llo"}}']
         mock_post.return_value = FakeStreamResp(iter_bytes=payload_chunks)
@@ -153,7 +153,7 @@ class TestAISEARCHProviders(unittest.TestCase):
         result = "".join(str(x) for x in cast(GeneratorType[Any, Any, Any], gen))
         self.assertIn("Hello", result)
 
-    @patch("llm4free.Provider.AISEARCH.PERPLEXED_search.requests.Session.post")
+    @patch("llm4free.AISEARCH.PERPLEXED_search.requests.Session.post")
     def test_perplexed_search_non_stream(self, mock_post):
         # Provide a mock response for PERPLEXED.
         payload = b'{"success": true, "answer": "Hello"}'
@@ -164,7 +164,7 @@ class TestAISEARCHProviders(unittest.TestCase):
         self.assertIsInstance(result, SearchResponse)
         self.assertIn("Hello", str(result))
 
-    @patch("llm4free.Provider.AISEARCH.PERPLEXED_search.requests.Session.post")
+    @patch("llm4free.AISEARCH.PERPLEXED_search.requests.Session.post")
     def test_perplexed_search_stream(self, mock_post):
         payload_chunks = [
             b'{"success": true, "answer": "He"}',
@@ -177,7 +177,7 @@ class TestAISEARCHProviders(unittest.TestCase):
         result = "".join(str(x) for x in cast(GeneratorType[Any, Any, Any], gen))
         self.assertIn("Hello", result)
 
-    @patch("llm4free.Provider.AISEARCH.Perplexity.requests.Session.post")
+    @patch("llm4free.AISEARCH.Perplexity.requests.Session.post")
     def test_perplexity_search_non_stream(self, mock_post):
         payload = b'data: {"step_type": "FINAL", "content": {"answer": "Hello"}}\r\n\r\n'
         mock_post.return_value = FakeStreamResp(content=payload)
@@ -187,7 +187,7 @@ class TestAISEARCHProviders(unittest.TestCase):
         self.assertIsInstance(result, SearchResponse)
         self.assertIn("Hello", str(result))
 
-    @patch("llm4free.Provider.AISEARCH.Perplexity.requests.Session.post")
+    @patch("llm4free.AISEARCH.Perplexity.requests.Session.post")
     def test_perplexity_search_stream(self, mock_post):
         payload_chunks = [
             b'data: {"step_type": "FINAL", "content": {"answer": "He"}}\r\n\r\n',
@@ -200,7 +200,7 @@ class TestAISEARCHProviders(unittest.TestCase):
         result = "".join(str(x) for x in cast(GeneratorType[Any, Any, Any], gen))
         self.assertIn("Hello", result)
 
-    @patch("llm4free.Provider.AISEARCH.ayesoul_search.aiohttp.ClientSession")
+    @patch("llm4free.AISEARCH.ayesoul_search.aiohttp.ClientSession")
     def test_ayesoul_search_stream(self, mock_client_session):
         # Mock WebSocket session and messages
         class FakeWS:
