@@ -1,19 +1,19 @@
 <div align="center">
-  <a href="https://github.com/OEvortex/Webscout">
+  <a href="https://github.com/OEvortex/llm4free">
     <picture>
     <!-- When GitHub is in Dark Mode, force a light background canvas directly behind your black SVG logo -->
-      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/OEvortex/Webscout/blob/main/logo.svg" style="background-color: #f8f9fa; padding: 12px; border-radius: 6px; display: inline-block;">
+      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/OEvortex/llm4free/blob/main/logo.svg" style="background-color: #f8f9fa; padding: 12px; border-radius: 6px; display: inline-block;">
       <!-- Default Light Mode rendering -->
-      <img src="https://github.com/OEvortex/Webscout/blob/main/logo.svg" alt="WebScout Logo">
+      <img src="https://github.com/OEvortex/llm4free/blob/main/logo.svg" alt="LLM4Free Logo">
   </picture>
   </a>
-  <a href="https://github.com/OEvortex/Webscout">
-    <img src="https://img.shields.io/badge/WebScout-Ultimate%20Toolkit-blue?style=for-the-badge&logo=python&logoColor=white" alt="WebScout Logo">
+  <a href="https://github.com/OEvortex/llm4free">
+    <img src="https://img.shields.io/badge/LLM4Free-All--in--One%20Toolkit-blue?style=for-the-badge&logo=python&logoColor=white" alt="LLM4Free Logo">
   </a>
 
   <h1>LLM4Free</h1>
 
-  <p><strong>Your All-in-One Python Toolkit for Web Search, AI Interaction, Digital Utilities, and More</strong></p>
+  <p><strong>Formerly WebScout — Your All-in-One Python Toolkit for Web Search, AI Interaction, Digital Utilities, and More</strong></p>
 
   <p>
     Access diverse search engines, cutting-edge AI models, temporary communication tools, media utilities, developer helpers, and powerful CLI interfaces -- all through one unified library.
@@ -57,7 +57,7 @@
 > Every provider implements `client.chat.completions.create(...)` — identical to the OpenAI Python SDK.
 
 > [!NOTE]
-> LLM4Free supports 40+ AI providers including: HeckAI, ChatGPT, Groq, DeepInfra, Nvidia, Sambanova, OpenRouter, HuggingFace, OllamaSwarm, and many more. See the full [Provider Matrix](Provider.md).
+> LLM4Free supports 40+ AI providers including: HeckAI, ChatGPT, Groq, DeepInfra, Nvidia, Sambanova, OpenRouter, HuggingFace, OllamaSwarm, and many more.
 
 <div align="center">
   <p>
@@ -75,7 +75,7 @@
 
 - **Multi-Engine Search** -- DuckDuckGo, Bing, Brave, Yahoo, Yep, Yandex, Mojeek, Wikipedia. ([Search Docs](docs/search.md))
 - **40+ AI Providers** -- All OpenAI-compatible for easy switching. ([Architecture](docs/architecture.md))
-- **AI-Powered Search** -- Perplexity, IAsk, Monica, AyeSoul, WebPilotAI. ([Provider Matrix](Provider.md))
+- **AI-Powered Search** -- Perplexity, IAsk, Monica, AyeSoul, WebPilotAI.
 - **OpenAI-Compatible API Server** -- Serve any LLM4Free provider via OpenAI endpoints. ([Server Docs](docs/openai-api-server.md))
 - **Unified Python Client** -- Auto-failover chat and image generation. ([Client Docs](docs/client.md))
 
@@ -83,7 +83,7 @@
 
 - **Text-to-Image** -- PollinationsAI, Together, Miragic, MagicStudio. ([TTI Docs](docs/getting-started.md#image-generation))
 - **Text-to-Speech** -- ElevenLabs, Deepgram, OpenAI FM, Parler, Qwen, MurfAI, and more. ([Model Registry](docs/models.md))
-- **Speech-to-Text** -- ElevenLabs STT. ([Provider Matrix](Provider.md))
+- **Speech-to-Text** -- ElevenLabs STT.
 - **YouTube Toolkit** -- Video downloads, transcription, API access. ([Docs](docs/gitapi.md))
 - **Weather Tools** -- Detailed weather info with ASCII display. ([Weather Docs](docs/weather.md))
 
@@ -279,7 +279,7 @@ for chunk in stream:
         print(chunk.choices[0].delta.content, end="")
 ```
 
-See [Provider.md](Provider.md) for the complete provider matrix with file locations.
+See [llm4free/llm/](llm4free/llm/) for all available provider implementations.
 
 <hr/>
 
@@ -501,7 +501,7 @@ Model registry docs: [docs/models.md](docs/models.md)
 | [Inferno](docs/inferno.md) | Local LLM server |
 | [Troubleshooting](docs/troubleshooting.md) | Common issues and solutions |
 | [Contributing](docs/contributing.md) | How to contribute |
-| [Provider Matrix](Provider.md) | Complete provider listing |
+| [Provider Modules](llm4free/llm/) | All provider implementations |
 | [Docs Hub](docs/README.md) | Full documentation index |
 
 <hr/>
