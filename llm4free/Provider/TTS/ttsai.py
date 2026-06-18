@@ -8,7 +8,7 @@ Free tier models with no authentication required.
 import pathlib
 import tempfile
 import time
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 from curl_cffi import CurlError, requests
 from litprinter import ic
@@ -99,7 +99,7 @@ class TTSAI(BaseTTSProvider):
         self.session = requests.Session()
         self.session.headers.update(self.headers)
         if proxies:
-            self.session.proxies.update(proxies)
+            self.session.proxies.update(cast(Any, proxies))
         self.timeout = timeout
 
     @property

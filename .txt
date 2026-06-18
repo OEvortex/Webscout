@@ -1,0 +1,240 @@
+Here's the consolidated list — 130+ free AI sites, no login required. Compiled from 8 search angles + 3 GitHub awesome-lists + pollinations + zebbern/no-cost-ai + rocnubie's list.
+
+---
+
+## 💬 CHAT / LLM (40 sites)
+
+| # | Site | URL | Notes |
+|---|---|---|---|
+| 1 | Duck.ai | https://duck.ai | Best privacy. GPT-4o, Claude, Llama, Mistral. Anonymized, not used for training |
+| 2 | HuggingChat | https://huggingface.co/chat | Multiple open-source models, no login |
+| 3 | Microsoft Copilot | https://copilot.microsoft.com | GPT-5, unlimited, 1 image/day |
+| 4 | ChatGPT (guest) | https://chatgpt.com | Temporary chat, no signup for basic |
+| 5 | Perplexity (guest) | https://perplexity.ai | Web search + citations. 3 Pro searches/day |
+| 6 | Le Chat (Mistral) | https://chat.mistral.ai | 10 msgs/24h |
+| 7 | Grok | https://grok.com | 3 msgs/2h |
+| 8 | Gemini | https://gemini.google.com | 5-10 prompts/day, fast model |
+| 9 | Meta AI | https://meta.ai | Llama 4, unlimited |
+| 10 | Venice | https://venice.ai | Private, uncensored options |
+| 11 | Andi | https://andi.com | Search-style answers |
+| 12 | Brave Leo | https://brave.com/leo/ | Inside Brave browser |
+| 13 | Phind | https://phind.com | For devs, Phind-70B |
+| 14 | Perchance Chat | https://perchance.org/ai-chat | Unlimited, roleplay/story focus |
+| 15 | You.com | https://you.com | Guest mode, multimodal |
+| 16 | Pi.ai | https://pi.ai | Inflection-2.5, unlimited |
+| 17 | Google AI Mode | https://google.com (AI Mode) | Inside Google Search |
+| 18 | Baidu ERNIE | https://yiyan.baidu.com | Chinese, no signup |
+| 19 | LMArena | https://lmarena.ai | 40+ models, unlimited |
+| 20 | GPT for Free / g4f | https://g4f.dev | 200+ local models, unlimited |
+| 21 | FlowGPT | https://flowgpt.com | Community GPTs |
+| 22 | Pollinations Chat | https://pollinations.ai | Open source |
+| 23 | SharedChat | https://sharedchat.cn | GPT-4o, o3, o4-mini |
+| 24 | Netfly | https://free.netfly.top | GPT-4o-mini, unlimited |
+| 25 | AI365VIP | https://chat.ai365vip.com | GPT-4o, unlimited |
+| 26 | Heck.ai | https://heck.ai | Multi-model, 50/day |
+| 27 | FreeGPT.es | https://freegpt.es | GPT-4o, DeepSeek, Grok |
+| 28 | fuckicoding link | https://link.fuckicoding.com | Multiple, generous |
+| 29 | Umint AI | https://umint-ai.hf.space | GPT-4o-mini, DeepSeek, Phi |
+| 30 | Mirexa | https://mirexa.vercel.app | Multi-model, uncensored "evil" mode |
+| 31 | Kaily | https://kaily.ai | PDF/website chat, no signup |
+| 32 | Uncensored.chat | https://uncensored.chat | NSFW-ok, no login |
+| 33 | Chat100.ai | https://chat100.ai | GPT-4o, Claude 3.5 |
+| 34 | Lumio AI | https://app.lumioai.tech | 7+ models, reasonable limits |
+| 35 | SurfSense | https://surfsense.com/free | Multi-model, 500k tokens |
+| 36 | DeepInfra Chat | https://deepinfra.com/chat | Kimi K2, GLM 4.5, Llama 4 |
+| 37 | Sur (Pollinations) | https://sur.pollinations.ai | OpenAI/Claude/Mistral via pollinations |
+| 38 | Free-ai-online | https://www.free-ai-online.com | Unlimited, no caps |
+| 39 | Chat2 Free2GPT | https://chat2.free2gpt.com | Gemini + many |
+| 40 | LiteAI | https://liteai (via Pollinations) | Chat + image |
+
+---
+
+## 🎨 IMAGE GENERATION (38 sites)
+
+| # | Site | URL | Notes |
+|---|---|---|---|
+| 1 | Pollinations | https://pollinations.ai | Flux, SD, Kontext, Nano Banana. Default backend |
+| 2 | Craiyon | https://craiyon.com | Unlimited, lower quality (512px) |
+| 3 | Perchance Image | https://perchance.org/ai-text-to-image-generator | Unlimited, SD-based |
+| 4 | Raphael AI | https://raphael.app | Unlimited basic, no watermark |
+| 5 | Imagefree | https://imagefree.org | Truly unlimited, no signup |
+| 6 | FreeGPT.IM | https://freegpt.im | GPT Image 2, 30/day |
+| 7 | OneFreeAI | https://draw.onefreeai.com | Flux 1.1 Pro, Nano Banana Pro |
+| 8 | DrawAny | https://drawany.art | Flux 2, Qwen, Z-Image, Kling |
+| 9 | Creen | https://creen.ai/ai-image-generator | 11+ engines, 4K |
+| 10 | NoLoginTool | https://nologintool.com/image/ai-image-generator | Flux, SDXL, Cloudflare |
+| 11 | Perchance AI (alt) | https://www.perchanceai.app | Stable Diffusion |
+| 12 | PictoFlux | https://pictoflux.com | Private, fast |
+| 13 | OptiPix | https://optipix.art | ON-DEVICE (browser). SD Turbo, LCM |
+| 14 | Deeka.ai | https://deeka.ai | SDXL Lightning |
+| 15 | HCODX | https://hcodx.com/tools/ai-image-generator | Flux + GPT Image, Pollinations backend |
+| 16 | FreeGen | https://freegen.app | Unlimited, no signup |
+| 17 | FlatAI | https://flatai.org | Local-storage only |
+| 18 | Vheer | https://vheer.com | No watermark, unlimited |
+| 19 | Stable Horde | https://stablehorde.net | Distributed volunteer-powered |
+| 20 | Lexica | https://lexica.art | SD search + generate |
+| 21 | RunwayML (Gen-4) | https://runwayml.com | Creative assistant |
+| 22 | Fotor | https://fotor.com | Image editing + AI |
+| 23 | AI Photo Editor | https://bestaiphotoeditor.app | Photo editing AI |
+| 24 | AI Image Editor | https://ai-image-editor.online | img2img editor |
+| 25 | AI Room Design | https://airoom-design.com | Interior design AI |
+| 26 | Nano Banana AI | https://nanobanana-ai.online | Google's Nano Banana Pro |
+| 27 | Flux 2 AI | https://flux-2.online | Flux 2 lineup |
+| 28 | Flux AI Online | https://flux-ai.online | Flux 2 Dev/Pro/Flex/LoRA |
+| 29 | Z-Image | https://z-image.club | Z-Image Turbo |
+| 30 | TinyWow | https://tinywow.com/tools/write | AI image tools |
+| 31 | Imagine Draw AI | https://imaginedraw.ai | Pollinations-based |
+| 32 | ImagineAnything | https://imagineanything.ai | Text-to-image |
+| 33 | PollinationApps | https://pollinations.ai (apps list) | 500+ projects on pollinations |
+| 34 | AI Logo Generator | https://ailogogenerator.net | Free logo gen |
+| 35 | NightCafe | https://creator.nightcafe.studio | Credits system |
+| 36 | AI Dungeon | https://aidungeon.com | Image gen included |
+| 37 | Pollinations AI Playground | https://pollinations.ai/playground | Web playground |
+| 38 | Draw Thing | https://draw.thing.com | Apple-style, free tier |
+
+---
+
+## 🔊 TTS / VOICE (22 sites)
+
+| # | Site | URL | Notes |
+|---|---|---|---|
+| 1 | Quick-TTS | https://quick-tts.com | ON-DEVICE Piper/Kokoro. No server |
+| 2 | TTS.ai | https://tts.ai/text-to-speech | Piper, VITS, MeloTTS, 100+ voices |
+| 3 | FreeTextToSpeech | https://freetexttospeech.net | 54 Kokoro voices, WAV, commercial |
+| 4 | AnySpeech | https://anyspeech.io | Google TTS, 40+ langs |
+| 5 | TTS-Free | https://www.tts-free.com | Browser-based, private |
+| 6 | TTSOpen | https://ttsopen.ai | OpenAI.fm alt, no login |
+| 7 | FineVoice | https://finevoice.ai/text-to-speech | 154 languages |
+| 8 | Crikk | https://crikk.com/text-to-speech | 317 voices, 91 langs, 2.5k chars guest |
+| 9 | TextToSpeech.site | https://texttospeech.site | Standard voices unlimited |
+| 10 | TTSmp3 | https://ttsmp3.com | Google/MS voices |
+| 11 | VoiceGenerator | https://voicegenerator.io | Multi-voice |
+| 12 | FakeYou | https://fakeyou.com | Community voice clones |
+| 13 | Wordcast | https://wordcast.app | Browser-native, device voices |
+| 14 | Aidubbing | https://aidubbing.io/text-to-speech | Realistic, unlimited |
+| 15 | Edge TTS (via wrappers) | https://ttsmaker.com | Microsoft Edge voices |
+| 16 | NaturalReaders (free) | https://naturalreaders.com | Limited, browser playback |
+| 17 | Read Aloud Web | https://readaloudweb.com | Browser-based |
+| 18 | Speechify (free) | https://speechify.com | Limited free tier |
+| 19 | Voicemaker | https://voicemaker.in | Free tier, multi-lang |
+| 20 | TTSReader | https://ttsreader.com | Browser-based |
+| 21 | FreeTTS.com | https://freetts.com | Basic free |
+| 22 | Notebooklm Audio (alt) | via various | Podcast gen |
+
+---
+
+## 🎬 VIDEO GENERATION (12 sites)
+
+| # | Site | URL | Notes |
+|---|---|---|---|
+| 1 | LoreMotion | https://loremotion.com | LTX-Video 2.3, no watermark, 1 free |
+| 2 | Giz.ai | https://giz.ai/ai-video-generator | LTX-2.3, Sora 2, Seedance |
+| 3 | Creen Video | https://creen.ai/ai-video-generator | 26 models, 10s clips @1080p |
+| 4 | Free.ai Music Video | https://free.ai/music/video-maker | Song+video combo |
+| 5 | Seedance 2.0 | https://seedance2.so | ByteDance Seedance, 1080p |
+| 6 | MakeVideo | https://makevideo.ai | Text to music video |
+| 7 | Freebeat | https://freebeat.ai | Lyric/dance video |
+| 8 | OneMoreShot | https://onemoreshot.ai | Music video gen |
+| 9 | Kapwing | https://kapwing.com/ai-video-generator | Free to start |
+| 10 | PixVerse | https://app.pixverse.ai | 50-60/day, watermark |
+| 11 | RunwayML | https://runwayml.com | Gen-4 unlimited |
+| 12 | Sora 2 France | https://soorafr.com | Sora 2 wrapper |
+
+---
+
+## 🎵 MUSIC GENERATION (12 sites)
+
+| # | Site | URL | Notes |
+|---|---|---|---|
+| 1 | AI Music Gen | https://aimusicgen.ai | No signup, royalty-free, 6 credits/day |
+| 2 | Remusic | https://remusic.ai | 1 free music/day |
+| 3 | AIMusic.so | https://aimusic.so | Suno v4.5+, no login |
+| 4 | Brev AI | https://brevai.net | Suno V3.5 wrapper, anonymous web |
+| 5 | SunoAI.me | https://sunoai.me | 2 free credits daily |
+| 6 | AISongCreator | https://aisongcreator.app | Up to 8-min songs |
+| 7 | MeloLab | https://melolab.ai | ACE-Step, Suno, Mureka models |
+| 8 | Notevibes | https://notevibes.com/ai-music-generator | Studio editor, 30+ genres |
+| 9 | Flow Music AI | https://flowmusicai.app | ~25s generation |
+| 10 | ACE-Step (via Free.ai) | https://free.ai/music | Apache 2.0, free |
+| 11 | Musiko AI | https://musiko.ai | With/without vocals |
+| 12 | Riffusion | https://www.riffusion.com | Limited free |
+
+---
+
+## 💻 CODE GENERATION (8 sites)
+
+| # | Site | URL | Notes |
+|---|---|---|---|
+| 1 | Free.ai/code | https://free.ai/code | 20+ languages, 2.5k tokens/day |
+| 2 | Rewind.ai/code | https://rewind.ai/code | Qwen 3 Coder |
+| 3 | Graphite Note | https://graphite-note.com/free-ai-tools/ai-code-generator | Multi-lang |
+| 4 | AI Free Forever | https://aifreeforever.com/tools/ai-code-writer | 15 langs |
+| 5 | Cod-AI | https://cod-ai.com | No signup, no watermark |
+| 6 | Pollinations (code via API) | https://pollinations.ai | OpenAI-compatible |
+| 7 | DeepInfra Playground | https://deepinfra.com | Kimi K2, Qwen3 Coder |
+| 8 | Puter | https://developer.puter.com | Multi-model, browser API |
+
+---
+
+## 📝 WRITING / PRODUCTIVITY (10 sites)
+
+| # | Site | URL | Notes |
+|---|---|---|---|
+| 1 | Perchance Text Gen | https://perchance.org/ai-text-generator | Unlimited |
+| 2 | Typefully AI Writer | https://typefully.com/tools/ai/ai-writer | No login |
+| 3 | Template.net Writer | https://template.net/ai-writer | Multi-format |
+| 4 | TinyWow | https://tinywow.com/tools/write | Essay/paragraph/story |
+| 5 | EarScribe (transcribe) | https://earscribe.app | ON-DEVICE, 99 langs |
+| 6 | Wordcast (TTS) | https://wordcast.app | ON-DEVICE |
+| 7 | Video-to-Audio | https://videotoaudioconverter.org | Browser-native |
+| 8 | MLA Citation | https://mlacitationgenerator.online | Writing helper |
+| 9 | Scribbr Citation | https://scribbr.com/citation/generator | Free |
+| 10 | Quillbot (free tier) | https://quillbot.com | Paraphrasing |
+
+---
+
+## 🔍 SEARCH / RESEARCH (8 sites)
+
+| # | Site | URL | Notes |
+|---|---|---|---|
+| 1 | Perplexity (guest) | https://perplexity.ai | Cited research |
+| 2 | You.com | https://you.com | Multi-modal search |
+| 3 | Andi | https://andi.com | Privacy search |
+| 4 | Brave Search + Leo | https://search.brave.com | Private |
+| 5 | Komo | https://komo.ai | Guest mode |
+| 6 | iAsk | https://iask.ai | Free questions |
+| 7 | Exa (via API) | https://exa.ai | Free credits |
+| 8 | Phind | https://phind.com | Dev-focused |
+
+---
+
+## 🎭 CHARACTER / ROLEPLAY (5 sites)
+
+| # | Site | URL | Notes |
+|---|---|---|---|
+| 1 | Perchance AI Chat | https://perchance.org/ai-chat | Creative/roleplay |
+| 2 | Wsup.ai | https://wsup.ai | Character chat |
+| 3 | SlagBot | https://slagbot.com | Privacy-first |
+| 4 | Venice | https://venice.ai | Uncensored |
+| 5 | Uncensored.chat | https://uncensored.chat | NSFW-OK |
+
+---
+
+## 🎯 KEY INFO
+
+**The single best "everything" backend**: https://pollinations.ai — powers ~500 community apps, free image/video/audio/text, no signup needed for basic use. Image models: flux, gptimage, kontext, seedream, nanobanana, zimage, wan-image, qwen-image, grok-imagine. Text models include openai, claude-sonnet-4.5, claude-opus-4.5, gemini-3-flash, deepseek-v3, kimi-k2.
+
+**Most reliable "no-login" LLM**: Duck.ai — supports GPT-4o mini, Claude 3 Haiku, Llama 3.3 70B, Mistral Small 3. Chats not stored, not used for training.
+
+**GitHub index sources** (for ongoing updates):
+- https://github.com/zebbern/no-cost-ai (80+ services, no signup)
+- https://github.com/rocnubie/Awesome-AI-Websites-2026 (curated 2026 list)
+- https://github.com/T-R-I-T-E-J/awesome-free-ai-resources (290+ tools)
+- https://github.com/aviaryan/awesome-no-login-web-apps (general no-login)
+- https://github.com/OuterSpacee/free-ai-apis (100+ APIs, 15 cats)
+
+**Privacy gold**: OptiPix.art, Wordcast.app, EarScribe.app, Quick-TTS.com — run 100% in browser, your data never leaves.
+
+**Watch out**: most "free AI image" sites are wrappers around Pollinations or Stable Horde — quality varies, daily caps exist, and "unlimited" usually means "rate-limited per IP". Treat prompts as public.
+
+Want me to save this as a markdown file, or fetch a specific category deeper?

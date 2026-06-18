@@ -16,7 +16,7 @@ Reference: https://kittenml-kittentts-demo.hf.space
 
 import json
 import tempfile
-from typing import Optional
+from typing import Any, Optional, cast
 
 from curl_cffi import requests
 from litprinter import ic
@@ -98,7 +98,7 @@ class KittenTTS(BaseTTSProvider):
         )
 
         if proxies:
-            self.session.proxies.update(proxies)
+            self.session.proxies.update(cast(Any, proxies))
 
         # Set defaults
         self.default_model = "micro"

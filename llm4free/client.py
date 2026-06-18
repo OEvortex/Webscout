@@ -28,13 +28,13 @@ from typing import (
     cast,
 )
 
-from llm4free.Provider.Openai_comp.base import (
+from llm4free.Provider.llm.base import (
     BaseChat,
     BaseCompletions,
     OpenAICompatibleProvider,
     Tool,
 )
-from llm4free.Provider.Openai_comp.utils import (
+from llm4free.Provider.llm.utils import (
     ChatCompletion,
     ChatCompletionChunk,
 )
@@ -45,9 +45,9 @@ from llm4free.Provider.TTS.base import BaseTTSProvider
 
 def load_openai_providers() -> Tuple[Dict[str, Type[OpenAICompatibleProvider]], Set[str]]:
     """
-    Dynamically loads all OpenAI-compatible provider classes from the Openai_comp module.
+    Dynamically loads all OpenAI-compatible provider classes from the llm module.
 
-    Scans the llm4free.Provider.Openai_comp package and imports all subclasses of
+    Scans the llm4free.Provider.llm package and imports all subclasses of
     OpenAICompatibleProvider. Excludes base classes, utility modules, and private classes.
 
     Returns:
@@ -66,7 +66,7 @@ def load_openai_providers() -> Tuple[Dict[str, Type[OpenAICompatibleProvider]], 
         True
     """
     return _load_providers(
-        "llm4free.Provider.Openai_comp",
+        "llm4free.Provider.llm",
         OpenAICompatibleProvider,
         ("base", "utils", "pydantic", "__"),
     )
@@ -137,7 +137,7 @@ def _get_models_safely(provider_cls: type, client: Optional["Client"] = None) ->
     Examples:
         >>> from llm4free.client import _get_models_safely, Client
         >>> client = Client()
-        >>> from llm4free.Provider.Openai_comp.some_provider import SomeProvider
+        >>> from llm4free.Provider.llm.some_provider import SomeProvider
         >>> models = _get_models_safely(SomeProvider, client)
         >>> print(models)
         ['gpt-4', 'gpt-3.5-turbo']
@@ -1327,7 +1327,7 @@ class Client:
             ... )
 
             >>> # With specific default providers
-            >>> from llm4free.Provider.Openai_comp.groq import Groq
+            >>> from llm4free.Provider.llm.groq import Groq
             >>> from llm4free.Provider.TTI.stable import StableDiffusion
             >>> client = Client(
             ...     provider=Groq,

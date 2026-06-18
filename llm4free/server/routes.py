@@ -51,7 +51,6 @@ class Api:
     def register_validation_exception_handler(self):
         """Register comprehensive exception handlers."""
         from starlette.status import HTTP_422_UNPROCESSABLE_CONTENT, HTTP_500_INTERNAL_SERVER_ERROR
-
         from .exceptions import APIError
 
         github_footer = "If you believe this is a bug, please pull an issue at https://github.com/OEvortex/Webscout."

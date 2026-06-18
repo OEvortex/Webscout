@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from .base import DuckDuckGoBase
 
 
@@ -11,7 +13,7 @@ class DuckDuckGoAnswers(DuckDuckGoBase):
     name = "duckduckgo"
     category = "answers"
 
-    def run(self, *args, **kwargs) -> list[dict[str, str]]:
+    def run(self, *args, **kwargs) -> list[dict[str, Any]]:
         """Get instant answers from DuckDuckGo.
 
         Args:

@@ -119,7 +119,7 @@ class DeepgramTTS(BaseTTSProvider):
         self.session = requests.Session()
         self.session.headers.update(self.headers)
         if proxies:
-            self.session.proxies.update(proxies)
+            self.session.proxies.update(cast(Any, proxies))
         self.timeout = timeout
         self.default_voice = "thalia"
 

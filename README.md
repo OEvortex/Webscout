@@ -53,14 +53,11 @@
 <hr/>
 
 > [!IMPORTANT]
-> LLM4Free supports three types of compatibility:
->
-> - **Native:** LLM4Free's own native API for maximum flexibility
-> - **OpenAI-Compatible:** Use providers with OpenAI-compatible interfaces
-> - **Local LLMs:** Run local models with OpenAI-compatible servers via [Inferno](docs/inferno.md)
+> LLM4Free uses a **single unified OpenAI-compatible interface** for all providers.
+> Every provider implements `client.chat.completions.create(...)` — identical to the OpenAI Python SDK.
 
 > [!NOTE]
-> LLM4Free supports 90+ AI providers including: OpenAI, GROQ, Gemini, Meta, DeepInfra, Cohere, Cerebras, HuggingFace, OpenRouter, Nvidia, Sambanova, PerplexityLabs, and many more. See the full [Provider Matrix](Provider.md).
+> LLM4Free supports 40+ AI providers including: HeckAI, ChatGPT, Groq, DeepInfra, Nvidia, Sambanova, OpenRouter, HuggingFace, OllamaSwarm, and many more. See the full [Provider Matrix](Provider.md).
 
 <div align="center">
   <p>
@@ -77,7 +74,7 @@
 ### Search & AI
 
 - **Multi-Engine Search** -- DuckDuckGo, Bing, Brave, Yahoo, Yep, Yandex, Mojeek, Wikipedia. ([Search Docs](docs/search.md))
-- **90+ AI Providers** -- Native, OpenAI-compatible, and local LLM interfaces. ([Architecture](docs/architecture.md))
+- **40+ AI Providers** -- All OpenAI-compatible for easy switching. ([Architecture](docs/architecture.md))
 - **AI-Powered Search** -- Perplexity, IAsk, Monica, AyeSoul, WebPilotAI. ([Provider Matrix](Provider.md))
 - **OpenAI-Compatible API Server** -- Serve any LLM4Free provider via OpenAI endpoints. ([Server Docs](docs/openai-api-server.md))
 - **Unified Python Client** -- Auto-failover chat and image generation. ([Client Docs](docs/client.md))
@@ -152,11 +149,14 @@ See [docs/DOCKER.md](docs/DOCKER.md) for full Docker deployment options includin
 ### AI Chat (No API Key)
 
 ```python
-from llm4free import Meta
+from llm4free.Provider.Openai_comp.heckai import HeckAI
 
-ai = Meta()
-response = ai.chat("Explain quantum computing in simple terms")
-print(response)
+client = HeckAI()
+response = client.chat.completions.create(
+    model="google/gemini-2.5-flash-preview",
+    messages=[{"role": "user", "content": "Explain quantum computing in simple terms"}],
+)
+print(response.choices[0].message.content)
 ```
 
 ### Web Search
@@ -224,34 +224,59 @@ Full CLI reference: [docs/cli.md](docs/cli.md)
 
 ## AI Chat Providers
 
-### Native Providers (No Auth Required)
+All providers use the **OpenAI-compatible interface** (`client.chat.completions.create(...)`).
+
+### Free Providers (No Auth Required)
 
 ```python
-from llm4free import Meta, Toolbaz, LLMChat, SonusAI, Netwrck, PiAI
+from llm4free.Provider.Openai_comp.heckai import HeckAI
+from llm4free.Provider.Openai_comp.artingai import ArtingAI
+from llm4free.Provider.Openai_comp.freeai import FreeAI
 
-ai = Meta()
-print(ai.chat("What is the capital of France?"))
+# HeckAI - multiple models
+client = HeckAI()
+response = client.chat.completions.create(
+    model="google/gemini-2.5-flash-preview",
+    messages=[{"role": "user", "content": "Hello!"}],
+)
+print(response.choices[0].message.content)
+
+# ArtingAI
+client = ArtingAI()
+response = client.chat.completions.create(
+    model="gpt-5",
+    messages=[{"role": "user", "content": "Hello!"}],
+)
 ```
 
 ### Authenticated Providers
 
 ```python
-from llm4free import OpenAI, GROQ, GEMINI, Cohere, DeepInfra
+from llm4free.Provider.Openai_comp.Auth.groq import Groq
+from llm4free.Provider.Openai_comp.Auth.deepinfra import DeepInfra
 
-groq = GROQ(api_key="your-key")
-response = groq.chat("Write a Python function to sort a list")
+groq = Groq(api_key="your-key")
+response = groq.chat.completions.create(
+    model="llama-3.3-70b-versatile",
+    messages=[{"role": "user", "content": "Write a Python function to sort a list"}],
+)
+print(response.choices[0].message.content)
 ```
 
-### OpenAI-Compatible Providers
+### Streaming
 
 ```python
-from llm4free.Provider.OPENAI import ChatGPT, Groq, DeepInfra
+from llm4free.Provider.Openai_comp.heckai import HeckAI
 
-chatgpt = ChatGPT()  # No auth required
-response = chatgpt.chat.completions.create(
-    model="gpt-4o-mini",
-    messages=[{"role": "user", "content": "Hello!"}]
+client = HeckAI()
+stream = client.chat.completions.create(
+    model="google/gemini-2.5-flash-preview",
+    messages=[{"role": "user", "content": "Tell me a joke"}],
+    stream=True,
 )
+for chunk in stream:
+    if chunk.choices[0].delta.content:
+        print(chunk.choices[0].delta.content, end="")
 ```
 
 See [Provider.md](Provider.md) for the complete provider matrix with file locations.
@@ -273,7 +298,7 @@ results = bing.text("climate change solutions")
 
 # Brave
 brave = BraveSearch()
-results = bravesearch.text("machine learning tutorials")
+results = brave.text("machine learning tutorials")
 ```
 
 Search docs: [docs/search.md](docs/search.md)
@@ -389,8 +414,8 @@ Client docs: [docs/client.md](docs/client.md)
 LLM4Free has a built-in tool calling system that works with any provider.
 
 ```python
-from llm4free.Provider.Apriel import Apriel
-from llm4free.AIbase import Tool
+from llm4free.Provider.Openai_comp.heckai import HeckAI
+from llm4free.Provider.Openai_comp.base import Tool
 
 def get_weather(city: str) -> str:
     return f"Weather in {city}: Sunny, 25C"
@@ -402,8 +427,12 @@ weather_tool = Tool(
     implementation=get_weather,
 )
 
-ai = Apriel(tools=[weather_tool])
-print(ai.chat("What is the weather in London?"))
+client = HeckAI(tools=[weather_tool])
+response = client.chat.completions.create(
+    model="google/gemini-2.5-flash-preview",
+    messages=[{"role": "user", "content": "What is the weather in London?"}],
+)
+print(response.choices[0].message.content)
 ```
 
 Tool calling docs: [docs/tool-calling.md](docs/tool-calling.md)

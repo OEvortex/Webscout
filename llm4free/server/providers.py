@@ -51,10 +51,10 @@ def initialize_provider_map() -> None:
 
     try:
         import importlib
-        # Ensure Openai_comp is loaded in sys.modules
-        importlib.import_module("llm4free.Provider.Openai_comp")
-        module = sys.modules["llm4free.Provider.Openai_comp"]
-        from llm4free.Provider.Openai_comp.base import OpenAICompatibleProvider, SimpleModelList
+        # Ensure llm is loaded in sys.modules
+        importlib.import_module("llm4free.Provider.llm")
+        module = sys.modules["llm4free.Provider.llm"]
+        from llm4free.Provider.llm.base import OpenAICompatibleProvider, SimpleModelList
 
         provider_count = 0
         model_count = 0

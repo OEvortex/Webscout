@@ -78,7 +78,6 @@ def _text_extract_json(html_bytes: bytes, keywords: str) -> List[Dict[str, str]]
         return result
     except Exception as ex:
         raise WebscoutE(f"_text_extract_json() {keywords=} {type(ex).__name__}: {ex}") from ex
-    raise WebscoutE(f"_text_extract_json() {keywords=} return None")
 
 
 def _normalize(raw_html: str) -> str:

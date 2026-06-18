@@ -15,7 +15,7 @@ Features:
 
 import io
 import tempfile
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 from curl_cffi import requests
 from litprinter import ic
@@ -176,7 +176,7 @@ class KyutaiTTS(BaseTTSProvider):
         )
 
         if proxies:
-            self.session.proxies.update(proxies)
+            self.session.proxies.update(cast(Any, proxies))
 
         # Set defaults
         self.default_model = "pocket-tts"

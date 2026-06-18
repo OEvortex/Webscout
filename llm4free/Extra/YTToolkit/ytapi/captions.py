@@ -41,7 +41,7 @@ class Captions:
         return video_id
 
     @staticmethod
-    def get_available_languages(video_id: str) -> List[Dict[str, str]]:
+    def get_available_languages(video_id: str) -> List[Dict[str, Any]]:
         """
         Get available caption languages for a video.
 

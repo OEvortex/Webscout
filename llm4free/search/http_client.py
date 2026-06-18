@@ -5,11 +5,6 @@ from __future__ import annotations
 from random import choice
 from typing import Any, Literal, Optional, cast
 
-try:
-    import trio  # type: ignore
-except ImportError:
-    pass
-
 import curl_cffi.requests
 
 from ..exceptions import RatelimitE, TimeoutE, WebscoutE

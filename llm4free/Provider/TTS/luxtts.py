@@ -16,7 +16,7 @@ Reference: https://yatharths-luxtts.hf.space
 import io
 import tempfile
 import time
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 from curl_cffi import requests
 from litprinter import ic
@@ -86,7 +86,7 @@ class LuxTTS(BaseTTSProvider):
         )
 
         if proxies:
-            self.session.proxies.update(proxies)
+            self.session.proxies.update(cast(Any, proxies))
 
         # Set defaults
         self.default_model = "luxtts"

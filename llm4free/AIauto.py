@@ -69,7 +69,7 @@ def _get_models_safely(provider_cls: type) -> List[str]:
     Returns:
         List[str]: A list of unique model names supported by the provider.
     """
-    models = []
+    models: List[str] = []
     try:
         if hasattr(provider_cls, "AVAILABLE_MODELS"):
             val = getattr(provider_cls, "AVAILABLE_MODELS")
@@ -294,7 +294,7 @@ class AUTO(Provider):
         optimizer: Optional[str] = None,
         conversationally: bool = False,
         **kwargs: Any,
-    ) -> Response:
+    ) -> Union[Response, Generator[Any, None, Any]]:
         """
         Sends the prompt to available providers, attempting to get a response from each until one succeeds.
 

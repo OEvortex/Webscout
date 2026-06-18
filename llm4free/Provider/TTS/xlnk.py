@@ -16,7 +16,7 @@ Reference: https://xlnk-tts.hf.space
 
 import json
 import tempfile
-from typing import Optional
+from typing import Any, Optional, cast
 
 from curl_cffi import requests
 from litprinter import ic
@@ -89,7 +89,7 @@ class XLNKTTS(BaseTTSProvider):
         )
 
         if proxies:
-            self.session.proxies.update(proxies)
+            self.session.proxies.update(cast(Any, proxies))
 
         # Set defaults
         self.default_model = "xlnk-tts"

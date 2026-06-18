@@ -13,27 +13,27 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, BinaryIO, Dict, Generator, List, Optional, Union, cast
 
-# Import OpenAI response types from the main Openai_comp module
+# Import OpenAI response types from the main llm module
 try:
-    from llm4free.Provider.Openai_comp.utils import (
+    from llm4free.Provider.llm.utils import (
         ChatCompletion as _ChatCompletion,
     )
-    from llm4free.Provider.Openai_comp.utils import (
+    from llm4free.Provider.llm.utils import (
         ChatCompletionChunk as _ChatCompletionChunk,
     )
-    from llm4free.Provider.Openai_comp.utils import (
+    from llm4free.Provider.llm.utils import (
         ChatCompletionMessage as _Message,
     )
-    from llm4free.Provider.Openai_comp.utils import (
+    from llm4free.Provider.llm.utils import (
         Choice as _Choice,
     )
-    from llm4free.Provider.Openai_comp.utils import (
+    from llm4free.Provider.llm.utils import (
         ChoiceDelta as _ChoiceDelta,
     )
-    from llm4free.Provider.Openai_comp.utils import (
+    from llm4free.Provider.llm.utils import (
         CompletionUsage as _Usage,
     )
-    from llm4free.Provider.Openai_comp.utils import (
+    from llm4free.Provider.llm.utils import (
         count_tokens as _count_tokens,
     )
 

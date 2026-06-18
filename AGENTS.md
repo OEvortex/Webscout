@@ -1,218 +1,234 @@
-# LLM4Free - QWEN Context File
+# LLM4Free AI Agent Instructions
 
-## Project Overview
+## Overview
+LLM4Free is a comprehensive Python toolkit providing unified access to 40+ AI providers, search engines, and digital utilities. This document guides AI agents for productive development in this codebase.
 
-**LLM4Free** is a comprehensive Python toolkit for web search, AI interaction, and digital utilities. It provides unified access to 90+ AI providers, multiple search engines, text-to-image/speech generation, developer tools, and an OpenAI-compatible API server — all through a single library.
+## Quick Start
 
-**Key Characteristics:**
-- **Package Name:** `llm4free` (PyPI)
-- **Python Version:** >=3.10
-- **License:** Apache-2.0
-- **Repository:** https://github.com/OEvortex/Webscout
-- **Author:** OEvortex (koulabhay26@gmail.com)
-
-## Architecture
-
-The project is organized into several key layers:
-
-```
-llm4free/
-├── Provider/          # AI provider implementations (63+ providers)
-│   ├── Openai_comp/   # OpenAI-compatible provider versions
-│   ├── TTI/           # Text-to-Image providers
-│   ├── TTS/           # Text-to-Speech providers
-│   ├── STT/           # Speech-to-Text providers
-│   ├── AISEARCH/      # AI-powered search providers
-│   └── UNFINISHED/    # Experimental providers
-├── search/            # Multi-engine web search (DuckDuckGo, Bing, Brave, etc.)
-├── server/            # OpenAI-compatible FastAPI server
-├── swiftcli/          # CLI framework
-├── scout/             # HTML parser and web crawler
-├── litagent/          # User-agent rotation and IP toolkit
-├── zeroart/           # ASCII art generator
-├── Extra/             # Additional utilities
-├── AIbase.py          # Base class for provider implementations
-├── AIauto.py          # Auto-failover logic
-├── client.py          # Unified Python client
-├── models.py          # Model registry (LLM, TTS, TTI)
-├── prompt_manager.py  # System prompt management
-├── sanitize.py        # Stream sanitization
-└── cli.py             # Command-line interface entry point
-```
-
-## Building and Running
-
-### Dependency Management (Use `uv` Only)
-
-This project uses `uv` for all Python environment management. **Never run bare `python` or `pip` directly.**
-
+### Development Environment
 ```bash
-# Install dependencies
-uv sync
-
-# Add a new dependency
-uv add <package>
-
-# Remove a dependency
-uv remove <package>
-
-# Run with extra dependencies
-uv run --extra api llm4free-server
-uv run --extra dev pytest
-```
-
-### CLI Usage
-
-```bash
-# Show help
+# Recommended: Use uv for modern Python package management
+uv add llm4free
 uv run llm4free --help
 
-# Search the web
-uv run llm4free text -k "python programming"
-uv run llm4free text -k "climate change" -e bing
-uv run llm4free images -k "mountains"
-uv run llm4free news -k "AI breakthrough" -t w
+# For development with all features
+uv add "llm4free[dev,api]"
 
-# Weather info
-uv run llm4free weather -l "New York"
-
-# Translation
-uv run llm4free translate -k "Hola" --to en
-
-# Show version
-uv run llm4free version
-```
-
-### API Server
-
-```bash
-# Start the OpenAI-compatible API server
-uv run --extra api llm4free-server
-uv run --extra api llm4free-server --port 8080 --host 0.0.0.0 --debug
-```
-
-### Docker
-
-```bash
-# Build and run
-docker-compose up llm4free-api
-
-# No-auth profile
-docker-compose -f docker-compose.yml -f docker-compose.no-auth.yml up llm4free-api
-```
-
-### Testing
-
-```bash
 # Run tests
 uv run pytest
 
-# Run specific test markers
-uv run pytest -m "not live"  # Skip network-dependent tests
+# Live testing (requires API keys)
+uv run python tests/live_test.py --list
+uv run python tests/live_test.py --provider OpenAI --api-key YOUR_KEY
 ```
 
-### Linting and Formatting
+### Core Concepts
+- **OpenAI Compatibility**: All providers implement identical `chat.completions.create()` interface
+- **Dynamic Loading**: Providers loaded at runtime via `_load_providers()`
+- **Unified Client**: Use `llm4free.client.Client` for all provider interactions
+- **Modular Architecture**: Clear separation between providers, search engines, and utilities
 
+## Essential Commands
+
+### Provider Discovery & Usage
+```python
+from llm4free import Client
+
+# Initialize unified client
+client = Client()
+
+# List available providers
+providers = client.list_providers()
+
+# Chat with auto-failover
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "Hello"}]
+)
+```
+
+### Search Operations
+```python
+from llm4free import DuckDuckGoSearch, BingSearch, BraveSearch
+
+# Search with any engine
+search = DuckDuckGoSearch()
+results = search.search("Python web scraping")
+```
+
+### CLI Usage
 ```bash
-# Lint with ruff
-uv run ruff check .
+# List available commands
+llm4free --help
 
-# Format with ruff
-uv run ruff format .
+# Search with DuckDuckGo
+llm4free ddg "Python tutorials"
+
+# Weather information
+llm4free weather "New York"
 ```
 
-## Development Conventions
+## Key Files & Patterns
 
-### Code Style
-- **Line length:** 100 characters (configured in `pyproject.toml`)
-- **Target Python:** 3.9+ (runtime requires 3.10+)
-- **Linting rules:** E, F, W, I (with E501, F403, F401 ignored)
-- **Formatter:** ruff
+### Core Interface Files
+- `llm4free/client.py` - Unified client for all providers
+- `llm4free/cli.py` - Rich-powered command-line interface
+- `llm4free/server/` - OpenAI-compatible API server
 
-### Provider Development
-When adding new providers:
-1. Subclass `Provider` from `llm4free.AIbase`
-2. Implement: `ask(prompt, ...)`, `chat(prompt, ...)`, `get_message(response)`
-3. Use consistent CamelCase class names matching filenames
-4. Add static import in `llm4free/Provider/__init__.py`
-5. Prefer `requests.Session` for HTTP clients
-6. Avoid global mutable state
-7. Add tests under `tests/providers/`
-8. Update `Provider.md` documentation
+### Provider Architecture
+- `llm4free/Provider/llm/` - OpenAI-compatible providers
+- `llm4free/Provider/OPENAI/` - OpenAI-compatible wrappers
+- `llm4free/Provider/TTI/` - Text-to-image providers
+- `llm4free/Provider/TTS/` - Text-to-speech providers
 
-### Testing Practices
-- Tests live in `tests/` directory
-- Network-dependent tests use `@pytest.mark.live` marker
-- **NO MOCKS OR FAKE RESPONSES** — Never use mocks, stubs, or fabricated responses in tests. Always use real clients and actual API calls to catch production-level bugs. The goal is to find real-world issues before they reach users.
-- Test both normal and error behavior including streaming
-- Use real HTTP requests against actual provider endpoints
-- Validate real response structures, not hardcoded fake data
+### Search Module
+- `llm4free/search/` - Search engine implementations
+- `llm4free/search/engines/` - Provider-specific engines
 
-### Import Conventions
-- Main package (`llm4free/__init__.py`) uses wildcard imports with `# noqa: F403`
-- Client is explicitly imported: `from .client import Client`
-- Agent registry exposed as: `from .models import model`
+### Base Classes
+- `llm4free/Provider/llm/base.py` - `OpenAICompatibleProvider` abstract base
+- `llm4free/Provider/llm/utils.py` - Response utilities
 
-## Agent Workflow Guidelines
+## Development Best Practices
 
-### Reverse Engineering
-When performing reverse engineering tasks (e.g., generating curl commands from websites or APIs, analyzing request/response patterns):
-- **Always use the `Reverse` subagent** for reverse engineering work
-- The Reverse agent has access to browser tools and specialized reverse engineering capabilities
-- Do not attempt to manually reverse engineer using terminal commands alone
+### Code Quality
+- **Type hints**: Use for all public functions
+- **Google-style docstrings**: Comprehensive documentation
+- **Imports**: Standard lib → third-party → local
+- **Error handling**: Comprehensive with provider fallbacks
 
-### Native Tools Usage
-Prefer using native VS Code tools instead of directly relying on PowerShell (bash) terminal for file operations and edits:
+### Testing Strategy
+```bash
+# Unit tests (mocked)
+uv run pytest tests/providers/
 
-- **For file operations**: Use `read_file`, `create_file`, `replace_string_in_file`, `multi_replace_string_in_file` tools
-- **For searching**: Use `grep_search`, `file_search`, `semantic_search`, `vscode_listCodeUsages` tools
-- **For renaming/refactoring**: Use `vscode_renameSymbol` tool
-- **For terminal operations**: Only use `run_in_terminal` when native tools cannot accomplish the task (e.g., running Python scripts, installing packages with uv, running git commands)
+# Live testing (requires API keys)
+uv run python tests/live_test.py --test-all --api-keys-file keys.json
+```
 
-This ensures better integration with VS Code and provides a more reliable workflow.
+### Adding New Functionality
 
-### Core
-- `curl_cffi` - HTTP client with browser impersonation
-- `aiohttp` - Async HTTP
-- `rich` - Rich terminal output
-- `pydantic` - Data validation
-- `lxml` - HTML/XML parsing
-- `cloudscraper` - Cloudflare bypass
-- `browser-cookie3` - Browser cookie extraction
+**To add a new provider:**
+1. Implement in `llm4free/Provider/llm/` (or appropriate subdirectory)
+2. Update `Provider.md` with provider matrix
+3. Consider adding to `llm4free/models.py` for registry
 
-### Optional
-- **api:** `fastapi`, `uvicorn`, `websockets`, `tiktoken`, `jinja2`
-- **dev:** `ruff`, `pytest`
+**To add a CLI command:**
+1. Update `llm4free/cli.py` with command group
+2. Add corresponding search engine/provider
+3. Update `docs/cli.md`
 
-## Entry Points
+**To add server capability:**
+1. Update `llm4free/server/` with new routes
+2. Document in `docs/openai-api-server.md`
+3. Ensure CLI/Client can hit new endpoints
 
-| Command | Module |
-|---------|--------|
-| `llm4free` / `LLM4FREE` | `llm4free.cli:main` |
-| `llm4free-server` / `llm4free-serve` | `llm4free.server.server:main` |
+## Common Patterns
 
-## Documentation
+### Provider Authentication
+```python
+# Some providers require auth (marked with required_auth = True)
+# Keys can be passed via:
+client = Client(api_key="your-key")
+# or via JSON file
+client = Client(api_keys_file="keys.json")
+```
 
-Comprehensive documentation is in `docs/`:
-- [Getting Started](docs/getting-started.md)
-- [Architecture](docs/architecture.md)
-- [CLI Reference](docs/cli.md)
-- [Python Client](docs/client.md)
-- [API Server](docs/openai-api-server.md)
-- [Model Registry](docs/models.md)
-- [Tool Calling](docs/tool-calling.md)
-- [Search Docs](docs/search.md)
-- [Provider Development](docs/provider-development.md)
-- [Deployment](docs/deployment.md)
-- [Docker](docs/DOCKER.md)
-- [Troubleshooting](docs/troubleshooting.md)
+### Model Resolution
+```python
+# Client handles model name mapping across providers
+response = client.chat.completions.create(
+    model="gpt-4o",  # Maps to available provider/model
+    messages=[...]
+)
+```
 
-## Provider Matrix
+### Tool Support
+```python
+# Providers support OpenAI-style tool calling
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[...],
+    tools=[
+        {
+            "type": "function",
+            "function": {
+                "name": "get_weather",
+                "description": "Get weather information",
+                "parameters": {...}
+            }
+        }
+    ]
+)
+```
 
-- **63 total AI providers** supported
-- **37 providers** have both normal and OpenAI-compatible implementations
-- **17 providers** have only normal implementations
-- **5 providers** have only OpenAI-compatible implementations
-- TTI, TTS, and STT providers in dedicated subdirectories
+## Troubleshooting
 
-See [Provider.md](Provider.md) for the complete matrix.
+### Common Issues
+1. **Provider not found**: Use `client.list_providers()` to see available options
+2. **Authentication errors**: Check `required_auth` attribute and provide API keys
+3. **Model not available**: Client performs fuzzy matching across providers
+4. **Import errors**: Use dynamic loading via `llm4free.client.load_openai_providers()`
+
+### Error Handling
+```python
+try:
+    response = client.chat.completions.create(...)
+except Exception as e:
+    # Client provides detailed error messages
+    print(f"Error: {e}")
+    # Try fallback provider
+    response = client.chat.completions.create(
+        model="alternative-model",
+        messages=...
+    )
+```
+
+## Integration Points
+
+### When to Use Which Component
+- **Direct provider calls**: Import specific provider classes
+- **Unified access**: Use `llm4free.client.Client`
+- **Web search**: Use `llm4free.search` modules
+- **API deployment**: Use `llm4free.server`
+- **CLI tools**: Use `llm4free.cli`
+
+### Extensibility
+- **New providers**: Add to `llm4free/Provider/` subdirectories
+- **New search engines**: Add to `llm4free/search/engines/`
+- **New utilities**: Add to `llm4free/Extra/`
+- **New features**: Follow existing patterns in core modules
+
+## Performance Tips
+
+1. **Background model fetching**: Client fetches models in background
+2. **Provider caching**: Client caches provider instances
+3. **Proxy support**: Configure proxies via client or environment
+4. **Timeouts**: Live testing has 60s hard timeout
+
+## Documentation Links
+
+- **Architecture**: `docs/architecture.md`
+- **Provider Matrix**: `Provider.md`
+- **CLI Reference**: `docs/cli.md`
+- **API Server**: `docs/openai-api-server.md`
+- **Models**: `docs/models.md`
+- **Search**: `docs/search.md`
+- **Contributing**: `CONTRIBUTING.md`
+
+## Next Steps
+
+For more specialized guidance, consider creating:
+- **Skills**: For specific tasks (search, provider management)
+- **Hooks**: For automated workflows
+- **Instructions**: For specific development patterns
+
+This codebase is designed for maximum flexibility while maintaining consistency through the OpenAI-compatible interface. Focus on the unified client for most use cases, and dive into specific providers when needed.
+
+### Rules
+- Follow the OpenAI-compatible interface for all providers
+- Use the unified client for all interactions when possible
+- Ensure comprehensive error handling with provider fallbacks
+- Maintain clear documentation and type hints for all public functions
+- For codebase and nlp codebase searching use `uvx vortexa -q "search query"` - vortexa is an custom codesearch engine that accurately understands the codebase and codebase structure and provides relevant results. It is available as a CLI tool and you should use it to search things in my codebase
+- For type checking use `uvx ty check .`  is a custom type checking tool that provides detailed insights into type issues in the codebase. It is available as a CLI tool and you should use it to perform type checking tasks in my codebase

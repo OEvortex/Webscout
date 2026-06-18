@@ -11,7 +11,7 @@ from fastapi.responses import StreamingResponse
 from litprinter import ic
 from starlette.status import HTTP_422_UNPROCESSABLE_CONTENT, HTTP_500_INTERNAL_SERVER_ERROR
 
-from llm4free.Provider.Openai_comp.utils import (
+from llm4free.Provider.llm.utils import (
     ChatCompletion,
     ChatCompletionMessage,
     Choice,

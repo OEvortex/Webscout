@@ -114,7 +114,7 @@ class ElevenlabsTTS(BaseTTSProvider):
         if self.api_key:
             self.session.headers.update({"xi-api-key": self.api_key})
         if proxies:
-            self.session.proxies.update(proxies)
+            self.session.proxies.update(cast(Any, proxies))
         self.timeout = timeout
         self.default_voice = "brian"
 

@@ -88,7 +88,7 @@ class OpenAIFMTTS(BaseTTSProvider):
         self.session = requests.Session()
         self.session.headers.update(self.headers)
         if proxies:
-            self.session.proxies.update(proxies)
+            self.session.proxies.update(cast(Any, proxies))
         self.timeout = timeout
 
     def tts(self, text: str, voice: Optional[str] = None, verbose: bool = False, **kwargs) -> str:

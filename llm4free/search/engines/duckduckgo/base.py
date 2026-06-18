@@ -10,11 +10,6 @@ from random import choice
 from time import sleep, time
 from typing import Any, Optional, cast
 
-try:
-    import trio  # type: ignore
-except ImportError:
-    pass
-
 import curl_cffi.requests
 
 try:

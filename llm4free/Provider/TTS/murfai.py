@@ -3,7 +3,7 @@ import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from io import BytesIO
-from typing import Generator, Optional
+from typing import Any, Generator, Optional, cast
 from urllib.parse import urlencode
 
 from curl_cffi import CurlError, requests
@@ -74,7 +74,7 @@ class MurfAITTS(BaseTTSProvider):
         self.session = requests.Session()
         self.session.headers.update(self.headers)
         if proxies:
-            self.session.proxies.update(proxies)
+            self.session.proxies.update(cast(Any, proxies))
         self.timeout = timeout
 
     def tts(self, text: str, voice: Optional[str] = None, verbose: bool = False, **kwargs) -> str:

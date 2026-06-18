@@ -1,6 +1,6 @@
 import importlib
 import pkgutil
-from typing import Any, Dict, List, Mapping, Optional, Union
+from typing import Any, Dict, List, Mapping, Optional, Union, cast
 
 from llm4free.AIbase import Provider, TTSProvider
 
@@ -109,7 +109,7 @@ class _LLMModels:
                                 models = get_models()
                                 if isinstance(models, set):
                                     models = list(models)
-                                provider_models[attr_name] = models
+                                provider_models[attr_name] = cast(List[str], models)
                             except Exception:
                                 provider_models[attr_name] = []
                         elif available_models is not None:
@@ -117,7 +117,7 @@ class _LLMModels:
                             models = available_models
                             if isinstance(models, set):
                                 models = list(models)
-                            provider_models[attr_name] = models
+                            provider_models[attr_name] = cast(List[str], models)
                         else:
                             provider_models[attr_name] = []
             except Exception:
@@ -393,7 +393,7 @@ class _TTIModels:
                     ):
                         if hasattr(attr, "AVAILABLE_MODELS"):
                             # Convert any sets to lists to ensure serializability
-                            models = getattr(attr, "AVAILABLE_MODELS", [])
+                            models = cast(List[str], getattr(attr, "AVAILABLE_MODELS", []))
                             if isinstance(models, set):
                                 models = list(models)
                             provider_models[attr_name] = models
