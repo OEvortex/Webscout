@@ -66,6 +66,7 @@ dependencies = [
     "uvicorn>=0.40.0",
     "starlette>=0.50.0",
     "openai>=2.43.0",
+    "pytest>=9.0.2",
 ]
 
 [project.scripts]

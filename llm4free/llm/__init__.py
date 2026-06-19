@@ -74,6 +74,9 @@ from llm4free.llm.turboseek import TurboSeek
 from llm4free.llm.wisecat import WiseCat
 from llm4free.llm.writecream import Writecream
 from llm4free.llm.gptfree import GptFree
+from llm4free.llm.fuckicoding import FuckICoding
+from llm4free.llm.freeaionline import FreeAIOnline
+from llm4free.llm.Auth.uncensoredchat import UncensoredChat
 
 # List of all exported names
 __all__ = [
@@ -142,4 +145,7 @@ __all__ = [
     "Sambanova",
     "TypliAI",
     "GptFree",
+    "FuckICoding",
+    "FreeAIOnline",
+    "UncensoredChat",
 ]

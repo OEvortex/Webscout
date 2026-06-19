@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026.06.19] - 2026-06-19
+
+### ✨ Added
+- **FreeAIOnline** — New provider for free-ai-online.com. Reverse-engineered the WordPress AI Engine plugin REST API (`mwai-ui/v1/chats/submit`). Uses SSE streaming with `{"type":"live","data":"token"}` format. Supports conversation history and nonce-based session auth.
+
+### 🚚 Moved
+- **UncensoredChat** — Moved from `llm4free/llm/uncensoredchat.py` to `llm4free/llm/Auth/uncensoredchat.py` since it requires authentication (`required_auth = True`). Updated import in `__init__.py`.
+
+### 🗑️ Removed
+- **AI365VIP** — Deleted dead provider (`chat.ai365vip.com` behind Cloudflare Turnstile, all API endpoints return 403).
+- **OaiBest** — Deleted dead provider (`free.oaibest.com` behind Cloudflare Turnstile, all API endpoints return 403).
+- **PerchanceAI** — Deleted dead provider (`perchance.org/api/urv-ai-chat` returns 404, API no longer exists).
+
+### 🐛 Fixed
+- **FuckICoding** — Completely rewritten based on reverse engineering of link.fuckicoding.com. Fixed endpoint (`/api/v1/chat` → `/api/v1/gpt/message`), added required `guest-id` and `version: v2` headers, fixed SSE format (`{"c":"content","rc":"reasoning"}` not OpenAI format), corrected payload structure (`chatId`, `plugins`, `systemPrompt`, message `time`/`attachments`), and updated model list to match actual free models from `/api/v1/app/new-info`.
+- **UncensoredChat** — Fixed import path in `__init__.py` after move to `Auth/` directory.
+
 ## [2026.06.18] - 2026-06-18
 
 ### ✨ Added
