@@ -5,8 +5,6 @@ Here's the consolidated list — 130+ free AI sites, no login required. Compiled
 ## 🎨 IMAGE GENERATION (38 sites)
 
 | # | Site | URL | Notes |
-
-| 16 | FreeGen | https://freegen.app | Unlimited, no signup |
 | 17 | FlatAI | https://flatai.org | Local-storage only |
 | 18 | Vheer | https://vheer.com | No watermark, unlimited |
 | 19 | Stable Horde | https://stablehorde.net | Distributed volunteer-powered |

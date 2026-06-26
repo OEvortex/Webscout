@@ -446,7 +446,7 @@ class OpenAICompatibleProvider(ABC):
 
             completions.create = _tool_aware_create
 
-        cls.__init__ = _non_native_init  # type: ignore[assignment]
+        cls.__init__ = _non_native_init  # type: ignore
 
     def __init__(
         self,
