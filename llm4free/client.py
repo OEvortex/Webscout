@@ -1004,6 +1004,7 @@ class ClientImages(BaseImages):
         }
         call_kwargs.update(kwargs)
 
+        errors: List[str] = []
         if resolved_provider:
             try:
                 provider_instance = self._get_provider_instance(resolved_provider)
@@ -1014,6 +1015,7 @@ class ClientImages(BaseImages):
                 return response
             except (RuntimeError, ValueError, TypeError) as exc:
                 logger.debug("TTI provider %s failed: %s", resolved_provider.__name__, exc)
+                errors.append(f"{resolved_provider.__name__}: {exc}")
 
         all_available = self._get_available_providers()
         fallback_queue = _build_fallback_queue(
@@ -1035,9 +1037,14 @@ class ClientImages(BaseImages):
                 if self._client.print_provider_info:
                     _print_provider_selection(p_name, p_model, fallback=True)
                 return response
-            except (RuntimeError, ValueError, TypeError):
+            except (RuntimeError, ValueError, TypeError) as e:
+                errors.append(f"{p_name}: {e}")
                 continue
-        raise RuntimeError("All image providers failed.")
+        raise RuntimeError(
+            f"All image providers failed. Errors: {'; '.join(errors[:5])}"
+            if errors
+            else "No image providers available."
+        )
 
     def create(self, **kwargs) -> ImageResponse:
         """
