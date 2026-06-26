@@ -6,6 +6,7 @@ from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi import CurlError, requests
 
+from llm4free.litagent import LitAgent
 from llm4free.llm.base import (
     BaseChat,
     BaseCompletions,
@@ -22,8 +23,6 @@ from llm4free.llm.utils import (
     format_prompt,
 )
 
-from llm4free.litagent import LitAgent
-
 
 def html_to_markdown(text: str) -> str:
     if not text:
@@ -38,7 +37,9 @@ def html_to_markdown(text: str) -> str:
     text = re.sub(r"<br\s*/?>", r"\n", text)
     text = re.sub(r"<(strong|b)[^>]*>(.*?)</\1>", r"**\2**", text)
     text = re.sub(r"<(em|i)[^>]*>(.*?)</\1>", r"*\2*", text)
-    text = re.sub(r"</?(section|div|span|article|header|footer)[^>]*>", "", text, flags=re.IGNORECASE)
+    text = re.sub(
+        r"</?(section|div|span|article|header|footer)[^>]*>", "", text, flags=re.IGNORECASE
+    )
     text = re.sub(r"<[^>]*>", "", text)
     return text
 
@@ -70,9 +71,7 @@ class Completions(BaseCompletions):
         if stream:
             return self._create_stream(request_id, created_time, payload, timeout, proxies)
         else:
-            return self._create_non_stream(
-                request_id, created_time, payload, timeout, proxies
-            )
+            return self._create_non_stream(request_id, created_time, payload, timeout, proxies)
 
     def _create_stream(
         self,

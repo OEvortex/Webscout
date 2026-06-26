@@ -47,12 +47,19 @@ from rich.progress import (
 from rich.table import Table
 
 console = Console()
-PROVIDER_PACKAGES = ["llm4free.llm", "llm4free.AISEARCH", "llm4free.STT", "llm4free.TTI", "llm4free.TTS"]
+PROVIDER_PACKAGES = [
+    "llm4free.llm",
+    "llm4free.AISEARCH",
+    "llm4free.STT",
+    "llm4free.TTI",
+    "llm4free.TTS",
+]
 
 
 # ──────────────────────────────────────────────────────────────────────
 # Timeout helper (POSIX signal.alarm based)
 # ──────────────────────────────────────────────────────────────────────
+
 
 class TimeoutError_(Exception):
     pass
@@ -65,6 +72,7 @@ def wallclock_timeout(seconds: int):
     Uses SIGALRM, so only works on the main thread under POSIX. This is fine
     because we run providers one at a time on the main thread.
     """
+
     def _handler(signum, frame):
         raise TimeoutError_(f"timeout after {seconds}s")
 
@@ -114,6 +122,7 @@ class ProviderResult:
 # ──────────────────────────────────────────────────────────────────────
 # Core test runner
 # ──────────────────────────────────────────────────────────────────────
+
 
 def _coerce_response(resp: Any) -> str:
     """Best-effort: turn whatever chat() returns into a flat string."""
@@ -293,6 +302,7 @@ def render_groups(results: List[ProviderResult]) -> None:
 # Entry point
 # ──────────────────────────────────────────────────────────────────────
 
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--api-key", help="API key for any auth-required provider")
@@ -346,7 +356,7 @@ def main() -> int:
     provider_classes = {}
     aibase_mod = importlib.import_module("llm4free.AIbase")
     base_cls = aibase_mod.Provider
-    
+
     for package_name in PROVIDER_PACKAGES:
         try:
             package = importlib.import_module(package_name)
@@ -360,7 +370,7 @@ def main() -> int:
                     pass
         except Exception:
             pass
-    
+
     names = list(provider_classes.keys())
     if args.only:
         wanted = {n.strip() for n in args.only.split(",") if n.strip()}
@@ -386,30 +396,42 @@ def main() -> int:
         for name in names:
             cls = provider_classes.get(name)
             if cls is None:
-                results.append(ProviderResult(
-                    name=name, status=INIT_FAILED, auth_required=False,
-                    error_type="MissingExport",
-                    error="name listed in __all__ but not present in module",
-                ))
+                results.append(
+                    ProviderResult(
+                        name=name,
+                        status=INIT_FAILED,
+                        auth_required=False,
+                        error_type="MissingExport",
+                        error="name listed in __all__ but not present in module",
+                    )
+                )
                 progress.update(task, advance=1, description=f"✗ {name}")
                 continue
             if not inspect.isclass(cls) or not issubclass(cls, base_cls):
                 # Not a provider subclass (e.g. a utility export) — record and skip.
-                results.append(ProviderResult(
-                    name=name, status=INIT_FAILED, auth_required=False,
-                    error_type="NotAProvider",
-                    error="export is not a subclass of AIbase.Provider",
-                ))
+                results.append(
+                    ProviderResult(
+                        name=name,
+                        status=INIT_FAILED,
+                        auth_required=False,
+                        error_type="NotAProvider",
+                        error="export is not a subclass of AIbase.Provider",
+                    )
+                )
                 progress.update(task, advance=1, description=f"– {name}")
                 continue
 
             auth = bool(getattr(cls, "required_auth", False))
             if auth and not args.include_auth and not (api_keys.get(name) or default_key):
-                results.append(ProviderResult(
-                    name=name, status=SKIPPED_AUTH, auth_required=True,
-                    error_type="AuthRequired",
-                    error="use --include-auth + --api-key to test",
-                ))
+                results.append(
+                    ProviderResult(
+                        name=name,
+                        status=SKIPPED_AUTH,
+                        auth_required=True,
+                        error_type="AuthRequired",
+                        error="use --include-auth + --api-key to test",
+                    )
+                )
                 progress.update(task, advance=1, description=f"… {name}")
                 continue
 
@@ -417,9 +439,14 @@ def main() -> int:
             progress.update(task, description=f"→ {name}")
             result = _run_provider_test(name, cls, key, args.prompt, args.timeout)
             results.append(result)
-            mark = {"WORKING": "✓", "EMPTY_RESPONSE": "·",
-                    "INIT_FAILED": "!", "RUNTIME_ERROR": "✗",
-                    "TIMEOUT": "⏱", "SKIPPED_AUTH": "…"}.get(result.status, "?")
+            mark = {
+                "WORKING": "✓",
+                "EMPTY_RESPONSE": "·",
+                "INIT_FAILED": "!",
+                "RUNTIME_ERROR": "✗",
+                "TIMEOUT": "⏱",
+                "SKIPPED_AUTH": "…",
+            }.get(result.status, "?")
             progress.update(task, advance=1, description=f"{mark} {name} [{result.status}]")
 
     console.print()

@@ -25,7 +25,9 @@ class User:
         """Get user profile information"""
         return request(self.base_url)
 
-    def get_repositories(self, page: int = 1, per_page: int = 30, repo_type: str = "all") -> List[Dict[str, Any]]:
+    def get_repositories(
+        self, page: int = 1, per_page: int = 30, repo_type: str = "all"
+    ) -> List[Dict[str, Any]]:
         """
         Get user's public repositories
 
@@ -112,7 +114,9 @@ class User:
         url = f"{self.base_url}/social_accounts"
         return request(url)
 
-    def get_packages(self, package_type: str = "container", page: int = 1, per_page: int = 30) -> List[Dict[str, Any]]:
+    def get_packages(
+        self, package_type: str = "container", page: int = 1, per_page: int = 30
+    ) -> List[Dict[str, Any]]:
         """
         Get user's public packages.
 
@@ -124,5 +128,7 @@ class User:
         Returns:
             List of user's packages
         """
-        url = f"{self.base_url}/packages?package_type={package_type}&page={page}&per_page={per_page}"
+        url = (
+            f"{self.base_url}/packages?package_type={package_type}&page={page}&per_page={per_page}"
+        )
         return request(url)

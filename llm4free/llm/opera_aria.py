@@ -34,8 +34,7 @@ import os
 import time
 from typing import Any, Dict, Generator, List, Optional, Union
 
-from curl_cffi import CurlError
-from curl_cffi import requests
+from curl_cffi import CurlError, requests
 
 from llm4free.llm.base import (
     BaseChat,
@@ -404,6 +403,7 @@ class OperaAria(OpenAICompatibleProvider):
 
     def _uuid(self) -> str:
         import uuid
+
         return uuid.uuid4().hex
 
     def _safe_count(self, text: str) -> int:
@@ -463,7 +463,9 @@ class OperaAria(OpenAICompatibleProvider):
         r1.raise_for_status()
         anon_token = r1.json().get("access_token")
         if not anon_token:
-            raise IOError(f"OperaAria: step-1 (client_credentials) returned no access_token: {r1.text[:200]}")
+            raise IOError(
+                f"OperaAria: step-1 (client_credentials) returned no access_token: {r1.text[:200]}"
+            )
 
         r2 = self.session.post(
             self.SIGNUP_ENDPOINT,
@@ -479,7 +481,9 @@ class OperaAria(OpenAICompatibleProvider):
         r2.raise_for_status()
         auth_token = r2.json().get("token")
         if not auth_token:
-            raise IOError(f"OperaAria: step-2 (anonymous signup) returned no auth_token: {r2.text[:200]}")
+            raise IOError(
+                f"OperaAria: step-2 (anonymous signup) returned no auth_token: {r2.text[:200]}"
+            )
 
         r3 = self.session.post(
             self.TOKEN_ENDPOINT,
@@ -495,7 +499,9 @@ class OperaAria(OpenAICompatibleProvider):
         r3.raise_for_status()
         refresh_token = r3.json().get("refresh_token")
         if not refresh_token:
-            raise IOError(f"OperaAria: step-3 (auth_token grant) returned no refresh_token: {r3.text[:200]}")
+            raise IOError(
+                f"OperaAria: step-3 (auth_token grant) returned no refresh_token: {r3.text[:200]}"
+            )
         return refresh_token
 
     def get_access_token(self) -> str:
@@ -595,9 +601,7 @@ class OperaAria(OpenAICompatibleProvider):
         return None, None
 
     @staticmethod
-    def _extract_content(
-        data: Dict[str, Any], version: str
-    ) -> tuple[Optional[str], Optional[str]]:
+    def _extract_content(data: Dict[str, Any], version: str) -> tuple[Optional[str], Optional[str]]:
         if version == "v1":
             msg = data.get("message")
             return (msg, None) if isinstance(msg, str) else (None, None)
@@ -611,9 +615,7 @@ class OperaAria(OpenAICompatibleProvider):
         return (text, None) if isinstance(text, str) else (None, None)
 
     @staticmethod
-    def _extract_conversation_id(
-        data: Dict[str, Any], version: str
-    ) -> Optional[str]:
+    def _extract_conversation_id(data: Dict[str, Any], version: str) -> Optional[str]:
         if version == "v1":
             cid = data.get("conversation_id")
             return cid if isinstance(cid, str) else None

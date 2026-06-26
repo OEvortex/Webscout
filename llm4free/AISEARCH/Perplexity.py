@@ -66,6 +66,7 @@ class Perplexity(AISearch):
 
         if proxies:
             from typing import cast
+
             self.session.proxies.update(cast(Any, proxies))
 
         # Initialize session info if possible
@@ -181,7 +182,13 @@ class Perplexity(AISearch):
         stream: bool = False,
         raw: bool = False,
         **kwargs: Any,
-    ) -> Union[SearchResponse, Generator[Union[Dict[str, str], SearchResponse], None, None], List[Any], Dict[str, Any], str]:
+    ) -> Union[
+        SearchResponse,
+        Generator[Union[Dict[str, str], SearchResponse], None, None],
+        List[Any],
+        Dict[str, Any],
+        str,
+    ]:
         """Search using the Perplexity API and get AI-generated responses."""
         sources = kwargs.get("sources", ["web"])
         follow_up = kwargs.get("follow_up")
@@ -237,11 +244,12 @@ class Perplexity(AISearch):
 
                 def stream_response():
                     full_text = ""
+
                     def extract_perplexity_content(data):
                         nonlocal full_text
                         current_answer = self._extract_answer(data)
                         if current_answer and len(current_answer) > len(full_text):
-                            delta = current_answer[len(full_text):]
+                            delta = current_answer[len(full_text) :]
                             full_text = current_answer
                             return delta
                         return None
@@ -254,11 +262,13 @@ class Perplexity(AISearch):
                         extract_regexes=None,
                         content_extractor=lambda chunk: extract_perplexity_content(chunk),
                         yield_raw_on_error=False,
-                        encoding='utf-8',
-                        encoding_errors='replace',
+                        encoding="utf-8",
+                        encoding_errors="replace",
                         line_delimiter="\r\n\r\n",
                         raw=raw,
-                        output_formatter=None if raw else lambda x: SearchResponse(x) if isinstance(x, str) else x,
+                        output_formatter=None
+                        if raw
+                        else lambda x: SearchResponse(x) if isinstance(x, str) else x,
                     )
 
                     yield from processed_chunks

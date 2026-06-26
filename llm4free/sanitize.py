@@ -1096,7 +1096,9 @@ def sanitize_stream(
                     yield chunk
                 # Skip None chunks entirely
 
-        async def _raw_passthrough_async(source_aiter: AsyncIterable[Any]) -> AsyncGenerator[Any, None]:
+        async def _raw_passthrough_async(
+            source_aiter: AsyncIterable[Any],
+        ) -> AsyncGenerator[Any, None]:
             """Pass through async iterable, decoding bytes to strings."""
             async for chunk in source_aiter:
                 if isinstance(chunk, (bytes, bytearray)):
@@ -1502,6 +1504,8 @@ try:
     lit_streamer.__decorator__ = _sanitize_stream_decorator  # ty: ignore
 except AttributeError:
     pass
+
+
 def __getattr__(name) -> Any:
     if name == "sanitize_stream":
         return sanitize_stream

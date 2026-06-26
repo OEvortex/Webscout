@@ -161,20 +161,22 @@ class Images(BaseImages):
                     continue
                 raise RuntimeError(f"Failed to check generation status: {e}")
 
-        raise RuntimeError(f"Image generation timed out after {max_attempts * poll_interval} seconds")
+        raise RuntimeError(
+            f"Image generation timed out after {max_attempts * poll_interval} seconds"
+        )
 
     def _generate_signature(self, prompt: str, timestamp: int) -> str:
         """
         Generate signature for VisualGPT API.
-        
+
         Note: The exact signature algorithm is client-side and may require
         reverse engineering from JavaScript. This is a simplified implementation
         that may not work with the actual API.
-        
+
         Args:
             prompt: The user prompt
             timestamp: Unix timestamp
-            
+
         Returns:
             Hex string signature
         """
@@ -191,16 +193,16 @@ class VisualGPT(TTICompatibleProvider):
     """VisualGPT AI Image Generator Provider.
 
     This provider uses VisualGPT's API for text-to-image generation.
-    
+
     Authentication:
         Requires a cookies.json file containing VisualGPT session cookies.
         Export cookies from your browser's developer tools after logging into
         https://visualgpt.io. The cookies file should be in JSON format.
-        
+
     Cookie Format:
         Simple format: {"cookie_name": "cookie_value", ...}
         Netscape format: [{"name": "cookie_name", "value": "cookie_value", ...}, ...]
-        
+
     Note: The API requires signature-based authentication which is generated
     client-side. The signature generation may need to be reverse engineered
     from the frontend JavaScript for full functionality.
@@ -224,10 +226,10 @@ class VisualGPT(TTICompatibleProvider):
         self.api_endpoint = "https://visualgpt.io/api/v1/prediction/handle"
         self.session = requests.Session()
         self.user_agent = LitAgent().random()
-        
+
         # Load cookies from file
         self._load_cookies(cookies_file)
-        
+
         self.headers = {
             "accept": "application/json, text/plain, */*",
             "accept-language": "en-GB,en-US;q=0.9,en;q=0.8",
@@ -243,7 +245,7 @@ class VisualGPT(TTICompatibleProvider):
             "sec-fetch-site": "same-origin",
         }
         self.session.headers.update(self.headers)
-        
+
         self.images = Images(self)
 
     def _load_cookies(self, cookies_file: str) -> None:
@@ -257,33 +259,33 @@ class VisualGPT(TTICompatibleProvider):
             json.JSONDecodeError: If cookies file is invalid JSON
         """
         import os
-        
+
         if not os.path.exists(cookies_file):
             raise FileNotFoundError(
                 f"Cookies file not found: {cookies_file}. "
                 "Please export your VisualGPT cookies to a cookies.json file. "
                 "You can export cookies from your browser's developer tools."
             )
-        
+
         try:
-            with open(cookies_file, 'r', encoding='utf-8') as f:
+            with open(cookies_file, "r", encoding="utf-8") as f:
                 cookies_data = json.load(f)
-            
+
             # Support both Netscape format and simple JSON format
             if isinstance(cookies_data, list):
                 # Netscape cookie format (list of cookie objects)
                 for cookie in cookies_data:
-                    if cookie.get('name') and cookie.get('value'):
+                    if cookie.get("name") and cookie.get("value"):
                         self.session.cookies.set(
-                            cookie['name'],
-                            cookie['value'],
-                            domain=cookie.get('domain', 'visualgpt.io'),
-                            path=cookie.get('path', '/'),
+                            cookie["name"],
+                            cookie["value"],
+                            domain=cookie.get("domain", "visualgpt.io"),
+                            path=cookie.get("path", "/"),
                         )
             elif isinstance(cookies_data, dict):
                 # Simple JSON format (dict of cookie_name: cookie_value)
                 for name, value in cookies_data.items():
-                    self.session.cookies.set(name, value, domain='visualgpt.io')
+                    self.session.cookies.set(name, value, domain="visualgpt.io")
             else:
                 raise ValueError(
                     "Invalid cookies format. Expected a list (Netscape format) "
@@ -291,9 +293,7 @@ class VisualGPT(TTICompatibleProvider):
                 )
         except json.JSONDecodeError as e:
             raise json.JSONDecodeError(
-                f"Invalid JSON in cookies file: {cookies_file}",
-                e.doc,
-                e.pos
+                f"Invalid JSON in cookies file: {cookies_file}", e.doc, e.pos
             )
 
     @property

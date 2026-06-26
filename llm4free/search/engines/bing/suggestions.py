@@ -11,6 +11,7 @@ from .base import BingBase
 class BingSuggestionsSearch(BingBase):
     name = "bing"
     category = "suggestions"
+
     def run(self, *args, **kwargs) -> List[str]:
         query = args[0] if args else kwargs.get("query")
         region = args[1] if len(args) > 1 else kwargs.get("region", "en-US")
@@ -18,10 +19,7 @@ class BingSuggestionsSearch(BingBase):
         if not query:
             raise ValueError("Query is mandatory")
 
-        params = {
-            "query": query,
-            "mkt": region
-        }
+        params = {"query": query, "mkt": region}
         url = f"https://api.bing.com/osjson.aspx?{urlencode(params)}"
 
         try:

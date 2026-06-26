@@ -15,7 +15,7 @@ class DictLikeMixin:
     This allows models to be accessed like dictionaries while maintaining
     type safety and IDE autocomplete support.
     """
-    
+
     def __getitem__(self, key):
         """Allow dict-like access."""
         return getattr(self, key)
@@ -43,33 +43,44 @@ class DictLikeMixin:
 
 class ToolCallType(str, Enum):
     """Type of tool call."""
+
     FUNCTION = "function"
+
 
 class FunctionCall(BaseModel):
     """Function call specification."""
+
     name: StrictStr
     arguments: StrictStr
+
 
 class ToolFunction(BaseModel):
     """Function specification in a tool."""
+
     name: StrictStr
     arguments: StrictStr
 
+
 class ToolCall(BaseModel):
     """Tool call specification."""
+
     id: StrictStr
     type: StrictStr
     function: ToolFunction
 
+
 class CompletionUsage(BaseModel):
     """Token usage information."""
+
     prompt_tokens: StrictInt
     completion_tokens: StrictInt
     total_tokens: StrictInt
     prompt_tokens_details: Optional[Dict[str, Any]] = None
 
+
 class ChoiceDelta(BaseModel, DictLikeMixin):
     """Delta content in streaming response - OpenAI SDK compatible."""
+
     content: Optional[StrictStr] = None
     function_call: Optional[FunctionCall] = None
     role: Optional[StrictStr] = None
@@ -80,6 +91,7 @@ class ChoiceDelta(BaseModel, DictLikeMixin):
 
 class ChatCompletionMessage(BaseModel, DictLikeMixin):
     """Chat message in completion response."""
+
     role: StrictStr
     content: Optional[StrictStr] = None
     function_call: Optional[FunctionCall] = None
@@ -90,6 +102,7 @@ class ChatCompletionMessage(BaseModel, DictLikeMixin):
 
 class Choice(BaseModel, DictLikeMixin):
     """Choice in completion response - OpenAI SDK compatible."""
+
     index: StrictInt
     message: Optional[ChatCompletionMessage] = None
     delta: Optional[ChoiceDelta] = None
@@ -99,6 +112,7 @@ class Choice(BaseModel, DictLikeMixin):
 
 class ModelData(BaseModel):
     """OpenAI model info response."""
+
     id: StrictStr
     object: StrictStr = "model"
     created: StrictInt = int(time.time())
@@ -107,8 +121,10 @@ class ModelData(BaseModel):
     root: Optional[StrictStr] = None
     parent: Optional[StrictStr] = None
 
+
 class ModelList(BaseModel):
     """OpenAI model list response."""
+
     data: List[ModelData]
     object: StrictStr = "list"
 
@@ -189,8 +205,10 @@ class ModelList(BaseModel):
 #     data: List[ImageData]
 #     created: int = int(time.time())
 
+
 class ChatCompletion(BaseModel):
     """Chat completion response - OpenAI SDK compatible."""
+
     model: StrictStr
     choices: List[Choice]
     id: StrictStr = Field(default_factory=lambda: f"chatcmpl-{str(uuid.uuid4())}")
@@ -226,6 +244,7 @@ class ChatCompletion(BaseModel):
 
 class ChatCompletionChunk(BaseModel):
     """Streaming chat completion response chunk - OpenAI SDK compatible."""
+
     model: StrictStr
     choices: List[Choice]
     id: StrictStr = Field(default_factory=lambda: f"chatcmpl-{str(uuid.uuid4())}")
@@ -261,8 +280,13 @@ class ChatCompletionChunk(BaseModel):
 
 # --- Helper Functions ---
 
-def format_prompt(messages: List[Dict[str, Any]], add_special_tokens: bool = False,
-                 do_continue: bool = False, include_system: bool = True) -> str:
+
+def format_prompt(
+    messages: List[Dict[str, Any]],
+    add_special_tokens: bool = False,
+    do_continue: bool = False,
+    include_system: bool = True,
+) -> str:
     """
     Format a series of messages into a single string, optionally adding special tokens.
 
@@ -275,6 +299,7 @@ def format_prompt(messages: List[Dict[str, Any]], add_special_tokens: bool = Fal
     Returns:
         A formatted string containing all messages.
     """
+
     # Helper function to convert content to string
     def to_string(value) -> str:
         if isinstance(value, str):
@@ -299,11 +324,13 @@ def format_prompt(messages: List[Dict[str, Any]], add_special_tokens: bool = Fal
     ]
 
     # Format each message as "Role: Content"
-    formatted = "\n".join([
-        f'{role.capitalize()}: {content}'
-        for role, content in processed_messages
-        if content.strip()
-    ])
+    formatted = "\n".join(
+        [
+            f"{role.capitalize()}: {content}"
+            for role, content in processed_messages
+            if content.strip()
+        ]
+    )
 
     # Add final prompt for assistant if needed
     if do_continue:
@@ -355,6 +382,7 @@ def get_last_user_message(messages: List[Dict[str, Any]]) -> str:
 
 # --- Token Counter ---
 
+
 def count_tokens(text_or_messages: Any) -> int:
     """
     Count tokens in a string or a list of messages using tiktoken.
@@ -366,6 +394,7 @@ def count_tokens(text_or_messages: Any) -> int:
         int: Number of tokens.
     """
     import tiktoken
+
     if isinstance(text_or_messages, str):
         enc = tiktoken.encoding_for_model("gpt-4o")
         return len(enc.encode(text_or_messages))
@@ -380,4 +409,3 @@ def count_tokens(text_or_messages: Any) -> int:
         return total
     else:
         return 0
-

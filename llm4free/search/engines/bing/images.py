@@ -15,6 +15,7 @@ from .base import BingBase
 class BingImagesSearch(BingBase):
     name = "bing"
     category = "images"
+
     def run(self, *args, **kwargs) -> List[ImagesResult]:
         keywords = args[0] if args else kwargs.get("keywords")
         args[1] if len(args) > 1 else kwargs.get("region", "us")
@@ -27,27 +28,23 @@ class BingImagesSearch(BingBase):
         if not keywords:
             raise ValueError("Keywords are mandatory")
 
-        safe_map = {
-            "on": "Strict",
-            "moderate": "Moderate",
-            "off": "Off"
-        }
+        safe_map = {"on": "Strict", "moderate": "Moderate", "off": "Off"}
         safe_map.get(safesearch.lower(), "Moderate")
 
         # Bing images URL
         url = f"{self.base_url}/images/async"
         params = {
-            'q': keywords,
-            'first': '1',
-            'count': '35',  # Fetch more to get max_results
-            'cw': '1177',
-            'ch': '759',
-            'tsc': 'ImageHoverTitle',
-            'layout': 'RowBased_Landscape',
-            't': '0',
-            'IG': '',
-            'SFX': '0',
-            'iid': 'images.1'
+            "q": keywords,
+            "first": "1",
+            "count": "35",  # Fetch more to get max_results
+            "cw": "1177",
+            "ch": "759",
+            "tsc": "ImageHoverTitle",
+            "layout": "RowBased_Landscape",
+            "t": "0",
+            "IG": "",
+            "SFX": "0",
+            "iid": "images.1",
         }
 
         results = []
@@ -55,8 +52,8 @@ class BingImagesSearch(BingBase):
         sfx = 0
 
         while len(results) < max_results:
-            params['first'] = str(first)
-            params['SFX'] = str(sfx)
+            params["first"] = str(first)
+            params["SFX"] = str(sfx)
             full_url = f"{url}?{urlencode(params)}"
 
             try:
@@ -67,15 +64,15 @@ class BingImagesSearch(BingBase):
                 raise Exception(f"Failed to fetch images: {str(e)}")
 
             soup = Scout(html)
-            img_tags = soup.select('a.iusc img')
+            img_tags = soup.select("a.iusc img")
 
             for img in img_tags:
                 if len(results) >= max_results:
                     break
 
-                title = img.get('alt', '')
-                src = img.get('src', '')
-                m_attr = img.parent.get('m', '') if img.parent else ''
+                title = img.get("alt", "")
+                src = img.get("src", "")
+                m_attr = img.parent.get("m", "") if img.parent else ""
 
                 # Parse m attribute for full image URL
                 image_url = src
@@ -83,27 +80,30 @@ class BingImagesSearch(BingBase):
                 if m_attr:
                     try:
                         import json
+
                         m_data = json.loads(m_attr)
-                        image_url = m_data.get('murl', src)
-                        thumbnail = m_data.get('turl', src)
+                        image_url = m_data.get("murl", src)
+                        thumbnail = m_data.get("turl", src)
                     except Exception:
                         pass
 
-                source = ''
+                source = ""
                 if img.parent and img.parent.parent:
-                    source_tag = img.parent.parent.select_one('.iusc .lnk')
+                    source_tag = img.parent.parent.select_one(".iusc .lnk")
                     if source_tag:
                         source = source_tag.get_text(strip=True)
 
-                results.append(ImagesResult(
-                    title=title,
-                    image=image_url,
-                    thumbnail=thumbnail,
-                    url=image_url,
-                    height=0,
-                    width=0,
-                    source=source
-                ))
+                results.append(
+                    ImagesResult(
+                        title=title,
+                        image=image_url,
+                        thumbnail=thumbnail,
+                        url=image_url,
+                        height=0,
+                        width=0,
+                        source=source,
+                    )
+                )
 
             first += 35
             sfx += 1

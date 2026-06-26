@@ -24,7 +24,20 @@ from llm4free.STT.base import (
 
 # Supported languages for Cohere Multilingual ASR
 SUPPORTED_LANGUAGES = [
-    "en", "fr", "de", "es", "pt", "it", "nl", "pl", "el", "ar", "ja", "ko", "zh", "vi"
+    "en",
+    "fr",
+    "de",
+    "es",
+    "pt",
+    "it",
+    "nl",
+    "pl",
+    "el",
+    "ar",
+    "ja",
+    "ko",
+    "zh",
+    "vi",
 ]
 
 
@@ -170,23 +183,17 @@ class CohereTranscriptions(BaseSTTTranscriptions):
             result = response.json()
             event_id = result.get("event_id")
             if not event_id:
-                raise exceptions.FailedToGenerateResponseError(
-                    f"No event_id in response: {result}"
-                )
+                raise exceptions.FailedToGenerateResponseError(f"No event_id in response: {result}")
 
             # Step 3: Get transcription result via SSE
-            transcription_text = self._get_sse_result(
-                event_id, timeout, proxies
-            )
+            transcription_text = self._get_sse_result(event_id, timeout, proxies)
 
             simple_result = {"text": transcription_text}
             return TranscriptionResponse(simple_result, response_format)
         except exceptions.FailedToGenerateResponseError:
             raise
         except Exception as e:
-            raise exceptions.FailedToGenerateResponseError(
-                f"Cohere transcription failed: {str(e)}"
-            )
+            raise exceptions.FailedToGenerateResponseError(f"Cohere transcription failed: {str(e)}")
 
     def _get_sse_result(
         self,
@@ -273,9 +280,7 @@ class CohereTranscriptions(BaseSTTTranscriptions):
         result = response.json()
         event_id = result.get("event_id")
         if not event_id:
-            raise exceptions.FailedToGenerateResponseError(
-                f"No event_id in response: {result}"
-            )
+            raise exceptions.FailedToGenerateResponseError(f"No event_id in response: {result}")
 
         # Step 3: Stream SSE results
         sse_headers = {
@@ -356,7 +361,9 @@ if __name__ == "__main__":
     client = CohereSTT()
 
     # Example audio file path - replace with your own
-    audio_file_path = r"C:\Users\koula\Desktop\CODEBASE\Projects\OEvortex\Webscout\tests\test_audio.wav"
+    audio_file_path = (
+        r"C:\Users\koula\Desktop\CODEBASE\Projects\OEvortex\Webscout\tests\test_audio.wav"
+    )
 
     print("=== Non-streaming example ===")
     with open(audio_file_path, "rb") as audio_file:

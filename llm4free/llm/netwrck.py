@@ -1,4 +1,3 @@
-from llm4free.llm.akashgpt import AVAILABLE_MODELS
 import json
 import time
 import uuid
@@ -6,6 +5,8 @@ from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi import CurlError, requests
 
+from llm4free.litagent import LitAgent
+from llm4free.llm.akashgpt import AVAILABLE_MODELS
 from llm4free.llm.base import (
     BaseChat,
     BaseCompletions,
@@ -23,8 +24,6 @@ from llm4free.llm.utils import (
     format_prompt,
     get_system_prompt,
 )
-
-from llm4free.litagent import LitAgent
 
 # ANSI escape codes for formatting
 BOLD = "\033[1m"

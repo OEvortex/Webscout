@@ -36,7 +36,7 @@ class Organization:
         sort: str = "created",
         direction: str = "desc",
         page: int = 1,
-        per_page: int = 30
+        per_page: int = 30,
     ) -> List[Dict[str, Any]]:
         """
         List organization repositories.
@@ -54,11 +54,7 @@ class Organization:
         url = f"{self.base_url}/repos?type={repo_type}&sort={sort}&direction={direction}&page={page}&per_page={per_page}"
         return request(url)
 
-    def get_public_members(
-        self,
-        page: int = 1,
-        per_page: int = 30
-    ) -> List[Dict[str, Any]]:
+    def get_public_members(self, page: int = 1, per_page: int = 30) -> List[Dict[str, Any]]:
         """
         List public members of the organization.
 
@@ -72,11 +68,7 @@ class Organization:
         url = f"{self.base_url}/public_members?page={page}&per_page={per_page}"
         return request(url)
 
-    def get_events(
-        self,
-        page: int = 1,
-        per_page: int = 30
-    ) -> List[Dict[str, Any]]:
+    def get_events(self, page: int = 1, per_page: int = 30) -> List[Dict[str, Any]]:
         """
         List public organization events.
 

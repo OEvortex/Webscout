@@ -5,6 +5,7 @@ from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi import CurlError, requests
 
+from llm4free.litagent import LitAgent
 from llm4free.llm.base import (
     BaseChat,
     BaseCompletions,
@@ -20,8 +21,6 @@ from llm4free.llm.utils import (
     CompletionUsage,
     count_tokens,
 )
-
-from llm4free.litagent import LitAgent
 
 BOLD = "\033[1m"
 RED = "\033[91m"
@@ -109,7 +108,12 @@ class Completions(BaseCompletions):
                 if not line.startswith("data: "):
                     continue
                 data = line[6:]
-                if data in ("[ANSWER_START]", "[ANSWER_DONE]", "[RELATE_Q_START]", "[RELATE_Q_DONE]"):
+                if data in (
+                    "[ANSWER_START]",
+                    "[ANSWER_DONE]",
+                    "[RELATE_Q_START]",
+                    "[RELATE_Q_DONE]",
+                ):
                     continue
                 if data.startswith("[") and data.endswith("]"):
                     continue

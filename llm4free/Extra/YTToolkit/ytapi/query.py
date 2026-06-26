@@ -10,7 +10,6 @@ from .video import Video
 
 
 class Search:
-
     @staticmethod
     def video(keywords: str) -> Optional[Video]:
         video_ids = Patterns.video_id.findall(find_videos(keywords))
@@ -79,7 +78,9 @@ class Search:
             return []
 
     @staticmethod
-    def videos_by_duration(keywords: str, duration: str = "short", limit: int = 20) -> Optional[List[str]]:
+    def videos_by_duration(
+        keywords: str, duration: str = "short", limit: int = 20
+    ) -> Optional[List[str]]:
         """
         Search videos filtered by duration.
 
@@ -92,9 +93,9 @@ class Search:
             List of video IDs
         """
         duration_filters = {
-            "short": "EgIYAQ%253D%253D",    # Under 4 minutes
-            "medium": "EgIYAw%253D%253D",   # 4-20 minutes
-            "long": "EgIYAg%253D%253D"      # Over 20 minutes
+            "short": "EgIYAQ%253D%253D",  # Under 4 minutes
+            "medium": "EgIYAw%253D%253D",  # 4-20 minutes
+            "long": "EgIYAg%253D%253D",  # Over 20 minutes
         }
         sp = duration_filters.get(duration, "")
         url = f"https://www.youtube.com/results?search_query={quote(keywords)}&sp={sp}"
@@ -105,7 +106,9 @@ class Search:
             return []
 
     @staticmethod
-    def videos_by_upload_date(keywords: str, when: str = "today", limit: int = 20) -> Optional[List[str]]:
+    def videos_by_upload_date(
+        keywords: str, when: str = "today", limit: int = 20
+    ) -> Optional[List[str]]:
         """
         Search videos filtered by upload date.
 
@@ -122,7 +125,7 @@ class Search:
             "today": "EgIIAg%253D%253D",
             "week": "EgIIAw%253D%253D",
             "month": "EgIIBA%253D%253D",
-            "year": "EgIIBQ%253D%253D"
+            "year": "EgIIBQ%253D%253D",
         }
         sp = date_filters.get(when, "")
         url = f"https://www.youtube.com/results?search_query={quote(keywords)}&sp={sp}"

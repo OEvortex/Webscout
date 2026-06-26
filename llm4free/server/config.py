@@ -27,14 +27,16 @@ class ServerConfig:
         self.request_timeout: int = 300  # 5 minutes
         self.auth_required: bool = False
         self.rate_limit_enabled: bool = False
-        self.request_logging_enabled: bool = os.getenv("LLM4FREE_REQUEST_LOGGING", "true").lower() == "true"  # Enable request logging by default
+        self.request_logging_enabled: bool = (
+            os.getenv("LLM4FREE_REQUEST_LOGGING", "true").lower() == "true"
+        )  # Enable request logging by default
 
     def update(self, **kwargs) -> None:
         """Update configuration with provided values."""
         for key, value in kwargs.items():
             if hasattr(self, key) and value is not None:
                 setattr(self, key, value)
-                ic.configureOutput(prefix='INFO| ')
+                ic.configureOutput(prefix="INFO| ")
                 ic(f"Config updated: {key} = {value}")
 
     def validate(self) -> None:
@@ -44,12 +46,15 @@ class ServerConfig:
 
         if self.default_provider not in self.provider_map and self.provider_map:
             available_providers = list(set(v.__name__ for v in self.provider_map.values()))
-            ic.configureOutput(prefix='WARNING| ')
-            ic(f"Default provider '{self.default_provider}' not found. Available: {available_providers}")
+            ic.configureOutput(prefix="WARNING| ")
+            ic(
+                f"Default provider '{self.default_provider}' not found. Available: {available_providers}"
+            )
 
 
 class AppConfig:
     """Legacy configuration class for backward compatibility."""
+
     provider_map = {}
     tti_provider_map = {}  # Add TTI provider map
     tts_provider_map = {}  # Add TTS provider map
@@ -59,13 +64,15 @@ class AppConfig:
     base_url: Optional[str] = None
     auth_required: bool = False
     rate_limit_enabled: bool = False
-    request_logging_enabled: bool = os.getenv("LLM4FREE_REQUEST_LOGGING", "true").lower() == "true"  # Enable request logging by default
+    request_logging_enabled: bool = (
+        os.getenv("LLM4FREE_REQUEST_LOGGING", "true").lower() == "true"
+    )  # Enable request logging by default
 
     @classmethod
     def set_config(cls, **data):
         """Set configuration values."""
         # Filter out auth-related keys
-        auth_keys = {'api_key'}
+        auth_keys = {"api_key"}
         filtered_data = {k: v for k, v in data.items() if k not in auth_keys}
 
         for key, value in filtered_data.items():
@@ -73,6 +80,7 @@ class AppConfig:
         # Sync with new config system
         try:
             from .server import get_config
+
             config = get_config()
             config.update(**filtered_data)
         except ImportError:

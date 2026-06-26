@@ -414,7 +414,11 @@ complete -c {self.name} -n "__fish_use_subcommand" -a "{" ".join(commands)}"
                     elif opt.get("multiple", False):
                         items = value if isinstance(value, list) else [value]
                         if "type" in opt:
-                            items = [convert_type(str(v), opt["type"], name) for v in items if v is not None]
+                            items = [
+                                convert_type(str(v), opt["type"], name)
+                                for v in items
+                                if v is not None
+                            ]
                         if "choices" in opt and opt["choices"]:
                             for v in items:
                                 validate_choice(
@@ -447,7 +451,11 @@ complete -c {self.name} -n "__fish_use_subcommand" -a "{" ".join(commands)}"
                                 value_to_convert = False
 
                         if "type" in opt and not opt.get("is_flag", False):
-                            value_to_convert = convert_type(str(value_to_convert), opt["type"], name) if value_to_convert is not None else None
+                            value_to_convert = (
+                                convert_type(str(value_to_convert), opt["type"], name)
+                                if value_to_convert is not None
+                                else None
+                            )
                         if "choices" in opt and opt["choices"]:
                             if value_to_convert is not None:
                                 validate_choice(

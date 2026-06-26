@@ -7,15 +7,14 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import aiohttp
 
-from tests.providers.utils import FakeResp
-
+from llm4free.AIbase import SearchResponse
 from llm4free.AISEARCH import (
     IAsk,
     Monica,
     Perplexity,
     webpilotai,
 )
-from llm4free.AIbase import SearchResponse
+from tests.providers.utils import FakeResp
 
 
 class FakeStreamResp(FakeResp):

@@ -15,22 +15,41 @@ from .results import ImagesResult, NewsResult, TextResult
 class BingSearch(BaseSearch):
     """Unified Bing search interface."""
 
-    def text(self, keywords: str, region: str = "us", safesearch: str = "moderate", max_results: Optional[int] = None, unique: bool = True) -> List[TextResult]:
+    def text(
+        self,
+        keywords: str,
+        region: str = "us",
+        safesearch: str = "moderate",
+        max_results: Optional[int] = None,
+        unique: bool = True,
+    ) -> List[TextResult]:
         search = BingTextSearch()
         return search.run(keywords, region, safesearch, max_results, unique=unique)
 
-    def images(self, keywords: str, region: str = "us", safesearch: str = "moderate", max_results: Optional[int] = None) -> List[ImagesResult]:
+    def images(
+        self,
+        keywords: str,
+        region: str = "us",
+        safesearch: str = "moderate",
+        max_results: Optional[int] = None,
+    ) -> List[ImagesResult]:
         search = BingImagesSearch()
         return search.run(keywords, region, safesearch, max_results)
 
-    def news(self, keywords: str, region: str = "us", safesearch: str = "moderate", max_results: Optional[int] = None) -> List[NewsResult]:
+    def news(
+        self,
+        keywords: str,
+        region: str = "us",
+        safesearch: str = "moderate",
+        max_results: Optional[int] = None,
+    ) -> List[NewsResult]:
         search = BingNewsSearch()
         return search.run(keywords, region, safesearch, max_results)
 
     def suggestions(self, query: str, region: str = "en-US") -> List[Dict[str, str]]:
         search = BingSuggestionsSearch()
         result = search.run(query, region)
-        return [{'suggestion': s} for s in result]
+        return [{"suggestion": s} for s in result]
 
     def answers(self, keywords: str) -> List[Dict[str, str]]:
         raise NotImplementedError("Answers not implemented for Bing")
@@ -38,7 +57,9 @@ class BingSearch(BaseSearch):
     def maps(self, *args, **kwargs) -> List[Dict[str, str]]:
         raise NotImplementedError("Maps not implemented for Bing")
 
-    def translate(self, keywords: str, from_lang: Optional[str] = None, to_lang: str = "en") -> List[Dict[str, str]]:
+    def translate(
+        self, keywords: str, from_lang: Optional[str] = None, to_lang: str = "en"
+    ) -> List[Dict[str, str]]:
         raise NotImplementedError("Translate not implemented for Bing")
 
     def videos(self, *args, **kwargs) -> List[Dict[str, str]]:

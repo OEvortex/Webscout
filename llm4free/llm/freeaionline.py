@@ -78,17 +78,13 @@ class Completions(BaseCompletions):
         created_time = int(time.time())
 
         if stream:
-            return self._create_stream(
-                request_id, created_time, model, payload, timeout, proxies
-            )
+            return self._create_stream(request_id, created_time, model, payload, timeout, proxies)
         else:
             return self._create_non_stream(
                 request_id, created_time, model, payload, timeout, proxies
             )
 
-    def _build_mwai_messages(
-        self, messages: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+    def _build_mwai_messages(self, messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         mwai_messages = []
         for msg in messages:
             role = msg.get("role", "user")
@@ -124,9 +120,7 @@ class Completions(BaseCompletions):
             )
 
             if response.status_code != 200:
-                raise IOError(
-                    f"FreeAIOnline request failed: {response.status_code}"
-                )
+                raise IOError(f"FreeAIOnline request failed: {response.status_code}")
 
             buffer = ""
             for chunk in response.iter_content(chunk_size=None):
@@ -156,9 +150,7 @@ class Completions(BaseCompletions):
                         content = event.get("data", "")
                         if content:
                             delta = ChoiceDelta(content=content)
-                            choice = Choice(
-                                index=0, delta=delta, finish_reason=None
-                            )
+                            choice = Choice(index=0, delta=delta, finish_reason=None)
                             yield ChatCompletionChunk(
                                 id=request_id,
                                 choices=[choice],
@@ -167,9 +159,7 @@ class Completions(BaseCompletions):
                             )
                     elif event_type == "end":
                         delta = ChoiceDelta(content=None)
-                        choice = Choice(
-                            index=0, delta=delta, finish_reason="stop"
-                        )
+                        choice = Choice(index=0, delta=delta, finish_reason="stop")
                         yield ChatCompletionChunk(
                             id=request_id,
                             choices=[choice],
@@ -209,9 +199,7 @@ class Completions(BaseCompletions):
             data = response.json()
 
             if not data.get("success"):
-                raise IOError(
-                    f"FreeAIOnline API error: {data.get('message', 'unknown')}"
-                )
+                raise IOError(f"FreeAIOnline API error: {data.get('message', 'unknown')}")
 
             full_text = data.get("reply", "")
             usage_data = data.get("usage", {})
@@ -329,11 +317,7 @@ if __name__ == "__main__":
             ):
                 status = "✓"
                 display_text = response.choices[0].message.content.strip()
-                display_text = (
-                    display_text[:50] + "..."
-                    if len(display_text) > 50
-                    else display_text
-                )
+                display_text = display_text[:50] + "..." if len(display_text) > 50 else display_text
             else:
                 status = "✗"
                 display_text = "Empty or invalid response"

@@ -15,14 +15,14 @@ from .mail_tm import MailTM, MailTMAsync
 from .temp_mail_io import TempMailIO, TempMailIOAsync
 
 __all__ = [
-    'TempMailProvider',
-    'AsyncTempMailProvider',
-    'MailTM',
-    'MailTMAsync',
-    'TempMailIO',
-    'TempMailIOAsync',
-    'EmailnatorProvider',
-    'get_random_email',
-    'get_disposable_email',
-    'get_provider'
+    "TempMailProvider",
+    "AsyncTempMailProvider",
+    "MailTM",
+    "MailTMAsync",
+    "TempMailIO",
+    "TempMailIOAsync",
+    "EmailnatorProvider",
+    "get_random_email",
+    "get_disposable_email",
+    "get_provider",
 ]

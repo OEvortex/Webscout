@@ -45,7 +45,7 @@ class WeatherAsciiClient:
             WeatherAscii object containing ASCII art weather data
         """
         url = f"https://wttr.in/{location}"
-        headers = {'User-Agent': 'curl'}
+        headers = {"User-Agent": "curl"}
 
         try:
             session = Session()
@@ -57,7 +57,9 @@ class WeatherAsciiClient:
                 ascii_weather = "\n".join(response.text.splitlines()[:-1])
                 return WeatherAscii(ascii_weather)
             else:
-                error_msg = f"Error: Unable to fetch weather data. Status code: {response.status_code}"
+                error_msg = (
+                    f"Error: Unable to fetch weather data. Status code: {response.status_code}"
+                )
                 return WeatherAscii(error_msg)
         except Exception as e:
             return WeatherAscii(f"Error: {str(e)}")
@@ -75,4 +77,3 @@ def get(location: str, params: Optional[Dict[str, Any]] = None) -> WeatherAscii:
     """
     client = WeatherAsciiClient()
     return client.get_weather(location, params)
-

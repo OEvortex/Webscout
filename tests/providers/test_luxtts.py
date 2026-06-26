@@ -153,7 +153,7 @@ class TestLuxTTS(TestCase):
         """Test submitting inference request."""
         mock_response = FakeResponse(json_data={"event_id": "test-event-123"})
 
-        with mock.patch.object(self.provider.session, 'post', return_value=mock_response):
+        with mock.patch.object(self.provider.session, "post", return_value=mock_response):
             event_id = self.provider._submit_inference(
                 text="Hello world",
                 reference_audio="https://example.com/audio.wav",
@@ -171,7 +171,7 @@ class TestLuxTTS(TestCase):
         """Test getting result from SSE stream."""
         mock_response = FakeResponse()
 
-        with mock.patch.object(self.provider.session, 'get', return_value=mock_response):
+        with mock.patch.object(self.provider.session, "get", return_value=mock_response):
             audio_url = self.provider._get_result("test-event-id")
 
             self.assertIn("https://", audio_url)
@@ -181,7 +181,7 @@ class TestLuxTTS(TestCase):
         """Test downloading audio file."""
         mock_response = FakeResponse(content=b"audio bytes")
 
-        with mock.patch.object(self.provider.session, 'get', return_value=mock_response):
+        with mock.patch.object(self.provider.session, "get", return_value=mock_response):
             audio_data = self.provider._download_audio("https://example.com/audio.wav")
 
             self.assertEqual(audio_data, b"audio bytes")

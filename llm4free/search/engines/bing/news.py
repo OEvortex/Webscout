@@ -15,6 +15,7 @@ from .base import BingBase
 class BingNewsSearch(BingBase):
     name = "bing"
     category = "news"
+
     def run(self, *args, **kwargs) -> List[NewsResult]:
         keywords = args[0] if args else kwargs.get("keywords")
         region = args[1] if len(args) > 1 else kwargs.get("region", "us")
@@ -27,22 +28,18 @@ class BingNewsSearch(BingBase):
         if not keywords:
             raise ValueError("Keywords are mandatory")
 
-        safe_map = {
-            "on": "Strict",
-            "moderate": "Moderate",
-            "off": "Off"
-        }
+        safe_map = {"on": "Strict", "moderate": "Moderate", "off": "Off"}
         safe_map.get(safesearch.lower(), "Moderate")
 
         # Bing news URL
         url = f"{self.base_url}/news/infinitescrollajax"
         params = {
-            'q': keywords,
-            'InfiniteScroll': '1',
-            'first': '1',
-            'SFX': '0',
-            'cc': region.lower(),
-            'setlang': self.lang.split('-')[0]
+            "q": keywords,
+            "InfiniteScroll": "1",
+            "first": "1",
+            "SFX": "0",
+            "cc": region.lower(),
+            "setlang": self.lang.split("-")[0],
         }
 
         results = []
@@ -50,8 +47,8 @@ class BingNewsSearch(BingBase):
         sfx = 0
 
         while len(results) < max_results:
-            params['first'] = str(first)
-            params['SFX'] = str(sfx)
+            params["first"] = str(first)
+            params["SFX"] = str(sfx)
             full_url = f"{url}?{urlencode(params)}"
 
             try:
@@ -65,25 +62,25 @@ class BingNewsSearch(BingBase):
                 break
 
             soup = Scout(html)
-            news_items = soup.select('div.newsitem')
+            news_items = soup.select("div.newsitem")
 
             for item in news_items:
                 if len(results) >= max_results:
                     break
 
-                title = item.select_one('a.title')
-                snippet = item.select_one('div.snippet')
-                source = item.select_one('div.source')
-                date = item.select_one('span.date')
+                title = item.select_one("a.title")
+                snippet = item.select_one("div.snippet")
+                source = item.select_one("div.source")
+                date = item.select_one("span.date")
 
                 if title:
                     news_result = NewsResult(
                         title=title.get_text(strip=True),
-                        url=title.get('href', ''),
-                        body=snippet.get_text(strip=True) if snippet else '',
-                        source=source.get_text(strip=True) if source else '',
-                        date=date.get_text(strip=True) if date else '',
-                        image=""
+                        url=title.get("href", ""),
+                        body=snippet.get_text(strip=True) if snippet else "",
+                        source=source.get_text(strip=True) if source else "",
+                        date=date.get_text(strip=True) if date else "",
+                        image="",
                     )
                     results.append(news_result)
 

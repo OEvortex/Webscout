@@ -21,8 +21,10 @@ except ImportError:
     # Handle direct execution
     import os
     import sys
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
     from llm4free.TTS.base import BaseTTSProvider
+
 
 class SherpaTTS(BaseTTSProvider):
     """
@@ -34,6 +36,7 @@ class SherpaTTS(BaseTTSProvider):
     - Speaker ID and Speed control
     - Multiple output formats
     """
+
     required_auth = False
 
     BASE_URL = "https://k2-fsa-text-to-speech.hf.space"
@@ -95,19 +98,63 @@ class SherpaTTS(BaseTTSProvider):
         "csukuangfj/vits-piper-en_GB-southern_english_female-low|1 speaker",
         "csukuangfj/vits-piper-en_GB-vctk-medium|109 speakers",
         "csukuangfj/vits-vctk|109 speakers",
-        "csukuangfj/vits-ljs|1 speaker"
+        "csukuangfj/vits-ljs|1 speaker",
     ]
 
     LANGUAGES = [
-        "English", "Chinese (Mandarin, 普通话)", "Chinese+English", "Persian+English",
-        "Cantonese (粤语)", "Min-nan (闽南话)", "Arabic", "Afrikaans", "Bengali",
-        "Bulgarian", "Catalan", "Croatian", "Czech", "Danish", "Dutch", "Estonian",
-        "Finnish", "French", "Georgian", "German", "Greek", "Gujarati", "Hindi",
-        "Hungarian", "Icelandic", "Indonesian", "Irish", "Italian", "Kazakh",
-        "Korean", "Latvian", "Lithuanian", "Luxembourgish", "Maltese", "Nepali",
-        "Norwegian", "Persian", "Polish", "Portuguese", "Romanian", "Russian",
-        "Serbian", "Slovak", "Slovenian", "Spanish", "Swahili", "Swedish", "Thai",
-        "Tswana", "Turkish", "Ukrainian", "Vietnamese", "Welsh"
+        "English",
+        "Chinese (Mandarin, 普通话)",
+        "Chinese+English",
+        "Persian+English",
+        "Cantonese (粤语)",
+        "Min-nan (闽南话)",
+        "Arabic",
+        "Afrikaans",
+        "Bengali",
+        "Bulgarian",
+        "Catalan",
+        "Croatian",
+        "Czech",
+        "Danish",
+        "Dutch",
+        "Estonian",
+        "Finnish",
+        "French",
+        "Georgian",
+        "German",
+        "Greek",
+        "Gujarati",
+        "Hindi",
+        "Hungarian",
+        "Icelandic",
+        "Indonesian",
+        "Irish",
+        "Italian",
+        "Kazakh",
+        "Korean",
+        "Latvian",
+        "Lithuanian",
+        "Luxembourgish",
+        "Maltese",
+        "Nepali",
+        "Norwegian",
+        "Persian",
+        "Polish",
+        "Portuguese",
+        "Romanian",
+        "Russian",
+        "Serbian",
+        "Slovak",
+        "Slovenian",
+        "Spanish",
+        "Swahili",
+        "Swedish",
+        "Thai",
+        "Tswana",
+        "Turkish",
+        "Ukrainian",
+        "Vietnamese",
+        "Welsh",
     ]
 
     def __init__(self, timeout: int = 60, proxy: Optional[str] = None):
@@ -132,22 +179,26 @@ class SherpaTTS(BaseTTSProvider):
             **kwargs: Additional parameters (language, model_choice, speaker_id, speed, response_format, verbose)
         """
         # Extract parameters from kwargs with defaults
-        language = kwargs.get('language', "English")
-        model_choice = kwargs.get('model_choice', "csukuangfj/kokoro-en-v0_19|11 speakers")
-        speaker_id = kwargs.get('speaker_id', "0")
-        speed = kwargs.get('speed', 1.0)
-        response_format = kwargs.get('response_format', "wav")
-        verbose = kwargs.get('verbose', True)
+        language = kwargs.get("language", "English")
+        model_choice = kwargs.get("model_choice", "csukuangfj/kokoro-en-v0_19|11 speakers")
+        speaker_id = kwargs.get("speaker_id", "0")
+        speed = kwargs.get("speed", 1.0)
+        response_format = kwargs.get("response_format", "wav")
+        verbose = kwargs.get("verbose", True)
         if not text:
             raise ValueError("Input text must be a non-empty string")
 
         model_choice = self.validate_model(model_choice)
 
         session_hash = self._generate_session_hash()
-        filename = pathlib.Path(tempfile.NamedTemporaryFile(suffix=f".{response_format}", dir=self.temp_dir, delete=False).name)
+        filename = pathlib.Path(
+            tempfile.NamedTemporaryFile(
+                suffix=f".{response_format}", dir=self.temp_dir, delete=False
+            ).name
+        )
 
         if verbose:
-            ic.configureOutput(prefix='DEBUG| ')
+            ic.configureOutput(prefix="DEBUG| ")
             ic(f"SherpaTTS: Generating speech for '{text[:20]}...' using {language}/{model_choice}")
 
         client_kwargs: dict[str, Any] = {"headers": self.headers, "timeout": self.timeout}
@@ -163,7 +214,7 @@ class SherpaTTS(BaseTTSProvider):
                     "event_data": None,
                     "fn_index": 1,
                     "trigger_id": 9,
-                    "session_hash": session_hash
+                    "session_hash": session_hash,
                 }
 
                 response = client.post(join_url, json=payload)
@@ -191,16 +242,24 @@ class SherpaTTS(BaseTTSProvider):
                                     output_data = data.get("output", {}).get("data", [])
                                     if output_data:
                                         audio_info = output_data[0]
-                                        path = audio_info["path"] if isinstance(audio_info, dict) else audio_info
+                                        path = (
+                                            audio_info["path"]
+                                            if isinstance(audio_info, dict)
+                                            else audio_info
+                                        )
                                         audio_url = f"{self.BASE_URL}/gradio_api/file={path}"
                                     break
                                 else:
-                                    raise exceptions.FailedToGenerateResponseError(f"Generation failed: {data}")
+                                    raise exceptions.FailedToGenerateResponseError(
+                                        f"Generation failed: {data}"
+                                    )
                             elif msg == "queue_full":
                                 raise exceptions.FailedToGenerateResponseError("Queue is full")
 
                 if not audio_url:
-                    raise exceptions.FailedToGenerateResponseError("Failed to get audio URL from stream")
+                    raise exceptions.FailedToGenerateResponseError(
+                        "Failed to get audio URL from stream"
+                    )
 
                 # Step 3: Download the audio file
                 audio_response = client.get(audio_url)
@@ -210,14 +269,14 @@ class SherpaTTS(BaseTTSProvider):
                     f.write(audio_response.content)
 
                 if verbose:
-                    ic.configureOutput(prefix='DEBUG| ')
+                    ic.configureOutput(prefix="DEBUG| ")
                     ic(f"Speech generated successfully: {filename}")
 
                 return filename.as_posix()
 
         except Exception as e:
             if verbose:
-                ic.configureOutput(prefix='DEBUG| ')
+                ic.configureOutput(prefix="DEBUG| ")
                 ic(f"Error in SherpaTTS: {e}")
             raise exceptions.FailedToGenerateResponseError(f"Failed to generate audio: {e}")
 
@@ -228,7 +287,7 @@ class SherpaTTS(BaseTTSProvider):
         voice: Optional[str] = None,
         response_format: Optional[str] = "mp3",
         instructions: Optional[str] = None,
-        verbose: bool = False
+        verbose: bool = False,
     ) -> str:
         """
         OpenAI-compatible speech creation interface.
@@ -249,40 +308,55 @@ class SherpaTTS(BaseTTSProvider):
             text=input_text,
             model_choice=model_choice,
             response_format=response_format or "mp3",
-            verbose=verbose
+            verbose=verbose,
         )
 
     def with_streaming_response(self):
         return StreamingResponseContextManager(self)
 
+
 class StreamingResponseContextManager:
     def __init__(self, tts_provider: SherpaTTS):
         self.tts_provider = tts_provider
+
     def create(self, **kwargs):
         audio_file = self.tts_provider.create_speech(**kwargs)
         return StreamingResponse(audio_file)
-    def __enter__(self): return self
-    def __exit__(self, exc_type, exc_val, exc_tb): pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
 
 class StreamingResponse:
     def __init__(self, audio_file: str):
         self.audio_file = audio_file
-    def __enter__(self): return self
-    def __exit__(self, exc_type, exc_val, exc_tb): pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
     def stream_to_file(self, file_path: str):
         import shutil
+
         shutil.copy2(self.audio_file, file_path)
+
     def iter_bytes(self, chunk_size: int = 1024):
-        with open(self.audio_file, 'rb') as f:
+        with open(self.audio_file, "rb") as f:
             while chunk := f.read(chunk_size):
                 yield chunk
+
 
 if __name__ == "__main__":
     tts = SherpaTTS()
     try:
         path = tts.tts("This is a Sherpa-ONNX test.", verbose=True)
-        ic.configureOutput(prefix='INFO| ')
+        ic.configureOutput(prefix="INFO| ")
         ic(f"Result: {path}")
     except Exception as e:
-        ic.configureOutput(prefix='ERROR| ')
+        ic.configureOutput(prefix="ERROR| ")
         ic(f"Error: {e}")

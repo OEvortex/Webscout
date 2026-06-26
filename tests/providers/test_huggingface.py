@@ -6,15 +6,15 @@ Set HUGGINGFACE_API_KEY environment variable to run these tests.
 """
 
 import os
+
 import pytest
 
 from llm4free.llm.Auth.huggingface import HuggingFace
 
-
 # Skip all tests in this module if no API key is available
 pytestmark = pytest.mark.skipif(
     not os.environ.get("HUGGINGFACE_API_KEY"),
-    reason="HUGGINGFACE_API_KEY environment variable not set"
+    reason="HUGGINGFACE_API_KEY environment variable not set",
 )
 
 

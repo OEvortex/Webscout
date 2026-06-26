@@ -27,7 +27,13 @@ class Mojeek(BaseSearchEngine[TextResult]):
     }
 
     def build_payload(
-        self, query: str, region: str, safesearch: str, timelimit: str | None, page: int = 1, **kwargs: Any
+        self,
+        query: str,
+        region: str,
+        safesearch: str,
+        timelimit: str | None,
+        page: int = 1,
+        **kwargs: Any,
     ) -> dict[str, Any]:
         """Build a payload for the search request."""
         safesearch_base = {"on": "1", "moderate": "0", "off": "0"}

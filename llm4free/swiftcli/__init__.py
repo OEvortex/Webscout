@@ -42,38 +42,34 @@ from .plugins.base import Plugin
 
 __all__ = [
     # Core classes
-    'CLI',
-    'Group',
-    'Context',
-    'Plugin',
-
+    "CLI",
+    "Group",
+    "Context",
+    "Plugin",
     # Exceptions
-    'SwiftCLIException',
-    'UsageError',
-    'BadParameter',
-    'ConfigError',
-    'PluginError',
-
+    "SwiftCLIException",
+    "UsageError",
+    "BadParameter",
+    "ConfigError",
+    "PluginError",
     # Command decorators
-    'command',
-    'group',
-    'argument',
-    'flag',
-    'pass_context',
-
+    "command",
+    "group",
+    "argument",
+    "flag",
+    "pass_context",
     # Option decorators
-    'option',
-    'envvar',
-    'config_file',
-    'version_option',
-    'help_option',
-
+    "option",
+    "envvar",
+    "config_file",
+    "version_option",
+    "help_option",
     # Output decorators
-    'table_output',
-    'progress',
-    'panel_output',
-    'format_output',
-    'pager_output',
-    'json_output',
-    'yaml_output'
+    "table_output",
+    "progress",
+    "panel_output",
+    "format_output",
+    "pager_output",
+    "json_output",
+    "yaml_output",
 ]

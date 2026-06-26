@@ -61,15 +61,9 @@ class TestKittenTTS(TestCase):
 
     def test_model_names_mapping(self):
         """Test model names mapping to Gradio API names."""
-        self.assertEqual(
-            self.provider.MODEL_NAMES["nano"], "Nano (15M - Fastest)"
-        )
-        self.assertEqual(
-            self.provider.MODEL_NAMES["micro"], "Micro (40M - Balanced)"
-        )
-        self.assertEqual(
-            self.provider.MODEL_NAMES["mini"], "Mini (80M - Best Quality)"
-        )
+        self.assertEqual(self.provider.MODEL_NAMES["nano"], "Nano (15M - Fastest)")
+        self.assertEqual(self.provider.MODEL_NAMES["micro"], "Micro (40M - Balanced)")
+        self.assertEqual(self.provider.MODEL_NAMES["mini"], "Mini (80M - Best Quality)")
 
     def test_supported_voices(self):
         """Test supported voices are defined."""

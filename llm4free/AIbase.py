@@ -415,9 +415,7 @@ class Provider(ABC):
             # Track in structured conversation history
             if conversation and hasattr(conversation, "add_tool_call_result"):
                 for r in results:
-                    conversation.add_tool_call_result(
-                        r["tool_name"], r["arguments"], r["result"]
-                    )
+                    conversation.add_tool_call_result(r["tool_name"], r["arguments"], r["result"])
 
         # Exhausted max_rounds — return last response
         return response if response is not None else ""

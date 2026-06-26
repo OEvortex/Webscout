@@ -37,11 +37,7 @@ MODEL_MAP: dict[str, dict[str, str]] = {
     },
 }
 
-ALL_MODELS = list(
-    dict.fromkeys(
-        m for server_models in MODEL_MAP.values() for m in server_models
-    )
-)
+ALL_MODELS = list(dict.fromkeys(m for server_models in MODEL_MAP.values() for m in server_models))
 
 
 def _resolve_server(model: str) -> str:
@@ -94,8 +90,7 @@ class Images(BaseImages):
                 )
             else:
                 img_bytes = self._generate_worker(
-                    server, prompt, model, width, height, actual_seed,
-                    effective_timeout, session
+                    server, prompt, model, width, height, actual_seed, effective_timeout, session
                 )
 
             images.append(img_bytes)
@@ -206,9 +201,7 @@ class Images(BaseImages):
 
         return self._poll_horde(task_id, timeout, session)
 
-    def _poll_horde(
-        self, task_id: str, timeout: int, session: requests.Session
-    ) -> bytes:
+    def _poll_horde(self, task_id: str, timeout: int, session: requests.Session) -> bytes:
         start = time.time()
         while time.time() - start < timeout:
             try:
@@ -267,11 +260,13 @@ class NoLoginTool(TTICompatibleProvider):
             self.session = session
         else:
             self.session = requests.Session()
-            self.session.headers.update({
-                "accept": "*/*",
-                "accept-language": "en-US,en;q=0.9",
-                "user-agent": LitAgent().random(),
-            })
+            self.session.headers.update(
+                {
+                    "accept": "*/*",
+                    "accept-language": "en-US,en;q=0.9",
+                    "user-agent": LitAgent().random(),
+                }
+            )
         self.images = Images(self)
 
     @property

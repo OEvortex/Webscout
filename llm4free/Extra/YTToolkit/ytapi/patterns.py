@@ -2,12 +2,12 @@ import re
 
 
 class _ChannelPatterns:
-    name = re.compile(r'channelMetadataRenderer\":{\"title\":\"(.*?)\"')
-    id = re.compile(r'channelId\":\"(.*?)\"')
+    name = re.compile(r"channelMetadataRenderer\":{\"title\":\"(.*?)\"")
+    id = re.compile(r"channelId\":\"(.*?)\"")
     verified = re.compile(r'"label":"Verified"')
     check_live = re.compile(r'{"text":"LIVE"}')
     live = re.compile(r"thumbnailOverlays\":\[(.*?)]")
-    video_id = re.compile(r'videoId\":\"(.*?)\"')
+    video_id = re.compile(r"videoId\":\"(.*?)\"")
     uploads = re.compile(r"gridVideoRenderer\":{\"videoId\":\"(.*?)\"")
     subscribers = re.compile(r"\"subscriberCountText\":{\"accessibility\":(.*?),")
     views = re.compile(r"viewCountText\":{\"simpleText\":\"(.*?)\"}")
@@ -30,7 +30,7 @@ class _ChannelPatterns:
 
 
 class _VideoPatterns:
-    video_id = re.compile(r'videoId\":\"(.*?)\"')
+    video_id = re.compile(r"videoId\":\"(.*?)\"")
     title = re.compile(r"title\":\"(.*?)\"")
     duration = re.compile(r"approxDurationMs\":\"(.*?)\"")
     upload_date = re.compile(r"uploadDate\":\"(.*?)\"")
@@ -40,8 +40,12 @@ class _VideoPatterns:
     is_streamed = re.compile(r"simpleText\":\"Streamed live")
     is_premiered = re.compile(r"dateText\":{\"simpleText\":\"Premiered")
     views = re.compile(r"videoViewCountRenderer\":{\"viewCount\":{\"simpleText\":\"(.*?)\"")
-    likes = re.compile(r"toggledText\":{\"accessibility\":{\"accessibilityData\":{\"label\":\"(.*?) ")
-    thumbnail = re.compile(r"playerMicroformatRenderer\":{\"thumbnail\":{\"thumbnails\":\[{\"url\":\"(.*?)\"")
+    likes = re.compile(
+        r"toggledText\":{\"accessibility\":{\"accessibilityData\":{\"label\":\"(.*?) "
+    )
+    thumbnail = re.compile(
+        r"playerMicroformatRenderer\":{\"thumbnail\":{\"thumbnails\":\[{\"url\":\"(.*?)\""
+    )
 
 
 class _PlaylistPatterns:

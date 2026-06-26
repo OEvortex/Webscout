@@ -192,11 +192,13 @@ class BraveSuggestions(BraveBase):
             Exception: If the request fails.
         """
         headers = dict(self.session.headers) if getattr(self, "session", None) else {}
-        headers.update({
-            "Referer": "https://search.brave.com/",
-            "Accept": "*/*",
-            "Accept-Language": "en-US,en;q=0.9",
-        })
+        headers.update(
+            {
+                "Referer": "https://search.brave.com/",
+                "Accept": "*/*",
+                "Accept-Language": "en-US,en;q=0.9",
+            }
+        )
 
         try:
             resp = self.session.get(
@@ -315,4 +317,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Error during test: {e}")
         import traceback
+
         traceback.print_exc()

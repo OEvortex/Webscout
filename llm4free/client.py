@@ -259,7 +259,9 @@ def _load_providers(
     return provider_map, auth_required_providers
 
 
-def _print_provider_selection(provider_name: str, model_name: str, *, fallback: bool = False) -> None:
+def _print_provider_selection(
+    provider_name: str, model_name: str, *, fallback: bool = False
+) -> None:
     suffix = " (Fallback)" if fallback else ""
     print(f"\033[1;34m{provider_name}:{model_name}{suffix}\033[0m\n")
 
@@ -277,9 +279,7 @@ def _get_available_provider_items(
     exclude = _normalized_name_set(excluded)
     if api_key:
         return [
-            (name, cls)
-            for name, cls in provider_registry.items()
-            if name.casefold() not in exclude
+            (name, cls) for name, cls in provider_registry.items() if name.casefold() not in exclude
         ]
     return [
         (name, cls)
@@ -381,7 +381,11 @@ def _resolve_provider_and_model(
     if "/" in model:
         provider_name, model_name = model.split("/", 1)
         found_provider = next(
-            (cls for name, cls in provider_registry.items() if name.lower() == provider_name.lower()),
+            (
+                cls
+                for name, cls in provider_registry.items()
+                if name.lower() == provider_name.lower()
+            ),
             None,
         )
         if found_provider:

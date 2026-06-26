@@ -4,6 +4,7 @@ from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi import CurlError, requests
 
+from llm4free.litagent import LitAgent
 from llm4free.llm.base import (
     BaseChat,
     BaseCompletions,
@@ -19,8 +20,6 @@ from llm4free.llm.utils import (
     CompletionUsage,
     count_tokens,
 )
-
-from llm4free.litagent import LitAgent
 
 BOLD = "\033[1m"
 RED = "\033[91m"
@@ -95,6 +94,7 @@ class Completions(BaseCompletions):
                     break
                 try:
                     import json
+
                     evt = json.loads(payload_str)
                 except json.JSONDecodeError:
                     continue
@@ -238,9 +238,7 @@ class FreeAI(OpenAICompatibleProvider):
         for available_model in self.AVAILABLE_MODELS:
             if model.lower() in available_model.lower():
                 return available_model
-        print(
-            f"{BOLD}Warning: Model '{model}' not found, using default 'qwen7b'{RESET}"
-        )
+        print(f"{BOLD}Warning: Model '{model}' not found, using default 'qwen7b'{RESET}")
         return "qwen7b"
 
     @property

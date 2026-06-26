@@ -113,15 +113,11 @@ class FasterQwen3TTS(BaseTTSProvider):
                 )
             result = response.json()
             if result.get("status") not in ("loaded", "already_loaded"):
-                raise exceptions.FailedToGenerateResponseError(
-                    f"Model loading failed: {result}"
-                )
+                raise exceptions.FailedToGenerateResponseError(f"Model loading failed: {result}")
         except exceptions.FailedToGenerateResponseError:
             raise
         except Exception as e:
-            raise exceptions.FailedToGenerateResponseError(
-                f"Model loading error: {str(e)}"
-            )
+            raise exceptions.FailedToGenerateResponseError(f"Model loading error: {str(e)}")
 
     def get_status(self) -> dict[str, Any]:
         """Get the current model status."""
@@ -136,9 +132,7 @@ class FasterQwen3TTS(BaseTTSProvider):
                 )
             return response.json()
         except Exception as e:
-            raise exceptions.FailedToGenerateResponseError(
-                f"Status check error: {str(e)}"
-            )
+            raise exceptions.FailedToGenerateResponseError(f"Status check error: {str(e)}")
 
     def get_preset_ref(self, ref_id: str) -> dict[str, Any]:
         """Get preset reference audio information."""
@@ -153,9 +147,7 @@ class FasterQwen3TTS(BaseTTSProvider):
                 )
             return response.json()
         except Exception as e:
-            raise exceptions.FailedToGenerateResponseError(
-                f"Preset ref fetch error: {str(e)}"
-            )
+            raise exceptions.FailedToGenerateResponseError(f"Preset ref fetch error: {str(e)}")
 
     def tts(
         self,
@@ -292,9 +284,7 @@ class FasterQwen3TTS(BaseTTSProvider):
         except exceptions.FailedToGenerateResponseError:
             raise
         except Exception as e:
-            raise exceptions.FailedToGenerateResponseError(
-                f"TTS generation error: {str(e)}"
-            )
+            raise exceptions.FailedToGenerateResponseError(f"TTS generation error: {str(e)}")
 
     def _generate_stream(
         self,
@@ -358,15 +348,13 @@ class FasterQwen3TTS(BaseTTSProvider):
         except exceptions.FailedToGenerateResponseError:
             raise
         except Exception as e:
-            raise exceptions.FailedToGenerateResponseError(
-                f"Streaming TTS error: {str(e)}"
-            )
+            raise exceptions.FailedToGenerateResponseError(f"Streaming TTS error: {str(e)}")
 
-    def _save_audio_data(
-        self, audio_data: bytes, response_format: str, verbose: bool
-    ) -> str:
+    def _save_audio_data(self, audio_data: bytes, response_format: str, verbose: bool) -> str:
         """Save audio data to a temporary file."""
-        file_extension = f".{response_format}" if not response_format.startswith(".") else response_format
+        file_extension = (
+            f".{response_format}" if not response_format.startswith(".") else response_format
+        )
         temp_file = tempfile.NamedTemporaryFile(
             delete=False,
             suffix=file_extension,
@@ -380,9 +368,7 @@ class FasterQwen3TTS(BaseTTSProvider):
             return temp_file.name
         except Exception as e:
             temp_file.close()
-            raise exceptions.FailedToGenerateResponseError(
-                f"Failed to save audio: {str(e)}"
-            )
+            raise exceptions.FailedToGenerateResponseError(f"Failed to save audio: {str(e)}")
 
     def transcribe(self, audio_file: Union[str, Path, BinaryIO]) -> str:
         """
@@ -416,9 +402,7 @@ class FasterQwen3TTS(BaseTTSProvider):
         except exceptions.FailedToGenerateResponseError:
             raise
         except Exception as e:
-            raise exceptions.FailedToGenerateResponseError(
-                f"Transcription error: {str(e)}"
-            )
+            raise exceptions.FailedToGenerateResponseError(f"Transcription error: {str(e)}")
         finally:
             if close_file and hasattr(files["audio"], "close"):
                 files["audio"].close()

@@ -12,10 +12,12 @@ from litprinter import ic
 try:
     from lxml import html
     from lxml.etree import HTMLParser as LHTMLParser  # type: ignore
+
     LXML_AVAILABLE = True
 except ImportError:
     LXML_AVAILABLE = False
     from typing import Any
+
     html: Any = None
     LHTMLParser: Any = None
 
@@ -29,7 +31,9 @@ class BaseSearchEngine(ABC, Generic[T]):
     """Abstract base class for all search engine backends."""
 
     name: str  # unique key, e.g. "google"
-    category: Literal["text", "images", "videos", "news", "books", "suggestions", "weather", "maps", "translate"]
+    category: Literal[
+        "text", "images", "videos", "news", "books", "suggestions", "weather", "maps", "translate"
+    ]
     provider: str  # source of the search results (e.g. "google", "bing", etc.)
     disabled: bool = False  # if True, the engine is disabled
     priority: float = 1
@@ -66,7 +70,13 @@ class BaseSearchEngine(ABC, Generic[T]):
 
     @abstractmethod
     def build_payload(
-        self, query: str, region: str, safesearch: str, timelimit: str | None, page: int, **kwargs: Any
+        self,
+        query: str,
+        region: str,
+        safesearch: str,
+        timelimit: str | None,
+        page: int,
+        **kwargs: Any,
     ) -> dict[str, Any]:
         """Build a payload for the search request."""
         raise NotImplementedError
@@ -77,7 +87,7 @@ class BaseSearchEngine(ABC, Generic[T]):
             response = self.http_client.request(method, url, **kwargs)  # type: ignore
             return response.text
         except Exception as ex:
-            ic.configureOutput(prefix='ERROR| ')
+            ic.configureOutput(prefix="ERROR| ")
             ic(f"Error in {self.name} request: {ex}")
             return None
 
@@ -85,10 +95,16 @@ class BaseSearchEngine(ABC, Generic[T]):
     def parser(self) -> Any:
         """Get HTML parser."""
         if not LXML_AVAILABLE:
-            ic.configureOutput(prefix='WARNING| ')
+            ic.configureOutput(prefix="WARNING| ")
             ic("lxml not available, HTML parsing disabled")
             return None
-        return LHTMLParser(remove_blank_text=True, remove_comments=True, remove_pis=True, collect_ids=False) if LHTMLParser else None
+        return (
+            LHTMLParser(
+                remove_blank_text=True, remove_comments=True, remove_pis=True, collect_ids=False
+            )
+            if LHTMLParser
+            else None
+        )
 
     def extract_tree(self, html_text: str) -> Any:
         """Extract html tree from html text."""
@@ -123,7 +139,7 @@ class BaseSearchEngine(ABC, Generic[T]):
                         value = "".join(data) if isinstance(data, list) else data
                         setattr(result, key, value.strip() if isinstance(value, str) else value)
                 except Exception as ex:
-                    ic.configureOutput(prefix='DEBUG| ')
+                    ic.configureOutput(prefix="DEBUG| ")
                     ic(f"Error extracting {key}: {ex}")
             results.append(result)
 
@@ -148,7 +164,12 @@ class BaseSearchEngine(ABC, Generic[T]):
         request_timeout = kwargs.pop("timeout", None)
 
         payload = self.build_payload(
-            query=query, region=region, safesearch=safesearch, timelimit=timelimit, page=page, **kwargs
+            query=query,
+            region=region,
+            safesearch=safesearch,
+            timelimit=timelimit,
+            page=page,
+            **kwargs,
         )
         headers = dict(self.search_headers)
         if isinstance(request_headers, Mapping):

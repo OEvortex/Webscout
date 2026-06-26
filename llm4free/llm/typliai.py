@@ -12,6 +12,7 @@ from urllib.parse import unquote
 
 from curl_cffi.requests import Session
 
+from llm4free.litagent import LitAgent
 from llm4free.llm.base import (
     BaseChat,
     BaseCompletions,
@@ -27,8 +28,6 @@ from llm4free.llm.utils import (
     CompletionUsage,
     format_prompt,
 )
-
-from llm4free.litagent import LitAgent
 
 
 def generate_random_id(length=16):
@@ -152,7 +151,7 @@ class Completions(BaseCompletions):
                             delta = ChoiceDelta(
                                 reasoning_content=reasoning_delta,
                                 reasoning=full_reasoning,
-                                role="assistant" if completion_tokens == 0 else None
+                                role="assistant" if completion_tokens == 0 else None,
                             )
                             choice = Choice(index=0, delta=delta, finish_reason=None)
                             chunk = ChatCompletionChunk(
@@ -170,7 +169,7 @@ class Completions(BaseCompletions):
                                 content=text_delta,
                                 reasoning_content=None,
                                 reasoning=None,
-                                role="assistant" if completion_tokens == 1 else None
+                                role="assistant" if completion_tokens == 1 else None,
                             )
                             choice = Choice(index=0, delta=delta, finish_reason=None)
                             chunk = ChatCompletionChunk(
@@ -186,7 +185,7 @@ class Completions(BaseCompletions):
                     reasoning_content=None,
                     reasoning=None,
                 ),
-                finish_reason="stop"
+                finish_reason="stop",
             )
             yield ChatCompletionChunk(
                 id=request_id, choices=[choice], created=created_time, model=model
@@ -223,7 +222,7 @@ class Completions(BaseCompletions):
             role="assistant",
             content=full_content,
             reasoning_content=full_reasoning if full_reasoning else None,
-            reasoning=full_reasoning if full_reasoning else None
+            reasoning=full_reasoning if full_reasoning else None,
         )
         choice = Choice(index=0, message=message, finish_reason="stop")
         usage = CompletionUsage(

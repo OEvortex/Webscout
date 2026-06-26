@@ -18,7 +18,7 @@ class LXMLParser:
     Provides robust parsing with enhanced error handling and flexibility.
     """
 
-    def __init__(self, parser_type: str = 'html'):
+    def __init__(self, parser_type: str = "html"):
         """
         Initialize the LXML parser with advanced parsing capabilities.
 
@@ -30,23 +30,24 @@ class LXMLParser:
 
         # Select appropriate parser based on type
         import importlib
+
         global lxml_html, etree
 
-        if parser_type == 'html':
+        if parser_type == "html":
             if lxml_html is None:
                 try:
                     # Import lazily so lxml remains optional
                     lxml_html = importlib.import_module("lxml.html")
                 except Exception as e:
                     raise ImportError("lxml is required for HTML parsing") from e
-            self._parser = lxml_html.HTMLParser(recover=True, encoding='utf-8')
-        elif parser_type == 'xml':
+            self._parser = lxml_html.HTMLParser(recover=True, encoding="utf-8")
+        elif parser_type == "xml":
             if etree is None:
                 try:
                     etree = importlib.import_module("lxml.etree")
                 except Exception as e:
                     raise ImportError("lxml is required for XML parsing") from e
-            self._parser = etree.XMLParser(recover=True, encoding='utf-8')
+            self._parser = etree.XMLParser(recover=True, encoding="utf-8")
         else:
             raise ValueError(f"Unsupported parser type: {parser_type}")
 
@@ -65,7 +66,7 @@ class LXMLParser:
             markup = self._preprocess_markup(markup)
 
             # Parse the markup
-            if self._parser_type == 'html':
+            if self._parser_type == "html":
                 assert lxml_html is not None
                 tree = lxml_html.fromstring(markup, parser=self._parser)
             else:
@@ -77,7 +78,7 @@ class LXMLParser:
 
         except Exception as e:
             self._parsing_errors.append(str(e))
-            return Tag('root')
+            return Tag("root")
 
     def _preprocess_markup(self, markup: str) -> str:
         """
@@ -90,11 +91,13 @@ class LXMLParser:
             str: Preprocessed markup
         """
         # Remove XML/HTML comments
-        markup = re.sub(r'<!--.*?-->', '', markup, flags=re.DOTALL)
+        markup = re.sub(r"<!--.*?-->", "", markup, flags=re.DOTALL)
 
         # Handle unclosed tags for HTML
-        if self._parser_type == 'html':
-            markup = re.sub(r'<(br|img|input|hr|meta)([^>]*?)(?<!/)>', r'<\1\2 />', markup, flags=re.IGNORECASE)
+        if self._parser_type == "html":
+            markup = re.sub(
+                r"<(br|img|input|hr|meta)([^>]*?)(?<!/)>", r"<\1\2 />", markup, flags=re.IGNORECASE
+            )
 
         return markup
 
@@ -111,8 +114,8 @@ class LXMLParser:
         # Create Tag with name and attributes
         # Strip namespaces like {http://www.w3.org/1999/xhtml}div
         tag_name = element.tag
-        if '}' in tag_name:
-            tag_name = tag_name.split('}', 1)[1]
+        if "}" in tag_name:
+            tag_name = tag_name.split("}", 1)[1]
 
         tag = Tag(tag_name, dict(element.attrib))
 
@@ -143,11 +146,15 @@ class LXMLParser:
         """
         return self._parsing_errors
 
-    def find_all(self, markup: str, tag: Optional[Union[str, List[str]]] = None,
-                 attrs: Optional[Dict[str, Any]] = None,
-                 recursive: bool = True,
-                 text: Optional[str] = None,
-                 limit: Optional[int] = None) -> List[Tag]:
+    def find_all(
+        self,
+        markup: str,
+        tag: Optional[Union[str, List[str]]] = None,
+        attrs: Optional[Dict[str, Any]] = None,
+        recursive: bool = True,
+        text: Optional[str] = None,
+        limit: Optional[int] = None,
+    ) -> List[Tag]:
         """
         Find all matching elements in the parsed document.
 
@@ -180,7 +187,9 @@ class LXMLParser:
 
             # Text filter
             if text:
-                element_text = ' '.join([str(c) for c in element.contents if isinstance(c, NavigableString)])
+                element_text = " ".join(
+                    [str(c) for c in element.contents if isinstance(c, NavigableString)]
+                )
                 if text not in element_text:
                     return False
 

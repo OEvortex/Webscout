@@ -14,8 +14,8 @@ from curl_cffi import CurlError, requests
 from litprinter import ic
 
 from llm4free import exceptions
-from llm4free.litagent import LitAgent
 from llm4free.AIbase import SimpleModelList
+from llm4free.litagent import LitAgent
 
 try:
     from . import utils
@@ -184,9 +184,7 @@ class TTSAI(BaseTTSProvider):
         # Create temporary file
         file_extension = f".{response_format}"
         filename = pathlib.Path(
-            tempfile.NamedTemporaryFile(
-                suffix=file_extension, dir=self.temp_dir, delete=False
-            ).name
+            tempfile.NamedTemporaryFile(suffix=file_extension, dir=self.temp_dir, delete=False).name
         )
 
         # Split text into sentences
@@ -198,9 +196,7 @@ class TTSAI(BaseTTSProvider):
                 try:
                     payload = {"text": part_text, "model": "piper", "voice": voice}
 
-                    response = self.session.post(
-                        self.api_url, json=payload, timeout=self.timeout
-                    )
+                    response = self.session.post(self.api_url, json=payload, timeout=self.timeout)
                     response.raise_for_status()
                     result = response.json()
 

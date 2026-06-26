@@ -306,7 +306,7 @@ class BaseCompletions(ABC):
         from llm4free.llm.utils import ToolCall, ToolFunction
 
         tool_objects: List[Tool] = []
-        for t in (tools or []):
+        for t in tools or []:
             if isinstance(t, Tool):
                 tool_objects.append(t)
             elif isinstance(t, dict):
@@ -372,6 +372,7 @@ class BaseCompletions(ABC):
 
         # Return a new ChatCompletion with native tool_calls format
         import copy
+
         from llm4free.llm.utils import ChatCompletion, ChatCompletionMessage, Choice
 
         orig_choice = response.choices[0]

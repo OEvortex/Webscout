@@ -17,12 +17,14 @@ from llm4free.zeroart import figlet_format
 # Lazy import for huggingface_hub
 HfApi = None
 
+
 def _ensure_huggingface_hub():
     """Ensure huggingface_hub is imported when needed."""
     global HfApi
     if HfApi is None:
         try:
             from huggingface_hub import HfApi as _HfApi
+
             HfApi = _HfApi
         except ImportError:
             raise ImportError(
@@ -31,15 +33,21 @@ def _ensure_huggingface_hub():
             )
     return HfApi
 
+
 console = Console()
+
 
 class ConversionError(Exception):
     """Custom exception for when things don't go as planned! ⚠️"""
+
     pass
+
 
 class QuantizationMethod(TypedDict):
     """Type definition for quantization method descriptions."""
+
     description: str
+
 
 class ModelConverter:
     """Handles the conversion of Hugging Face models to GGUF format."""
@@ -71,7 +79,7 @@ class ModelConverter:
         "q8_0": "8-bit quantization - near-original quality",
         # Ternary quantization (experimental)
         "tq1_0": "1-bit ternary quantization - experimental, extreme compression",
-        "tq2_0": "2-bit ternary quantization - experimental, very small size"
+        "tq2_0": "2-bit ternary quantization - experimental, very small size",
     }
 
     VALID_IMATRIX_METHODS: Dict[str, str] = {
@@ -101,7 +109,7 @@ class ModelConverter:
         "q4_k_m": "4-bit K-quant medium with imatrix",
         "q5_k_s": "5-bit K-quant small with imatrix",
         "q5_k_m": "5-bit K-quant medium with imatrix",
-        "q6_k": "6-bit K-quant with imatrix"
+        "q6_k": "6-bit K-quant with imatrix",
     }
     # Default output type options (matches llama.cpp)
     VALID_OUTTYPES: Set[str] = {"f32", "f16", "bf16", "q8_0", "tq1_0", "tq2_0", "auto"}
@@ -124,13 +132,13 @@ class ModelConverter:
         dry_run: bool = False,
         no_lazy: bool = False,
         model_name: Optional[str] = None,
-        small_first_shard: bool = False
+        small_first_shard: bool = False,
     ) -> None:
         self.model_id = model_id
         self.username = username
         self.token = token
-        self.quantization_methods = quantization_methods.split(',')
-        self.model_name = model_name or model_id.split('/')[-1]
+        self.quantization_methods = quantization_methods.split(",")
+        self.model_name = model_name or model_id.split("/")[-1]
         self.workspace = Path(os.getcwd())
         self.use_imatrix = use_imatrix
         self.train_data_file = train_data_file
@@ -145,15 +153,21 @@ class ModelConverter:
         self.no_lazy = no_lazy
         self.small_first_shard = small_first_shard
         # Determine if we only need the base conversion (no quantization)
-        self.base_only = self.outtype in self.VALID_OUTTYPES and len(self.quantization_methods) == 1 and self.quantization_methods[0] in ["fp16", "f16", "f32", "bf16", "auto"]
+        self.base_only = (
+            self.outtype in self.VALID_OUTTYPES
+            and len(self.quantization_methods) == 1
+            and self.quantization_methods[0] in ["fp16", "f16", "f32", "bf16", "auto"]
+        )
 
     def validate_inputs(self) -> None:
         """Validates all input parameters."""
-        if '/' not in self.model_id:
+        if "/" not in self.model_id:
             raise ValueError("Invalid model ID format. Expected format: 'organization/model-name'")
 
         if self.use_imatrix:
-            invalid_methods = [m for m in self.quantization_methods if m not in self.VALID_IMATRIX_METHODS]
+            invalid_methods = [
+                m for m in self.quantization_methods if m not in self.VALID_IMATRIX_METHODS
+            ]
             if invalid_methods:
                 raise ValueError(
                     f"Invalid imatrix quantization methods: {', '.join(invalid_methods)}.\n"
@@ -182,17 +196,19 @@ class ModelConverter:
         if self.use_split and self.split_max_size:
             try:
                 # Support K, M, G units (like llama.cpp's split_str_to_n_bytes)
-                if self.split_max_size[-1].upper() in ['K', 'M', 'G']:
+                if self.split_max_size[-1].upper() in ["K", "M", "G"]:
                     int(self.split_max_size[:-1])
                     unit = self.split_max_size[-1].upper()
-                    if unit not in ['K', 'M', 'G']:
+                    if unit not in ["K", "M", "G"]:
                         raise ValueError("Split max size must end with K, M, or G")
                 elif self.split_max_size.isnumeric():
                     int(self.split_max_size)
                 else:
                     raise ValueError("Invalid format")
             except (ValueError, IndexError):
-                raise ValueError("Invalid split max size format. Use format like '256M', '5G', or numeric bytes")
+                raise ValueError(
+                    "Invalid split max size format. Use format like '256M', '5G', or numeric bytes"
+                )
 
     @staticmethod
     def check_dependencies() -> Dict[str, bool]:
@@ -200,77 +216,79 @@ class ModelConverter:
         system = platform.system()
 
         dependencies: Dict[str, str] = {
-            'git': 'Git version control',
-            'cmake': 'CMake build system',
-            'ninja': 'Ninja build system (optional)'
+            "git": "Git version control",
+            "cmake": "CMake build system",
+            "ninja": "Ninja build system (optional)",
         }
 
         # Add platform-specific dependencies
-        if system != 'Windows':
-            dependencies['pip3'] = 'Python package installer'
+        if system != "Windows":
+            dependencies["pip3"] = "Python package installer"
         else:
-            dependencies['pip'] = 'Python package installer'
+            dependencies["pip"] = "Python package installer"
 
         status: Dict[str, bool] = {}
 
         for cmd, desc in dependencies.items():
             try:
-                if system == 'Windows':
+                if system == "Windows":
                     # Use 'where' command on Windows
-                    result = subprocess.run(['where', cmd], capture_output=True, text=True)
+                    result = subprocess.run(["where", cmd], capture_output=True, text=True)
                     status[cmd] = result.returncode == 0
                 else:
                     # Use 'which' command on Unix-like systems
-                    result = subprocess.run(['which', cmd], capture_output=True, text=True)
+                    result = subprocess.run(["which", cmd], capture_output=True, text=True)
                     status[cmd] = result.returncode == 0
             except (FileNotFoundError, subprocess.SubprocessError):
                 status[cmd] = False
 
         # Special check for Python - try different variants
-        python_variants = ['python3', 'python', 'py'] if system != 'Windows' else ['python', 'py', 'python3']
-        status['python'] = False
+        python_variants = (
+            ["python3", "python", "py"] if system != "Windows" else ["python", "py", "python3"]
+        )
+        status["python"] = False
         for variant in python_variants:
             try:
-                if system == 'Windows':
-                    result = subprocess.run(['where', variant], capture_output=True)
+                if system == "Windows":
+                    result = subprocess.run(["where", variant], capture_output=True)
                 else:
-                    result = subprocess.run(['which', variant], capture_output=True)
+                    result = subprocess.run(["which", variant], capture_output=True)
                 if result.returncode == 0:
-                    status['python'] = True
+                    status["python"] = True
                     break
             except Exception:
                 continue
 
         # Check for C++ compiler
-        cpp_compilers = ['cl', 'g++', 'clang++'] if system == 'Windows' else ['g++', 'clang++']
-        status['cpp_compiler'] = False
+        cpp_compilers = ["cl", "g++", "clang++"] if system == "Windows" else ["g++", "clang++"]
+        status["cpp_compiler"] = False
         for compiler in cpp_compilers:
             try:
-                if system == 'Windows':
-                    result = subprocess.run(['where', compiler], capture_output=True)
+                if system == "Windows":
+                    result = subprocess.run(["where", compiler], capture_output=True)
                 else:
-                    result = subprocess.run(['which', compiler], capture_output=True)
+                    result = subprocess.run(["which", compiler], capture_output=True)
                 if result.returncode == 0:
-                    status['cpp_compiler'] = True
+                    status["cpp_compiler"] = True
                     break
             except Exception:
                 continue
 
-        dependencies['python'] = 'Python interpreter'
-        dependencies['cpp_compiler'] = 'C++ compiler (g++, clang++, or MSVC)'
+        dependencies["python"] = "Python interpreter"
+        dependencies["cpp_compiler"] = "C++ compiler (g++, clang++, or MSVC)"
 
         return status
 
     def detect_hardware(self) -> Dict[str, bool]:
         """Detect available hardware acceleration with improved cross-platform support."""
         hardware: Dict[str, bool] = {
-            'cuda': False,
-            'metal': False,
-            'opencl': False,
-            'vulkan': False,
-            'rocm': False,
-            'blas': False,
-            'accelerate': False
+            "cuda": False,
+            "metal": False,
+            "opencl": False,
+            "vulkan": False,
+            "rocm": False,
+            "blas": False,
+            "accelerate": False,
         }
 
         system = platform.system()
@@ -278,101 +296,123 @@ class ModelConverter:
         # Check CUDA
         try:
             # Check for nvcc compiler
-            if subprocess.run(['nvcc', '--version'], capture_output=True, shell=(system == 'Windows')).returncode == 0:
-                hardware['cuda'] = True
+            if (
+                subprocess.run(
+                    ["nvcc", "--version"], capture_output=True, shell=(system == "Windows")
+                ).returncode
+                == 0
+            ):
+                hardware["cuda"] = True
             # Also check for nvidia-smi as fallback
-            elif subprocess.run(['nvidia-smi'], capture_output=True, shell=(system == 'Windows')).returncode == 0:
-                hardware['cuda'] = True
+            elif (
+                subprocess.run(
+                    ["nvidia-smi"], capture_output=True, shell=(system == "Windows")
+                ).returncode
+                == 0
+            ):
+                hardware["cuda"] = True
         except (FileNotFoundError, subprocess.SubprocessError):
             # Check for CUDA libraries on Windows
-            if system == 'Windows':
+            if system == "Windows":
                 cuda_paths = [
-                    os.environ.get('CUDA_PATH'),
-                    'C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA',
-                    'C:\\Program Files (x86)\\NVIDIA GPU Computing Toolkit\\CUDA'
+                    os.environ.get("CUDA_PATH"),
+                    "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA",
+                    "C:\\Program Files (x86)\\NVIDIA GPU Computing Toolkit\\CUDA",
                 ]
                 for cuda_path in cuda_paths:
                     if cuda_path and os.path.exists(cuda_path):
-                        hardware['cuda'] = True
+                        hardware["cuda"] = True
                         break
 
         # Check Metal (macOS)
-        if system == 'Darwin':
+        if system == "Darwin":
             try:
                 # Check for Xcode command line tools
-                if subprocess.run(['xcrun', '--show-sdk-path'], capture_output=True).returncode == 0:
-                    hardware['metal'] = True
+                if (
+                    subprocess.run(["xcrun", "--show-sdk-path"], capture_output=True).returncode
+                    == 0
+                ):
+                    hardware["metal"] = True
                 # Check for Metal framework
-                if os.path.exists('/System/Library/Frameworks/Metal.framework'):
-                    hardware['metal'] = True
+                if os.path.exists("/System/Library/Frameworks/Metal.framework"):
+                    hardware["metal"] = True
                 # macOS also supports Accelerate framework
-                if os.path.exists('/System/Library/Frameworks/Accelerate.framework'):
-                    hardware['accelerate'] = True
+                if os.path.exists("/System/Library/Frameworks/Accelerate.framework"):
+                    hardware["accelerate"] = True
             except (FileNotFoundError, subprocess.SubprocessError):
                 pass
 
         # Check OpenCL
         try:
-            if system == 'Windows':
+            if system == "Windows":
                 # Check for OpenCL on Windows
                 opencl_paths = [
-                    'C:\\Windows\\System32\\OpenCL.dll',
-                    'C:\\Windows\\SysWOW64\\OpenCL.dll'
+                    "C:\\Windows\\System32\\OpenCL.dll",
+                    "C:\\Windows\\SysWOW64\\OpenCL.dll",
                 ]
                 if any(os.path.exists(path) for path in opencl_paths):
-                    hardware['opencl'] = True
+                    hardware["opencl"] = True
             else:
-                if subprocess.run(['clinfo'], capture_output=True).returncode == 0:
-                    hardware['opencl'] = True
+                if subprocess.run(["clinfo"], capture_output=True).returncode == 0:
+                    hardware["opencl"] = True
         except (FileNotFoundError, subprocess.SubprocessError):
             pass
 
         # Check Vulkan
         try:
-            if system == 'Windows':
+            if system == "Windows":
                 # Check for Vulkan on Windows
                 vulkan_paths = [
-                    'C:\\Windows\\System32\\vulkan-1.dll',
-                    'C:\\Windows\\SysWOW64\\vulkan-1.dll'
+                    "C:\\Windows\\System32\\vulkan-1.dll",
+                    "C:\\Windows\\SysWOW64\\vulkan-1.dll",
                 ]
                 if any(os.path.exists(path) for path in vulkan_paths):
-                    hardware['vulkan'] = True
+                    hardware["vulkan"] = True
             else:
-                if subprocess.run(['vulkaninfo'], capture_output=True).returncode == 0:
-                    hardware['vulkan'] = True
+                if subprocess.run(["vulkaninfo"], capture_output=True).returncode == 0:
+                    hardware["vulkan"] = True
         except (FileNotFoundError, subprocess.SubprocessError):
             pass
 
         # Check ROCm (AMD)
         try:
-            if subprocess.run(['rocm-smi'], capture_output=True, shell=(system == 'Windows')).returncode == 0:
-                hardware['rocm'] = True
-            elif system == 'Linux':
+            if (
+                subprocess.run(
+                    ["rocm-smi"], capture_output=True, shell=(system == "Windows")
+                ).returncode
+                == 0
+            ):
+                hardware["rocm"] = True
+            elif system == "Linux":
                 # Check for ROCm installation
-                rocm_paths = ['/opt/rocm', '/usr/lib/x86_64-linux-gnu/librocm-smi64.so']
+                rocm_paths = ["/opt/rocm", "/usr/lib/x86_64-linux-gnu/librocm-smi64.so"]
                 if any(os.path.exists(path) for path in rocm_paths):
-                    hardware['rocm'] = True
+                    hardware["rocm"] = True
         except (FileNotFoundError, subprocess.SubprocessError):
             pass
 
         # Check for BLAS libraries
         try:
             import numpy as np  # type: ignore[import-untyped]
+
             # Check if numpy is linked with optimized BLAS
             config = np.__config__.show()
-            if any(lib in str(config).lower() for lib in ['openblas', 'mkl', 'atlas', 'blis']):
-                hardware['blas'] = True
+            if any(lib in str(config).lower() for lib in ["openblas", "mkl", "atlas", "blis"]):
+                hardware["blas"] = True
         except (ImportError, AttributeError):
             # Fallback: check for common BLAS libraries
-            if system == 'Linux':
-                blas_libs = ['/usr/lib/x86_64-linux-gnu/libopenblas.so', '/usr/lib/x86_64-linux-gnu/libblas.so']
+            if system == "Linux":
+                blas_libs = [
+                    "/usr/lib/x86_64-linux-gnu/libopenblas.so",
+                    "/usr/lib/x86_64-linux-gnu/libblas.so",
+                ]
                 if any(os.path.exists(lib) for lib in blas_libs):
-                    hardware['blas'] = True
-            elif system == 'Windows':
+                    hardware["blas"] = True
+            elif system == "Windows":
                 # Check for Intel MKL or OpenBLAS on Windows
-                mkl_paths = ['C:\\Program Files (x86)\\Intel\\oneAPI\\mkl']
+                mkl_paths = ["C:\\Program Files (x86)\\Intel\\oneAPI\\mkl"]
                 if any(os.path.exists(path) for path in mkl_paths):
-                    hardware['blas'] = True
+                    hardware["blas"] = True
 
         return hardware
 
@@ -385,7 +425,9 @@ class ModelConverter:
             # Clone llama.cpp if not exists
             if not llama_path.exists():
                 try:
-                    subprocess.run(['git', 'clone', 'https://github.com/ggerganov/llama.cpp'], check=True)
+                    subprocess.run(
+                        ["git", "clone", "https://github.com/ggerganov/llama.cpp"], check=True
+                    )
                 except subprocess.CalledProcessError as e:
                     raise ConversionError(f"Failed to clone llama.cpp repository: {e}")
 
@@ -395,15 +437,18 @@ class ModelConverter:
 
                 # Update to latest version
                 try:
-                    subprocess.run(['git', 'pull'], capture_output=True, check=False)
+                    subprocess.run(["git", "pull"], capture_output=True, check=False)
                 except subprocess.CalledProcessError:
                     console.print("[yellow]Warning: Could not update llama.cpp repository")
 
                 # Clean any existing build directory to avoid cached CMake variables
-                build_dir = Path('build')
+                build_dir = Path("build")
                 if build_dir.exists():
-                    console.print("[yellow]Cleaning existing build directory to avoid CMake cache conflicts...")
+                    console.print(
+                        "[yellow]Cleaning existing build directory to avoid CMake cache conflicts..."
+                    )
                     import shutil
+
                     try:
                         shutil.rmtree(build_dir)
                         console.print("[green]Build directory cleaned successfully")
@@ -414,7 +459,9 @@ class ModelConverter:
                 is_nix = system == "Linux" and os.path.exists("/nix/store")
 
                 if is_nix:
-                    console.print("[yellow]Detected Nix environment. Using system Python packages...")
+                    console.print(
+                        "[yellow]Detected Nix environment. Using system Python packages..."
+                    )
                     # In Nix, we need to use the system Python packages
                     try:
                         # Try to import required packages to check if they're available
@@ -422,26 +469,39 @@ class ModelConverter:
                         import sentencepiece  # type: ignore
                         import torch  # type: ignore
                         import transformers  # type: ignore
+
                         console.print("[green]Required Python packages are already installed.")
                     except ImportError:
                         console.print("[red]Missing required Python packages in Nix environment.")
                         console.print("[yellow]Please install them using:")
-                        console.print("nix-shell -p python3Packages.torch python3Packages.numpy python3Packages.sentencepiece python3Packages.transformers")
+                        console.print(
+                            "nix-shell -p python3Packages.torch python3Packages.numpy python3Packages.sentencepiece python3Packages.transformers"
+                        )
                         raise ConversionError("Missing required Python packages in Nix environment")
                 else:
                     # In non-Nix environments, install requirements if they exist
-                    if os.path.exists('requirements.txt'):
+                    if os.path.exists("requirements.txt"):
                         try:
-                            pip_cmd = 'pip' if system == 'Windows' else 'pip3'
-                            subprocess.run([pip_cmd, 'install', '-r', 'requirements.txt'], check=True)
+                            pip_cmd = "pip" if system == "Windows" else "pip3"
+                            subprocess.run(
+                                [pip_cmd, "install", "-r", "requirements.txt"], check=True
+                            )
                         except subprocess.CalledProcessError as e:
                             if "externally-managed-environment" in str(e):
-                                console.print("[yellow]Detected externally managed Python environment.")
-                                console.print("[yellow]Please install the required packages manually:")
+                                console.print(
+                                    "[yellow]Detected externally managed Python environment."
+                                )
+                                console.print(
+                                    "[yellow]Please install the required packages manually:"
+                                )
                                 console.print("pip install torch numpy sentencepiece transformers")
-                                raise ConversionError("Failed to install requirements in externally managed environment")
+                                raise ConversionError(
+                                    "Failed to install requirements in externally managed environment"
+                                )
                             else:
-                                console.print(f"[yellow]Warning: Failed to install requirements: {e}")
+                                console.print(
+                                    f"[yellow]Warning: Failed to install requirements: {e}"
+                                )
 
                 # Detect available hardware
                 hardware = self.detect_hardware()
@@ -451,8 +511,12 @@ class ModelConverter:
 
                 # Clear any environment variables that might cause conflicts
                 env_vars_to_clear = [
-                    'LLAMA_CUBLAS', 'LLAMA_CLBLAST', 'LLAMA_HIPBLAS',
-                    'LLAMA_METAL', 'LLAMA_ACCELERATE', 'LLAMA_OPENBLAS'
+                    "LLAMA_CUBLAS",
+                    "LLAMA_CLBLAST",
+                    "LLAMA_HIPBLAS",
+                    "LLAMA_METAL",
+                    "LLAMA_ACCELERATE",
+                    "LLAMA_OPENBLAS",
                 ]
                 for var in env_vars_to_clear:
                     if var in os.environ:
@@ -460,63 +524,65 @@ class ModelConverter:
                         del os.environ[var]
 
                 # Configure CMake build with robust options
-                cmake_args: List[str] = ['cmake', '-B', 'build']
+                cmake_args: List[str] = ["cmake", "-B", "build"]
 
                 # Add basic CMake options
-                cmake_args.extend([
-                    '-DCMAKE_BUILD_TYPE=Release',
-                    '-DLLAMA_BUILD_TESTS=OFF',
-                    '-DLLAMA_BUILD_EXAMPLES=ON',
-                    '-DLLAMA_BUILD_SERVER=OFF',
-                    # Disable optional dependencies that might cause issues
-                    '-DLLAMA_CURL=OFF',           # Disable CURL (not needed for GGUF conversion)
-                    '-DLLAMA_LLGUIDANCE=OFF'      # Disable LLGuidance (optional feature)
-                ])
+                cmake_args.extend(
+                    [
+                        "-DCMAKE_BUILD_TYPE=Release",
+                        "-DLLAMA_BUILD_TESTS=OFF",
+                        "-DLLAMA_BUILD_EXAMPLES=ON",
+                        "-DLLAMA_BUILD_SERVER=OFF",
+                        # Disable optional dependencies that might cause issues
+                        "-DLLAMA_CURL=OFF",  # Disable CURL (not needed for GGUF conversion)
+                        "-DLLAMA_LLGUIDANCE=OFF",  # Disable LLGuidance (optional feature)
+                    ]
+                )
 
                 # Add hardware acceleration options with latest 2025 llama.cpp GGML flags
                 # Use priority order: CUDA > Metal > Vulkan > OpenCL > ROCm > BLAS > Accelerate
                 acceleration_enabled = False
 
-                if hardware['cuda']:
+                if hardware["cuda"]:
                     # Latest 2025 GGML CUDA flags (LLAMA_CUBLAS is deprecated)
-                    cmake_args.extend(['-DGGML_CUDA=ON'])
+                    cmake_args.extend(["-DGGML_CUDA=ON"])
                     console.print("[green]Enabling CUDA acceleration (GGML_CUDA=ON)")
                     acceleration_enabled = True
-                elif hardware['metal']:
+                elif hardware["metal"]:
                     # Latest 2025 GGML Metal flags for macOS
-                    cmake_args.extend(['-DGGML_METAL=ON'])
+                    cmake_args.extend(["-DGGML_METAL=ON"])
                     console.print("[green]Enabling Metal acceleration (GGML_METAL=ON)")
                     acceleration_enabled = True
-                elif hardware['vulkan']:
+                elif hardware["vulkan"]:
                     # Latest 2025 GGML Vulkan flags
-                    cmake_args.extend(['-DGGML_VULKAN=ON'])
+                    cmake_args.extend(["-DGGML_VULKAN=ON"])
                     console.print("[green]Enabling Vulkan acceleration (GGML_VULKAN=ON)")
                     acceleration_enabled = True
-                elif hardware['opencl']:
+                elif hardware["opencl"]:
                     # Latest 2025 GGML OpenCL flags (LLAMA_CLBLAST is deprecated)
-                    cmake_args.extend(['-DGGML_OPENCL=ON'])
+                    cmake_args.extend(["-DGGML_OPENCL=ON"])
                     console.print("[green]Enabling OpenCL acceleration (GGML_OPENCL=ON)")
                     acceleration_enabled = True
-                elif hardware['rocm']:
+                elif hardware["rocm"]:
                     # Latest 2025 GGML ROCm/HIP flags
-                    cmake_args.extend(['-DGGML_HIPBLAS=ON'])
+                    cmake_args.extend(["-DGGML_HIPBLAS=ON"])
                     console.print("[green]Enabling ROCm acceleration (GGML_HIPBLAS=ON)")
                     acceleration_enabled = True
-                elif hardware['blas']:
+                elif hardware["blas"]:
                     # Latest 2025 GGML BLAS flags with vendor detection
-                    cmake_args.extend(['-DGGML_BLAS=ON'])
+                    cmake_args.extend(["-DGGML_BLAS=ON"])
                     # Try to detect BLAS vendor for optimal performance
-                    if system == 'Darwin':
-                        cmake_args.extend(['-DGGML_BLAS_VENDOR=Accelerate'])
-                    elif 'mkl' in str(hardware).lower():
-                        cmake_args.extend(['-DGGML_BLAS_VENDOR=Intel10_64lp'])
+                    if system == "Darwin":
+                        cmake_args.extend(["-DGGML_BLAS_VENDOR=Accelerate"])
+                    elif "mkl" in str(hardware).lower():
+                        cmake_args.extend(["-DGGML_BLAS_VENDOR=Intel10_64lp"])
                     else:
-                        cmake_args.extend(['-DGGML_BLAS_VENDOR=OpenBLAS'])
+                        cmake_args.extend(["-DGGML_BLAS_VENDOR=OpenBLAS"])
                     console.print("[green]Enabling BLAS acceleration (GGML_BLAS=ON)")
                     acceleration_enabled = True
-                elif hardware['accelerate']:
+                elif hardware["accelerate"]:
                     # Latest 2025 GGML Accelerate framework flags for macOS
-                    cmake_args.extend(['-DGGML_ACCELERATE=ON'])
+                    cmake_args.extend(["-DGGML_ACCELERATE=ON"])
                     console.print("[green]Enabling Accelerate framework (GGML_ACCELERATE=ON)")
                     acceleration_enabled = True
 
@@ -524,22 +590,25 @@ class ModelConverter:
                     console.print("[yellow]No hardware acceleration available, using CPU only")
 
                 # Platform-specific optimizations
-                if system == 'Windows':
+                if system == "Windows":
                     # Use Visual Studio generator on Windows if available
                     try:
-                        vs_result = subprocess.run(['where', 'msbuild'], capture_output=True)
+                        vs_result = subprocess.run(["where", "msbuild"], capture_output=True)
                         if vs_result.returncode == 0:
-                            cmake_args.extend(['-G', 'Visual Studio 17 2022'])
+                            cmake_args.extend(["-G", "Visual Studio 17 2022"])
                         else:
-                            cmake_args.extend(['-G', 'MinGW Makefiles'])
+                            cmake_args.extend(["-G", "MinGW Makefiles"])
                     except Exception:
-                        cmake_args.extend(['-G', 'MinGW Makefiles'])
+                        cmake_args.extend(["-G", "MinGW Makefiles"])
                 else:
                     # Use Ninja if available on Unix systems
                     try:
-                        ninja_cmd = 'ninja' if system != 'Windows' else 'ninja.exe'
-                        if subprocess.run(['which', ninja_cmd], capture_output=True).returncode == 0:
-                            cmake_args.extend(['-G', 'Ninja'])
+                        ninja_cmd = "ninja" if system != "Windows" else "ninja.exe"
+                        if (
+                            subprocess.run(["which", ninja_cmd], capture_output=True).returncode
+                            == 0
+                        ):
+                            cmake_args.extend(["-G", "Ninja"])
                     except Exception:
                         pass  # Fall back to default generator
 
@@ -561,22 +630,26 @@ class ModelConverter:
 
                 # Try fallback without hardware acceleration if main config failed
                 if not config_success:
-                    console.print("[yellow]Attempting fallback configuration without hardware acceleration...")
+                    console.print(
+                        "[yellow]Attempting fallback configuration without hardware acceleration..."
+                    )
                     console.print("[cyan]Using CPU-only build configuration...")
                     fallback_args = [
-                        'cmake', '-B', 'build',
-                        '-DCMAKE_BUILD_TYPE=Release',
-                        '-DLLAMA_BUILD_TESTS=OFF',
-                        '-DLLAMA_BUILD_EXAMPLES=ON',
-                        '-DLLAMA_BUILD_SERVER=OFF',
+                        "cmake",
+                        "-B",
+                        "build",
+                        "-DCMAKE_BUILD_TYPE=Release",
+                        "-DLLAMA_BUILD_TESTS=OFF",
+                        "-DLLAMA_BUILD_EXAMPLES=ON",
+                        "-DLLAMA_BUILD_SERVER=OFF",
                         # Disable optional dependencies that might cause issues
-                        '-DLLAMA_CURL=OFF',           # Disable CURL (not needed for GGUF conversion)
-                        '-DLLAMA_LLGUIDANCE=OFF',     # Disable LLGuidance (optional feature)
+                        "-DLLAMA_CURL=OFF",  # Disable CURL (not needed for GGUF conversion)
+                        "-DLLAMA_LLGUIDANCE=OFF",  # Disable LLGuidance (optional feature)
                         # Enable CPU optimizations
-                        '-DGGML_NATIVE=OFF',  # Disable native optimizations for compatibility
-                        '-DGGML_AVX=ON',      # Enable AVX if available
-                        '-DGGML_AVX2=ON',     # Enable AVX2 if available
-                        '-DGGML_FMA=ON'       # Enable FMA if available
+                        "-DGGML_NATIVE=OFF",  # Disable native optimizations for compatibility
+                        "-DGGML_AVX=ON",  # Enable AVX if available
+                        "-DGGML_AVX2=ON",  # Enable AVX2 if available
+                        "-DGGML_FMA=ON",  # Enable FMA if available
                     ]
                     try:
                         console.print(f"[cyan]Fallback CMake command: {' '.join(fallback_args)}")
@@ -585,7 +658,9 @@ class ModelConverter:
                             config_success = True
                             console.print("[green]Fallback CMake configuration successful!")
                         else:
-                            console.print(f"[red]Fallback CMake configuration failed: {result.stderr}")
+                            console.print(
+                                f"[red]Fallback CMake configuration failed: {result.stderr}"
+                            )
                     except subprocess.CalledProcessError as e:
                         console.print(f"[red]Fallback CMake execution failed: {e}")
 
@@ -593,13 +668,15 @@ class ModelConverter:
                 if not config_success:
                     console.print("[yellow]Attempting minimal configuration...")
                     minimal_args = [
-                        'cmake', '-B', 'build',
-                        '-DCMAKE_BUILD_TYPE=Release',
+                        "cmake",
+                        "-B",
+                        "build",
+                        "-DCMAKE_BUILD_TYPE=Release",
                         # Disable optional dependencies that might cause issues
-                        '-DLLAMA_CURL=OFF',           # Disable CURL (not needed for GGUF conversion)
-                        '-DLLAMA_LLGUIDANCE=OFF',     # Disable LLGuidance (optional feature)
-                        '-DLLAMA_BUILD_SERVER=OFF',   # Disable server (not needed for conversion)
-                        '-DLLAMA_BUILD_TESTS=OFF'     # Disable tests (not needed for conversion)
+                        "-DLLAMA_CURL=OFF",  # Disable CURL (not needed for GGUF conversion)
+                        "-DLLAMA_LLGUIDANCE=OFF",  # Disable LLGuidance (optional feature)
+                        "-DLLAMA_BUILD_SERVER=OFF",  # Disable server (not needed for conversion)
+                        "-DLLAMA_BUILD_TESTS=OFF",  # Disable tests (not needed for conversion)
                     ]
                     try:
                         console.print(f"[cyan]Minimal CMake command: {' '.join(minimal_args)}")
@@ -608,24 +685,30 @@ class ModelConverter:
                             config_success = True
                             console.print("[green]Minimal CMake configuration successful!")
                         else:
-                            console.print(f"[red]Minimal CMake configuration failed: {result.stderr}")
-                            raise ConversionError(f"All CMake configuration attempts failed. Last error: {result.stderr}")
+                            console.print(
+                                f"[red]Minimal CMake configuration failed: {result.stderr}"
+                            )
+                            raise ConversionError(
+                                f"All CMake configuration attempts failed. Last error: {result.stderr}"
+                            )
                     except subprocess.CalledProcessError as e:
                         raise ConversionError(f"All CMake configuration attempts failed: {e}")
 
                 if not config_success:
-                    raise ConversionError("CMake configuration failed with all attempted strategies")
+                    raise ConversionError(
+                        "CMake configuration failed with all attempted strategies"
+                    )
 
                 # Build the project
                 status.update("[bold green]Building llama.cpp...")
-                build_cmd = ['cmake', '--build', 'build', '--config', 'Release']
+                build_cmd = ["cmake", "--build", "build", "--config", "Release"]
 
                 # Add parallel build option
                 cpu_count = os.cpu_count() or 1
-                if system == 'Windows':
-                    build_cmd.extend(['--parallel', str(cpu_count)])
+                if system == "Windows":
+                    build_cmd.extend(["--parallel", str(cpu_count)])
                 else:
-                    build_cmd.extend(['-j', str(cpu_count)])
+                    build_cmd.extend(["-j", str(cpu_count)])
 
                 try:
                     result = subprocess.run(build_cmd, capture_output=True, text=True)
@@ -633,7 +716,7 @@ class ModelConverter:
                         console.print(f"[red]Build failed: {result.stderr}")
                         # Try single-threaded build as fallback
                         console.print("[yellow]Attempting single-threaded build...")
-                        fallback_build = ['cmake', '--build', 'build', '--config', 'Release']
+                        fallback_build = ["cmake", "--build", "build", "--config", "Release"]
                         result = subprocess.run(fallback_build, capture_output=True, text=True)
                         if result.returncode != 0:
                             raise ConversionError(f"Build failed: {result.stderr}")
@@ -655,10 +738,12 @@ class ModelConverter:
         table.add_row("Model Name", self.model_name)
         table.add_row("Username", self.username or "Not provided")
         table.add_row("Token", "****" if self.token else "Not provided")
-        table.add_row("Quantization Methods", "\n".join(
-            f"{method} ({self.VALID_METHODS[method]})"
-            for method in self.quantization_methods
-        ))
+        table.add_row(
+            "Quantization Methods",
+            "\n".join(
+                f"{method} ({self.VALID_METHODS[method]})" for method in self.quantization_methods
+            ),
+        )
 
         console.print(Panel(table))
 
@@ -669,15 +754,15 @@ class ModelConverter:
         # Possible binary locations
         possible_paths = [
             f"./llama.cpp/build/bin/{binary_name}",  # Standard build location
-            f"./llama.cpp/build/{binary_name}",      # Alternative build location
-            f"./llama.cpp/{binary_name}",            # Root directory
+            f"./llama.cpp/build/{binary_name}",  # Alternative build location
+            f"./llama.cpp/{binary_name}",  # Root directory
             f"./llama.cpp/build/Release/{binary_name}",  # Windows Release build
-            f"./llama.cpp/build/Debug/{binary_name}",    # Windows Debug build
+            f"./llama.cpp/build/Debug/{binary_name}",  # Windows Debug build
         ]
 
         # Add .exe extension on Windows
-        if system == 'Windows':
-            possible_paths = [path + '.exe' for path in possible_paths]
+        if system == "Windows":
+            possible_paths = [path + ".exe" for path in possible_paths]
 
         # Find the first existing binary
         for path in possible_paths:
@@ -686,21 +771,28 @@ class ModelConverter:
 
         # If not found, return the most likely path and let it fail with a clear error
         default_path = f"./llama.cpp/build/bin/{binary_name}"
-        if system == 'Windows':
-            default_path += '.exe'
+        if system == "Windows":
+            default_path += ".exe"
         return default_path
 
-    def generate_importance_matrix(self, model_path: str, train_data_path: str, output_path: str) -> None:
+    def generate_importance_matrix(
+        self, model_path: str, train_data_path: str, output_path: str
+    ) -> None:
         """Generates importance matrix for quantization with improved error handling."""
         imatrix_binary = self.get_binary_path("llama-imatrix")
 
         imatrix_command: List[str] = [
             imatrix_binary,
-            "-m", model_path,
-            "-f", train_data_path,
-            "-ngl", "99",
-            "--output-frequency", "10",
-            "-o", output_path,
+            "-m",
+            model_path,
+            "-f",
+            train_data_path,
+            "-ngl",
+            "99",
+            "--output-frequency",
+            "10",
+            "-o",
+            output_path,
         ]
 
         if not os.path.isfile(model_path):
@@ -721,7 +813,7 @@ class ModelConverter:
                 shell=False,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True
+                text=True,
             )
 
             try:
@@ -757,7 +849,7 @@ class ModelConverter:
         else:
             split_cmd.extend(["--split-max-tensors", str(self.split_max_tensors)])
 
-        model_path_prefix = '.'.join(model_path.split('.')[:-1])
+        model_path_prefix = ".".join(model_path.split(".")[:-1])
         split_cmd.extend([model_path, model_path_prefix])
 
         if not os.path.isfile(model_path):
@@ -781,13 +873,18 @@ class ModelConverter:
         # Get list of split files
         model_file_prefix = os.path.basename(model_path_prefix)
         try:
-            split_files = [f for f in os.listdir(outdir)
-                          if f.startswith(model_file_prefix) and f.endswith(".gguf")]
+            split_files = [
+                f
+                for f in os.listdir(outdir)
+                if f.startswith(model_file_prefix) and f.endswith(".gguf")
+            ]
         except OSError as e:
             raise ConversionError(f"Error reading output directory: {e}")
 
         if not split_files:
-            raise ConversionError(f"No split files found in {outdir} with prefix {model_file_prefix}")
+            raise ConversionError(
+                f"No split files found in {outdir} with prefix {model_file_prefix}"
+            )
 
         console.print(f"[green]Found {len(split_files)} split files: {', '.join(split_files)}")
         return split_files
@@ -894,12 +991,7 @@ This repository is licensed under the same terms as the original model.
                 pass
 
             console.print(f"[bold green]Creating new repository: {repo_id}")
-            api.create_repo(
-                repo_id=repo_id,
-                exist_ok=True,
-                private=False,
-                repo_type="model"
-            )
+            api.create_repo(repo_id=repo_id, exist_ok=True, private=False, repo_type="model")
             console.print(f"[green]✓ Successfully created repository: {repo_id}")
             console.print(f"[cyan]Repository URL: https://huggingface.co/{repo_id}")
         except Exception as e:
@@ -933,7 +1025,9 @@ This repository is licensed under the same terms as the original model.
 
             # Check dependencies
             deps = self.check_dependencies()
-            missing = [name for name, installed in deps.items() if not installed and name != 'ninja']
+            missing = [
+                name for name, installed in deps.items() if not installed and name != "ninja"
+            ]
             if missing:
                 raise ConversionError(f"Missing required dependencies: {', '.join(missing)}")
 
@@ -958,39 +1052,40 @@ This repository is licensed under the same terms as the original model.
                 finally:
                     # Clean up temporary download directory
                     import shutil
+
                     shutil.rmtree(tmpdir, ignore_errors=True)
 
             # Display success message
-            console.print(Panel.fit(
-                "[bold green]✓[/] Conversion completed successfully!\n\n"
-                f"[cyan]Output files can be found in: {self.workspace / self.model_name}[/]",
-                title="Success",
-                border_style="green"
-            ))
+            console.print(
+                Panel.fit(
+                    "[bold green]✓[/] Conversion completed successfully!\n\n"
+                    f"[cyan]Output files can be found in: {self.workspace / self.model_name}[/]",
+                    title="Success",
+                    border_style="green",
+                )
+            )
 
         except Exception as e:
-            console.print(Panel.fit(
-                f"[bold red]✗[/] {str(e)}",
-                title="Error",
-                border_style="red"
-            ))
+            console.print(Panel.fit(f"[bold red]✗[/] {str(e)}", title="Error", border_style="red"))
             raise
 
     def _convert_with_dirs(self, tmpdir: str, outdir: str) -> None:
         """Helper method to perform conversion with given directories."""
         # Use outtype for base filename (e.g., model.f16.gguf, model.bf16.gguf)
         outtype_suffix = self.outtype if self.outtype != "auto" else "f16"
-        base_gguf = str(Path(outdir)/f"{self.model_name}.{outtype_suffix}.gguf")
+        base_gguf = str(Path(outdir) / f"{self.model_name}.{outtype_suffix}.gguf")
 
         # Download model (or use remote mode)
-        local_dir = Path(tmpdir)/self.model_name
+        local_dir = Path(tmpdir) / self.model_name
         if self.remote:
-            console.print("[bold green]Using remote mode - downloading only config and tokenizer...")
+            console.print(
+                "[bold green]Using remote mode - downloading only config and tokenizer..."
+            )
             api = _ensure_huggingface_hub()(token=self.token)
             api.snapshot_download(
                 repo_id=self.model_id,
                 local_dir=local_dir,
-                allow_patterns=["LICENSE", "*.json", "*.md", "*.txt", "tokenizer.model"]
+                allow_patterns=["LICENSE", "*.json", "*.md", "*.txt", "tokenizer.model"],
             )
         else:
             console.print("[bold green]Downloading model...")
@@ -1007,7 +1102,7 @@ This repository is licensed under the same terms as the original model.
         conversion_scripts = [
             "llama.cpp/convert_hf_to_gguf.py",
             "llama.cpp/convert-hf-to-gguf.py",
-            "llama.cpp/convert.py"
+            "llama.cpp/convert.py",
         ]
 
         conversion_script = None
@@ -1024,10 +1119,13 @@ This repository is licensed under the same terms as the original model.
 
         # Build conversion command with new llama.cpp options
         convert_cmd = [
-            python_cmd, conversion_script,
+            python_cmd,
+            conversion_script,
             str(local_dir),
-            "--outtype", self.outtype,
-            "--outfile", base_gguf
+            "--outtype",
+            self.outtype,
+            "--outfile",
+            base_gguf,
         ]
 
         # Add optional flags based on new llama.cpp features
@@ -1082,9 +1180,7 @@ This repository is licensed under the same terms as the original model.
                 console.print(f"[bold green]Uploading model file: {gguf_filename}")
                 try:
                     api.upload_file(
-                        path_or_fileobj=base_gguf,
-                        path_in_repo=gguf_filename,
-                        repo_id=repo_id
+                        path_or_fileobj=base_gguf, path_in_repo=gguf_filename, repo_id=repo_id
                     )
                     console.print(f"[green]✓ Successfully uploaded: {gguf_filename}")
                 except Exception as e:
@@ -1095,8 +1191,10 @@ This repository is licensed under the same terms as the original model.
         # Generate importance matrix if needed
         imatrix_path: Optional[str] = None
         if self.use_imatrix:
-            train_data_path = self.train_data_file if self.train_data_file else "llama.cpp/groups_merged.txt"
-            imatrix_path = str(Path(outdir)/"imatrix.dat")
+            train_data_path = (
+                self.train_data_file if self.train_data_file else "llama.cpp/groups_merged.txt"
+            )
+            imatrix_path = str(Path(outdir) / "imatrix.dat")
             self.generate_importance_matrix(base_gguf, train_data_path, imatrix_path)
 
         # Quantize model
@@ -1112,21 +1210,21 @@ This repository is licensed under the same terms as the original model.
             quantized_name = f"{self.model_name.lower()}-{method.lower()}"
             if self.use_imatrix:
                 quantized_name += "-imat"
-            quantized_path = str(Path(outdir)/f"{quantized_name}.gguf")
+            quantized_path = str(Path(outdir) / f"{quantized_name}.gguf")
 
             console.print(f"[cyan]Quantizing with method: {method}")
 
             if self.use_imatrix and imatrix_path:
                 quantize_cmd: List[str] = [
                     quantize_binary,
-                    "--imatrix", str(imatrix_path),
-                    base_gguf, quantized_path, method
+                    "--imatrix",
+                    str(imatrix_path),
+                    base_gguf,
+                    quantized_path,
+                    method,
                 ]
             else:
-                quantize_cmd = [
-                    quantize_binary,
-                    base_gguf, quantized_path, method
-                ]
+                quantize_cmd = [quantize_binary, base_gguf, quantized_path, method]
 
             console.print(f"[cyan]Quantization command: {' '.join(quantize_cmd)}")
 
@@ -1138,7 +1236,9 @@ This repository is licensed under the same terms as the original model.
                 raise ConversionError(f"Could not execute llama-quantize binary: {quantize_binary}")
 
             if not os.path.isfile(quantized_path):
-                raise ConversionError(f"Quantization completed but output file not found: {quantized_path}")
+                raise ConversionError(
+                    f"Quantization completed but output file not found: {quantized_path}"
+                )
 
             quantized_files.append(f"{quantized_name}.gguf")
             console.print(f"[green]Successfully quantized with {method}: {quantized_name}.gguf")
@@ -1167,9 +1267,7 @@ This repository is licensed under the same terms as the original model.
                 console.print(f"[bold green]Uploading quantized model: {file_name}")
                 try:
                     api.upload_file(
-                        path_or_fileobj=quantized_path,
-                        path_in_repo=file_name,
-                        repo_id=repo_id
+                        path_or_fileobj=quantized_path, path_in_repo=file_name, repo_id=repo_id
                     )
                     console.print(f"[green]✓ Successfully uploaded: {file_name}")
                 except Exception as e:
@@ -1182,9 +1280,7 @@ This repository is licensed under the same terms as the original model.
                 console.print("[bold green]Uploading importance matrix: imatrix.dat")
                 try:
                     api.upload_file(
-                        path_or_fileobj=imatrix_path,
-                        path_in_repo="imatrix.dat",
-                        repo_id=repo_id
+                        path_or_fileobj=imatrix_path, path_in_repo="imatrix.dat", repo_id=repo_id
                     )
                     console.print("[green]✓ Successfully uploaded: imatrix.dat")
                 except Exception as e:
@@ -1194,24 +1290,35 @@ This repository is licensed under the same terms as the original model.
             console.print(f"[bold green]🎉 All files uploaded successfully to {repo_id}!")
             console.print(f"[cyan]Repository URL: https://huggingface.co/{repo_id}")
 
+
 # Initialize CLI with HAI vibes
 app = CLI(
-    name="gguf",
-    help="Convert HuggingFace models to GGUF format with style! 🔥",
-    version="2.0.0"
+    name="gguf", help="Convert HuggingFace models to GGUF format with style! 🔥", version="2.0.0"
 )
 
+
 @app.command(name="convert")
-@option("-m", "--model-id", help="The HuggingFace model ID (e.g., 'OEvortex/HelpingAI-Lite-1.5T')", required=True)
+@option(
+    "-m",
+    "--model-id",
+    help="The HuggingFace model ID (e.g., 'OEvortex/HelpingAI-Lite-1.5T')",
+    required=True,
+)
 @option("-u", "--username", help="Your HuggingFace username for uploads", default=None)
 @option("-t", "--token", help="Your HuggingFace API token for uploads", default=None)
 @option("-q", "--quantization", help="Comma-separated quantization methods", default="q4_k_m")
-@option("-o", "--outtype", help="Output type: f32, f16, bf16, q8_0, tq1_0, tq2_0, auto", default="f16")
+@option(
+    "-o", "--outtype", help="Output type: f32, f16, bf16, q8_0, tq1_0, tq2_0, auto", default="f16"
+)
 @option("-i", "--use-imatrix", help="Use importance matrix for quantization", is_flag=True)
 @option("--train-data", help="Training data file for imatrix quantization", default=None)
 @option("-s", "--split-model", help="Split the model into smaller chunks", is_flag=True)
-@option("--split-max-tensors", help="Maximum number of tensors per file when splitting", default=256)
-@option("--split-max-size", help="Maximum file size when splitting (e.g., '256M', '5G')", default=None)
+@option(
+    "--split-max-tensors", help="Maximum number of tensors per file when splitting", default=256
+)
+@option(
+    "--split-max-size", help="Maximum file size when splitting (e.g., '256M', '5G')", default=None
+)
 @option("--vocab-only", help="Only extract vocabulary (no model weights)", is_flag=True)
 @option("--remote", help="(Experimental) Read tensors remotely without full download", is_flag=True)
 @option("--dry-run", help="Only print split plan without writing files", is_flag=True)
@@ -1234,7 +1341,7 @@ def convert_command(
     dry_run: bool = False,
     no_lazy: bool = False,
     model_name: Optional[str] = None,
-    small_first_shard: bool = False
+    small_first_shard: bool = False,
 ) -> None:
     """
     Convert and quantize HuggingFace models to GGUF format! 🚀
@@ -1280,7 +1387,7 @@ def convert_command(
             dry_run=dry_run,
             no_lazy=no_lazy,
             model_name=model_name,
-            small_first_shard=small_first_shard
+            small_first_shard=small_first_shard,
         )
         converter.convert()
     except (ConversionError, ValueError) as e:
@@ -1290,9 +1397,11 @@ def convert_command(
         console.print(f"[red]Unexpected error: {str(e)}")
         sys.exit(1)
 
+
 def main() -> None:
     """Fire up the GGUF converter! 🚀"""
     app.run()
+
 
 if __name__ == "__main__":
     main()

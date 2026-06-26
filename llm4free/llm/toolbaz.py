@@ -26,7 +26,7 @@ from llm4free.llm.utils import (
     CompletionUsage,
     format_prompt,
 )
-from llm4free.litagent import LitAgent
+
 # ANSI escape codes for formatting
 BOLD = "\033[1m"
 RED = "\033[91m"
@@ -375,7 +375,7 @@ if __name__ == "__main__":
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": "Hello! How are you today?"},
         ],
-        stream=True
+        stream=True,
     )
     # OpenAI-compatible streaming response handling
     try:

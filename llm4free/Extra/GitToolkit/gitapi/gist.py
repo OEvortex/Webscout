@@ -22,10 +22,7 @@ class Gist:
         return cast(Dict[str, Any], request(url))
 
     def list_public(
-        self,
-        since: Optional[str] = None,
-        page: int = 1,
-        per_page: int = 30
+        self, since: Optional[str] = None, page: int = 1, per_page: int = 30
     ) -> List[Dict[str, Any]]:
         """
         List public gists sorted by most recently updated.
@@ -44,11 +41,7 @@ class Gist:
         return cast(List[Dict[str, Any]], request(url))
 
     def list_for_user(
-        self,
-        username: str,
-        since: Optional[str] = None,
-        page: int = 1,
-        per_page: int = 30
+        self, username: str, since: Optional[str] = None, page: int = 1, per_page: int = 30
     ) -> List[Dict[str, Any]]:
         """
         List public gists for a user.
@@ -67,12 +60,7 @@ class Gist:
             url += f"&since={since}"
         return cast(List[Dict[str, Any]], request(url))
 
-    def get_commits(
-        self,
-        gist_id: str,
-        page: int = 1,
-        per_page: int = 30
-    ) -> List[Dict[str, Any]]:
+    def get_commits(self, gist_id: str, page: int = 1, per_page: int = 30) -> List[Dict[str, Any]]:
         """
         Get commit history for a gist.
 
@@ -87,12 +75,7 @@ class Gist:
         url = f"{self.BASE_URL}/{gist_id}/commits?page={page}&per_page={per_page}"
         return cast(List[Dict[str, Any]], request(url))
 
-    def get_forks(
-        self,
-        gist_id: str,
-        page: int = 1,
-        per_page: int = 30
-    ) -> List[Dict[str, Any]]:
+    def get_forks(self, gist_id: str, page: int = 1, per_page: int = 30) -> List[Dict[str, Any]]:
         """
         List forks of a gist.
 
@@ -121,12 +104,7 @@ class Gist:
         url = f"{self.BASE_URL}/{gist_id}/{sha}"
         return cast(Dict[str, Any], request(url))
 
-    def get_comments(
-        self,
-        gist_id: str,
-        page: int = 1,
-        per_page: int = 30
-    ) -> List[Dict[str, Any]]:
+    def get_comments(self, gist_id: str, page: int = 1, per_page: int = 30) -> List[Dict[str, Any]]:
         """
         Get comments on a gist.
 

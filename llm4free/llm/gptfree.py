@@ -155,10 +155,14 @@ class Completions(BaseCompletions):
             "history": history,
         }
 
-    def _get_firebase_token(self, proxies: Optional[Dict[str, str]] = None, timeout: Optional[int] = None) -> str:
+    def _get_firebase_token(
+        self, proxies: Optional[Dict[str, str]] = None, timeout: Optional[int] = None
+    ) -> str:
         """Authenticate with Firebase and return an ID token."""
         firebase_api_key = "AIzaSyBdU-Np8RSh1tPSsPOWg3qIm6PnVK5PQb4"
-        auth_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={firebase_api_key}"
+        auth_url = (
+            f"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={firebase_api_key}"
+        )
         response = self._client.session.post(
             auth_url,
             json={"returnSecureToken": True},
@@ -313,9 +317,7 @@ class Completions(BaseCompletions):
                     final_usage = chunk.usage
 
             prompt_tokens = final_usage.get("prompt_tokens", 0) if chunk.usage else 0
-            completion_tokens = (
-                final_usage.get("completion_tokens", 0) if chunk.usage else 0
-            )
+            completion_tokens = final_usage.get("completion_tokens", 0) if chunk.usage else 0
             total_tokens = final_usage.get("total_tokens", 0) if chunk.usage else 0
 
             usage = CompletionUsage(
@@ -399,6 +401,7 @@ class GptFree(OpenAICompatibleProvider):
     @property
     def models(self) -> SimpleModelList:
         return SimpleModelList(self.AVAILABLE_MODELS)
+
 
 if __name__ == "__main__":
     client = GptFree()

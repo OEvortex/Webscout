@@ -2,6 +2,7 @@
 
 This module wraps the YTTranscriber for a simplified interface.
 """
+
 import re
 from typing import Any, Dict, List, Optional
 
@@ -28,10 +29,7 @@ class Captions:
         if not video_id:
             return ""
 
-        patterns = [
-            r'(?:v=|youtu\.be/|shorts/)([a-zA-Z0-9_-]{11})',
-            r'^([a-zA-Z0-9_-]{11})$'
-        ]
+        patterns = [r"(?:v=|youtu\.be/|shorts/)([a-zA-Z0-9_-]{11})", r"^([a-zA-Z0-9_-]{11})$"]
 
         for pattern in patterns:
             match = re.search(pattern, video_id)
@@ -58,9 +56,9 @@ class Captions:
 
         try:
             session = Session()
-            session.headers.update({
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            })
+            session.headers.update(
+                {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+            )
 
             fetcher = TranscriptListFetcher(session)
             transcript_list = fetcher.fetch(video_id)
@@ -69,19 +67,19 @@ class Captions:
 
             # Add manually created transcripts
             for transcript in transcript_list._manually_created_transcripts.values():
-                languages.append({
-                    'code': transcript.language_code,
-                    'name': transcript.language,
-                    'is_auto': False
-                })
+                languages.append(
+                    {
+                        "code": transcript.language_code,
+                        "name": transcript.language,
+                        "is_auto": False,
+                    }
+                )
 
             # Add generated transcripts
             for transcript in transcript_list._generated_transcripts.values():
-                languages.append({
-                    'code': transcript.language_code,
-                    'name': transcript.language,
-                    'is_auto': True
-                })
+                languages.append(
+                    {"code": transcript.language_code, "name": transcript.language, "is_auto": True}
+                )
 
             return languages
         except Exception:
@@ -103,7 +101,7 @@ class Captions:
         if not timed:
             return None
 
-        return " ".join([entry['text'] for entry in timed])
+        return " ".join([entry["text"] for entry in timed])
 
     @staticmethod
     def get_timed_transcript(video_id: str, language: str = "en") -> Optional[List[Dict[str, Any]]]:
@@ -125,13 +123,12 @@ class Captions:
         try:
             # Use YTTranscriber for reliable fetching
             transcript = YTTranscriber.get_transcript(
-                video_id,
-                languages=language if language != 'any' else None
+                video_id, languages=language if language != "any" else None
             )
             return transcript
         except Exception:
             # If requested language fails, try any available
-            if language != 'any':
+            if language != "any":
                 try:
                     transcript = YTTranscriber.get_transcript(video_id, languages=None)
                     return transcript
@@ -163,7 +160,7 @@ class Captions:
         results = []
 
         for entry in transcript:
-            if query_lower in entry['text'].lower():
+            if query_lower in entry["text"].lower():
                 results.append(entry)
 
         return results
@@ -186,5 +183,3 @@ if __name__ == "__main__":
             print(f"  {entry['start']:.1f}s: {entry['text'][:50]}")
     else:
         print("  No transcript available")
-
-

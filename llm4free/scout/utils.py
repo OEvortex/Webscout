@@ -26,7 +26,7 @@ def decode_markup(markup: Union[str, bytes], encoding: Optional[str] = None) -> 
             pass
 
     # Try common encodings - we got options! 💪
-    encodings = ['utf-8', 'latin1', 'iso-8859-1', 'ascii']
+    encodings = ["utf-8", "latin1", "iso-8859-1", "ascii"]
 
     for enc in encodings:
         try:
@@ -35,4 +35,4 @@ def decode_markup(markup: Union[str, bytes], encoding: Optional[str] = None) -> 
             continue
 
     # Last resort - ignore errors and keep it moving! 🚀
-    return markup.decode('utf-8', errors='ignore')
+    return markup.decode("utf-8", errors="ignore")

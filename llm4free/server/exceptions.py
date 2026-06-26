@@ -18,19 +18,24 @@ def clean_text(text):
         return text
 
     # Remove null bytes
-    text = text.replace('\x00', '')
+    text = text.replace("\x00", "")
 
     # Keep newlines, tabs, and other printable characters, remove other control chars
     # This regex matches control characters except \n, \r, \t
-    return re.sub(r'[\x01-\x08\x0b\x0c\x0e-\x1f\x7f]', '', text)
+    return re.sub(r"[\x01-\x08\x0b\x0c\x0e-\x1f\x7f]", "", text)
 
 
 class APIError(Exception):
     """Custom exception for API errors."""
 
-    def __init__(self, message: str, status_code: int = HTTP_500_INTERNAL_SERVER_ERROR,
-                 error_type: str = "server_error", param: Optional[str] = None,
-                 code: Optional[str] = None):
+    def __init__(
+        self,
+        message: str,
+        status_code: int = HTTP_500_INTERNAL_SERVER_ERROR,
+        error_type: str = "server_error",
+        param: Optional[str] = None,
+        code: Optional[str] = None,
+    ):
         self.message = message
         self.status_code = status_code
         self.error_type = error_type
@@ -41,15 +46,11 @@ class APIError(Exception):
     def to_response(self) -> JSONResponse:
         """Convert to FastAPI JSONResponse."""
         error_detail = ErrorDetail(
-            message=self.message,
-            type=self.error_type,
-            param=self.param,
-            code=self.code
+            message=self.message, type=self.error_type, param=self.param, code=self.code
         )
         error_response = ErrorResponse(error=error_detail)
         return JSONResponse(
-            status_code=self.status_code,
-            content=error_response.model_dump(exclude_none=True)
+            status_code=self.status_code, content=error_response.model_dump(exclude_none=True)
         )
 
 
@@ -59,11 +60,13 @@ def format_exception(e) -> str:
         message = e
     else:
         message = f"{e.__class__.__name__}: {str(e)}"
-    return json.dumps({
-        "error": {
-            "message": message,
-            "type": "server_error",
-            "param": None,
-            "code": "internal_server_error"
+    return json.dumps(
+        {
+            "error": {
+                "message": message,
+                "type": "server_error",
+                "param": None,
+                "code": "internal_server_error",
+            }
         }
-    })
+    )

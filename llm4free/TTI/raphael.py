@@ -258,11 +258,13 @@ class RaphaelAI(TTICompatibleProvider):
             self.session = session
         else:
             self.session = requests.Session()
-            self.session.headers.update({
-                "accept": "*/*",
-                "accept-language": "en-US,en;q=0.9",
-                "user-agent": LitAgent().random(),
-            })
+            self.session.headers.update(
+                {
+                    "accept": "*/*",
+                    "accept-language": "en-US,en;q=0.9",
+                    "user-agent": LitAgent().random(),
+                }
+            )
         self.images = Images(self)
 
     @classmethod

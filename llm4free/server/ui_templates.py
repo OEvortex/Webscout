@@ -1,4 +1,3 @@
-
 """
 UI Templates for LLM4Free Server.
 Contains HTML/CSS/JS for the landing page and custom Swagger UI.

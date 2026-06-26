@@ -22,7 +22,6 @@ from llm4free.llm.base import (
 )
 from llm4free.llm.utils import ChatCompletion, ChatCompletionMessage, Choice
 
-
 # ═════════════════════════════════════════════════════════════════════════ #
 #  Helper: a minimal non-native provider for unit tests
 # ═════════════════════════════════════════════════════════════════════════ #
@@ -48,7 +47,9 @@ class _MockCompletions(BaseCompletions):
         tools: Optional[List[Union[Tool, Dict[str, Any]]]] = None,
         **kwargs: Any,
     ) -> ChatCompletion:
-        content = self.responses[self.call_count] if self.call_count < len(self.responses) else "fallback"
+        content = (
+            self.responses[self.call_count] if self.call_count < len(self.responses) else "fallback"
+        )
         self.call_count += 1
         msg = ChatCompletionMessage(role="assistant", content=content)
         choice = Choice(index=0, message=msg, finish_reason="stop")
@@ -94,7 +95,7 @@ class TestToolXmlHelpers(unittest.TestCase):
         text = (
             "<invoke>"
             "<tool_name>get_weather</tool_name>"
-            "<parameters>{\"city\": \"London\"}</parameters>"
+            '<parameters>{"city": "London"}</parameters>'
             "</invoke>"
         )
         calls = BaseCompletions.extract_tool_calls(text)
@@ -107,12 +108,12 @@ class TestToolXmlHelpers(unittest.TestCase):
         text = (
             "<invoke>"
             "<tool_name>tool_a</tool_name>"
-            "<parameters>{\"x\": 1}</parameters>"
+            '<parameters>{"x": 1}</parameters>'
             "</invoke>"
             "some text"
             "<invoke>"
             "<tool_name>tool_b</tool_name>"
-            "<parameters>{\"y\": 2}</parameters>"
+            '<parameters>{"y": 2}</parameters>'
             "</invoke>"
         )
         calls = BaseCompletions.extract_tool_calls(text)
@@ -128,12 +129,7 @@ class TestToolXmlHelpers(unittest.TestCase):
         assert BaseCompletions.extract_tool_calls("") is None
 
     def test_extract_tool_calls_invalid_json_args(self) -> None:
-        text = (
-            "<invoke>"
-            "<tool_name>bad_tool</tool_name>"
-            "<parameters>{invalid}</parameters>"
-            "</invoke>"
-        )
+        text = "<invoke><tool_name>bad_tool</tool_name><parameters>{invalid}</parameters></invoke>"
         calls = BaseCompletions.extract_tool_calls(text)
         assert calls is not None
         assert calls[0]["arguments"] == {}
@@ -197,12 +193,14 @@ class TestNonNativeToolLoop(unittest.TestCase):
     def test_tool_loop_returns_tool_calls(self) -> None:
         """When the model returns XML invoke, the response should have
         native tool_calls and content=None."""
-        self.completions.set_responses([
-            "<invoke>"
-            "<tool_name>get_weather</tool_name>"
-            "<parameters>{\"city\": \"Paris\"}</parameters>"
-            "</invoke>"
-        ])
+        self.completions.set_responses(
+            [
+                "<invoke>"
+                "<tool_name>get_weather</tool_name>"
+                '<parameters>{"city": "Paris"}</parameters>'
+                "</invoke>"
+            ]
+        )
         result = self.completions._run_non_native_tool_loop(
             self.completions.create,
             model="mock-model",
@@ -233,12 +231,14 @@ class TestNonNativeToolLoop(unittest.TestCase):
 
     def test_tool_loop_handles_dict_tools(self) -> None:
         """Tools passed as dicts (OpenAI format) should also work."""
-        self.completions.set_responses([
-            "<invoke>"
-            "<tool_name>get_weather</tool_name>"
-            "<parameters>{\"city\": \"London\"}</parameters>"
-            "</invoke>"
-        ])
+        self.completions.set_responses(
+            [
+                "<invoke>"
+                "<tool_name>get_weather</tool_name>"
+                '<parameters>{"city": "London"}</parameters>'
+                "</invoke>"
+            ]
+        )
         dict_tool = {
             "type": "function",
             "function": {
@@ -265,8 +265,10 @@ class TestNonNativeToolLoop(unittest.TestCase):
         result = self.completions._run_non_native_tool_loop(
             self.completions.create,
             model="mock-model",
-            messages=[{"role": "system", "content": "You are a helpful assistant."},
-                       {"role": "user", "content": "Hi"}],
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": "Hi"},
+            ],
             tools=[self.tool],
         )
         assert result.choices[0].message.content == "Final answer."
@@ -274,13 +276,15 @@ class TestNonNativeToolLoop(unittest.TestCase):
     def test_external_pattern_full_round_trip(self) -> None:
         """Simulate the full external tool calling flow (OpenAI pattern)."""
         # Round 1: model returns tool call
-        self.completions.set_responses([
-            "<invoke>"
-            "<tool_name>get_weather</tool_name>"
-            "<parameters>{\"city\": \"Tokyo\"}</parameters>"
-            "</invoke>",
-            "The weather in Tokyo is warm.",
-        ])
+        self.completions.set_responses(
+            [
+                "<invoke>"
+                "<tool_name>get_weather</tool_name>"
+                '<parameters>{"city": "Tokyo"}</parameters>'
+                "</invoke>",
+                "The weather in Tokyo is warm.",
+            ]
+        )
         resp1 = self.completions._run_non_native_tool_loop(
             self.completions.create,
             model="mock-model",
@@ -292,8 +296,6 @@ class TestNonNativeToolLoop(unittest.TestCase):
         assert tc.function.name == "get_weather"
 
         # Simulate user executing the tool and calling again
-        import json
-        args = json.loads(tc.function.arguments)
         result = "warm and sunny"
 
         messages = [
@@ -320,8 +322,10 @@ class InitTrackingCompletions(BaseCompletions):
     def create(self, **kw):
         msg = ChatCompletionMessage(role="assistant", content="ok")
         return ChatCompletion(
-            id="x", choices=[Choice(index=0, message=msg, finish_reason="stop")],
-            model="m", created=int(time.time()),
+            id="x",
+            choices=[Choice(index=0, message=msg, finish_reason="stop")],
+            model="m",
+            created=int(time.time()),
         )
 
 
@@ -337,8 +341,10 @@ class TestWrappingBehavior(unittest.TestCase):
         class NonNativeProv(OpenAICompatibleProvider):
             supports_tools = False
             AVAILABLE_MODELS = ["m"]
+
             def __init__(self):
                 self.chat = InitTrackingChat(self)
+
             @property
             def models(self):
                 return SimpleModelList(self.AVAILABLE_MODELS)
@@ -350,8 +356,10 @@ class TestWrappingBehavior(unittest.TestCase):
         class NativeProv(OpenAICompatibleProvider):
             supports_tools = True
             AVAILABLE_MODELS = ["m"]
+
             def __init__(self):
                 self.chat = InitTrackingChat(self)
+
             @property
             def models(self):
                 return SimpleModelList(self.AVAILABLE_MODELS)
@@ -363,8 +371,10 @@ class TestWrappingBehavior(unittest.TestCase):
         class PassProv(OpenAICompatibleProvider):
             supports_tools = False
             AVAILABLE_MODELS = ["m"]
+
             def __init__(self):
                 self.chat = InitTrackingChat(self)
+
             @property
             def models(self):
                 return SimpleModelList(self.AVAILABLE_MODELS)
@@ -401,6 +411,7 @@ def _check_tool_response(resp: Any, keyword: str = "") -> str:
 
 try:
     from llm4free.llm.freeai import FreeAI
+
     HAS_FREEAI = True
 except ImportError:
     HAS_FREEAI = False
@@ -410,7 +421,8 @@ def _freeai_reachable() -> bool:
     """Quick connectivity check so we don't hang for 30s on an unreachable host."""
     try:
         from curl_cffi import requests
-        r = requests.get("https://api.free.ai/v1/chat/", timeout=5, impersonate="chrome110")
+
+        requests.get("https://api.free.ai/v1/chat/", timeout=5, impersonate="chrome110")
         # Any response (even 404/405) means the host is reachable
         return True
     except Exception:
@@ -447,6 +459,7 @@ class TestFreeAINonNativeToolCalling:
 
 try:
     from llm4free.llm.k2think import K2Think
+
     HAS_K2THINK = True
 except ImportError:
     HAS_K2THINK = False
@@ -475,8 +488,12 @@ class TestK2ThinkNonNativeToolCalling:
 
     def test_tool_call_with_simple_tool(self):
         def get_capital(country: str) -> str:
-            capitals = {"france": "Paris", "germany": "Berlin",
-                        "japan": "Tokyo", "india": "New Delhi"}
+            capitals = {
+                "france": "Paris",
+                "germany": "Berlin",
+                "japan": "Tokyo",
+                "india": "New Delhi",
+            }
             return capitals.get(country.lower(), f"Capital of {country} not found")
 
         tool = Tool(
@@ -535,14 +552,24 @@ class TestK2ThinkNonNativeToolCalling:
             return a * b
 
         tools = [
-            Tool(name="add", description="Add two numbers",
-                 parameters={"a": {"type": "integer", "description": "First number"},
-                             "b": {"type": "integer", "description": "Second number"}},
-                 implementation=add),
-            Tool(name="multiply", description="Multiply two numbers",
-                 parameters={"a": {"type": "integer", "description": "First number"},
-                             "b": {"type": "integer", "description": "Second number"}},
-                 implementation=multiply),
+            Tool(
+                name="add",
+                description="Add two numbers",
+                parameters={
+                    "a": {"type": "integer", "description": "First number"},
+                    "b": {"type": "integer", "description": "Second number"},
+                },
+                implementation=add,
+            ),
+            Tool(
+                name="multiply",
+                description="Multiply two numbers",
+                parameters={
+                    "a": {"type": "integer", "description": "First number"},
+                    "b": {"type": "integer", "description": "Second number"},
+                },
+                implementation=multiply,
+            ),
         ]
 
         resp1 = self.provider.chat.completions.create(
@@ -582,6 +609,7 @@ class TestK2ThinkNonNativeToolCalling:
 
 try:
     from llm4free.llm.toolbaz import Toolbaz
+
     HAS_TOOLBAZ = True
 except ImportError:
     HAS_TOOLBAZ = False
@@ -590,6 +618,7 @@ except ImportError:
 def _toolbaz_reachable() -> bool:
     try:
         from curl_cffi import requests
+
         requests.get("https://data.toolbaz.com/", timeout=5, impersonate="chrome110")
         return True
     except Exception:
@@ -627,9 +656,14 @@ class TestToolbazNonNativeToolCalling:
 
     def test_tool_call_with_simple_tool(self):
         import json as _json
+
         def get_capital(country: str) -> str:
-            capitals = {"france": "Paris", "germany": "Berlin",
-                        "japan": "Tokyo", "india": "New Delhi"}
+            capitals = {
+                "france": "Paris",
+                "germany": "Berlin",
+                "japan": "Tokyo",
+                "india": "New Delhi",
+            }
             return capitals.get(country.lower(), f"Capital of {country} not found")
 
         tool = Tool(
@@ -677,9 +711,12 @@ class TestToolbazNonNativeToolCalling:
         )
         _check_tool_response(resp2, "Paris")
 
-    @pytest.mark.xfail(reason="toolbaz_v4 model may not reliably follow XML tool instructions for math")
+    @pytest.mark.xfail(
+        reason="toolbaz_v4 model may not reliably follow XML tool instructions for math"
+    )
     def test_multiple_tools(self):
         import json as _json
+
         def add(a: int, b: int) -> int:
             return a + b
 
@@ -687,14 +724,24 @@ class TestToolbazNonNativeToolCalling:
             return a * b
 
         tools = [
-            Tool(name="add", description="Add two numbers",
-                 parameters={"a": {"type": "integer", "description": "First number"},
-                             "b": {"type": "integer", "description": "Second number"}},
-                 implementation=add),
-            Tool(name="multiply", description="Multiply two numbers",
-                 parameters={"a": {"type": "integer", "description": "First number"},
-                             "b": {"type": "integer", "description": "Second number"}},
-                 implementation=multiply),
+            Tool(
+                name="add",
+                description="Add two numbers",
+                parameters={
+                    "a": {"type": "integer", "description": "First number"},
+                    "b": {"type": "integer", "description": "Second number"},
+                },
+                implementation=add,
+            ),
+            Tool(
+                name="multiply",
+                description="Multiply two numbers",
+                parameters={
+                    "a": {"type": "integer", "description": "First number"},
+                    "b": {"type": "integer", "description": "Second number"},
+                },
+                implementation=multiply,
+            ),
         ]
 
         resp1 = self.provider.chat.completions.create(
@@ -731,6 +778,7 @@ class TestToolbazNonNativeToolCalling:
 
 try:
     from llm4free.llm.essentialai import EssentialAI
+
     HAS_ESSENTIAL = True
 except ImportError:
     HAS_ESSENTIAL = False

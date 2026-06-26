@@ -10,6 +10,8 @@ from typing import Any, Dict, Generator, List, Optional, Union, cast
 from curl_cffi import requests as curl_requests
 from curl_cffi.requests import exceptions as curl_exceptions
 
+from llm4free.litagent import LitAgent
+
 # Import base classes and utility structures
 from llm4free.llm.base import (
     BaseChat,
@@ -26,8 +28,6 @@ from llm4free.llm.utils import (
     CompletionUsage,
     count_tokens,
 )
-
-from llm4free.litagent import LitAgent
 
 # ANSI escape codes for formatting
 

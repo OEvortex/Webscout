@@ -139,11 +139,13 @@ class BraveVideos(BraveBase):
             Exception: If the request fails after retries.
         """
         headers = dict(self.session.headers) if getattr(self, "session", None) else {}
-        headers.update({
-            "Referer": "https://search.brave.com/",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.9",
-        })
+        headers.update(
+            {
+                "Referer": "https://search.brave.com/",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.9",
+            }
+        )
 
         attempts = 3
         backoff = 1.0
@@ -271,9 +273,24 @@ class BraveVideos(BraveBase):
                 if any(c.isdigit() for c in text) and not any(
                     month in text.lower()
                     for month in [
-                        "jan", "feb", "mar", "apr", "may", "jun",
-                        "jul", "aug", "sep", "oct", "nov", "dec",
-                        "hour", "day", "week", "month", "year", "ago",
+                        "jan",
+                        "feb",
+                        "mar",
+                        "apr",
+                        "may",
+                        "jun",
+                        "jul",
+                        "aug",
+                        "sep",
+                        "oct",
+                        "nov",
+                        "dec",
+                        "hour",
+                        "day",
+                        "week",
+                        "month",
+                        "year",
+                        "ago",
                     ]
                 ):
                     view_count = self._parse_view_count(text)
@@ -361,4 +378,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Error during search: {e}")
         import traceback
+
         traceback.print_exc()

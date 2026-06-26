@@ -5,6 +5,7 @@ from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi import CurlError, requests
 
+from llm4free.litagent import LitAgent
 from llm4free.llm.base import (
     BaseChat,
     BaseCompletions,
@@ -20,8 +21,6 @@ from llm4free.llm.utils import (
     CompletionUsage,
     format_prompt,
 )
-
-from llm4free.litagent import LitAgent
 
 CHAT_FN_INDEX = 1
 SEND_TRIGGER_ID = 19
@@ -59,9 +58,7 @@ def _process_differential_ops(ops: list, message_contents: Dict[int, str]) -> st
         ):
             msg_idx = field_path[0]
             message_contents[msg_idx] = message_contents.get(msg_idx, "") + text
-    return "".join(
-        message_contents.get(i, "") for i in sorted(message_contents.keys())
-    )
+    return "".join(message_contents.get(i, "") for i in sorted(message_contents.keys()))
 
 
 class Completions(BaseCompletions):
@@ -92,9 +89,7 @@ class Completions(BaseCompletions):
         if stream:
             return self._create_stream(request_id, created_time, session_hash, timeout, proxies)
         else:
-            return self._create_non_stream(
-                request_id, created_time, session_hash, timeout, proxies
-            )
+            return self._create_non_stream(request_id, created_time, session_hash, timeout, proxies)
 
     def _create_stream(
         self,
@@ -121,7 +116,11 @@ class Completions(BaseCompletions):
             for raw_line in resp.iter_lines():
                 if not raw_line:
                     continue
-                line = raw_line.decode("utf-8", errors="replace") if isinstance(raw_line, bytes) else raw_line
+                line = (
+                    raw_line.decode("utf-8", errors="replace")
+                    if isinstance(raw_line, bytes)
+                    else raw_line
+                )
                 if not line.startswith("data:"):
                     continue
                 try:
@@ -200,7 +199,9 @@ class Completions(BaseCompletions):
     ) -> ChatCompletion:
         try:
             full_text = ""
-            for chunk in self._create_stream(request_id, created_time, session_hash, timeout, proxies):
+            for chunk in self._create_stream(
+                request_id, created_time, session_hash, timeout, proxies
+            ):
                 if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
                     full_text += chunk.choices[0].delta.content
 

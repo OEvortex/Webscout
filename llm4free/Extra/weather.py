@@ -20,18 +20,18 @@ class CurrentCondition:
         Args:
             data: Current condition data dictionary from wttr.in
         """
-        self.temp_c: Optional[str] = data.get('temp_C')
-        self.temp_f: Optional[str] = data.get('temp_F')
-        self.feels_like_c: Optional[str] = data.get('FeelsLikeC')
-        self.feels_like_f: Optional[str] = data.get('FeelsLikeF')
-        self.weather_desc: str = data.get('weatherDesc', [{}])[0].get('value', '')
-        self.weather_code: Optional[str] = data.get('weatherCode')
-        self.humidity: Optional[str] = data.get('humidity')
-        self.visibility: Optional[str] = data.get('visibility')
-        self.pressure: Optional[str] = data.get('pressure')
-        self.wind_speed_kmph: Optional[str] = data.get('windspeedKmph')
-        self.wind_direction: Optional[str] = data.get('winddir16Point')
-        self.wind_degree: Optional[str] = data.get('winddirDegree')
+        self.temp_c: Optional[str] = data.get("temp_C")
+        self.temp_f: Optional[str] = data.get("temp_F")
+        self.feels_like_c: Optional[str] = data.get("FeelsLikeC")
+        self.feels_like_f: Optional[str] = data.get("FeelsLikeF")
+        self.weather_desc: str = data.get("weatherDesc", [{}])[0].get("value", "")
+        self.weather_code: Optional[str] = data.get("weatherCode")
+        self.humidity: Optional[str] = data.get("humidity")
+        self.visibility: Optional[str] = data.get("visibility")
+        self.pressure: Optional[str] = data.get("pressure")
+        self.wind_speed_kmph: Optional[str] = data.get("windspeedKmph")
+        self.wind_direction: Optional[str] = data.get("winddir16Point")
+        self.wind_degree: Optional[str] = data.get("winddirDegree")
 
 
 class Location:
@@ -43,11 +43,11 @@ class Location:
         Args:
             data: Location data dictionary from wttr.in
         """
-        self.name: str = data.get('areaName', [{}])[0].get('value', '')
-        self.country: str = data.get('country', [{}])[0].get('value', '')
-        self.region: str = data.get('region', [{}])[0].get('value', '')
-        self.latitude: Optional[str] = data.get('latitude')
-        self.longitude: Optional[str] = data.get('longitude')
+        self.name: str = data.get("areaName", [{}])[0].get("value", "")
+        self.country: str = data.get("country", [{}])[0].get("value", "")
+        self.region: str = data.get("region", [{}])[0].get("value", "")
+        self.latitude: Optional[str] = data.get("latitude")
+        self.longitude: Optional[str] = data.get("longitude")
 
 
 class HourlyForecast:
@@ -59,17 +59,17 @@ class HourlyForecast:
         Args:
             data: Hourly forecast data dictionary from wttr.in
         """
-        self.time: Optional[str] = data.get('time')
-        self.temp_c: Optional[str] = data.get('tempC')
-        self.temp_f: Optional[str] = data.get('tempF')
-        self.weather_desc: str = data.get('weatherDesc', [{}])[0].get('value', '')
-        self.weather_code: Optional[str] = data.get('weatherCode')
-        self.wind_speed_kmph: Optional[str] = data.get('windspeedKmph')
-        self.wind_direction: Optional[str] = data.get('winddir16Point')
-        self.feels_like_c: Optional[str] = data.get('FeelsLikeC')
-        self.feels_like_f: Optional[str] = data.get('FeelsLikeF')
-        self.chance_of_rain: Optional[str] = data.get('chanceofrain')
-        self.chance_of_snow: Optional[str] = data.get('chanceofsnow')
+        self.time: Optional[str] = data.get("time")
+        self.temp_c: Optional[str] = data.get("tempC")
+        self.temp_f: Optional[str] = data.get("tempF")
+        self.weather_desc: str = data.get("weatherDesc", [{}])[0].get("value", "")
+        self.weather_code: Optional[str] = data.get("weatherCode")
+        self.wind_speed_kmph: Optional[str] = data.get("windspeedKmph")
+        self.wind_direction: Optional[str] = data.get("winddir16Point")
+        self.feels_like_c: Optional[str] = data.get("FeelsLikeC")
+        self.feels_like_f: Optional[str] = data.get("FeelsLikeF")
+        self.chance_of_rain: Optional[str] = data.get("chanceofrain")
+        self.chance_of_snow: Optional[str] = data.get("chanceofsnow")
 
 
 class DayForecast:
@@ -81,34 +81,34 @@ class DayForecast:
         Args:
             data: Daily forecast data dictionary from wttr.in
         """
-        self.date: Optional[str] = data.get('date')
+        self.date: Optional[str] = data.get("date")
         self.date_formatted: Optional[str] = None
         if self.date:
             try:
-                self.date_formatted = datetime.strptime(self.date, '%Y-%m-%d').strftime('%a, %b %d')
+                self.date_formatted = datetime.strptime(self.date, "%Y-%m-%d").strftime("%a, %b %d")
             except ValueError:
                 pass
 
-        self.max_temp_c: Optional[str] = data.get('maxtempC')
-        self.max_temp_f: Optional[str] = data.get('maxtempF')
-        self.min_temp_c: Optional[str] = data.get('mintempC')
-        self.min_temp_f: Optional[str] = data.get('mintempF')
-        self.avg_temp_c: Optional[str] = data.get('avgtempC')
-        self.avg_temp_f: Optional[str] = data.get('avgtempF')
-        self.sun_hour: Optional[str] = data.get('sunHour')
+        self.max_temp_c: Optional[str] = data.get("maxtempC")
+        self.max_temp_f: Optional[str] = data.get("maxtempF")
+        self.min_temp_c: Optional[str] = data.get("mintempC")
+        self.min_temp_f: Optional[str] = data.get("mintempF")
+        self.avg_temp_c: Optional[str] = data.get("avgtempC")
+        self.avg_temp_f: Optional[str] = data.get("avgtempF")
+        self.sun_hour: Optional[str] = data.get("sunHour")
 
         # Parse astronomy data (simplified)
-        if data.get('astronomy') and len(data.get('astronomy', [])) > 0:
-            astro = data.get('astronomy', [{}])[0]
-            self.sunrise: Optional[str] = astro.get('sunrise')
-            self.sunset: Optional[str] = astro.get('sunset')
-            self.moon_phase: Optional[str] = astro.get('moon_phase')
+        if data.get("astronomy") and len(data.get("astronomy", [])) > 0:
+            astro = data.get("astronomy", [{}])[0]
+            self.sunrise: Optional[str] = astro.get("sunrise")
+            self.sunset: Optional[str] = astro.get("sunset")
+            self.moon_phase: Optional[str] = astro.get("moon_phase")
         else:
             self.sunrise = self.sunset = self.moon_phase = None
 
         # Parse hourly forecasts
         self.hourly: List[HourlyForecast] = []
-        for hour_data in data.get('hourly', []):
+        for hour_data in data.get("hourly", []):
             self.hourly.append(HourlyForecast(hour_data))
 
 
@@ -129,17 +129,17 @@ class Weather:
 
         # Parse current condition
         self.current_condition: Optional[CurrentCondition] = None
-        if data.get('current_condition') and len(data.get('current_condition', [])) > 0:
-            self.current_condition = CurrentCondition(data.get('current_condition', [{}])[0])
+        if data.get("current_condition") and len(data.get("current_condition", [])) > 0:
+            self.current_condition = CurrentCondition(data.get("current_condition", [{}])[0])
 
         # Parse location
         self.location: Optional[Location] = None
-        if data.get('nearest_area') and len(data.get('nearest_area', [])) > 0:
-            self.location = Location(data.get('nearest_area', [{}])[0])
+        if data.get("nearest_area") and len(data.get("nearest_area", [])) > 0:
+            self.location = Location(data.get("nearest_area", [{}])[0])
 
         # Parse forecast days
         self.forecast_days: List[DayForecast] = []
-        for day_data in data.get('weather', []):
+        for day_data in data.get("weather", []):
             self.forecast_days.append(DayForecast(day_data))
 
     @property

@@ -14,6 +14,7 @@ from .base import AsyncTempMailProvider, TempMailProvider
 @dataclass
 class DomainModel:
     """Domain model for TempMail.io API"""
+
     name: str
     type: str
     forward_available: str
@@ -23,6 +24,7 @@ class DomainModel:
 @dataclass
 class CreateEmailResponseModel:
     """Response model for email creation in TempMail.io API"""
+
     email: str
     token: str
 
@@ -30,6 +32,7 @@ class CreateEmailResponseModel:
 @dataclass
 class MessageResponseModel:
     """Message model for TempMail.io API"""
+
     attachments: Optional[List[Any]]
     body_html: Optional[str]
     body_text: Optional[str]
@@ -58,10 +61,10 @@ class TempMailIOAsync(AsyncTempMailProvider):
         self._session = aiohttp.ClientSession(
             base_url="https://api.internal.temp-mail.io",
             headers={
-                'Host': 'api.internal.temp-mail.io',
-                'User-Agent': 'okhttp/4.5.0',
-                'Connection': 'close'
-            }
+                "Host": "api.internal.temp-mail.io",
+                "User-Agent": "okhttp/4.5.0",
+                "Connection": "close",
+            },
         )
         return self
 
@@ -91,16 +94,21 @@ class TempMailIOAsync(AsyncTempMailProvider):
         try:
             async with self._session.get("/api/v3/domains") as response:
                 response_json = await response.json()
-                return [DomainModel(
-                    domain['name'],
-                    domain['type'],
-                    domain['forward_available'],
-                    domain['forward_max_seconds']
-                ) for domain in response_json['domains']]
+                return [
+                    DomainModel(
+                        domain["name"],
+                        domain["type"],
+                        domain["forward_available"],
+                        domain["forward_max_seconds"],
+                    )
+                    for domain in response_json["domains"]
+                ]
         except Exception:
             return []
 
-    async def create_email(self, alias: Optional[str] = None, domain: Optional[str] = None) -> Tuple[str, str]:
+    async def create_email(
+        self, alias: Optional[str] = None, domain: Optional[str] = None
+    ) -> Tuple[str, str]:
         """Create a new temporary email"""
         if not self._session:
             await self.initialize()
@@ -110,12 +118,11 @@ class TempMailIOAsync(AsyncTempMailProvider):
 
         try:
             async with self._session.post(
-                "/api/v3/email/new",
-                data={'name': alias, 'domain': domain}
+                "/api/v3/email/new", data={"name": alias, "domain": domain}
             ) as response:
                 response_json = await response.json()
-                self.email = response_json['email']
-                self.token = response_json['token']
+                self.email = response_json["email"]
+                self.token = response_json["token"]
                 return str(self.email), str(self.token)
         except Exception:
             return "", ""
@@ -130,8 +137,7 @@ class TempMailIOAsync(AsyncTempMailProvider):
 
         try:
             async with self._session.delete(
-                f"/api/v3/email/{self.email}",
-                data={'token': self.token}
+                f"/api/v3/email/{self.email}", data={"token": self.token}
             ) as response:
                 success = response.status == 200
                 if success:
@@ -158,13 +164,15 @@ class TempMailIOAsync(AsyncTempMailProvider):
                 messages = []
                 for message in response_json:
                     msg_dict = {
-                        'msg_id': message['id'],
-                        'from': message['from'],
-                        'to': message['to'],
-                        'subject': message['subject'] if 'subject' in message else "",
-                        'body': message['body_text'] or message['body_html'],
-                        'hasAttachments': bool(message['attachments'] and len(message['attachments']) > 0),
-                        'createdAt': message['created_at']
+                        "msg_id": message["id"],
+                        "from": message["from"],
+                        "to": message["to"],
+                        "subject": message["subject"] if "subject" in message else "",
+                        "body": message["body_text"] or message["body_html"],
+                        "hasAttachments": bool(
+                            message["attachments"] and len(message["attachments"]) > 0
+                        ),
+                        "createdAt": message["created_at"],
                     }
                     messages.append(msg_dict)
                 return messages
@@ -186,12 +194,15 @@ class TempMailIO(TempMailProvider):
             auto_create: Automatically create an email upon initialization
         """
         from curl_cffi.requests import Session
+
         self.session = Session()
-        self.session.headers.update({
-            'Host': 'api.internal.temp-mail.io',
-            'User-Agent': 'okhttp/4.5.0',
-            'Connection': 'close'
-        })
+        self.session.headers.update(
+            {
+                "Host": "api.internal.temp-mail.io",
+                "User-Agent": "okhttp/4.5.0",
+                "Connection": "close",
+            }
+        )
         self.base_url = "https://api.internal.temp-mail.io"
         self.email = None
         self.token = None
@@ -206,26 +217,26 @@ class TempMailIO(TempMailProvider):
             response = self.session.get(f"{self.base_url}/api/v3/domains")
             response.raise_for_status()
             response_json = response.json()
-            return [DomainModel(
-                domain['name'],
-                domain['type'],
-                domain['forward_available'],
-                domain['forward_max_seconds']
-            ) for domain in response_json['domains']]
+            return [
+                DomainModel(
+                    domain["name"],
+                    domain["type"],
+                    domain["forward_available"],
+                    domain["forward_max_seconds"],
+                )
+                for domain in response_json["domains"]
+            ]
         except Exception:
             return []
 
     def create_account(self) -> bool:
         """Create a new temporary email account"""
         try:
-            response = self.session.post(
-                f"{self.base_url}/api/v3/email/new",
-                data={}
-            )
+            response = self.session.post(f"{self.base_url}/api/v3/email/new", data={})
             response.raise_for_status()
             response_json = response.json()
-            self.email = response_json['email']
-            self.token = response_json['token']
+            self.email = response_json["email"]
+            self.token = response_json["token"]
             return True
         except Exception:
             return False
@@ -245,13 +256,15 @@ class TempMailIO(TempMailProvider):
             messages = []
             for message in response_json:
                 msg_dict = {
-                    'msg_id': message['id'],
-                    'from': message['from'] if 'from' in message else "",
-                    'to': message['to'] if 'to' in message else "",
-                    'subject': message['subject'] if 'subject' in message else "",
-                    'body': message['body_text'] or message['body_html'] or "",
-                    'hasAttachments': bool(message.get('attachments') and len(message['attachments']) > 0),
-                    'createdAt': message['created_at']
+                    "msg_id": message["id"],
+                    "from": message["from"] if "from" in message else "",
+                    "to": message["to"] if "to" in message else "",
+                    "subject": message["subject"] if "subject" in message else "",
+                    "body": message["body_text"] or message["body_html"] or "",
+                    "hasAttachments": bool(
+                        message.get("attachments") and len(message["attachments"]) > 0
+                    ),
+                    "createdAt": message["created_at"],
                 }
                 messages.append(msg_dict)
             return messages
@@ -280,8 +293,7 @@ class TempMailIO(TempMailProvider):
 
         try:
             response = self.session.delete(
-                f"{self.base_url}/api/v3/email/{self.email}",
-                data={'token': self.token}
+                f"{self.base_url}/api/v3/email/{self.email}", data={"token": self.token}
             )
             response.raise_for_status()
             success = response.status_code == 200
@@ -298,7 +310,4 @@ class TempMailIO(TempMailProvider):
         if not self.email or not self.token:
             return {}
 
-        return {
-            'email': self.email,
-            'token': self.token
-        }
+        return {"email": self.email, "token": self.token}

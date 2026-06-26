@@ -9,6 +9,7 @@ from ...base import BaseSearchEngine
 
 T = TypeVar("T")
 
+
 class YahooSearchEngine(BaseSearchEngine[T], Generic[T]):
     """Base class for Yahoo search engines.
 

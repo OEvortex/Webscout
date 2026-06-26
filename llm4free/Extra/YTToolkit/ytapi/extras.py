@@ -14,7 +14,6 @@ from .utils import dup_filter, request
 
 
 class Extras:
-
     @staticmethod
     def trending_videos(limit: Optional[int] = None) -> Optional[List[str]]:
         """
@@ -175,4 +174,3 @@ class Extras:
             return dup_filter(video_ids, limit) if video_ids else None
         except Exception:
             return None
-

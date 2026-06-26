@@ -23,17 +23,14 @@ __all__ = [
     # Base classes
     "BaseSearch",
     "BaseSearchEngine",
-
     # Main search interfaces
     "BraveSearch",
     "DuckDuckGoSearch",
     "BingSearch",
     "YahooSearch",
-
     # Individual engines
     "Mojeek",
     "Wikipedia",
-
     # Result models
     "TextResult",
     "ImagesResult",

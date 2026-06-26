@@ -90,7 +90,9 @@ class DuckDuckGoTextSearch(DuckDuckGoBase):
 
         def _text_html_page(s: int) -> list[TextResult]:
             payload["s"] = f"{s}"
-            resp_content = self._get_url("POST", "https://html.duckduckgo.com/html", data=payload).content
+            resp_content = self._get_url(
+                "POST", "https://html.duckduckgo.com/html", data=payload
+            ).content
             if b"No  results." in resp_content:
                 return []
 
@@ -107,14 +109,25 @@ class DuckDuckGoTextSearch(DuckDuckGoBase):
                         href
                         and href not in cache
                         and not href.startswith(
-                            ("http://www.google.com/search?q=", "https://duckduckgo.com/y.js?ad_domain")
+                            (
+                                "http://www.google.com/search?q=",
+                                "https://duckduckgo.com/y.js?ad_domain",
+                            )
                         )
                     ):
                         cache.add(href)
                         titlexpath = e.xpath("./h2/a/text()")
-                        title = str(titlexpath[0]) if titlexpath and isinstance(titlexpath, list) else ""
+                        title = (
+                            str(titlexpath[0])
+                            if titlexpath and isinstance(titlexpath, list)
+                            else ""
+                        )
                         bodyxpath = e.xpath("./a//text()")
-                        body = "".join(str(x) for x in bodyxpath) if bodyxpath and isinstance(bodyxpath, list) else ""
+                        body = (
+                            "".join(str(x) for x in bodyxpath)
+                            if bodyxpath and isinstance(bodyxpath, list)
+                            else ""
+                        )
                         result = TextResult(
                             title=self._normalize(title),
                             href=self._normalize_url(href),
@@ -162,7 +175,9 @@ class DuckDuckGoTextSearch(DuckDuckGoBase):
 
         def _text_lite_page(s: int) -> list[TextResult]:
             payload["s"] = f"{s}"
-            resp_content = self._get_url("POST", "https://lite.duckduckgo.com/lite/", data=payload).content
+            resp_content = self._get_url(
+                "POST", "https://lite.duckduckgo.com/lite/", data=payload
+            ).content
             if b"No more results." in resp_content:
                 return []
 
@@ -179,19 +194,28 @@ class DuckDuckGoTextSearch(DuckDuckGoBase):
                 if isinstance(e, self.parser.etree.Element):
                     if i == 1:
                         hrefxpath = e.xpath(".//a//@href")
-                        href = str(hrefxpath[0]) if hrefxpath and isinstance(hrefxpath, list) else None
+                        href = (
+                            str(hrefxpath[0]) if hrefxpath and isinstance(hrefxpath, list) else None
+                        )
                         if (
                             href is None
                             or href in cache
                             or href.startswith(
-                                ("http://www.google.com/search?q=", "https://duckduckgo.com/y.js?ad_domain")
+                                (
+                                    "http://www.google.com/search?q=",
+                                    "https://duckduckgo.com/y.js?ad_domain",
+                                )
                             )
                         ):
                             [next(data, None) for _ in range(3)]  # skip block(i=1,2,3,4)
                         else:
                             cache.add(href)
                             titlexpath = e.xpath(".//a//text()")
-                            title = str(titlexpath[0]) if titlexpath and isinstance(titlexpath, list) else ""
+                            title = (
+                                str(titlexpath[0])
+                                if titlexpath and isinstance(titlexpath, list)
+                                else ""
+                            )
                     elif i == 2:
                         bodyxpath = e.xpath(".//td[@class='result-snippet']//text()")
                         body = (

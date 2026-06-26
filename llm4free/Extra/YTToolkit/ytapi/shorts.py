@@ -1,4 +1,5 @@
 """YouTube Shorts functionality."""
+
 import re
 from typing import List, Optional
 from urllib.error import HTTPError
@@ -9,6 +10,7 @@ from .utils import dup_filter, request
 
 try:
     from llm4free.litagent.agent import LitAgent
+
     _USER_AGENT = LitAgent().random()
 except ImportError:
     _USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
@@ -35,18 +37,15 @@ class Shorts:
 
         # Clean video ID
         if "youtube.com" in video_id or "youtu.be" in video_id:
-            match = re.search(r'(?:v=|shorts/|youtu\.be/)([a-zA-Z0-9_-]{11})', video_id)
+            match = re.search(r"(?:v=|shorts/|youtu\.be/)([a-zA-Z0-9_-]{11})", video_id)
             if match:
                 video_id = match.group(1)
 
         url = f"https://www.youtube.com/shorts/{video_id}"
 
         try:
-            headers = {
-                "User-Agent": _USER_AGENT,
-                "Accept": "text/html"
-            }
-            req = Request(url, headers=headers, method='HEAD')
+            headers = {"User-Agent": _USER_AGENT, "Accept": "text/html"}
+            req = Request(url, headers=headers, method="HEAD")
             response = urlopen(req, timeout=10)
             # If we get a 200 and URL contains /shorts/, it's a Short
             final_url = response.geturl()
@@ -95,6 +94,7 @@ class Shorts:
             return []
 
         from urllib.parse import quote
+
         # sp=EgIYAQ%253D%253D is the filter for Shorts
         url = f"https://www.youtube.com/results?search_query={quote(query)}&sp=EgIYAQ%253D%253D"
 

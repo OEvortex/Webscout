@@ -146,9 +146,7 @@ class XLNKTTS(BaseTTSProvider):
         noise_clamp = kwargs.get("noise_clamp", self.default_noise_clamp)
         eos_threshold = kwargs.get("eos_threshold", self.default_eos_threshold)
         frames_after_eos = kwargs.get("frames_after_eos", self.default_frames_after_eos)
-        enable_custom_frames = kwargs.get(
-            "enable_custom_frames", self.default_enable_custom_frames
-        )
+        enable_custom_frames = kwargs.get("enable_custom_frames", self.default_enable_custom_frames)
 
         # Validate model
         self.validate_model(model)

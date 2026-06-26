@@ -6,24 +6,33 @@ from urllib.request import Request, urlopen
 
 try:
     from llm4free.litagent.agent import LitAgent
+
     _USER_AGENT_GENERATOR = LitAgent()
 except ImportError:
     _USER_AGENT_GENERATOR = None
 
+
 class GitError(Exception):
     """Base exception for GitHub API errors"""
+
     pass
+
 
 class RateLimitError(GitError):
     """Raised when hitting GitHub API rate limits"""
+
     pass
+
 
 class NotFoundError(GitError):
     """Raised when resource is not found"""
+
     pass
+
 
 class RequestError(GitError):
     """Raised for general request errors"""
+
     pass
 
 
@@ -44,15 +53,17 @@ def request(url: str, retry_attempts: int = 3) -> Any:
         RequestError: For other request errors
     """
     headers = {
-        "User-Agent": _USER_AGENT_GENERATOR.random() if _USER_AGENT_GENERATOR else "llm4free-gitapi/1.0",
-        "Accept": "application/vnd.github+json"
+        "User-Agent": _USER_AGENT_GENERATOR.random()
+        if _USER_AGENT_GENERATOR
+        else "llm4free-gitapi/1.0",
+        "Accept": "application/vnd.github+json",
     }
 
     for attempt in range(retry_attempts):
         try:
             req = Request(url, headers=headers)
             response = urlopen(req, timeout=30)
-            data = response.read().decode('utf-8')
+            data = response.read().decode("utf-8")
             try:
                 return json.loads(data)
             except json.JSONDecodeError as json_err:
@@ -64,7 +75,7 @@ def request(url: str, retry_attempts: int = 3) -> Any:
             if e.code == 429:
                 if attempt < retry_attempts - 1:
                     # Wait before retrying on rate limit
-                    time.sleep(2 ** attempt)  # Exponential backoff
+                    time.sleep(2**attempt)  # Exponential backoff
                     continue
                 raise RateLimitError(f"Rate limited after {retry_attempts} attempts")
             if e.code == 403:

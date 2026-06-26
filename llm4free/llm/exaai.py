@@ -6,6 +6,9 @@ from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi import requests
 
+# Attempt to import LitAgent, fallback if not available
+from llm4free.litagent import LitAgent
+
 # Import base classes and utility structures
 from llm4free.llm.base import (
     BaseChat,
@@ -22,9 +25,6 @@ from llm4free.llm.utils import (
     CompletionUsage,
     count_tokens,
 )
-
-# Attempt to import LitAgent, fallback if not available
-from llm4free.litagent import LitAgent
 
 # --- ExaAI Client ---
 

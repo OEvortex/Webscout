@@ -44,7 +44,6 @@ def _make_provider(name: str):
 def test_audio_generation():
     """Test that TTS providers can actually generate audio from text."""
     test_text = "Hello, this is a test of the text to speech system."
-    output_dir = Path(tempfile.mkdtemp(prefix="tts_test_"))
 
     provider_configs = [
         ("DeepgramTTS", {"text": test_text, "voice": "thalia"}),

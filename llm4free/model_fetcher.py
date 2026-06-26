@@ -92,9 +92,7 @@ class ModelFetcherCache:
 
             return entry.get("models")
 
-    def set(
-        self, provider_name: str, models: list[str], ttl: Optional[int] = None
-    ) -> None:
+    def set(self, provider_name: str, models: list[str], ttl: Optional[int] = None) -> None:
         """Cache models for a provider.
 
         Args:
@@ -179,9 +177,7 @@ class BackgroundModelFetcher:
         _threads: Dict tracking active fetch threads.
     """
 
-    def __init__(
-        self, cache: Optional[ModelFetcherCache] = None, debug: bool = False
-    ) -> None:
+    def __init__(self, cache: Optional[ModelFetcherCache] = None, debug: bool = False) -> None:
         """Initialize the background model fetcher.
 
         Args:
@@ -221,9 +217,7 @@ class BackgroundModelFetcher:
 
         # Start background fetch if not already running
         with self.lock:
-            if provider_name not in self._threads or not self._threads[
-                provider_name
-            ].is_alive():
+            if provider_name not in self._threads or not self._threads[provider_name].is_alive():
                 thread = threading.Thread(
                     target=self._fetch_and_cache,
                     args=(provider_name, fetch_func, timeout),
@@ -266,9 +260,7 @@ class BackgroundModelFetcher:
             if fetch_thread.is_alive():
                 # Timeout occurred
                 if self.debug:
-                    ic(
-                        f"Model fetch for '{provider_name}' timed out after {timeout}s"
-                    )
+                    ic(f"Model fetch for '{provider_name}' timed out after {timeout}s")
                 return
 
             if error is not None:

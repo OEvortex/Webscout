@@ -90,7 +90,9 @@ class Scout:
         self.text_analyzer = ScoutTextAnalyzer()
         self.web_analyzer = ScoutWebAnalyzer()
 
-    def normalize_text(self, text: str, form: Literal["NFC", "NFD", "NFKC", "NFKD"] = "NFKD") -> str:
+    def normalize_text(
+        self, text: str, form: Literal["NFC", "NFD", "NFKC", "NFKD"] = "NFKD"
+    ) -> str:
         """
         Normalize text using Unicode normalization.
 

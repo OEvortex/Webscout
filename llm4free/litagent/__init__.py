@@ -26,4 +26,4 @@ from .constants import BROWSERS, DEVICES, FINGERPRINTS, OS_VERSIONS
 
 agent = LitAgent()
 
-__all__ = ['LitAgent', 'agent', 'BROWSERS', 'OS_VERSIONS', 'DEVICES', 'FINGERPRINTS']
+__all__ = ["LitAgent", "agent", "BROWSERS", "OS_VERSIONS", "DEVICES", "FINGERPRINTS"]

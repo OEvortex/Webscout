@@ -6,9 +6,7 @@ This module is kept as a placeholder to avoid import errors.
 
 import pytest
 
-pytestmark = pytest.mark.skip(
-    reason="OpenResearcher provider has been removed from the codebase"
-)
+pytestmark = pytest.mark.skip(reason="OpenResearcher provider has been removed from the codebase")
 
 
 class TestOpenResearcher:

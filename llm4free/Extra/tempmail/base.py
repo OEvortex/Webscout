@@ -17,6 +17,7 @@ class TempMailProvider(ABC):
     """
     Abstract base class for synchronous temporary email providers
     """
+
     email: Optional[str] = None
     account_id: Optional[str] = None
 
@@ -54,6 +55,7 @@ class AsyncTempMailProvider(ABC):
     """
     Abstract base class for asynchronous temporary email providers
     """
+
     email: Optional[str] = None
     account_id: Optional[str] = None
 
@@ -68,7 +70,9 @@ class AsyncTempMailProvider(ABC):
         raise NotImplementedError("Method needs to be implemented in subclass")
 
     @abstractmethod
-    async def create_email(self, alias: Optional[str] = None, domain: Optional[str] = None) -> Tuple[str, str]:
+    async def create_email(
+        self, alias: Optional[str] = None, domain: Optional[str] = None
+    ) -> Tuple[str, str]:
         """Create a new temporary email address"""
         raise NotImplementedError("Method needs to be implemented in subclass")
 
@@ -98,11 +102,13 @@ def generate_random_string(length: int, include_digits: bool = True) -> str:
     chars = string.ascii_lowercase
     if include_digits:
         chars += string.digits
-    return ''.join(random.sample(chars, length))
+    return "".join(random.sample(chars, length))
 
 
 # Factory function for getting a temporary email provider
-def get_provider(provider_name: str = "mailtm", async_provider: bool = False) -> Union[TempMailProvider, AsyncTempMailProvider]:
+def get_provider(
+    provider_name: str = "mailtm", async_provider: bool = False
+) -> Union[TempMailProvider, AsyncTempMailProvider]:
     """
     Get a temporary email provider instance
 
@@ -116,21 +122,26 @@ def get_provider(provider_name: str = "mailtm", async_provider: bool = False) ->
     if async_provider:
         if provider_name.lower() == "tempmailio":
             from .temp_mail_io import TempMailIOAsync
+
             return TempMailIOAsync()
         elif provider_name.lower() == "emailnator":
             raise NotImplementedError("Emailnator async provider not implemented.")
         else:
             from .mail_tm import MailTMAsync
+
             return MailTMAsync()
     else:
         if provider_name.lower() == "tempmailio":
             from .temp_mail_io import TempMailIO
+
             return TempMailIO()
         elif provider_name.lower() == "emailnator":
             from .emailnator import EmailnatorProvider
+
             return EmailnatorProvider()
         else:
             from .mail_tm import MailTM
+
             return MailTM()
 
 
@@ -151,11 +162,11 @@ def get_random_email(provider_name: str = "mailtm") -> Tuple[str, TempMailProvid
         raise TypeError("get_random_email only supports synchronous providers")
 
     # For providers that require explicit initialization
-    if getattr(provider, '_initialized', True) is False:
+    if getattr(provider, "_initialized", True) is False:
         try:
             # If there's an initialization method that needs to be called
-            if hasattr(provider, 'initialize'):
-                provider.initialize() # type: ignore
+            if hasattr(provider, "initialize"):
+                provider.initialize()  # type: ignore
         except Exception as e:
             raise RuntimeError(f"Failed to initialize provider: {e}")
 
@@ -164,7 +175,7 @@ def get_random_email(provider_name: str = "mailtm") -> Tuple[str, TempMailProvid
     if not success:
         raise RuntimeError(f"Failed to create account with provider {provider_name}")
 
-    return getattr(provider, 'email', ""), provider
+    return getattr(provider, "email", ""), provider
 
 
 def get_disposable_email() -> Tuple[str, TempMailProvider]:

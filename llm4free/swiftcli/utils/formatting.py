@@ -10,12 +10,13 @@ from rich.text import Text
 
 console = Console()
 
+
 def style_text(
     text: str,
     color: Optional[str] = None,
     bold: bool = False,
     italic: bool = False,
-    underline: bool = False
+    underline: bool = False,
 ) -> Text:
     """
     Apply styling to text.
@@ -42,6 +43,7 @@ def style_text(
 
     return Text(text, style=" ".join(style))
 
+
 def format_error(message: str, title: str = "Error") -> None:
     """
     Format and display error message.
@@ -51,6 +53,7 @@ def format_error(message: str, title: str = "Error") -> None:
         title: Error title
     """
     console.print(f"[bold red]{title}:[/] {message}")
+
 
 def format_warning(message: str, title: str = "Warning") -> None:
     """
@@ -62,6 +65,7 @@ def format_warning(message: str, title: str = "Warning") -> None:
     """
     console.print(f"[bold yellow]{title}:[/] {message}")
 
+
 def format_success(message: str, title: str = "Success") -> None:
     """
     Format and display success message.
@@ -71,6 +75,7 @@ def format_success(message: str, title: str = "Success") -> None:
         title: Success title
     """
     console.print(f"[bold green]{title}:[/] {message}")
+
 
 def format_info(message: str, title: str = "Info") -> None:
     """
@@ -82,12 +87,13 @@ def format_info(message: str, title: str = "Info") -> None:
     """
     console.print(f"[bold blue]{title}:[/] {message}")
 
+
 def create_table(
     headers: List[str],
     rows: List[List[Any]],
     title: Optional[str] = None,
     style: str = "default",
-    show_lines: bool = False
+    show_lines: bool = False,
 ) -> Table:
     """
     Create a formatted table.
@@ -102,12 +108,7 @@ def create_table(
     Returns:
         Rich Table object
     """
-    table = Table(
-        title=title,
-        show_header=True,
-        header_style="bold blue",
-        show_lines=show_lines
-    )
+    table = Table(title=title, show_header=True, header_style="bold blue", show_lines=show_lines)
 
     # Add columns
     for header in headers:
@@ -119,11 +120,8 @@ def create_table(
 
     return table
 
-def truncate_text(
-    text: str,
-    max_length: int,
-    suffix: str = "..."
-) -> str:
+
+def truncate_text(text: str, max_length: int, suffix: str = "...") -> str:
     """
     Truncate text to specified length.
 
@@ -137,14 +135,10 @@ def truncate_text(
     """
     if len(text) <= max_length:
         return text
-    return text[:max_length - len(suffix)] + suffix
+    return text[: max_length - len(suffix)] + suffix
 
-def wrap_text(
-    text: str,
-    width: int,
-    indent: str = "",
-    initial_indent: str = ""
-) -> str:
+
+def wrap_text(text: str, width: int, indent: str = "", initial_indent: str = "") -> str:
     """
     Wrap text to specified width.
 
@@ -158,18 +152,11 @@ def wrap_text(
         Wrapped text
     """
     import textwrap
-    return textwrap.fill(
-        text,
-        width=width,
-        initial_indent=initial_indent,
-        subsequent_indent=indent
-    )
 
-def format_dict(
-    data: Dict[str, Any],
-    indent: int = 2,
-    sort_keys: bool = True
-) -> str:
+    return textwrap.fill(text, width=width, initial_indent=initial_indent, subsequent_indent=indent)
+
+
+def format_dict(data: Dict[str, Any], indent: int = 2, sort_keys: bool = True) -> str:
     """
     Format dictionary for display.
 
@@ -182,18 +169,11 @@ def format_dict(
         Formatted string
     """
     import json
-    return json.dumps(
-        data,
-        indent=indent,
-        sort_keys=sort_keys,
-        default=str
-    )
 
-def format_list(
-    items: List[Any],
-    bullet: str = "•",
-    indent: int = 2
-) -> str:
+    return json.dumps(data, indent=indent, sort_keys=sort_keys, default=str)
+
+
+def format_list(items: List[Any], bullet: str = "•", indent: int = 2) -> str:
     """
     Format list for display.
 
@@ -208,6 +188,7 @@ def format_list(
     indent_str = " " * indent
     return "\n".join(f"{indent_str}{bullet} {item}" for item in items)
 
+
 def strip_ansi(text: str) -> str:
     """
     Remove ANSI escape sequences from text.
@@ -218,8 +199,9 @@ def strip_ansi(text: str) -> str:
     Returns:
         Clean text
     """
-    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-    return ansi_escape.sub('', text)
+    ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+    return ansi_escape.sub("", text)
+
 
 def get_terminal_size() -> tuple:
     """
@@ -230,14 +212,13 @@ def get_terminal_size() -> tuple:
     """
     return console.size
 
+
 def clear_screen() -> None:
     """Clear the terminal screen."""
     console.clear()
 
-def create_padding(
-    renderable: Any,
-    pad: Union[int, tuple] = 1
-) -> Padding:
+
+def create_padding(renderable: Any, pad: Union[int, tuple] = 1) -> Padding:
     """
     Add padding around content.
 

@@ -7,6 +7,7 @@ from .base import DuckDuckGoBase
 class DuckDuckGoVideos(DuckDuckGoBase):
     name = "duckduckgo"
     category = "videos"
+
     def run(self, *args, **kwargs) -> list[VideosResult]:
         keywords = args[0] if args else kwargs.get("keywords")
         region = args[1] if len(args) > 1 else kwargs.get("region", "wt-wt")
@@ -40,7 +41,9 @@ class DuckDuckGoVideos(DuckDuckGoBase):
 
         def _videos_page(s: int) -> list[VideosResult]:
             payload["s"] = f"{s}"
-            resp_content = self._get_url("GET", "https://duckduckgo.com/v.js", params=payload).content
+            resp_content = self._get_url(
+                "GET", "https://duckduckgo.com/v.js", params=payload
+            ).content
             resp_json = self.json_loads(resp_content)
 
             page_data = resp_json.get("results", [])
@@ -77,4 +80,3 @@ class DuckDuckGoVideos(DuckDuckGoBase):
             raise e
 
         return list(self.islice(results, max_results))
-

@@ -7,6 +7,7 @@ from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi import CurlError, requests
 
+from llm4free.litagent import LitAgent
 from llm4free.llm.base import (
     BaseChat,
     BaseCompletions,
@@ -24,7 +25,6 @@ from llm4free.llm.utils import (
     format_prompt,
 )
 
-from llm4free.litagent import LitAgent
 
 class Completions(BaseCompletions):
     def __init__(self, client: "EssentialAI"):
@@ -62,9 +62,7 @@ class Completions(BaseCompletions):
         if stream:
             return self._create_stream(request_id, created_time, payload, timeout, proxies)
         else:
-            return self._create_non_stream(
-                request_id, created_time, payload, timeout, proxies
-            )
+            return self._create_non_stream(request_id, created_time, payload, timeout, proxies)
 
     def _create_stream(
         self,
@@ -76,7 +74,9 @@ class Completions(BaseCompletions):
     ) -> Generator[ChatCompletionChunk, None, None]:
         try:
             call_url = f"{self._client.api_endpoint}/gradio_api/call/chat"
-            call_response = self._client.session.post(call_url, json=payload, timeout=timeout or self._client.timeout)
+            call_response = self._client.session.post(
+                call_url, json=payload, timeout=timeout or self._client.timeout
+            )
             call_response.raise_for_status()
             event_id = call_response.json().get("event_id")
 
@@ -106,7 +106,7 @@ class Completions(BaseCompletions):
                             current_full_text = data[0]
                             if isinstance(current_full_text, str):
                                 if current_full_text.startswith(last_full_text):
-                                    delta_text = current_full_text[len(last_full_text):]
+                                    delta_text = current_full_text[len(last_full_text) :]
                                 else:
                                     delta_text = current_full_text
                                 last_full_text = current_full_text
@@ -173,7 +173,13 @@ class EssentialAI(OpenAICompatibleProvider):
     required_auth = False
     AVAILABLE_MODELS = ["rnj-1-instruct"]
 
-    def __init__(self, timeout: int = 30, temperature: float = 0.2, top_p: float = 0.95, max_tokens: int = 512):
+    def __init__(
+        self,
+        timeout: int = 30,
+        temperature: float = 0.2,
+        top_p: float = 0.95,
+        max_tokens: int = 512,
+    ):
         self.timeout = timeout
         self.api_endpoint = "https://essentialai-rnj-1-instruct-space.hf.space"
         self.temperature = temperature
@@ -182,9 +188,7 @@ class EssentialAI(OpenAICompatibleProvider):
         self.proxies = {}
 
         agent = LitAgent()
-        zerogpu_uuid = "".join(
-            random.choices(string.ascii_letters + string.digits + "_", k=21)
-        )
+        zerogpu_uuid = "".join(random.choices(string.ascii_letters + string.digits + "_", k=21))
         self.headers = {
             "Content-Type": "application/json",
             "User-Agent": agent.random(),

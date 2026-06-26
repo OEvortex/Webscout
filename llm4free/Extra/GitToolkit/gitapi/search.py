@@ -15,7 +15,7 @@ class GitSearch:
         sort: Optional[str] = None,
         order: str = "desc",
         page: int = 1,
-        per_page: int = 30
+        per_page: int = 30,
     ) -> Dict[str, Any]:
         """
         Search for repositories.
@@ -41,7 +41,7 @@ class GitSearch:
         sort: Optional[str] = None,
         order: str = "desc",
         page: int = 1,
-        per_page: int = 30
+        per_page: int = 30,
     ) -> Dict[str, Any]:
         """
         Search for users.
@@ -56,17 +56,14 @@ class GitSearch:
         Returns:
             Dict with total_count, incomplete_results, and items
         """
-        url = f"{self.BASE_URL}/users?q={quote(query)}&page={page}&per_page={per_page}&order={order}"
+        url = (
+            f"{self.BASE_URL}/users?q={quote(query)}&page={page}&per_page={per_page}&order={order}"
+        )
         if sort:
             url += f"&sort={sort}"
         return request(url)
 
-    def search_topics(
-        self,
-        query: str,
-        page: int = 1,
-        per_page: int = 30
-    ) -> Dict[str, Any]:
+    def search_topics(self, query: str, page: int = 1, per_page: int = 30) -> Dict[str, Any]:
         """
         Search for topics.
 
@@ -87,7 +84,7 @@ class GitSearch:
         sort: Optional[str] = None,
         order: str = "desc",
         page: int = 1,
-        per_page: int = 30
+        per_page: int = 30,
     ) -> Dict[str, Any]:
         """
         Search for commits.
@@ -113,7 +110,7 @@ class GitSearch:
         sort: Optional[str] = None,
         order: str = "desc",
         page: int = 1,
-        per_page: int = 30
+        per_page: int = 30,
     ) -> Dict[str, Any]:
         """
         Search for issues and pull requests.
@@ -128,7 +125,9 @@ class GitSearch:
         Returns:
             Dict with total_count, incomplete_results, and items
         """
-        url = f"{self.BASE_URL}/issues?q={quote(query)}&page={page}&per_page={per_page}&order={order}"
+        url = (
+            f"{self.BASE_URL}/issues?q={quote(query)}&page={page}&per_page={per_page}&order={order}"
+        )
         if sort:
             url += f"&sort={sort}"
         return request(url)
@@ -140,7 +139,7 @@ class GitSearch:
         sort: Optional[str] = None,
         order: str = "desc",
         page: int = 1,
-        per_page: int = 30
+        per_page: int = 30,
     ) -> Dict[str, Any]:
         """
         Search for labels in a repository.

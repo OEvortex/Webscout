@@ -10,13 +10,13 @@ from .suggestions import Suggestions
 from .video import Video
 
 __all__ = [
-    'Video',
-    'Search',
-    'Extras',
-    'Channel',
-    'Playlist',
-    'Suggestions',
-    'Shorts',
-    'Hashtag',
-    'Captions'
+    "Video",
+    "Search",
+    "Extras",
+    "Channel",
+    "Playlist",
+    "Suggestions",
+    "Shorts",
+    "Hashtag",
+    "Captions",
 ]

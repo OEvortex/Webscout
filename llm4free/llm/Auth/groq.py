@@ -24,8 +24,9 @@ from ..utils import (
 
 # --- Groq Client ---
 
+
 class Completions(BaseCompletions):
-    def __init__(self, client: 'Groq'):
+    def __init__(self, client: "Groq"):
         self._client = client
 
     def create(
@@ -37,7 +38,7 @@ class Completions(BaseCompletions):
         stream: bool = False,
         temperature: Optional[float] = None,
         top_p: Optional[float] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
         """
         Creates a model response for the given chat conversation.
@@ -83,11 +84,13 @@ class Completions(BaseCompletions):
                 json=payload,
                 stream=True,
                 timeout=self._client.timeout,
-                impersonate="chrome110"  # Use impersonate for better compatibility
+                impersonate="chrome110",  # Use impersonate for better compatibility
             )
 
             if response.status_code != 200:
-                raise IOError(f"Groq request failed with status code {response.status_code}: {response.text}")
+                raise IOError(
+                    f"Groq request failed with status code {response.status_code}: {response.text}"
+                )
 
             # Track token usage across chunks
             prompt_tokens = 0
@@ -103,33 +106,35 @@ class Completions(BaseCompletions):
 
                         try:
                             data = json.loads(json_str)
-                            choices = data.get('choices')
+                            choices = data.get("choices")
                             if not choices and choices is not None:
                                 continue
                             choice_data = choices[0] if choices else {}
-                            delta_data = choice_data.get('delta', {})
-                            finish_reason = choice_data.get('finish_reason')
+                            delta_data = choice_data.get("delta", {})
+                            finish_reason = choice_data.get("finish_reason")
 
                             # Update token counts if available
-                            usage_data = data.get('usage', {})
+                            usage_data = data.get("usage", {})
                             if usage_data:
-                                prompt_tokens = usage_data.get('prompt_tokens', prompt_tokens)
-                                completion_tokens = usage_data.get('completion_tokens', completion_tokens)
-                                total_tokens = usage_data.get('total_tokens', total_tokens)
+                                prompt_tokens = usage_data.get("prompt_tokens", prompt_tokens)
+                                completion_tokens = usage_data.get(
+                                    "completion_tokens", completion_tokens
+                                )
+                                total_tokens = usage_data.get("total_tokens", total_tokens)
 
                             # Create the delta object
                             delta = ChoiceDelta(
-                                content=delta_data.get('content'),
-                                role=delta_data.get('role'),
-                                tool_calls=delta_data.get('tool_calls')
+                                content=delta_data.get("content"),
+                                role=delta_data.get("role"),
+                                tool_calls=delta_data.get("tool_calls"),
                             )
 
                             # Create the choice object
                             choice = Choice(
-                                index=choice_data.get('index', 0),
+                                index=choice_data.get("index", 0),
                                 delta=delta,
                                 finish_reason=finish_reason,
-                                logprobs=choice_data.get('logprobs')
+                                logprobs=choice_data.get("logprobs"),
                             )
 
                             # Create the chunk object
@@ -138,7 +143,7 @@ class Completions(BaseCompletions):
                                 choices=[choice],
                                 created=created_time,
                                 model=model,
-                                system_fingerprint=data.get('system_fingerprint')
+                                system_fingerprint=data.get("system_fingerprint"),
                             )
 
                             # Convert chunk to dict using Pydantic's API
@@ -150,13 +155,26 @@ class Completions(BaseCompletions):
                             # Add usage information to match OpenAI format
                             usage_dict = {
                                 "prompt_tokens": prompt_tokens or 10,
-                                "completion_tokens": completion_tokens or (len(delta_data.get('content', '')) if delta_data.get('content') else 0),
-                                "total_tokens": total_tokens or (10 + (len(delta_data.get('content', '')) if delta_data.get('content') else 0)),
-                                "estimated_cost": None
+                                "completion_tokens": completion_tokens
+                                or (
+                                    len(delta_data.get("content", ""))
+                                    if delta_data.get("content")
+                                    else 0
+                                ),
+                                "total_tokens": total_tokens
+                                or (
+                                    10
+                                    + (
+                                        len(delta_data.get("content", ""))
+                                        if delta_data.get("content")
+                                        else 0
+                                    )
+                                ),
+                                "estimated_cost": None,
                             }
 
                             # Update completion_tokens and total_tokens as we receive more content
-                            if delta_data.get('content'):
+                            if delta_data.get("content"):
                                 completion_tokens += 1
                                 total_tokens = prompt_tokens + completion_tokens
                                 usage_dict["completion_tokens"] = completion_tokens
@@ -183,47 +201,49 @@ class Completions(BaseCompletions):
                 self._client.base_url,
                 json=payload,
                 timeout=self._client.timeout,
-                impersonate="chrome110"  # Use impersonate for better compatibility
+                impersonate="chrome110",  # Use impersonate for better compatibility
             )
 
             if response.status_code != 200:
-                raise IOError(f"Groq request failed with status code {response.status_code}: {response.text}")
+                raise IOError(
+                    f"Groq request failed with status code {response.status_code}: {response.text}"
+                )
 
             data = response.json()
 
-            choices_data = data.get('choices', [])
-            usage_data = data.get('usage', {})
+            choices_data = data.get("choices", [])
+            usage_data = data.get("usage", {})
 
             choices = []
             for choice_d in choices_data:
-                message_d = choice_d.get('message', {})
+                message_d = choice_d.get("message", {})
 
                 # Handle tool calls if present
-                tool_calls = message_d.get('tool_calls')
+                tool_calls = message_d.get("tool_calls")
 
                 message = ChatCompletionMessage(
-                    role=message_d.get('role', 'assistant'),
-                    content=message_d.get('content', ''),
-                    tool_calls=tool_calls
+                    role=message_d.get("role", "assistant"),
+                    content=message_d.get("content", ""),
+                    tool_calls=tool_calls,
                 )
                 choice = Choice(
-                    index=choice_d.get('index', 0),
+                    index=choice_d.get("index", 0),
                     message=message,
-                    finish_reason=choice_d.get('finish_reason', 'stop')
+                    finish_reason=choice_d.get("finish_reason", "stop"),
                 )
                 choices.append(choice)
 
             usage = CompletionUsage(
-                prompt_tokens=usage_data.get('prompt_tokens', 0),
-                completion_tokens=usage_data.get('completion_tokens', 0),
-                total_tokens=usage_data.get('total_tokens', 0)
+                prompt_tokens=usage_data.get("prompt_tokens", 0),
+                completion_tokens=usage_data.get("completion_tokens", 0),
+                total_tokens=usage_data.get("total_tokens", 0),
             )
 
             completion = ChatCompletion(
                 id=request_id,
                 choices=choices,
                 created=created_time,
-                model=data.get('model', model),
+                model=data.get("model", model),
                 usage=usage,
             )
             return completion
@@ -235,9 +255,11 @@ class Completions(BaseCompletions):
             print(f"Error processing Groq response: {e}")
             raise
 
+
 class Chat(BaseChat):
-    def __init__(self, client: 'Groq'):
+    def __init__(self, client: "Groq"):
         self.completions = Completions(client)
+
 
 class Groq(OpenAICompatibleProvider):
     required_auth = True
@@ -266,10 +288,12 @@ class Groq(OpenAICompatibleProvider):
         "llama-3.2-3b-preview",
         "llama-3.2-11b-vision-preview",
         "llama-3.2-90b-vision-preview",
-        "mixtral-8x7b-32768"
+        "mixtral-8x7b-32768",
     ]
 
-    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 30, browser: str = "chrome"):
+    def __init__(
+        self, api_key: Optional[str] = None, timeout: Optional[int] = 30, browser: str = "chrome"
+    ):
         self.timeout = timeout
         self.base_url = "https://api.groq.com/openai/v1/chat/completions"
         self.api_key = api_key
@@ -293,31 +317,36 @@ class Groq(OpenAICompatibleProvider):
             agent = LitAgent()
             fingerprint = agent.generate_fingerprint(browser)
 
-            self.headers.update({
-                "Accept": fingerprint["accept"],
-                "Accept-Encoding": "gzip, deflate, br, zstd",
-                "Accept-Language": fingerprint["accept_language"],
-                "Cache-Control": "no-cache",
-                "Connection": "keep-alive",
-                "Origin": "https://console.groq.com",
-                "Pragma": "no-cache",
-                "Referer": "https://console.groq.com/",
-                "Sec-Fetch-Dest": "empty",
-                "Sec-Fetch-Mode": "cors",
-                "Sec-Fetch-Site": "same-site",
-                "Sec-CH-UA": fingerprint["sec_ch_ua"] or '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
-                "Sec-CH-UA-Mobile": "?0",
-                "Sec-CH-UA-Platform": f'"{fingerprint["platform"]}"',
-                "User-Agent": fingerprint["user_agent"],
-            })
+            self.headers.update(
+                {
+                    "Accept": fingerprint["accept"],
+                    "Accept-Encoding": "gzip, deflate, br, zstd",
+                    "Accept-Language": fingerprint["accept_language"],
+                    "Cache-Control": "no-cache",
+                    "Connection": "keep-alive",
+                    "Origin": "https://console.groq.com",
+                    "Pragma": "no-cache",
+                    "Referer": "https://console.groq.com/",
+                    "Sec-Fetch-Dest": "empty",
+                    "Sec-Fetch-Mode": "cors",
+                    "Sec-Fetch-Site": "same-site",
+                    "Sec-CH-UA": fingerprint["sec_ch_ua"]
+                    or '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
+                    "Sec-CH-UA-Mobile": "?0",
+                    "Sec-CH-UA-Platform": f'"{fingerprint["platform"]}"',
+                    "User-Agent": fingerprint["user_agent"],
+                }
+            )
         except (NameError, Exception):
             # Fallback to basic headers if LitAgent is not available
-            self.headers.update({
-                "Accept": "application/json",
-                "Accept-Encoding": "gzip, deflate, br",
-                "Accept-Language": "en-US,en;q=0.9",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            })
+            self.headers.update(
+                {
+                    "Accept": "application/json",
+                    "Accept-Encoding": "gzip, deflate, br",
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                }
+            )
 
         # Update session headers
         self.session.headers.update(self.headers)
@@ -349,7 +378,7 @@ class Groq(OpenAICompatibleProvider):
             response = temp_session.get(
                 "https://api.groq.com/openai/v1/models",
                 headers=headers,
-                impersonate="chrome110"  # Use impersonate for fetching
+                impersonate="chrome110",  # Use impersonate for fetching
             )
 
             if response.status_code != 200:

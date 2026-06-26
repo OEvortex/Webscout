@@ -66,7 +66,9 @@ class DuckDuckGoImages(DuckDuckGoBase):
 
         def _images_page(s: int) -> list[ImagesResult]:
             payload["s"] = f"{s}"
-            resp_content = self._get_url("GET", "https://duckduckgo.com/i.js", params=payload).content
+            resp_content = self._get_url(
+                "GET", "https://duckduckgo.com/i.js", params=payload
+            ).content
             resp_json = self.json_loads(resp_content)
 
             page_data = resp_json.get("results", [])

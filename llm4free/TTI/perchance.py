@@ -1,14 +1,14 @@
 import base64
 import random
-import time
 import re
+import time
 from typing import Any, Optional
 
 from curl_cffi import CurlError, requests
 
 from llm4free.AIbase import SimpleModelList
-from llm4free.litagent import LitAgent
 from llm4free.Extra.cookie_harvester import CookieHarvester
+from llm4free.litagent import LitAgent
 from llm4free.TTI.base import BaseImages, TTICompatibleProvider
 from llm4free.TTI.image_hosting import upload_image_with_fallback
 from llm4free.TTI.utils import ImageData, ImageResponse
@@ -114,7 +114,7 @@ class Images(BaseImages):
             create_url = "https://image-generation.perchance.org/api/generate"
             params = {
                 "prompt": f"'{prompt}, {prompt_style[0]}",
-                "negativePrompt": f"'bad quality, ugly, deformed",
+                "negativePrompt": "'bad quality, ugly, deformed",
                 "userKey": self._client.user_key,
                 "__cache_bust": str(random.random()),
                 "seed": str(seed) if seed is not None else "-1",
@@ -191,11 +191,13 @@ class PerchanceAI(TTICompatibleProvider):
             self.session = session
         else:
             self.session = requests.Session()
-            self.session.headers.update({
-                "accept": "*/*",
-                "accept-language": "en-US,en;q=0.9",
-                "user-agent": LitAgent().random(),
-            })
+            self.session.headers.update(
+                {
+                    "accept": "*/*",
+                    "accept-language": "en-US,en;q=0.9",
+                    "user-agent": LitAgent().random(),
+                }
+            )
         self.user_key = user_key
         self.images = Images(self)
 
@@ -206,10 +208,9 @@ class PerchanceAI(TTICompatibleProvider):
         headed: bool = False,
         harvest_timeout: int = 120,
     ) -> "PerchanceAI":
-        from llm4free.Extra.cookie_harvester import CookieHarvester
 
         ch = CookieHarvester(headed=headed, timeout=harvest_timeout)
-        result = ch.harvest(url, wait=8.0, domain_filter=["perchance.org"])
+        ch.harvest(url, wait=8.0, domain_filter=["perchance.org"])
         session = ch.to_requests_session()
 
         user_key = cls._extract_user_key(session) or ""
@@ -218,7 +219,6 @@ class PerchanceAI(TTICompatibleProvider):
     @staticmethod
     def _extract_user_key(session: requests.Session) -> Optional[str]:
         """Try to get a valid userKey by checking with the API."""
-        import re
 
         test_key = "0" * 64
         check_url = "https://image-generation.perchance.org/api/checkVerificationStatus"
@@ -239,11 +239,10 @@ class PerchanceAI(TTICompatibleProvider):
 
     def extract_user_key_from_page(self, headed: bool = True) -> str:
         """Open the page, click generate, and extract userKey from network traffic.
-        
+
         Requires headed=True so Cloudflare challenges can be solved.
         Returns the extracted 64-char hex key.
         """
-        import re
         import subprocess
 
         binary = "agent-browser"
@@ -262,19 +261,25 @@ class PerchanceAI(TTICompatibleProvider):
         try:
             r = subprocess.run(
                 [binary, "find", "text", "generate", "click"],
-                capture_output=True, text=True, timeout=30,
+                capture_output=True,
+                text=True,
+                timeout=30,
             )
         except Exception:
             r = subprocess.run(
                 [binary, "eval", "document.querySelector('button')?.click()"],
-                capture_output=True, text=True, timeout=30,
+                capture_output=True,
+                text=True,
+                timeout=30,
             )
 
         time.sleep(10)
 
         r = subprocess.run(
             [binary, "state", "save", "/dev/stdout"],
-            capture_output=True, text=True, timeout=15,
+            capture_output=True,
+            text=True,
+            timeout=15,
         )
 
         try:

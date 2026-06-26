@@ -18,13 +18,31 @@ def _is_provider_class(obj: object) -> bool:
 
 # All items in __all__ that are NOT provider classes
 NON_PROVIDER_NAMES = {
-    "OpenAICompatibleProvider", "SimpleModelList", "BaseChat",
-    "BaseCompletions", "Tool", "ToolDefinition", "FunctionParameters",
-    "FunctionDefinition", "ChatCompletion", "ChatCompletionChunk",
-    "Choice", "ChoiceDelta", "ChatCompletionMessage", "CompletionUsage",
-    "ToolCall", "ToolFunction", "FunctionCall", "ToolCallType",
-    "ModelData", "ModelList", "format_prompt", "get_system_prompt",
-    "get_last_user_message", "count_tokens", "ChatGPTReversed",
+    "OpenAICompatibleProvider",
+    "SimpleModelList",
+    "BaseChat",
+    "BaseCompletions",
+    "Tool",
+    "ToolDefinition",
+    "FunctionParameters",
+    "FunctionDefinition",
+    "ChatCompletion",
+    "ChatCompletionChunk",
+    "Choice",
+    "ChoiceDelta",
+    "ChatCompletionMessage",
+    "CompletionUsage",
+    "ToolCall",
+    "ToolFunction",
+    "FunctionCall",
+    "ToolCallType",
+    "ModelData",
+    "ModelList",
+    "format_prompt",
+    "get_system_prompt",
+    "get_last_user_message",
+    "count_tokens",
+    "ChatGPTReversed",
 }
 
 

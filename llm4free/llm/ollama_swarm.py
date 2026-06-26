@@ -246,7 +246,9 @@ def _models_cache_file() -> Path:
 
 
 def _get_candidate_servers(seed_servers: Optional[List[str]] = None) -> List[str]:
-    seeds: List[str] = list(seed_servers) if seed_servers is not None else list(_DEFAULT_SEED_SERVERS)
+    seeds: List[str] = (
+        list(seed_servers) if seed_servers is not None else list(_DEFAULT_SEED_SERVERS)
+    )
     user = _seed_file()
     if user.exists():
         try:
@@ -307,13 +309,17 @@ def _probe_server(url: str) -> Optional[Tuple[str, List[str]]]:
                 models = []
                 for m in data.get("data", []):
                     model_id = m.get("id", "")
-                    if model_id and "/attacker/" not in model_id and not model_id.startswith("model-b"):
+                    if (
+                        model_id
+                        and "/attacker/" not in model_id
+                        and not model_id.startswith("model-b")
+                    ):
                         models.append(model_id)
                 if models:
                     return url, models
     except Exception:
         pass
-    
+
     try:
         with Session() as s:
             # Fallback to Ollama-native /api/tags endpoint
@@ -322,8 +328,7 @@ def _probe_server(url: str) -> Optional[Tuple[str, List[str]]]:
         models = [
             m.get("name", "")
             for m in r.json().get("models", [])
-            if "/attacker/" not in m.get("name", "")
-            and not m.get("name", "").startswith("model-b")
+            if "/attacker/" not in m.get("name", "") and not m.get("name", "").startswith("model-b")
         ]
         if models:
             return url, models
@@ -401,12 +406,8 @@ class Completions(BaseCompletions):
         request_id = f"chatcmpl-{uuid.uuid4().hex}"
         created_time = int(time.time())
         if stream:
-            return self._create_stream(
-                request_id, created_time, model, prompt, timeout, proxies
-            )
-        return self._create_non_stream(
-            request_id, created_time, model, prompt, timeout, proxies
-        )
+            return self._create_stream(request_id, created_time, model, prompt, timeout, proxies)
+        return self._create_non_stream(request_id, created_time, model, prompt, timeout, proxies)
 
     def _post_to(self, server_url: str, model: str, prompt: str, timeout: int):
         url = f"{server_url}/v1/chat/completions"
@@ -513,9 +514,7 @@ class Completions(BaseCompletions):
                     raise
                 continue
 
-        raise IOError(
-            f"OllamaSwarm: no server in the swarm accepted model {model!r}"
-        )
+        raise IOError(f"OllamaSwarm: no server in the swarm accepted model {model!r}")
 
     def _create_non_stream(
         self,
@@ -590,9 +589,7 @@ class Completions(BaseCompletions):
                 system_fingerprint=None,
             )
 
-        raise IOError(
-            f"OllamaSwarm: no server in the swarm accepted model {model!r}"
-        )
+        raise IOError(f"OllamaSwarm: no server in the swarm accepted model {model!r}")
 
 
 class Chat(BaseChat):

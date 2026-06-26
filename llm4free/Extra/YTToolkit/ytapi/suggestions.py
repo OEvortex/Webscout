@@ -1,4 +1,5 @@
 """YouTube search suggestions and autocomplete."""
+
 import json
 from typing import List, Optional
 from urllib.parse import quote
@@ -6,6 +7,7 @@ from urllib.request import Request, urlopen
 
 try:
     from llm4free.litagent.agent import LitAgent
+
     _USER_AGENT = LitAgent().random()
 except ImportError:
     _USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
@@ -33,22 +35,19 @@ class Suggestions:
 
         url = f"{Suggestions.AUTOCOMPLETE_URL}?client=youtube&ds=yt&q={quote(query)}&hl={language}"
 
-        headers = {
-            "User-Agent": _USER_AGENT,
-            "Accept": "application/json"
-        }
+        headers = {"User-Agent": _USER_AGENT, "Accept": "application/json"}
 
         try:
             req = Request(url, headers=headers)
             response = urlopen(req, timeout=10)
-            data = response.read().decode('utf-8')
+            data = response.read().decode("utf-8")
 
             # Response is JSONP, extract JSON part
             # Format: window.google.ac.h(["query",[["suggestion1"],["suggestion2"],...]])
-            start = data.find('(')
-            end = data.rfind(')')
+            start = data.find("(")
+            end = data.rfind(")")
             if start != -1 and end != -1:
-                json_str = data[start + 1:end]
+                json_str = data[start + 1 : end]
                 parsed = json.loads(json_str)
                 if len(parsed) > 1 and isinstance(parsed[1], list):
                     return [item[0] for item in parsed[1] if isinstance(item, list) and item]

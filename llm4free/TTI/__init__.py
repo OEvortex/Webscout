@@ -18,13 +18,13 @@ from llm4free.TTI.perchance import PerchanceAI
 from llm4free.TTI.pollinations import PollinationsAI
 from llm4free.TTI.raphael import RaphaelAI
 from llm4free.TTI.together import TogetherImage
-from llm4free.TTI.visualgpt import VisualGPT
 
 # Utility classes
 from llm4free.TTI.utils import (
     ImageData,
     ImageResponse,
 )
+from llm4free.TTI.visualgpt import VisualGPT
 
 # List of all exported names
 __all__ = [

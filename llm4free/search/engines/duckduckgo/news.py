@@ -9,6 +9,7 @@ from .base import DuckDuckGoBase
 class DuckDuckGoNews(DuckDuckGoBase):
     name = "duckduckgo"
     category = "news"
+
     def run(self, *args, **kwargs) -> list[NewsResult]:
         keywords = args[0] if args else kwargs.get("keywords")
         region = args[1] if len(args) > 1 else kwargs.get("region", "wt-wt")
@@ -37,7 +38,9 @@ class DuckDuckGoNews(DuckDuckGoBase):
 
         def _news_page(s: int) -> list[NewsResult]:
             payload["s"] = f"{s}"
-            resp_content = self._get_url("GET", "https://duckduckgo.com/news.js", params=payload).content
+            resp_content = self._get_url(
+                "GET", "https://duckduckgo.com/news.js", params=payload
+            ).content
             resp_json = self.json_loads(resp_content)
             page_data = resp_json.get("results", [])
             page_results = []
@@ -67,4 +70,3 @@ class DuckDuckGoNews(DuckDuckGoBase):
             raise e
 
         return list(self.islice(results, max_results))
-

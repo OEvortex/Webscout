@@ -5,6 +5,9 @@ from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi.requests import Session
 
+# Attempt to import LitAgent, fallback if not available
+from llm4free.litagent import LitAgent
+
 # Import base classes and utility structures
 from llm4free.llm.base import (
     BaseChat,
@@ -21,9 +24,6 @@ from llm4free.llm.utils import (
     CompletionUsage,
     count_tokens,
 )
-
-# Attempt to import LitAgent, fallback if not available
-from llm4free.litagent import LitAgent
 
 # --- WiseCat Client ---
 
@@ -136,14 +136,19 @@ class Completions(BaseCompletions):
                         continue
 
                     # Parse usage lines (format: e:{...} or d:{...})
-                    usage_match = re.match(r'^[ed]:(\{.*\})$', decoded_line)
+                    usage_match = re.match(r"^[ed]:(\{.*\})$", decoded_line)
                     if usage_match:
                         try:
                             import json
+
                             usage_data = json.loads(usage_match.group(1))
                             if "usage" in usage_data:
-                                prompt_tokens = usage_data["usage"].get("promptTokens", prompt_tokens)
-                                completion_tokens = usage_data["usage"].get("completionTokens", completion_tokens)
+                                prompt_tokens = usage_data["usage"].get(
+                                    "promptTokens", prompt_tokens
+                                )
+                                completion_tokens = usage_data["usage"].get(
+                                    "completionTokens", completion_tokens
+                                )
                                 total_tokens = prompt_tokens + completion_tokens
                         except Exception:
                             pass
@@ -210,14 +215,19 @@ class Completions(BaseCompletions):
                         continue
 
                     # Parse usage lines
-                    usage_match = re.match(r'^[ed]:(\{.*\})$', decoded_line)
+                    usage_match = re.match(r"^[ed]:(\{.*\})$", decoded_line)
                     if usage_match:
                         try:
                             import json
+
                             usage_data = json.loads(usage_match.group(1))
                             if "usage" in usage_data:
-                                prompt_tokens = usage_data["usage"].get("promptTokens", prompt_tokens)
-                                completion_tokens = usage_data["usage"].get("completionTokens", completion_tokens)
+                                prompt_tokens = usage_data["usage"].get(
+                                    "promptTokens", prompt_tokens
+                                )
+                                completion_tokens = usage_data["usage"].get(
+                                    "completionTokens", completion_tokens
+                                )
                         except Exception:
                             pass
 

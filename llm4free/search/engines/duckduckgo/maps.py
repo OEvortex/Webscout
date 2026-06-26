@@ -10,7 +10,10 @@ from .base import DuckDuckGoBase
 class DuckDuckGoMaps(DuckDuckGoBase):
     name = "duckduckgo"
     category = "maps"
-    def _calculate_distance(self, lat_t: Decimal, lon_l: Decimal, lat_b: Decimal, lon_r: Decimal) -> float:
+
+    def _calculate_distance(
+        self, lat_t: Decimal, lon_l: Decimal, lat_b: Decimal, lon_r: Decimal
+    ) -> float:
         """Calculate the Euclidean distance between top-left and bottom-right corners of bounding box."""
         # Convert to float for math operations
         lat_t_f = float(lat_t)
@@ -113,13 +116,15 @@ class DuckDuckGoMaps(DuckDuckGoBase):
                 "bbox_br": f"{lat_b},{lon_r}",
                 "strict_bbox": "1",
             }
-            resp_content = self._get_url("GET", "https://duckduckgo.com/local.js", params=params).content
+            resp_content = self._get_url(
+                "GET", "https://duckduckgo.com/local.js", params=params
+            ).content
             resp_json = self.json_loads(resp_content)
             page_data = resp_json.get("results", [])
 
             page_results = []
             for res in page_data:
-                r_name = f'{res["name"]} {res["address"]}'
+                r_name = f"{res['name']} {res['address']}"
                 if r_name in cache:
                     continue
                 else:
@@ -137,8 +142,12 @@ class DuckDuckGoMaps(DuckDuckGoBase):
                         "desc": x.get("description", "") if (x := res["embed"]) else "",
                         "hours": res["hours"] or "",
                         "category": res["ddg_category"] or "",
-                        "facebook": f"www.facebook.com/profile.php?id={x}" if (x := res["facebook_id"]) else "",
-                        "instagram": f"https://www.instagram.com/{x}" if (x := res["instagram_id"]) else "",
+                        "facebook": f"www.facebook.com/profile.php?id={x}"
+                        if (x := res["facebook_id"])
+                        else "",
+                        "instagram": f"https://www.instagram.com/{x}"
+                        if (x := res["instagram_id"])
+                        else "",
                         "twitter": f"https://twitter.com/{x}" if (x := res["twitter_id"]) else "",
                     }
                     page_results.append(result)
@@ -180,4 +189,3 @@ class DuckDuckGoMaps(DuckDuckGoBase):
                 break
 
         return list(self.islice(results, max_results))
-

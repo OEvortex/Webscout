@@ -7,17 +7,15 @@ Set GEMINI_COOKIE_FILE environment variable to run these tests.
 """
 
 import os
-import pytest
 
+import pytest
 
 # Gemini provider (GEMINI class) lives in llm4free.Bard but uses
 # a legacy interface (ask/get_message) that is incompatible with the
 # current OpenAI-compatible provider base.  Skip the entire module
 # until the tests are rewritten against the current interface.
 
-pytestmark = pytest.mark.skip(
-    reason="Gemini provider uses legacy interface; tests need rewriting"
-)
+pytestmark = pytest.mark.skip(reason="Gemini provider uses legacy interface; tests need rewriting")
 
 
 class TestGemini:
@@ -28,6 +26,7 @@ class TestGemini:
         cookie_file = os.environ.get("GEMINI_COOKIE_FILE")
         assert cookie_file is not None, "GEMINI_COOKIE_FILE must be set"
         from llm4free.Bard import GEMINI
+
         self.provider = GEMINI(cookie_file=cookie_file)
 
     def test_ask_non_stream(self):
@@ -55,6 +54,7 @@ class TestGemini:
         for model in models_to_test:
             try:
                 from llm4free.Bard import GEMINI
+
                 cookie_file = os.environ.get("GEMINI_COOKIE_FILE")
                 provider = GEMINI(cookie_file=cookie_file, model=model)
                 response = provider.ask("Say 'test'")

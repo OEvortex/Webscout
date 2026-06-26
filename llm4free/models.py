@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 BaseImages = None
 try:
     from llm4free.TTI.base import BaseImages as BaseImagesClass
+
     BaseImages = BaseImagesClass
     TTI_AVAILABLE = True
 except ImportError:
@@ -107,7 +108,11 @@ class _LLMModels:
                         module = importlib.import_module(f"{package_name}.{module_name}")
                         for attr_name in dir(module):
                             attr = getattr(module, attr_name)
-                            if isinstance(attr, type) and issubclass(attr, Provider) and attr != Provider:
+                            if (
+                                isinstance(attr, type)
+                                and issubclass(attr, Provider)
+                                and attr != Provider
+                            ):
                                 get_models = getattr(attr, "get_models", None)
                                 available_models = getattr(attr, "AVAILABLE_MODELS", None)
                                 if get_models and callable(get_models):
@@ -151,7 +156,11 @@ class _LLMModels:
                         module = importlib.import_module(f"{package_name}.{module_name}")
                         for attr_name in dir(module):
                             attr = getattr(module, attr_name)
-                            if isinstance(attr, type) and issubclass(attr, Provider) and attr != Provider:
+                            if (
+                                isinstance(attr, type)
+                                and issubclass(attr, Provider)
+                                and attr != Provider
+                            ):
                                 # Get available models
                                 models = []
                                 get_models = getattr(attr, "get_models", None)

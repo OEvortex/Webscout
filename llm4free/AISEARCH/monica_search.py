@@ -134,9 +134,11 @@ class Monica(AISearch):
                 processed_chunks = sanitize_stream(
                     data=response.iter_content(chunk_size=None),
                     to_json=True,
-                    content_extractor=lambda chunk: chunk.get("text")
-                    if isinstance(chunk, dict) and chunk.get("text") is not None
-                    else None,
+                    content_extractor=lambda chunk: (
+                        chunk.get("text")
+                        if isinstance(chunk, dict) and chunk.get("text") is not None
+                        else None
+                    ),
                     yield_raw_on_error=False,
                     encoding="utf-8",
                     encoding_errors="replace",
@@ -181,9 +183,11 @@ class Monica(AISearch):
                         strip_chars=None,
                         start_marker=None,
                         end_marker=None,
-                        content_extractor=lambda chunk: chunk.get("text")
-                        if isinstance(chunk, dict) and chunk.get("text") is not None
-                        else None,
+                        content_extractor=lambda chunk: (
+                            chunk.get("text")
+                            if isinstance(chunk, dict) and chunk.get("text") is not None
+                            else None
+                        ),
                         yield_raw_on_error=False,
                         encoding="utf-8",
                         encoding_errors="replace",

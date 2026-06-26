@@ -21,7 +21,7 @@ class HTMLParser:
         """
         Initialize the HTML parser with advanced parsing capabilities.
         """
-        self._root = Tag('html')
+        self._root = Tag("html")
         self._current_tag = self._root
         self._tag_stack = [self._root]
         self._parsing_errors = []
@@ -64,10 +64,12 @@ class HTMLParser:
         markup = html.unescape(markup)
 
         # Handle unclosed tags (basic approach)
-        markup = re.sub(r'<(br|img|input|hr|meta)([^>]*?)(?<!/)>', r'<\1\2 />', markup, flags=re.IGNORECASE)
+        markup = re.sub(
+            r"<(br|img|input|hr|meta)([^>]*?)(?<!/)>", r"<\1\2 />", markup, flags=re.IGNORECASE
+        )
 
         # Remove comments (optional, can be configurable)
-        markup = re.sub(r'<!--.*?-->', '', markup, flags=re.DOTALL)
+        markup = re.sub(r"<!--.*?-->", "", markup, flags=re.DOTALL)
 
         return markup
 
@@ -115,10 +117,12 @@ class HTMLParser:
         """
         return self._parsing_errors
 
+
 class _ScoutHTMLParser(StdHTMLParser):
     """
     Internal HTML parser that integrates with Scout's parsing mechanism.
     """
+
     def __init__(self, scout_parser: HTMLParser):
         """
         Initialize the parser with a Scout HTML parser.
@@ -174,8 +178,8 @@ class _ScoutHTMLParser(StdHTMLParser):
             data (str): Comment content
         """
         # Optionally handle comments
-        comment_tag = Tag('comment')
-        comment_tag.attrs['content'] = data
+        comment_tag = Tag("comment")
+        comment_tag.attrs["content"] = data
         self._scout_parser.add_tag(comment_tag)
 
     def handle_decl(self, decl: str):
@@ -186,8 +190,8 @@ class _ScoutHTMLParser(StdHTMLParser):
             decl (str): Declaration content
         """
         # Create a special tag for declarations
-        decl_tag = Tag('!DOCTYPE')
-        decl_tag.attrs['content'] = decl
+        decl_tag = Tag("!DOCTYPE")
+        decl_tag.attrs["content"] = decl
         self._scout_parser.add_tag(decl_tag)
 
     def handle_pi(self, data: str):
@@ -198,8 +202,8 @@ class _ScoutHTMLParser(StdHTMLParser):
             data (str): Processing instruction content
         """
         # Create a special tag for processing instructions
-        pi_tag = Tag('?')
-        pi_tag.attrs['content'] = data
+        pi_tag = Tag("?")
+        pi_tag.attrs["content"] = data
         self._scout_parser.add_tag(pi_tag)
 
     def handle_entityref(self, name: str):
@@ -210,7 +214,7 @@ class _ScoutHTMLParser(StdHTMLParser):
             name (str): Entity reference name
         """
         # Convert entity references to their actual characters
-        char = html_entities.html5.get(name, f'&{name};')
+        char = html_entities.html5.get(name, f"&{name};")
         self._scout_parser.add_text(char)
 
     def handle_charref(self, name: str):
@@ -222,14 +226,14 @@ class _ScoutHTMLParser(StdHTMLParser):
         """
         # Convert character references to their actual characters
         try:
-            if name.startswith('x'):
+            if name.startswith("x"):
                 char = chr(int(name[1:], 16))
             else:
                 char = chr(int(name))
             self._scout_parser.add_text(char)
         except ValueError:
             # Fallback for invalid references
-            self._scout_parser.add_text(f'&#{name};')
+            self._scout_parser.add_text(f"&#{name};")
 
     def close(self):
         """

@@ -139,11 +139,13 @@ class BraveNews(BraveBase):
             Exception: If the request fails after retries.
         """
         headers = dict(self.session.headers) if getattr(self, "session", None) else {}
-        headers.update({
-            "Referer": "https://search.brave.com/",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.9",
-        })
+        headers.update(
+            {
+                "Referer": "https://search.brave.com/",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.9",
+            }
+        )
 
         attempts = 3
         backoff = 1.0
@@ -295,18 +297,52 @@ class BraveNews(BraveBase):
 
         # Check for relative time patterns
         relative_patterns = [
-            "hour", "hours", "minute", "minutes", "second", "seconds",
-            "day", "days", "week", "weeks", "month", "months", "year", "years",
-            "ago", "yesterday", "today",
+            "hour",
+            "hours",
+            "minute",
+            "minutes",
+            "second",
+            "seconds",
+            "day",
+            "days",
+            "week",
+            "weeks",
+            "month",
+            "months",
+            "year",
+            "years",
+            "ago",
+            "yesterday",
+            "today",
         ]
         if any(pattern in text_lower for pattern in relative_patterns):
             return True
 
         # Check for month names
         months = [
-            "january", "february", "march", "april", "may", "june",
-            "july", "august", "september", "october", "november", "december",
-            "jan", "feb", "mar", "apr", "jun", "jul", "aug", "sep", "oct", "nov", "dec",
+            "january",
+            "february",
+            "march",
+            "april",
+            "may",
+            "june",
+            "july",
+            "august",
+            "september",
+            "october",
+            "november",
+            "december",
+            "jan",
+            "feb",
+            "mar",
+            "apr",
+            "jun",
+            "jul",
+            "aug",
+            "sep",
+            "oct",
+            "nov",
+            "dec",
         ]
         if any(month in text_lower for month in months):
             return True
@@ -350,4 +386,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Error during search: {e}")
         import traceback
+
         traceback.print_exc()

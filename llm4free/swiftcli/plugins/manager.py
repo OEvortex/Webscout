@@ -14,6 +14,7 @@ from .base import Plugin
 
 console = Console()
 
+
 class PluginManager:
     """
     Manages SwiftCLI plugins.
@@ -112,9 +113,7 @@ class PluginManager:
                 # Find Plugin subclasses in module
                 for attr_name in dir(module):
                     attr = getattr(module, attr_name)
-                    if (isinstance(attr, type) and
-                        issubclass(attr, Plugin) and
-                        attr is not Plugin):
+                    if isinstance(attr, type) and issubclass(attr, Plugin) and attr is not Plugin:
                         plugin = attr()
                         self.register(plugin)
 
@@ -163,8 +162,9 @@ class PluginManager:
                     return False
             except Exception as e:
                 console.print(f"[red]Error in plugin {plugin.name}: {e}[/red]")
-                if plugin.app and getattr(plugin.app, 'debug', False):
+                if plugin.app and getattr(plugin.app, "debug", False):
                     import traceback
+
                     traceback.print_exc()
 
         return True
@@ -186,8 +186,9 @@ class PluginManager:
                 plugin.after_command(command, args, result)
             except Exception as e:
                 console.print(f"[red]Error in plugin {plugin.name}: {e}[/red]")
-                if plugin.app and getattr(plugin.app, 'debug', False):
+                if plugin.app and getattr(plugin.app, "debug", False):
                     import traceback
+
                     traceback.print_exc()
 
     def on_error(self, command: str, error: Exception) -> None:
@@ -206,8 +207,9 @@ class PluginManager:
                 plugin.on_error(command, error)
             except Exception as e:
                 console.print(f"[red]Error in plugin {plugin.name}: {e}[/red]")
-                if plugin.app and getattr(plugin.app, 'debug', False):
+                if plugin.app and getattr(plugin.app, "debug", False):
                     import traceback
+
                     traceback.print_exc()
 
     def get_help_text(self, command: str) -> List[str]:

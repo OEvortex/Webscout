@@ -23,7 +23,7 @@ from llm4free.llm.utils import (
 class Completions(BaseCompletions):
     """TwoAI chat completions compatible with OpenAI format."""
 
-    def __init__(self, client: 'TwoAI'):
+    def __init__(self, client: "TwoAI"):
         self._client = client
 
     def create(
@@ -38,7 +38,7 @@ class Completions(BaseCompletions):
         timeout: Optional[int] = None,
         proxies: Optional[Dict[str, str]] = None,
         online_search: Optional[bool] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Union[ChatCompletion, Generator[ChatCompletionChunk, None, None]]:
         """Create a chat completion using TwoAI."""
         payload: Dict[str, Any] = {
@@ -60,12 +60,21 @@ class Completions(BaseCompletions):
         created_time = int(time.time())
 
         if stream:
-            return self._create_stream(request_id, created_time, model, payload, timeout=timeout, proxies=proxies)
-        return self._create_non_stream(request_id, created_time, model, payload, timeout=timeout, proxies=proxies)
+            return self._create_stream(
+                request_id, created_time, model, payload, timeout=timeout, proxies=proxies
+            )
+        return self._create_non_stream(
+            request_id, created_time, model, payload, timeout=timeout, proxies=proxies
+        )
 
     def _create_stream(
-        self, request_id: str, created_time: int, model: str, payload: Dict[str, Any],
-        timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        payload: Dict[str, Any],
+        timeout: Optional[int] = None,
+        proxies: Optional[Dict[str, str]] = None,
     ) -> Generator[ChatCompletionChunk, None, None]:
         original_proxies = dict(self._client.session.proxies)
         if proxies is not None:
@@ -79,7 +88,7 @@ class Completions(BaseCompletions):
                 json=payload,
                 stream=True,
                 timeout=timeout if timeout is not None else self._client.timeout,
-                proxies=proxies or getattr(self._client, "proxies", None)  # ty:ignore[invalid-argument-type]
+                proxies=proxies or getattr(self._client, "proxies", None),  # ty:ignore[invalid-argument-type]
             )
             response.raise_for_status()
 
@@ -108,9 +117,7 @@ class Completions(BaseCompletions):
                 usage_data = data.get("usage", {})
                 if usage_data:
                     prompt_tokens = usage_data.get("prompt_tokens", prompt_tokens)
-                    completion_tokens = usage_data.get(
-                        "completion_tokens", completion_tokens
-                    )
+                    completion_tokens = usage_data.get("completion_tokens", completion_tokens)
                     total_tokens = usage_data.get("total_tokens", total_tokens)
 
                 delta = ChoiceDelta(
@@ -142,8 +149,13 @@ class Completions(BaseCompletions):
             self._client.session.proxies.update(cast(Any, original_proxies))
 
     def _create_non_stream(
-        self, request_id: str, created_time: int, model: str, payload: Dict[str, Any],
-        timeout: Optional[int] = None, proxies: Optional[Dict[str, str]] = None
+        self,
+        request_id: str,
+        created_time: int,
+        model: str,
+        payload: Dict[str, Any],
+        timeout: Optional[int] = None,
+        proxies: Optional[Dict[str, str]] = None,
     ) -> ChatCompletion:
         original_proxies = dict(self._client.session.proxies)
         if proxies is not None:
@@ -156,7 +168,7 @@ class Completions(BaseCompletions):
                 headers=self._client.headers,
                 json=payload,
                 timeout=timeout if timeout is not None else self._client.timeout,
-                proxies=proxies or getattr(self._client, "proxies", None)  # ty:ignore[invalid-argument-type]
+                proxies=proxies or getattr(self._client, "proxies", None),  # ty:ignore[invalid-argument-type]
             )
             response.raise_for_status()
             data = response.json()
@@ -201,38 +213,41 @@ class Completions(BaseCompletions):
 
 
 class Chat(BaseChat):
-    def __init__(self, client: 'TwoAI'):
+    def __init__(self, client: "TwoAI"):
         self.completions = Completions(client)
 
 
 class TwoAI(OpenAICompatibleProvider):
     """OpenAI-compatible client for the TwoAI API."""
+
     required_auth = True
     AVAILABLE_MODELS = ["sutra-v2", "sutra-r0"]
 
-    def __init__(self, api_key: str, browser: str = "chrome", proxies: Optional[Dict[str, str]] = None):
+    def __init__(
+        self, api_key: str, browser: str = "chrome", proxies: Optional[Dict[str, str]] = None
+    ):
         super().__init__(proxies=proxies)
         self.timeout = 30
         self.base_url = "https://chatsutra-server.account-2b0.workers.dev/v2/chat/completions"
         self.api_key = api_key
 
         headers: Dict[str, str] = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-            'Accept': 'application/json',
-            'Accept-Encoding': 'gzip, deflate, br, zstd',
-            'Accept-Language': 'en-US,en;q=0.9,en-IN;q=0.8',
-            'Content-Type': 'application/json',
-            'Origin': 'https://chat.two.ai',
-            'Referer': 'https://chatsutra-server.account-2b0.workers.dev/',
-            'Sec-Ch-Ua': '"Chromium";v="140", "Not=A?Brand";v="24", "Microsoft Edge";v="140"',
-            'Sec-Ch-Ua-Mobile': '?0',
-            'Sec-Ch-Ua-Platform': '"Windows"',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'cross-site',
-            'Sec-Gpc': '1',
-            'Dnt': '1',
-            'X-Session-Token': api_key
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0",
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Accept-Language": "en-US,en;q=0.9,en-IN;q=0.8",
+            "Content-Type": "application/json",
+            "Origin": "https://chat.two.ai",
+            "Referer": "https://chatsutra-server.account-2b0.workers.dev/",
+            "Sec-Ch-Ua": '"Chromium";v="140", "Not=A?Brand";v="24", "Microsoft Edge";v="140"',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": '"Windows"',
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "cross-site",
+            "Sec-Gpc": "1",
+            "Dnt": "1",
+            "X-Session-Token": api_key,
         }
 
         self.headers = headers
@@ -243,13 +258,13 @@ class TwoAI(OpenAICompatibleProvider):
     def models(self) -> SimpleModelList:
         return SimpleModelList(type(self).AVAILABLE_MODELS)
 
+
 if __name__ == "__main__":
     from rich import print
+
     two_ai = TwoAI(api_key="api_key")
     resp = two_ai.chat.completions.create(
-        model="sutra-v2",
-        messages=[{"role": "user", "content": "Hello, how are you?"}],
-        stream=True
+        model="sutra-v2", messages=[{"role": "user", "content": "Hello, how are you?"}], stream=True
     )
     for chunk in resp:
         print(chunk, end="")

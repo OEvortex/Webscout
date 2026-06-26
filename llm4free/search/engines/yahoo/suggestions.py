@@ -109,7 +109,7 @@ class YahooSuggestions(YahooSearchEngine[str]):
             safesearch=safesearch,
             timelimit=timelimit,
             page=page,
-            **kwargs
+            **kwargs,
         )
 
         response = self.request(self.search_method, self.search_url, params=payload)

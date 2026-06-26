@@ -6,6 +6,7 @@ from .base import DuckDuckGoBase
 class DuckDuckGoTranslate(DuckDuckGoBase):
     name = "duckduckgo"
     category = "translate"
+
     def run(self, *args, **kwargs) -> list[dict[str, str]]:
         keywords = args[0] if args else kwargs.get("keywords")
         from_ = args[1] if len(args) > 1 else kwargs.get("from_")
@@ -45,4 +46,3 @@ class DuckDuckGoTranslate(DuckDuckGoBase):
             raise e
 
         return results
-

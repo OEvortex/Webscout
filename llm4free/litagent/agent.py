@@ -74,7 +74,7 @@ class LitAgent:
             "requests_served": 0,
             "browser_usage": {browser: 0 for browser in BROWSERS.keys()},
             "device_usage": {device: 0 for device in DEVICES.keys()},
-            "start_time": datetime.now().isoformat()
+            "start_time": datetime.now().isoformat(),
         }
 
     def _generate_agents(self, count: int) -> List[str]:
@@ -94,44 +94,46 @@ class LitAgent:
             version_range: Tuple[int, int] = BROWSERS.get(browser, (100, 130))
             version: int = random.randint(*version_range)
 
-            if browser in ['chrome', 'firefox', 'edge', 'opera', 'brave', 'vivaldi']:
-                os_type: str = random.choice(['windows', 'mac', 'linux'])
+            if browser in ["chrome", "firefox", "edge", "opera", "brave", "vivaldi"]:
+                os_type: str = random.choice(["windows", "mac", "linux"])
                 os_ver: str = random.choice(OS_VERSIONS.get(os_type, ["10.0"]))
 
-                if os_type == 'windows':
+                if os_type == "windows":
                     platform = f"Windows NT {os_ver}; Win64; x64"
-                elif os_type == 'mac':
+                elif os_type == "mac":
                     platform = f"Macintosh; Intel Mac OS X {os_ver}"
                 else:
                     platform = f"X11; Linux {os_ver}"
 
                 agent = f"Mozilla/5.0 ({platform}) AppleWebKit/537.36 (KHTML, like Gecko) "
 
-                if browser == 'chrome':
+                if browser == "chrome":
                     agent += f"Chrome/{version}.0.0.0 Safari/537.36"
-                elif browser == 'firefox':
+                elif browser == "firefox":
                     agent += f"Firefox/{version}.0"
-                elif browser == 'edge':
+                elif browser == "edge":
                     agent += f"Chrome/{version}.0.0.0 Safari/537.36 Edg/{version}.0.0.0"
-                elif browser == 'opera':
+                elif browser == "opera":
                     agent += f"Chrome/{version}.0.0.0 Safari/537.36 OPR/{version}.0.0.0"
-                elif browser == 'brave':
+                elif browser == "brave":
                     agent += f"Chrome/{version}.0.0.0 Safari/537.36 Brave/{version}.0.0.0"
-                elif browser == 'vivaldi':
+                elif browser == "vivaldi":
                     vivaldi_build: int = random.randint(1000, 9999)
-                    agent += f"Chrome/{version}.0.0.0 Safari/537.36 Vivaldi/{version}.0.{vivaldi_build}"
+                    agent += (
+                        f"Chrome/{version}.0.0.0 Safari/537.36 Vivaldi/{version}.0.{vivaldi_build}"
+                    )
 
-            elif browser == 'safari':
-                device: str = random.choice(['mac', 'ios'])
-                if device == 'mac':
-                    ver: str = random.choice(OS_VERSIONS.get('mac', ["10_15_7"]))
+            elif browser == "safari":
+                device: str = random.choice(["mac", "ios"])
+                if device == "mac":
+                    ver: str = random.choice(OS_VERSIONS.get("mac", ["10_15_7"]))
                     agent = f"Mozilla/5.0 (Macintosh; Intel Mac OS X {ver}) "
                 else:
-                    ver = random.choice(OS_VERSIONS.get('ios', ["17_0"]))
-                    device_name: str = random.choice(['iPhone', 'iPad'])
+                    ver = random.choice(OS_VERSIONS.get("ios", ["17_0"]))
+                    device_name: str = random.choice(["iPhone", "iPad"])
                     agent = f"Mozilla/5.0 ({device_name}; CPU OS {ver} like Mac OS X) "
 
-                agent += f"AppleWebKit/{version}.1.15 (KHTML, like Gecko) Version/{version//10}.0 Safari/{version}.1.15"
+                agent += f"AppleWebKit/{version}.1.15 (KHTML, like Gecko) Version/{version // 10}.0 Safari/{version}.1.15"
 
             agents.append(agent)
 
@@ -139,14 +141,21 @@ class LitAgent:
         unique_agents = list(set(agents))
         return [a for a in unique_agents if a not in self._blacklist]
 
-    def _update_stats(self, browser_type: Optional[str] = None, device_type: Optional[str] = None) -> None:
+    def _update_stats(
+        self, browser_type: Optional[str] = None, device_type: Optional[str] = None
+    ) -> None:
         """Update internal usage statistics."""
+
         def update() -> None:
             self._stats["requests_served"] += 1
             if browser_type:
-                self._stats["browser_usage"][browser_type] = self._stats["browser_usage"].get(browser_type, 0) + 1
+                self._stats["browser_usage"][browser_type] = (
+                    self._stats["browser_usage"].get(browser_type, 0) + 1
+                )
             if device_type:
-                self._stats["device_usage"][device_type] = self._stats["device_usage"].get(device_type, 0) + 1
+                self._stats["device_usage"][device_type] = (
+                    self._stats["device_usage"].get(device_type, 0) + 1
+                )
 
         if self.thread_safe and self.lock:
             with self.lock:
@@ -156,6 +165,7 @@ class LitAgent:
 
     def _add_to_history(self, agent: str) -> None:
         """Add a generated agent to history."""
+
         def add() -> None:
             self._history.append(agent)
             if len(self._history) > 50:
@@ -211,7 +221,7 @@ class LitAgent:
 
     def mobile(self) -> str:
         """Returns a mobile device user agent."""
-        matching = [a for a in self._agents if any(d in a for d in DEVICES.get('mobile', []))]
+        matching = [a for a in self._agents if any(d in a for d in DEVICES.get("mobile", []))]
         agent = random.choice(matching) if matching else self.custom(device_type="mobile")
         self._update_stats(device_type="mobile")
         return agent
@@ -225,28 +235,57 @@ class LitAgent:
 
     def tablet(self) -> str:
         """Returns a tablet device user agent."""
-        matching = [a for a in self._agents if 'iPad' in a or ('Android' in a and 'Mobile' not in a)]
+        matching = [
+            a for a in self._agents if "iPad" in a or ("Android" in a and "Mobile" not in a)
+        ]
         agent = random.choice(matching) if matching else self.custom(device_type="tablet")
         self._update_stats(device_type="tablet")
         return agent
 
-    def chrome(self) -> str: return self.browser('chrome')
-    def firefox(self) -> str: return self.browser('firefox')
-    def safari(self) -> str: return self.browser('safari')
-    def edge(self) -> str: return self.browser('edge')
-    def opera(self) -> str: return self.browser('opera')
-    def brave(self) -> str: return self.browser('brave')
-    def vivaldi(self) -> str: return self.browser('vivaldi')
+    def chrome(self) -> str:
+        return self.browser("chrome")
 
-    def windows(self) -> str: return self.custom(os='windows')
-    def macos(self) -> str: return self.custom(os='mac')
-    def linux(self) -> str: return self.custom(os='linux')
-    def android(self) -> str: return self.custom(os='android')
-    def ios(self) -> str: return self.custom(os='ios')
+    def firefox(self) -> str:
+        return self.browser("firefox")
 
-    def custom(self, browser: Optional[str] = None, version: Optional[str] = None,
-               os: Optional[str] = None, os_version: Optional[str] = None,
-               device_type: Optional[str] = None) -> str:
+    def safari(self) -> str:
+        return self.browser("safari")
+
+    def edge(self) -> str:
+        return self.browser("edge")
+
+    def opera(self) -> str:
+        return self.browser("opera")
+
+    def brave(self) -> str:
+        return self.browser("brave")
+
+    def vivaldi(self) -> str:
+        return self.browser("vivaldi")
+
+    def windows(self) -> str:
+        return self.custom(os="windows")
+
+    def macos(self) -> str:
+        return self.custom(os="mac")
+
+    def linux(self) -> str:
+        return self.custom(os="linux")
+
+    def android(self) -> str:
+        return self.custom(os="android")
+
+    def ios(self) -> str:
+        return self.custom(os="ios")
+
+    def custom(
+        self,
+        browser: Optional[str] = None,
+        version: Optional[str] = None,
+        os: Optional[str] = None,
+        os_version: Optional[str] = None,
+        device_type: Optional[str] = None,
+    ) -> str:
         """
         Generate a customized user agent string.
 
@@ -260,37 +299,37 @@ class LitAgent:
         Returns:
             str: The customized user agent string.
         """
-        browser = browser.lower() if browser else 'chrome'
+        browser = browser.lower() if browser else "chrome"
         v_range = BROWSERS.get(browser, (100, 130))
-        v_num = int(version.split('.')[0]) if version else random.randint(*v_range)
+        v_num = int(version.split(".")[0]) if version else random.randint(*v_range)
 
-        os = os.lower() if os else random.choice(['windows', 'mac', 'linux'])
+        os = os.lower() if os else random.choice(["windows", "mac", "linux"])
         os_ver = os_version or random.choice(OS_VERSIONS.get(os, ["10.0"]))
-        device_type = (device_type or 'desktop').lower()
+        device_type = (device_type or "desktop").lower()
 
-        if os == 'windows':
+        if os == "windows":
             platform = f"Windows NT {os_ver}; Win64; x64"
-        elif os == 'mac':
+        elif os == "mac":
             platform = f"Macintosh; Intel Mac OS X {os_ver}"
-        elif os == 'linux':
+        elif os == "linux":
             platform = f"X11; Linux {os_ver}"
-        elif os == 'android':
+        elif os == "android":
             platform = f"Linux; Android {os_ver}; {random.choice(DEVICES.get('mobile', ['Samsung Galaxy']))}"
-        elif os == 'ios':
-            dev = 'iPhone' if device_type == 'mobile' else 'iPad'
+        elif os == "ios":
+            dev = "iPhone" if device_type == "mobile" else "iPad"
             platform = f"{dev}; CPU OS {os_ver} like Mac OS X"
         else:
             platform = "Windows NT 10.0; Win64; x64"
 
         agent = f"Mozilla/5.0 ({platform}) AppleWebKit/537.36 (KHTML, like Gecko) "
 
-        if browser == 'chrome':
+        if browser == "chrome":
             agent += f"Chrome/{v_num}.0.0.0 Safari/537.36"
-        elif browser == 'firefox':
+        elif browser == "firefox":
             agent += f"Firefox/{v_num}.0"
-        elif browser == 'safari':
-            agent += f"Version/{v_num//10}.0 Safari/{v_num}.1.15"
-        elif browser == 'edge':
+        elif browser == "safari":
+            agent += f"Version/{v_num // 10}.0 Safari/{v_num}.1.15"
+        elif browser == "edge":
             agent += f"Chrome/{v_num}.0.0.0 Safari/537.36 Edg/{v_num}.0.0.0"
         else:
             agent += f"Chrome/{v_num}.0.0.0 Safari/537.36"
@@ -319,7 +358,9 @@ class LitAgent:
                 sec_ch_ua = sec_ch_ua_dict[b_name].format(v, v)
                 break
 
-        accept_language_list = cast(List[str], FINGERPRINTS.get("accept_language", ["en-US,en;q=0.9"]))
+        accept_language_list = cast(
+            List[str], FINGERPRINTS.get("accept_language", ["en-US,en;q=0.9"])
+        )
         accept_list = cast(List[str], FINGERPRINTS.get("accept", ["*/*"]))
         platforms_list = cast(List[str], FINGERPRINTS.get("platforms", ["Windows"]))
 
@@ -338,10 +379,10 @@ class LitAgent:
 
     def smart_tv(self) -> str:
         """Generate a Smart TV user agent."""
-        tv: str = random.choice(DEVICES.get('tv', ["Samsung Smart TV"]))
-        if 'Samsung' in tv:
+        tv: str = random.choice(DEVICES.get("tv", ["Samsung Smart TV"]))
+        if "Samsung" in tv:
             agent: str = f"Mozilla/5.0 (SMART-TV; SAMSUNG; {tv}; Tizen 6.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36"
-        elif 'LG' in tv:
+        elif "LG" in tv:
             agent = f"Mozilla/5.0 (Web0S; {tv}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
         else:
             agent = f"Mozilla/5.0 (Linux; {tv}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36"
@@ -351,10 +392,10 @@ class LitAgent:
 
     def gaming(self) -> str:
         """Generate a gaming console user agent."""
-        console: str = random.choice(DEVICES.get('console', ["PlayStation 5"]))
-        if 'PlayStation' in console:
+        console: str = random.choice(DEVICES.get("console", ["PlayStation 5"]))
+        if "PlayStation" in console:
             agent: str = f"Mozilla/5.0 ({console}) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Safari/605.1.15"
-        elif 'Xbox' in console:
+        elif "Xbox" in console:
             agent = f"Mozilla/5.0 (Windows NT 10.0; Win64; x64; Xbox; {console}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Edge/110.0.1587.41"
         else:
             agent = self.random()
@@ -364,8 +405,8 @@ class LitAgent:
 
     def wearable(self) -> str:
         """Generate a wearable device user agent."""
-        dev: str = random.choice(DEVICES.get('wearable', ["Apple Watch"]))
-        if 'Apple Watch' in dev:
+        dev: str = random.choice(DEVICES.get("wearable", ["Apple Watch"]))
+        if "Apple Watch" in dev:
             agent: str = "Mozilla/5.0 (AppleWatch; CPU WatchOS like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/10.0 Mobile/15E148 Safari/605.1"
         else:
             agent = f"Mozilla/5.0 (Linux; {dev}) AppleWebKit/537.36 (KHTML, like Gecko)"
@@ -375,6 +416,7 @@ class LitAgent:
 
     def refresh(self) -> None:
         """Refresh the internal agents pool with new values."""
+
         def do_refresh() -> None:
             self._agents = self._generate_agents(100)
             self._stats["total_generated"] += 100
@@ -407,6 +449,7 @@ class LitAgent:
 
     def rotate_ip(self) -> str:
         """Rotate through the IP pool and returns the next IP address."""
+
         def rot() -> str:
             ip: str = self._ip_pool[self._ip_index]
             self._ip_index = (self._ip_index + 1) % len(self._ip_pool)
@@ -451,14 +494,16 @@ class LitAgent:
         """Get usage statistics."""
         stats = self._stats.copy()
         usage = stats["browser_usage"]
-        stats["top_browser"] = max(usage.items(), key=lambda x: x[1])[0] if any(usage.values()) else None
+        stats["top_browser"] = (
+            max(usage.items(), key=lambda x: x[1])[0] if any(usage.values()) else None
+        )
         stats["avoidance_rate"] = min(99.9, 90 + (stats["total_generated"] / 1000))
         return stats
 
     def export_stats(self, filename: str) -> bool:
         """Export stats to a JSON file."""
         try:
-            with open(filename, 'w', encoding='utf-8') as f:
+            with open(filename, "w", encoding="utf-8") as f:
                 json.dump(self.get_stats(), f, indent=4)
             return True
         except Exception:
@@ -470,7 +515,7 @@ class LitAgent:
 
     def random_id(self, length: int = 16) -> str:
         """Generate a random hexadecimal string ID."""
-        return ''.join(random.choices('0123456789abcdef', k=length))
+        return "".join(random.choices("0123456789abcdef", k=length))
 
     def _generate_ip_pool(self, count: int) -> List[str]:
         """Generate a pool of random IP addresses."""

@@ -228,9 +228,7 @@ class KittenTTS(BaseTTSProvider):
         Returns:
             str: Event ID for polling results
         """
-        payload = {
-            "data": [text, model_name, voice, speed]
-        }
+        payload = {"data": [text, model_name, voice, speed]}
 
         response = self.session.post(
             self.SYNTHESIZE_ENDPOINT,
@@ -340,6 +338,7 @@ class KittenTTS(BaseTTSProvider):
             list: List of available voice names
         """
         return self.SUPPORTED_VOICES.copy()
+
 
 if __name__ == "__main__":
     # Example usage

@@ -55,12 +55,14 @@ class Completions(BaseCompletions):
 
         mwai_messages = []
         for msg in messages:
-            mwai_messages.append({
-                "role": msg.get("role", "user"),
-                "content": msg.get("content", ""),
-                "time": time.strftime("%d/%m/%Y, %H:%M:%S"),
-                "attachments": [],
-            })
+            mwai_messages.append(
+                {
+                    "role": msg.get("role", "user"),
+                    "content": msg.get("content", ""),
+                    "time": time.strftime("%d/%m/%Y, %H:%M:%S"),
+                    "attachments": [],
+                }
+            )
 
         payload: Dict[str, Any] = {
             "model": model,
@@ -78,9 +80,7 @@ class Completions(BaseCompletions):
         created_time = int(time.time())
 
         if stream:
-            return self._create_stream(
-                request_id, created_time, model, payload, timeout, proxies
-            )
+            return self._create_stream(request_id, created_time, model, payload, timeout, proxies)
         else:
             return self._create_non_stream(
                 request_id, created_time, model, payload, timeout, proxies
@@ -118,17 +118,13 @@ class Completions(BaseCompletions):
             if response.status_code == 401:
                 raise IOError("Authentication failed - guest access denied")
             if response.status_code != 200:
-                raise IOError(
-                    f"FuckICoding request failed: {response.status_code}"
-                )
+                raise IOError(f"FuckICoding request failed: {response.status_code}")
 
             content_type = response.headers.get("content-type", "")
             if "application/json" in content_type:
                 data = response.json()
                 if not data.get("success", True):
-                    raise IOError(
-                        f"FuckICoding API error: {data.get('message', 'unknown')}"
-                    )
+                    raise IOError(f"FuckICoding API error: {data.get('message', 'unknown')}")
 
             buffer = ""
             for chunk in response.iter_content(chunk_size=None):
@@ -157,9 +153,7 @@ class Completions(BaseCompletions):
                     content = event.get("c", "")
                     if content:
                         delta = ChoiceDelta(content=content)
-                        choice = Choice(
-                            index=0, delta=delta, finish_reason=None
-                        )
+                        choice = Choice(index=0, delta=delta, finish_reason=None)
                         yield ChatCompletionChunk(
                             id=request_id,
                             choices=[choice],
@@ -192,11 +186,7 @@ class Completions(BaseCompletions):
             for chunk in self._create_stream(
                 request_id, created_time, model, payload, timeout, proxies
             ):
-                if (
-                    chunk.choices
-                    and chunk.choices[0].delta
-                    and chunk.choices[0].delta.content
-                ):
+                if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
                     full_text += chunk.choices[0].delta.content
 
             usage = CompletionUsage(
@@ -307,11 +297,7 @@ if __name__ == "__main__":
             ):
                 status = "✓"
                 display_text = response.choices[0].message.content.strip()
-                display_text = (
-                    display_text[:50] + "..."
-                    if len(display_text) > 50
-                    else display_text
-                )
+                display_text = display_text[:50] + "..." if len(display_text) > 50 else display_text
             else:
                 status = "✗"
                 display_text = "Empty or invalid response"

@@ -3,6 +3,7 @@
 These tests exercise the real search providers against the network.
 Run only the live suite with: uv run pytest tests/search/ -m live
 """
+
 from __future__ import annotations
 
 import pytest
@@ -201,6 +202,7 @@ class TestStandaloneEngines:
         assert isinstance(results, list)
         assert len(results) >= 1
 
+
 class TestNotImplemented:
     """Test that unimplemented methods raise NotImplementedError."""
 
@@ -245,5 +247,3 @@ class TestNotImplemented:
         brave = BraveSearch()
         with pytest.raises(NotImplementedError):
             brave.translate("test")
-
-

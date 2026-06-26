@@ -221,11 +221,11 @@ class Chat(BaseChat):
 class DeepInfra(OpenAICompatibleProvider):
     """
     DeepInfra OpenAI-compatible provider.
-    
+
     DeepInfra provides OpenAI-compatible API for LLM models.
     API Documentation: https://deepinfra.com/docs/openai_api
     """
-    
+
     required_auth = True
     AVAILABLE_MODELS = [
         "meta-llama/Llama-3.3-70B-Instruct-Turbo",
@@ -247,7 +247,7 @@ class DeepInfra(OpenAICompatibleProvider):
         """
         if not api_key:
             return cls.AVAILABLE_MODELS
-            
+
         try:
             # Use a temporary curl_cffi session for this class method
             temp_session = Session()
@@ -286,7 +286,7 @@ class DeepInfra(OpenAICompatibleProvider):
 
     def __init__(self, api_key: str, browser: str = "chrome"):
         """Initialize DeepInfra client.
-        
+
         Args:
             api_key (str): DeepInfra API key (required).
             browser (str, optional): Browser type for fingerprint. Defaults to "chrome".
@@ -298,18 +298,18 @@ class DeepInfra(OpenAICompatibleProvider):
         self.timeout = None
         self.base_url = "https://api.deepinfra.com/v1/openai/chat/completions"
         self.session = Session()
-        
+
         # Initialize LitAgent for browser fingerprint
         agent = LitAgent()
         fingerprint = agent.generate_fingerprint(browser)
-        
+
         # Minimal headers for DeepInfra API
         self.headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}",
             "User-Agent": fingerprint["user_agent"],
         }
-        
+
         self.session.headers.update(self.headers)
         self.chat = Chat(self)
 
@@ -320,6 +320,7 @@ class DeepInfra(OpenAICompatibleProvider):
 
 if __name__ == "__main__":
     import os
+
     api_key = os.environ.get("DEEPINFRA_API_KEY", "your-api-key-here")
     client = DeepInfra(api_key=api_key)
     response = client.chat.completions.create(

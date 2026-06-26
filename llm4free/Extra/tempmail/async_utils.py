@@ -1,6 +1,7 @@
 """
 Async utilities for temporary email generation
 """
+
 import asyncio
 from typing import Dict, List, Optional, Tuple
 
@@ -20,7 +21,9 @@ class AsyncTempMailHelper:
         self.email = None
         self.token = None
 
-    async def create(self, alias: Optional[str] = None, domain: Optional[str] = None) -> Tuple[str, str]:
+    async def create(
+        self, alias: Optional[str] = None, domain: Optional[str] = None
+    ) -> Tuple[str, str]:
         """
         Create a new temporary email
 
@@ -38,7 +41,7 @@ class AsyncTempMailHelper:
             self.email, self.token = await self.api.create_email(alias, domain)
             return self.email, self.token
         except Exception as e:
-            ic.configureOutput(prefix='ERROR| ')
+            ic.configureOutput(prefix="ERROR| ")
             ic(f"Error creating email: {e}")
             await self.close()
             raise
@@ -66,12 +69,16 @@ class AsyncTempMailHelper:
                     "subject": msg.get("subject"),
                     "created_at": msg.get("created_at") or msg.get("createdAt"),
                     "body": msg.get("body_text") or msg.get("body_html") or msg.get("body"),
-                    "has_attachments": bool(msg.get("attachments") or msg.get("has_attachments") or msg.get("hasAttachments"))
+                    "has_attachments": bool(
+                        msg.get("attachments")
+                        or msg.get("has_attachments")
+                        or msg.get("hasAttachments")
+                    ),
                 }
                 for msg in messages
             ]
         except Exception as e:
-            ic.configureOutput(prefix='ERROR| ')
+            ic.configureOutput(prefix="ERROR| ")
             ic(f"Error getting messages: {e}")
             return []
 
@@ -83,7 +90,7 @@ class AsyncTempMailHelper:
             True if deletion was successful, False otherwise
         """
         if not self.api or not self.email or not self.token:
-            ic.configureOutput(prefix='WARNING| ')
+            ic.configureOutput(prefix="WARNING| ")
             ic("No email to delete")
             return False
 
@@ -91,7 +98,7 @@ class AsyncTempMailHelper:
             result = await self.api.delete_email()
             return result
         except Exception as e:
-            ic.configureOutput(prefix='ERROR| ')
+            ic.configureOutput(prefix="ERROR| ")
             ic(f"Error deleting email: {e}")
             return False
         finally:
@@ -104,7 +111,9 @@ class AsyncTempMailHelper:
             self.api = None
 
 
-async def get_temp_email(alias: Optional[str] = None, domain: Optional[str] = None) -> Tuple[str, AsyncTempMailHelper]:
+async def get_temp_email(
+    alias: Optional[str] = None, domain: Optional[str] = None
+) -> Tuple[str, AsyncTempMailHelper]:
     """
     Get a temporary email address asynchronously
 
@@ -120,7 +129,9 @@ async def get_temp_email(alias: Optional[str] = None, domain: Optional[str] = No
     return email, helper
 
 
-async def wait_for_message(helper: AsyncTempMailHelper, timeout: int = 60, check_interval: int = 5) -> Optional[Dict]:
+async def wait_for_message(
+    helper: AsyncTempMailHelper, timeout: int = 60, check_interval: int = 5
+) -> Optional[Dict]:
     """
     Wait for a message to arrive in the inbox
 

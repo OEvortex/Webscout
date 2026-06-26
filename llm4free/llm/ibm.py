@@ -9,6 +9,9 @@ from curl_cffi import CurlError
 # Import curl_cffi for improved request handling
 from curl_cffi.requests import Session
 
+# Attempt to import LitAgent, fallback if not available
+from llm4free.litagent import LitAgent
+
 # Import base classes and utility structures
 from llm4free.llm.base import (
     BaseChat,
@@ -26,9 +29,6 @@ from llm4free.llm.utils import (
     count_tokens,
     format_prompt,
 )
-
-# Attempt to import LitAgent, fallback if not available
-from llm4free.litagent import LitAgent
 
 
 class Completions(BaseCompletions):

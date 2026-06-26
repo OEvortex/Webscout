@@ -21,7 +21,9 @@ def timeIt(func: Callable):
     RESET = "\033[0m"
 
     def _log_elapsed(func_name: str, elapsed: float) -> None:
-        logger.info("%s- Execution time for '%s' : %.6f Seconds.  %s", GREEN_BOLD, func_name, elapsed, RESET)
+        logger.info(
+            "%s- Execution time for '%s' : %.6f Seconds.  %s", GREEN_BOLD, func_name, elapsed, RESET
+        )
 
     @functools.wraps(func)
     def sync_wrapper(*args, **kwargs):
@@ -53,6 +55,7 @@ def retry(retries: int = 3, delay: float = 1) -> Callable:
     ``time.sleep`` for sync functions and ``asyncio.sleep`` for async
     functions so that async callers are never blocked.
     """
+
     def decorator(func: Callable):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -62,12 +65,16 @@ def retry(retries: int = 3, delay: float = 1) -> Callable:
                     return func(*args, **kwargs)
                 except Exception as exc:
                     last_exc = exc
-                    logger.warning("Attempt %d failed: %s. Retrying in %s seconds...", attempt + 1, exc, delay)
+                    logger.warning(
+                        "Attempt %d failed: %s. Retrying in %s seconds...", attempt + 1, exc, delay
+                    )
                     time.sleep(delay)
             if last_exc is not None:
                 raise last_exc
             func_name = getattr(func, "__name__", str(func))
-            raise RuntimeError(f"Function {func_name} failed after {retries} retries with no exception recorded")
+            raise RuntimeError(
+                f"Function {func_name} failed after {retries} retries with no exception recorded"
+            )
 
         @functools.wraps(func)
         async def async_wrapper(*args, **kwargs):
@@ -77,12 +84,16 @@ def retry(retries: int = 3, delay: float = 1) -> Callable:
                     return await func(*args, **kwargs)
                 except Exception as exc:
                     last_exc = exc
-                    logger.warning("Attempt %d failed: %s. Retrying in %s seconds...", attempt + 1, exc, delay)
+                    logger.warning(
+                        "Attempt %d failed: %s. Retrying in %s seconds...", attempt + 1, exc, delay
+                    )
                     await asyncio.sleep(delay)
             if last_exc is not None:
                 raise last_exc
             func_name = getattr(func, "__name__", str(func))
-            raise RuntimeError(f"Function {func_name} failed after {retries} retries with no exception recorded")
+            raise RuntimeError(
+                f"Function {func_name} failed after {retries} retries with no exception recorded"
+            )
 
         if asyncio.iscoroutinefunction(func):
             return async_wrapper

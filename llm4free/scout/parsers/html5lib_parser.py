@@ -44,9 +44,7 @@ class HTML5Parser:
 
             # Parse the markup
             tree = html5lib.parse(
-                markup,
-                namespaceHTMLElements=self._namespaces,
-                transport_encoding='utf-8'
+                markup, namespaceHTMLElements=self._namespaces, transport_encoding="utf-8"
             )
 
             # Convert parsed tree to Scout Tag. html5lib may return an ElementTree or an Element
@@ -55,7 +53,7 @@ class HTML5Parser:
 
         except Exception as e:
             self._parsing_errors.append(str(e))
-            return Tag('root')
+            return Tag("root")
 
     def _preprocess_markup(self, markup: Union[str, bytes]) -> str:
         """
@@ -76,10 +74,12 @@ class HTML5Parser:
             markup = decoded
 
         # Remove HTML comments
-        markup = re.sub(r'<!--.*?-->', '', markup, flags=re.DOTALL)
+        markup = re.sub(r"<!--.*?-->", "", markup, flags=re.DOTALL)
 
         # Handle unclosed tags
-        markup = re.sub(r'<(br|img|input|hr|meta)([^>]*?)(?<!/)>', r'<\1\2 />', markup, flags=re.IGNORECASE)
+        markup = re.sub(
+            r"<(br|img|input|hr|meta)([^>]*?)(?<!/)>", r"<\1\2 />", markup, flags=re.IGNORECASE
+        )
 
         return markup
 
@@ -123,11 +123,15 @@ class HTML5Parser:
         """
         return self._parsing_errors
 
-    def find_all(self, markup: str, tag: Optional[Union[str, List[str]]] = None,
-                 attrs: Optional[Dict[str, Any]] = None,
-                 recursive: bool = True,
-                 text: Optional[str] = None,
-                 limit: Optional[int] = None) -> List[Tag]:
+    def find_all(
+        self,
+        markup: str,
+        tag: Optional[Union[str, List[str]]] = None,
+        attrs: Optional[Dict[str, Any]] = None,
+        recursive: bool = True,
+        text: Optional[str] = None,
+        limit: Optional[int] = None,
+    ) -> List[Tag]:
         """
         Find all matching elements in the parsed document.
 
@@ -160,7 +164,9 @@ class HTML5Parser:
 
             # Text filter
             if text:
-                element_text = ' '.join([str(c) for c in element.contents if isinstance(c, NavigableString)])
+                element_text = " ".join(
+                    [str(c) for c in element.contents if isinstance(c, NavigableString)]
+                )
                 if text not in element_text:
                     return False
 

@@ -16,13 +16,13 @@ class ParserRegistry:
     """
 
     _PARSERS: Dict[str, Type[Any]] = {
-        'html.parser': HTMLParser,
-        'lxml': LXMLParser,
-        'html5lib': HTML5Parser
+        "html.parser": HTMLParser,
+        "lxml": LXMLParser,
+        "html5lib": HTML5Parser,
     }
 
     @classmethod
-    def get_parser(cls, parser_name: str = 'html.parser') -> Any:
+    def get_parser(cls, parser_name: str = "html.parser") -> Any:
         """
         Retrieve a parser by its name.
 
@@ -36,7 +36,9 @@ class ParserRegistry:
             ValueError: If the parser is not found
         """
         if parser_name not in cls._PARSERS:
-            raise ValueError(f"Parser '{parser_name}' not found. Available parsers: {list(cls._PARSERS.keys())}")
+            raise ValueError(
+                f"Parser '{parser_name}' not found. Available parsers: {list(cls._PARSERS.keys())}"
+            )
 
         return cls._PARSERS[parser_name]()
 
@@ -61,10 +63,6 @@ class ParserRegistry:
         """
         return cls._PARSERS.copy()
 
+
 # Expose key classes and functions
-__all__ = [
-    'HTMLParser',
-    'LXMLParser',
-    'HTML5Parser',
-    'ParserRegistry'
-]
+__all__ = ["HTMLParser", "LXMLParser", "HTML5Parser", "ParserRegistry"]

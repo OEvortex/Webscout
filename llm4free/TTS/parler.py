@@ -21,8 +21,10 @@ except ImportError:
     # Handle direct execution
     import os
     import sys
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
     from llm4free.TTS.base import BaseTTSProvider
+
 
 class ParlerTTS(BaseTTSProvider):
     """
@@ -33,6 +35,7 @@ class ParlerTTS(BaseTTSProvider):
     - Controllable via simple text prompts (description)
     - Manual polling logic for robustness
     """
+
     required_auth = False
 
     BASE_URL = "https://parler-tts-parler-tts.hf.space"
@@ -69,19 +72,26 @@ class ParlerTTS(BaseTTSProvider):
             **kwargs: Additional parameters
         """
         # Extract parameters from kwargs with defaults
-        description = kwargs.get('description', "A female speaker delivers a slightly expressive and animated speech with a moderate speed. The recording features a low-pitch voice and very clear audio.")
-        use_large = kwargs.get('use_large', False)
-        response_format = kwargs.get('response_format', "wav")
-        verbose = verbose if verbose is not None else kwargs.get('verbose', True)
+        description = kwargs.get(
+            "description",
+            "A female speaker delivers a slightly expressive and animated speech with a moderate speed. The recording features a low-pitch voice and very clear audio.",
+        )
+        use_large = kwargs.get("use_large", False)
+        response_format = kwargs.get("response_format", "wav")
+        verbose = verbose if verbose is not None else kwargs.get("verbose", True)
 
         if not text:
             raise ValueError("Input text must be a non-empty string")
 
         session_hash = self._generate_session_hash()
-        filename = pathlib.Path(tempfile.NamedTemporaryFile(suffix=f".{response_format}", dir=self.temp_dir, delete=False).name)
+        filename = pathlib.Path(
+            tempfile.NamedTemporaryFile(
+                suffix=f".{response_format}", dir=self.temp_dir, delete=False
+            ).name
+        )
 
         if verbose:
-            ic.configureOutput(prefix='DEBUG| ')
+            ic.configureOutput(prefix="DEBUG| ")
             ic(f"ParlerTTS: Generating speech for '{text[:20]}...'")
 
         client_kwargs: dict[str, Any] = {"headers": self.headers, "timeout": self.timeout}
@@ -98,7 +108,7 @@ class ParlerTTS(BaseTTSProvider):
                     "event_data": None,
                     "fn_index": 0,
                     "trigger_id": 8,
-                    "session_hash": session_hash
+                    "session_hash": session_hash,
                 }
 
                 response = client.post(join_url, json=payload)
@@ -127,11 +137,17 @@ class ParlerTTS(BaseTTSProvider):
                                     output_data = data.get("output", {}).get("data", [])
                                     if output_data:
                                         audio_info = output_data[0]
-                                        path = audio_info["path"] if isinstance(audio_info, dict) else audio_info
+                                        path = (
+                                            audio_info["path"]
+                                            if isinstance(audio_info, dict)
+                                            else audio_info
+                                        )
                                         audio_url = f"{self.BASE_URL}/file={path}"
                                     break
                                 else:
-                                    raise exceptions.FailedToGenerateResponseError(f"Generation failed: {data}")
+                                    raise exceptions.FailedToGenerateResponseError(
+                                        f"Generation failed: {data}"
+                                    )
                             elif msg == "queue_full":
                                 raise exceptions.FailedToGenerateResponseError("Queue is full")
                             elif msg == "send_hash":
@@ -139,7 +155,9 @@ class ParlerTTS(BaseTTSProvider):
                                 pass
 
                 if not audio_url:
-                    raise exceptions.FailedToGenerateResponseError("Failed to get audio URL from stream")
+                    raise exceptions.FailedToGenerateResponseError(
+                        "Failed to get audio URL from stream"
+                    )
 
                 # Step 3: Download the audio file
                 audio_response = client.get(audio_url)
@@ -149,14 +167,14 @@ class ParlerTTS(BaseTTSProvider):
                     f.write(audio_response.content)
 
                 if verbose:
-                    ic.configureOutput(prefix='DEBUG| ')
+                    ic.configureOutput(prefix="DEBUG| ")
                     ic(f"Speech generated successfully: {filename}")
 
                 return filename.as_posix()
 
         except Exception as e:
             if verbose:
-                ic.configureOutput(prefix='DEBUG| ')
+                ic.configureOutput(prefix="DEBUG| ")
                 ic(f"Error in ParlerTTS: {e}")
             raise exceptions.FailedToGenerateResponseError(f"Failed to generate audio: {e}")
 
@@ -167,7 +185,7 @@ class ParlerTTS(BaseTTSProvider):
         voice: Optional[str] = None,
         response_format: Optional[str] = "mp3",
         instructions: Optional[str] = None,
-        verbose: bool = False
+        verbose: bool = False,
     ) -> str:
         """
         OpenAI-compatible speech creation interface.
@@ -183,23 +201,27 @@ class ParlerTTS(BaseTTSProvider):
         Returns:
             str: Path to the generated audio file
         """
-        description = instructions or "A female speaker delivers a slightly expressive and animated speech with a moderate speed. The recording features a low-pitch voice and very clear audio."
-        use_large = (model == "parler-large-v1")
+        description = (
+            instructions
+            or "A female speaker delivers a slightly expressive and animated speech with a moderate speed. The recording features a low-pitch voice and very clear audio."
+        )
+        use_large = model == "parler-large-v1"
 
         return self.tts(
             text=input_text,
             description=description,
             use_large=use_large,
             response_format=response_format or "mp3",
-            verbose=verbose
+            verbose=verbose,
         )
+
 
 if __name__ == "__main__":
     tts = ParlerTTS()
     try:
         path = tts.tts("Testing Parler-TTS with manual polling.", verbose=True)
-        ic.configureOutput(prefix='INFO| ')
+        ic.configureOutput(prefix="INFO| ")
         ic(f"Saved to {path}")
     except Exception as e:
-        ic.configureOutput(prefix='ERROR| ')
+        ic.configureOutput(prefix="ERROR| ")
         ic(f"Error: {e}")

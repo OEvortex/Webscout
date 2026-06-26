@@ -1,4 +1,4 @@
-WATCH_URL = 'https://www.youtube.com/watch?v={video_id}'
+WATCH_URL = "https://www.youtube.com/watch?v={video_id}"
 
 
 class WebscoutE(Exception):
@@ -8,6 +8,7 @@ class WebscoutE(Exception):
     This class serves as the root for all custom exceptions raised by the Webscout library.
     It provides a common base for catching and handling errors specific to Webscout.
     """
+
     pass
 
 
@@ -18,6 +19,7 @@ class ModelNotFoundError(WebscoutE):
     This exception is raised when the specified model cannot be located or accessed by the provider.
     It indicates that the model name might be incorrect or the provider does not support it.
     """
+
     pass
 
 
@@ -28,6 +30,7 @@ class MissingRequirementsError(WebscoutE):
     This exception is raised when a feature requires certain libraries or packages that are not installed.
     It indicates that the user needs to install the missing dependencies to use the feature.
     """
+
     pass
 
 
@@ -38,6 +41,7 @@ class APIConnectionError(WebscoutE):
     This exception is raised when a network connection to an external API fails.
     It indicates a problem with the network or the API server itself.
     """
+
     pass
 
 
@@ -48,6 +52,7 @@ class AuthenticationError(WebscoutE):
     This exception is raised when the provided credentials are invalid or expired.
     It indicates that the application cannot authenticate with the service.
     """
+
     pass
 
 
@@ -58,6 +63,7 @@ class RatelimitE(WebscoutE):
     This exception is raised when the number of requests to an API exceeds the allowed limit within a given time frame.
     It indicates that the application is making too many requests and needs to slow down.
     """
+
     pass
 
 
@@ -68,6 +74,7 @@ class ConversationLimitException(WebscoutE):
     This exception is raised when a limit on the number of turns or messages in a conversation is exceeded.
     It indicates that the conversation has reached its maximum allowed length.
     """
+
     pass
 
 
@@ -78,6 +85,7 @@ class TimeoutE(WebscoutE):
     This exception is raised when a request to an API takes longer than the allowed time to complete.
     It indicates a problem with the network or the API server being slow to respond.
     """
+
     pass
 
 
@@ -88,7 +96,9 @@ class FailedToGenerateResponseError(WebscoutE):
     This exception is raised when a provider is unable to generate a response for a given request.
     It indicates an issue with the provider's logic or data.
     """
+
     pass
+
 
 class InvalidResponseError(WebscoutE):
     """
@@ -97,23 +107,31 @@ class InvalidResponseError(WebscoutE):
     This exception is raised when the response from an API does not match the expected format or contains invalid data.
     It indicates an issue with the API response parsing or structure.
     """
+
     pass
+
 
 class ProviderConnectionError(WebscoutE):
     """
     Exception raised when there are issues connecting to a specific provider.
     """
+
     pass
+
 
 class InvalidOptimizerError(WebscoutE):
     """
     Exception raised when an invalid or unavailable optimizer is requested.
     """
+
     pass
+
 
 class InvalidAuthenticationError(Exception):
     """Custom exception for authentication errors (e.g., invalid API key, cookies)."""
+
     pass
+
 
 class AllProvidersFailure(WebscoutE):
     """
@@ -122,6 +140,7 @@ class AllProvidersFailure(WebscoutE):
     This exception is raised when none of the available providers are able to generate a response for a given request.
     It indicates a widespread issue with all providers.
     """
+
     pass
 
 
@@ -132,6 +151,7 @@ class FacebookInvalidCredentialsException(WebscoutE):
     This exception is raised when the provided Facebook credentials (e.g., username, password, cookies) are invalid.
     It indicates that the application is unable to authenticate with Facebook.
     """
+
     pass
 
 
@@ -142,6 +162,7 @@ class FacebookRegionBlocked(WebscoutE):
     This exception is raised when access to Facebook is blocked due to geographical restrictions.
     It indicates that the application is unable to access Facebook from the current location.
     """
+
     pass
 
 
@@ -152,6 +173,7 @@ class ModelUnloadedException(WebscoutE):
     This exception is raised when a required model is not loaded or has been unloaded.
     It indicates that the application is unable to perform operations that require the model.
     """
+
     pass
 
 
@@ -185,7 +207,7 @@ class YouTubeRequestFailedError(TranscriptRetrievalError):
     """
 
     def __init__(self, video_id, http_error):
-        message = 'Request to YouTube failed: {reason}'
+        message = "Request to YouTube failed: {reason}"
         super().__init__(video_id, message.format(reason=str(http_error)))
 
 
@@ -201,7 +223,7 @@ class VideoUnavailableError(TranscriptRetrievalError):
     """
 
     def __init__(self, video_id):
-        message = 'The video is no longer available'
+        message = "The video is no longer available"
         super().__init__(video_id, message)
 
 
@@ -218,7 +240,7 @@ class InvalidVideoIdError(TranscriptRetrievalError):
 
     def __init__(self, video_id):
         message = (
-            'You provided an invalid video id. Make sure you are using the video id and NOT the url!\n\n'
+            "You provided an invalid video id. Make sure you are using the video id and NOT the url!\n\n"
             'Do NOT run: `YTTranscriber.get_transcript("https://www.youtube.com/watch?v=1234")`\n'
             'Instead run: `YTTranscriber.get_transcript("1234")`'
         )
@@ -238,11 +260,11 @@ class TooManyRequestsError(TranscriptRetrievalError):
 
     def __init__(self, video_id):
         message = (
-            'YouTube is receiving too many requests from this IP and now requires solving a captcha to continue. '
-            'One of the following things can be done to work around this:\n\
-            - Manually solve the captcha in a browser and export the cookie. '
-            '- Use a different IP address\n\
-            - Wait until the ban on your IP has been lifted'
+            "YouTube is receiving too many requests from this IP and now requires solving a captcha to continue. "
+            "One of the following things can be done to work around this:\n\
+            - Manually solve the captcha in a browser and export the cookie. "
+            "- Use a different IP address\n\
+            - Wait until the ban on your IP has been lifted"
         )
         super().__init__(video_id, message)
 
@@ -259,7 +281,7 @@ class TranscriptsDisabledError(TranscriptRetrievalError):
     """
 
     def __init__(self, video_id):
-        message = 'Subtitles are disabled for this video'
+        message = "Subtitles are disabled for this video"
         super().__init__(video_id, message)
 
 
@@ -275,7 +297,7 @@ class NoTranscriptAvailableError(TranscriptRetrievalError):
     """
 
     def __init__(self, video_id):
-        message = 'No transcripts are available for this video'
+        message = "No transcripts are available for this video"
         super().__init__(video_id, message)
 
 
@@ -291,7 +313,7 @@ class NotTranslatableError(TranscriptRetrievalError):
     """
 
     def __init__(self, video_id):
-        message = 'The requested language is not translatable'
+        message = "The requested language is not translatable"
         super().__init__(video_id, message)
 
 
@@ -307,7 +329,7 @@ class TranslationLanguageNotAvailableError(TranscriptRetrievalError):
     """
 
     def __init__(self, video_id):
-        message = 'The requested translation language is not available'
+        message = "The requested translation language is not available"
         super().__init__(video_id, message)
 
 
@@ -323,7 +345,7 @@ class CookiePathInvalidError(TranscriptRetrievalError):
     """
 
     def __init__(self, video_id):
-        message = 'The provided cookie path is invalid'
+        message = "The provided cookie path is invalid"
         super().__init__(video_id, message)
 
 
@@ -339,7 +361,7 @@ class CookiesInvalidError(TranscriptRetrievalError):
     """
 
     def __init__(self, video_id):
-        message = 'The cookies provided are not valid (may have expired)'
+        message = "The cookies provided are not valid (may have expired)"
         super().__init__(video_id, message)
 
 
@@ -355,7 +377,7 @@ class FailedToCreateConsentCookieError(TranscriptRetrievalError):
     """
 
     def __init__(self, video_id):
-        message = 'Failed to automatically give consent to saving cookies'
+        message = "Failed to automatically give consent to saving cookies"
         super().__init__(video_id, message)
 
 
@@ -374,10 +396,13 @@ class NoTranscriptFoundError(TranscriptRetrievalError):
 
     def __init__(self, video_id, requested_language_codes, transcript_data):
         message = (
-            'No transcripts were found for any of the requested language codes: {requested_language_codes}\n\n'
-            '{transcript_data}'
+            "No transcripts were found for any of the requested language codes: {requested_language_codes}\n\n"
+            "{transcript_data}"
         )
-        super().__init__(video_id, message.format(
-            requested_language_codes=requested_language_codes,
-            transcript_data=str(transcript_data)
-        ))
+        super().__init__(
+            video_id,
+            message.format(
+                requested_language_codes=requested_language_codes,
+                transcript_data=str(transcript_data),
+            ),
+        )

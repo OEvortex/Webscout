@@ -31,16 +31,16 @@ def parse_args(args: List[str]) -> Dict[str, Any]:
         arg = args[i]
 
         # Handle flags/options
-        if arg.startswith('-'):
+        if arg.startswith("-"):
             # Support --key=value or -k=value syntax
-            if '=' in arg:
-                key, value = arg.lstrip('-').split('=', 1)
-                key = key.replace('-', '_')
+            if "=" in arg:
+                key, value = arg.lstrip("-").split("=", 1)
+                key = key.replace("-", "_")
             else:
-                key = arg.lstrip('-').replace('-', '_')
+                key = arg.lstrip("-").replace("-", "_")
 
                 # Check if next arg is a value or another flag
-                if i + 1 >= len(args) or args[i + 1].startswith('-'):
+                if i + 1 >= len(args) or args[i + 1].startswith("-"):
                     value = True  # Flag without value
                 else:
                     value = args[i + 1]
@@ -57,17 +57,15 @@ def parse_args(args: List[str]) -> Dict[str, Any]:
                 parsed[key] = value
         else:
             # Positional argument
-            pos_index = len([k for k in parsed.keys() if k.startswith('arg')])
-            parsed[f'arg{pos_index}'] = arg
+            pos_index = len([k for k in parsed.keys() if k.startswith("arg")])
+            parsed[f"arg{pos_index}"] = arg
 
         i += 1
 
     return parsed
 
-def validate_required(
-    params: Dict[str, Any],
-    required: List[str]
-) -> None:
+
+def validate_required(params: Dict[str, Any], required: List[str]) -> None:
     """
     Validate required parameters are present.
 
@@ -82,11 +80,8 @@ def validate_required(
     if missing:
         raise UsageError(f"Missing required parameters: {', '.join(missing)}")
 
-def convert_type(
-    value: str,
-    type_: Type,
-    param_name: str
-) -> Any:
+
+def convert_type(value: str, type_: Type, param_name: str) -> Any:
     """
     Convert string value to specified type.
 
@@ -109,25 +104,21 @@ def convert_type(
             if isinstance(value, (int, float)):
                 return bool(value)
             if isinstance(value, str):
-                return value.lower() in ('true', 't', 'yes', 'y', '1')
+                return value.lower() in ("true", "t", "yes", "y", "1")
             return bool(value)
 
         # If a list is provided and the target type is a collection type, return as-is
-        if isinstance(value, list) and getattr(type_, '__origin__', None) in (list,):
+        if isinstance(value, list) and getattr(type_, "__origin__", None) in (list,):
             return value
 
         # Attempt to construct the type normally (e.g., int('42'), Enum('val'), etc.)
         return type_(value)
     except (ValueError, TypeError):
-        raise BadParameter(
-            f"Invalid value for {param_name}: {value} (expected {type_.__name__})"
-        )
+        raise BadParameter(f"Invalid value for {param_name}: {value} (expected {type_.__name__})")
+
 
 def validate_choice(
-    value: Any,
-    choices: List[Any],
-    param_name: str,
-    case_sensitive: bool = True
+    value: Any, choices: List[Any], param_name: str, case_sensitive: bool = True
 ) -> None:
     """
     Validate value is one of allowed choices.
@@ -153,11 +144,8 @@ def validate_choice(
             f"(choose from {', '.join(str(c) for c in choices)})"
         )
 
-def validate_argument(
-    value: str,
-    validation_rules: Dict[str, Any],
-    param_name: str
-) -> str:
+
+def validate_argument(value: str, validation_rules: Dict[str, Any], param_name: str) -> str:
     """
     Validate argument against validation rules.
 
@@ -172,21 +160,21 @@ def validate_argument(
     Raises:
         BadParameter: If validation fails
     """
-    if not value and validation_rules.get('required', True):
+    if not value and validation_rules.get("required", True):
         raise BadParameter(f"Required argument {param_name} is empty")
 
-    if 'min_length' in validation_rules and len(value) < validation_rules['min_length']:
+    if "min_length" in validation_rules and len(value) < validation_rules["min_length"]:
         raise BadParameter(
             f"Argument {param_name} too short (min {validation_rules['min_length']} characters)"
         )
 
-    if 'max_length' in validation_rules and len(value) > validation_rules['max_length']:
+    if "max_length" in validation_rules and len(value) > validation_rules["max_length"]:
         raise BadParameter(
             f"Argument {param_name} too long (max {validation_rules['max_length']} characters)"
         )
 
-    if 'pattern' in validation_rules:
-        pattern = validation_rules['pattern']
+    if "pattern" in validation_rules:
+        pattern = validation_rules["pattern"]
         if isinstance(pattern, str):
             pattern = re.compile(pattern)
         if not pattern.match(value):
@@ -194,16 +182,18 @@ def validate_argument(
                 f"Argument {param_name} doesn't match pattern: {validation_rules.get('pattern', pattern.pattern)}"
             )
 
-    if 'choices' in validation_rules:
-        validate_choice(value, validation_rules['choices'], param_name,
-                      validation_rules.get('case_sensitive', True))
+    if "choices" in validation_rules:
+        validate_choice(
+            value,
+            validation_rules["choices"],
+            param_name,
+            validation_rules.get("case_sensitive", True),
+        )
 
     return value
 
-def check_mutually_exclusive(
-    params: Dict[str, Any],
-    exclusive_groups: List[List[str]]
-) -> None:
+
+def check_mutually_exclusive(params: Dict[str, Any], exclusive_groups: List[List[str]]) -> None:
     """
     Check that mutually exclusive options are not used together.
 
@@ -222,10 +212,9 @@ def check_mutually_exclusive(
                 f"and cannot be used together"
             )
 
+
 def load_config_file(
-    path: Union[str, Path],
-    format: str = 'auto',
-    required: bool = True
+    path: Union[str, Path], format: str = "auto", required: bool = True
 ) -> Dict[str, Any]:
     """
     Load configuration from file.
@@ -249,26 +238,24 @@ def load_config_file(
         return {}
 
     # Auto-detect format from extension
-    if format == 'auto':
-        format = path.suffix.lstrip('.').lower()
-        if format not in ('json', 'yaml', 'yml'):
+    if format == "auto":
+        format = path.suffix.lstrip(".").lower()
+        if format not in ("json", "yaml", "yml"):
             raise UsageError(f"Unsupported config format: {format}")
 
     try:
         with open(path) as f:
-            if format == 'json':
+            if format == "json":
                 return json.load(f)
-            elif format in ('yaml', 'yml'):
+            elif format in ("yaml", "yml"):
                 return yaml.safe_load(f)
             else:
                 raise UsageError(f"Unsupported config format: {format}")
     except Exception as e:
         raise UsageError(f"Error loading config file: {str(e)}")
 
-def parse_key_value(
-    value: str,
-    separator: str = '='
-) -> tuple:
+
+def parse_key_value(value: str, separator: str = "=") -> tuple:
     """
     Parse key-value string.
 
@@ -290,10 +277,8 @@ def parse_key_value(
             f"Invalid key-value pair: {value} (expected format: key{separator}value)"
         )
 
-def parse_list(
-    value: str,
-    separator: str = ','
-) -> List[str]:
+
+def parse_list(value: str, separator: str = ",") -> List[str]:
     """
     Parse comma-separated list.
 
@@ -306,10 +291,9 @@ def parse_list(
     """
     return [x.strip() for x in value.split(separator) if x.strip()]
 
+
 def parse_dict(
-    value: str,
-    item_separator: str = ',',
-    key_value_separator: str = '='
+    value: str, item_separator: str = ",", key_value_separator: str = "="
 ) -> Dict[str, str]:
     """
     Parse dictionary string.
@@ -337,12 +321,8 @@ def parse_dict(
 
     return result
 
-def get_env_var(
-    name: str,
-    type_: Type = str,
-    required: bool = False,
-    default: Any = None
-) -> Any:
+
+def get_env_var(name: str, type_: Type = str, required: bool = False, default: Any = None) -> Any:
     """
     Get and validate environment variable.
 

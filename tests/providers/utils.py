@@ -4,12 +4,13 @@ from typing import Any, Dict, Optional, Union
 
 class FakeResp:
     """A mock response object for testing."""
+
     def __init__(
         self,
         status_code: int = 200,
         text: str = "",
         json_data: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None
+        headers: Optional[Dict[str, str]] = None,
     ):
         self.status_code = status_code
         self._text = text

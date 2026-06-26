@@ -1,6 +1,7 @@
 """
 Text processing utilities for TTS providers.
 """
+
 import re
 from typing import Dict, List, Optional, Pattern, Set, Tuple, Union, cast
 
@@ -11,65 +12,198 @@ class SentenceTokenizer:
     def __init__(self) -> None:
         # Common abbreviations by category
         self.TITLES: Set[str] = {
-            'mr', 'mrs', 'ms', 'dr', 'prof', 'rev', 'sr', 'jr', 'esq',
-            'hon', 'pres', 'gov', 'atty', 'supt', 'det', 'rev', 'col','maj', 'gen', 'capt', 'cmdr',
-            'lt', 'sgt', 'cpl', 'pvt'
+            "mr",
+            "mrs",
+            "ms",
+            "dr",
+            "prof",
+            "rev",
+            "sr",
+            "jr",
+            "esq",
+            "hon",
+            "pres",
+            "gov",
+            "atty",
+            "supt",
+            "det",
+            "rev",
+            "col",
+            "maj",
+            "gen",
+            "capt",
+            "cmdr",
+            "lt",
+            "sgt",
+            "cpl",
+            "pvt",
         }
 
         self.ACADEMIC: Set[str] = {
-            'ph.d', 'phd', 'm.d', 'md', 'b.a', 'ba', 'm.a', 'ma', 'd.d.s', 'dds',
-            'm.b.a', 'mba', 'b.sc', 'bsc', 'm.sc', 'msc', 'llb', 'll.b', 'bl'
+            "ph.d",
+            "phd",
+            "m.d",
+            "md",
+            "b.a",
+            "ba",
+            "m.a",
+            "ma",
+            "d.d.s",
+            "dds",
+            "m.b.a",
+            "mba",
+            "b.sc",
+            "bsc",
+            "m.sc",
+            "msc",
+            "llb",
+            "ll.b",
+            "bl",
         }
 
         self.ORGANIZATIONS: Set[str] = {
-            'inc', 'ltd', 'co', 'corp', 'llc', 'llp', 'assn', 'bros', 'plc', 'cos',
-            'intl', 'dept', 'est', 'dist', 'mfg', 'div'
+            "inc",
+            "ltd",
+            "co",
+            "corp",
+            "llc",
+            "llp",
+            "assn",
+            "bros",
+            "plc",
+            "cos",
+            "intl",
+            "dept",
+            "est",
+            "dist",
+            "mfg",
+            "div",
         }
 
         self.MONTHS: Set[str] = {
-            'jan', 'feb', 'mar', 'apr', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'
+            "jan",
+            "feb",
+            "mar",
+            "apr",
+            "jun",
+            "jul",
+            "aug",
+            "sep",
+            "oct",
+            "nov",
+            "dec",
         }
 
         self.UNITS: Set[str] = {
-            'oz', 'pt', 'qt', 'gal', 'ml', 'cc', 'km', 'cm', 'mm', 'ft', 'in',
-            'kg', 'lb', 'lbs', 'hz', 'khz', 'mhz', 'ghz', 'kb', 'mb', 'gb', 'tb'
+            "oz",
+            "pt",
+            "qt",
+            "gal",
+            "ml",
+            "cc",
+            "km",
+            "cm",
+            "mm",
+            "ft",
+            "in",
+            "kg",
+            "lb",
+            "lbs",
+            "hz",
+            "khz",
+            "mhz",
+            "ghz",
+            "kb",
+            "mb",
+            "gb",
+            "tb",
         }
 
         self.TECHNOLOGY: Set[str] = {
-            'v', 'ver', 'app', 'sys', 'dir', 'exe', 'lib', 'api', 'sdk', 'url',
-            'cpu', 'gpu', 'ram', 'rom', 'hdd', 'ssd', 'lan', 'wan', 'sql', 'html'
+            "v",
+            "ver",
+            "app",
+            "sys",
+            "dir",
+            "exe",
+            "lib",
+            "api",
+            "sdk",
+            "url",
+            "cpu",
+            "gpu",
+            "ram",
+            "rom",
+            "hdd",
+            "ssd",
+            "lan",
+            "wan",
+            "sql",
+            "html",
         }
 
         self.MISC: Set[str] = {
-            'vs', 'etc', 'ie', 'eg', 'no', 'al', 'ca', 'cf', 'pp', 'est', 'st',
-            'approx', 'appt', 'apt', 'dept', 'depts', 'min', 'max', 'avg'
+            "vs",
+            "etc",
+            "ie",
+            "eg",
+            "no",
+            "al",
+            "ca",
+            "cf",
+            "pp",
+            "est",
+            "st",
+            "approx",
+            "appt",
+            "apt",
+            "dept",
+            "depts",
+            "min",
+            "max",
+            "avg",
         }
 
         # Combine all abbreviations
         self.all_abbreviations: Set[str] = (
-            self.TITLES | self.ACADEMIC | self.ORGANIZATIONS |
-            self.MONTHS | self.UNITS | self.TECHNOLOGY | self.MISC
+            self.TITLES
+            | self.ACADEMIC
+            | self.ORGANIZATIONS
+            | self.MONTHS
+            | self.UNITS
+            | self.TECHNOLOGY
+            | self.MISC
         )
 
         # Special patterns
-        self.ELLIPSIS: str = r'\.{2,}|…'
-        self.URL_PATTERN: str = (
-            r'(?:https?:\/\/|www\.)[\w\-\.]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?'
-        )
-        self.EMAIL_PATTERN: str = r'[\w\.-]+@[\w\.-]+\.\w+'
+        self.ELLIPSIS: str = r"\.{2,}|…"
+        self.URL_PATTERN: str = r"(?:https?:\/\/|www\.)[\w\-\.]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?"
+        self.EMAIL_PATTERN: str = r"[\w\.-]+@[\w\.-]+\.\w+"
         self.NUMBER_PATTERN: str = (
-            r'\d+(?:\.\d+)?(?:%|°|km|cm|mm|m|kg|g|lb|ft|in|mph|kmh|hz|mhz|ghz)?'
+            r"\d+(?:\.\d+)?(?:%|°|km|cm|mm|m|kg|g|lb|ft|in|mph|kmh|hz|mhz|ghz)?"
         )
 
         # Quote and bracket pairs
         self.QUOTE_PAIRS: Dict[str, str] = {
-            '"': '"', "'": "'", "「": "」", "『": "』",
-            "«": "»", "‹": "›", "‚": "'"
+            '"': '"',
+            "'": "'",
+            "「": "」",
+            "『": "』",
+            "«": "»",
+            "‹": "›",
+            "‚": "'",
         }
 
         self.BRACKETS: Dict[str, str] = {
-            '(': ')', '[': ']', '{': '}', '⟨': '⟩', '「': '」',
-            '『': '』', '【': '】', '〖': '〗', '｢': '｣'
+            "(": ")",
+            "[": "]",
+            "{": "}",
+            "⟨": "⟩",
+            "「": "」",
+            "『": "』",
+            "【": "】",
+            "〖": "〗",
+            "｢": "｣",
         }
 
         # Compile regex patterns
@@ -79,7 +213,7 @@ class SentenceTokenizer:
         """Compile regex patterns for better performance."""
         # Pattern for finding potential sentence boundaries
         self.SENTENCE_END: Pattern = re.compile(
-            r'''
+            r"""
             # Group for sentence endings
             (?:
                 # Standard endings with optional quotes/brackets
@@ -94,16 +228,13 @@ class SentenceTokenizer:
 
             # Must be followed by whitespace and capital letter or number
             (?=\s+(?:[A-Z0-9]|["'({[\[「『《‹〈][A-Z]))
-            ''',
-            re.VERBOSE
+            """,
+            re.VERBOSE,
         )
 
         # Pattern for abbreviations
-        abbrev_pattern = '|'.join(re.escape(abbr) for abbr in self.all_abbreviations)
-        self.ABBREV_PATTERN: Pattern = re.compile(
-            fr'\b(?:{abbrev_pattern})\.?',
-            re.IGNORECASE
-        )
+        abbrev_pattern = "|".join(re.escape(abbr) for abbr in self.all_abbreviations)
+        self.ABBREV_PATTERN: Pattern = re.compile(rf"\b(?:{abbrev_pattern})\.?", re.IGNORECASE)
 
     def _protect_special_cases(self, text: str) -> Tuple[str, Dict[str, str]]:
         """Protect URLs, emails, and other special cases from being split."""
@@ -114,7 +245,7 @@ class SentenceTokenizer:
         # Protect URLs and emails
         for pattern in [self.URL_PATTERN, self.EMAIL_PATTERN]:
             for match in re.finditer(pattern, protected):
-                placeholder = f'__PROTECTED_{counter}__'
+                placeholder = f"__PROTECTED_{counter}__"
                 placeholders[placeholder] = match.group()
                 protected = protected.replace(match.group(), placeholder)
                 counter += 1
@@ -129,14 +260,14 @@ class SentenceTokenizer:
                 stack.append((char, i))
             elif stack and char == self.QUOTE_PAIRS[stack[-1][0]]:
                 start_quote, start_idx = stack.pop()
-                content = ''.join(protected_chars[start_idx:i + 1])
-                placeholder = f'__PROTECTED_{counter}__'
+                content = "".join(protected_chars[start_idx : i + 1])
+                placeholder = f"__PROTECTED_{counter}__"
                 placeholders[placeholder] = content
-                protected_chars[start_idx:i + 1] = list(placeholder)
+                protected_chars[start_idx : i + 1] = list(placeholder)
                 counter += 1
             i += 1
 
-        return ''.join(protected_chars), placeholders
+        return "".join(protected_chars), placeholders
 
     def _restore_special_cases(self, text: str, placeholders: Dict[str, str]) -> str:
         """Restore protected content."""
@@ -147,10 +278,11 @@ class SentenceTokenizer:
 
     def _handle_abbreviations(self, text: str) -> str:
         """Handle abbreviations to prevent incorrect sentence splitting."""
+
         def replace_abbrev(match: re.Match) -> str:
-            abbr = match.group().lower().rstrip('.')
+            abbr = match.group().lower().rstrip(".")
             if abbr in self.all_abbreviations:
-                return match.group().replace('.', '__DOT__')
+                return match.group().replace(".", "__DOT__")
             return match.group()
 
         return self.ABBREV_PATTERN.sub(replace_abbrev, text)
@@ -158,9 +290,9 @@ class SentenceTokenizer:
     def _normalize_whitespace(self, text: str) -> str:
         """Normalize whitespace while preserving paragraph breaks."""
         # Replace multiple newlines with special marker
-        text = re.sub(r'\n\s*\n', ' __PARA__ ', text)
+        text = re.sub(r"\n\s*\n", " __PARA__ ", text)
         # Normalize remaining whitespace
-        text = re.sub(r'\s+', ' ', text)
+        text = re.sub(r"\s+", " ", text)
         return text.strip()
 
     def _restore_formatting(self, sentences: List[str]) -> List[str]:
@@ -168,13 +300,13 @@ class SentenceTokenizer:
         restored = []
         for sentence in sentences:
             # Restore dots in abbreviations
-            sentence = sentence.replace('__DOT__', '.')
+            sentence = sentence.replace("__DOT__", ".")
 
             # Restore paragraph breaks
-            sentence = sentence.replace('__PARA__', '\n\n')
+            sentence = sentence.replace("__PARA__", "\n\n")
 
             # Clean up whitespace
-            sentence = re.sub(r'\s+', ' ', sentence).strip()
+            sentence = re.sub(r"\s+", " ", sentence).strip()
 
             # Capitalize first letter if it's lowercase and not an abbreviation
             words = sentence.split()
@@ -231,12 +363,12 @@ class SentenceTokenizer:
                 current_sentence.append(sentence)
             else:
                 if current_sentence:
-                    final_sentences.append(' '.join(current_sentence))
+                    final_sentences.append(" ".join(current_sentence))
                 current_sentence = [sentence]
 
         # Add last sentence if exists
         if current_sentence:
-            final_sentences.append(' '.join(current_sentence))
+            final_sentences.append(" ".join(current_sentence))
 
         return final_sentences
 

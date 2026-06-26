@@ -3,37 +3,39 @@ from __future__ import annotations
 import unittest
 from unittest.mock import MagicMock, patch
 
-from tests.providers.utils import FakeResp
 from llm4free.search.engines.brave.base import BraveBase
 from llm4free.search.engines.brave.text import BraveTextSearch
+from tests.providers.utils import FakeResp
 
 
 class TestBraveBase(unittest.TestCase):
-  def test_brave_base_uses_curl_cffi_session(self) -> None:
-    session_mock = MagicMock()
-    session_mock.headers = MagicMock()
+    def test_brave_base_uses_curl_cffi_session(self) -> None:
+        session_mock = MagicMock()
+        session_mock.headers = MagicMock()
 
-    fingerprint = {"User-Agent": "test-agent", "Accept-Language": "en-US"}
+        fingerprint = {"User-Agent": "test-agent", "Accept-Language": "en-US"}
 
-    with patch("llm4free.search.engines.brave.base.Session", return_value=session_mock) as mock_session:
-      with patch("llm4free.search.engines.brave.base.LitAgent") as mock_litagent:
-        mock_litagent.return_value.generate_fingerprint.return_value = fingerprint
+        with patch(
+            "llm4free.search.engines.brave.base.Session", return_value=session_mock
+        ) as mock_session:
+            with patch("llm4free.search.engines.brave.base.LitAgent") as mock_litagent:
+                mock_litagent.return_value.generate_fingerprint.return_value = fingerprint
 
-        brave = BraveBase(
-          timeout=15,
-          proxies={"https": "http://proxy.local:8080"},
-          verify=False,
-          impersonate="chrome131",
+                brave = BraveBase(
+                    timeout=15,
+                    proxies={"https": "http://proxy.local:8080"},
+                    verify=False,
+                    impersonate="chrome131",
+                )
+
+        mock_session.assert_called_once_with(
+            proxies={"https": "http://proxy.local:8080"},
+            verify=False,
+            timeout=15,
+            impersonate="chrome131",
         )
-
-    mock_session.assert_called_once_with(
-      proxies={"https": "http://proxy.local:8080"},
-      verify=False,
-      timeout=15,
-      impersonate="chrome131",
-    )
-    session_mock.headers.update.assert_called_once_with(fingerprint)
-    self.assertIs(brave.session, session_mock)
+        session_mock.headers.update.assert_called_once_with(fingerprint)
+        self.assertIs(brave.session, session_mock)
 
 
 class TestBraveTextSearch(unittest.TestCase):

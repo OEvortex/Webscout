@@ -5,6 +5,7 @@ from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi import requests
 
+from llm4free.litagent import LitAgent
 from llm4free.llm.base import (
     BaseChat,
     BaseCompletions,
@@ -19,8 +20,6 @@ from llm4free.llm.utils import (
     ChoiceDelta,
     CompletionUsage,
 )
-
-from llm4free.litagent import LitAgent
 
 
 class Completions(BaseCompletions):

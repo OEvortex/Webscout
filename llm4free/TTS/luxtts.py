@@ -331,9 +331,7 @@ class LuxTTS(BaseTTSProvider):
                         continue
 
         if not audio_url:
-            raise exceptions.FailedToGenerateResponseError(
-                "No audio URL found in LuxTTS response"
-            )
+            raise exceptions.FailedToGenerateResponseError("No audio URL found in LuxTTS response")
 
         return audio_url
 

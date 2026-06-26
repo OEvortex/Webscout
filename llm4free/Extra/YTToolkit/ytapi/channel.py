@@ -11,10 +11,9 @@ from .video import Video
 
 
 class Channel:
-
-    _HEAD = 'https://www.youtube.com/channel/'
-    _CUSTOM = 'https://www.youtube.com/c/'
-    _USER = 'https://www.youtube.com/'
+    _HEAD = "https://www.youtube.com/channel/"
+    _CUSTOM = "https://www.youtube.com/c/"
+    _USER = "https://www.youtube.com/"
 
     def __init__(self, channel_id: str):
         """
@@ -32,13 +31,13 @@ class Channel:
             self._target_url = self._CUSTOM + channel_id
         elif results[0][0]:
             self._usable_id = results[0][0]
-            self._target_url = self._HEAD + 'UC' + results[0][0]
+            self._target_url = self._HEAD + "UC" + results[0][0]
         elif results[0][1]:
             self._usable_id = results[0][1]
             self._target_url = self._CUSTOM + results[0][1]
         elif results[0][2]:
             self._usable_id = results[0][2]
-            self._target_url = self._USER + '@' + results[0][2]
+            self._target_url = self._USER + "@" + results[0][2]
         self.id = None
         self.name = None
         self.subscribers = None
@@ -61,7 +60,7 @@ class Channel:
                 setattr(self, k, v)
 
     def __repr__(self):
-        return f'<Channel `{self._target_url}`>'
+        return f"<Channel `{self._target_url}`>"
 
     def __prepare_metadata(self) -> Dict[str, Any]:
         """
@@ -78,13 +77,13 @@ class Channel:
             Patterns.avatar,
             Patterns.banner,
             Patterns.verified,
-            Patterns.socials
+            Patterns.socials,
         ]
         extracted = collect(lambda x: x.findall(self._about_page) or None, patterns)
         name, avatar, banner, verified, socials = [e[0] if e else None for e in extracted]
 
         # Add robust error handling for info extraction
-        info_pattern = re.compile("\\[{\"aboutChannelRenderer\":(.*?)],")
+        info_pattern = re.compile('\\[{"aboutChannelRenderer":(.*?)],')
         info_match = info_pattern.search(self._about_page)
 
         if not info_match:
@@ -103,7 +102,7 @@ class Channel:
                 "avatar": avatar,
                 "banner": banner,
                 "verified": bool(verified),
-                "socials": unquote(socials) if socials is not None else None
+                "socials": unquote(socials) if socials is not None else None,
             }
 
         try:
@@ -117,14 +116,24 @@ class Channel:
                 "description": info.get("description"),
                 "country": info.get("country"),
                 "custom_url": info.get("canonicalChannelUrl"),
-                "subscribers": info.get("subscriberCountText", "").split(' ')[0] if "subscriberCountText" in info else None,
-                "views": info.get("viewCountText", "").replace(' views', '') if "viewCountText" in info else None,
-                "created_at": info.get("joinedDateText", {}).get("content", "").replace('Joined ', '') if "joinedDateText" in info else None,
-                "video_count": info.get("videoCountText", "").split(' ')[0] if "videoCountText" in info else None,
+                "subscribers": info.get("subscriberCountText", "").split(" ")[0]
+                if "subscriberCountText" in info
+                else None,
+                "views": info.get("viewCountText", "").replace(" views", "")
+                if "viewCountText" in info
+                else None,
+                "created_at": info.get("joinedDateText", {})
+                .get("content", "")
+                .replace("Joined ", "")
+                if "joinedDateText" in info
+                else None,
+                "video_count": info.get("videoCountText", "").split(" ")[0]
+                if "videoCountText" in info
+                else None,
                 "avatar": avatar,
                 "banner": banner,
                 "verified": bool(verified),
-                "socials": unquote(socials) if socials is not None else None
+                "socials": unquote(socials) if socials is not None else None,
             }
         except (KeyError, json.JSONDecodeError):
             # Fallback if JSON parsing fails
@@ -142,7 +151,7 @@ class Channel:
                 "avatar": avatar,
                 "banner": banner,
                 "verified": bool(verified),
-                "socials": unquote(socials) if socials is not None else None
+                "socials": unquote(socials) if socials is not None else None,
             }
 
     @property

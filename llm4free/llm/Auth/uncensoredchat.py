@@ -124,9 +124,7 @@ class Completions(BaseCompletions):
             payload["top_p"] = top_p
 
         if stream:
-            return self._create_stream(
-                request_id, created_time, model, payload, timeout, proxies
-            )
+            return self._create_stream(request_id, created_time, model, payload, timeout, proxies)
         else:
             return self._create_non_stream(
                 request_id, created_time, model, payload, timeout, proxies
@@ -343,11 +341,7 @@ if __name__ == "__main__":
             ):
                 status = "✓"
                 display_text = response.choices[0].message.content.strip()
-                display_text = (
-                    display_text[:50] + "..."
-                    if len(display_text) > 50
-                    else display_text
-                )
+                display_text = display_text[:50] + "..." if len(display_text) > 50 else display_text
             else:
                 status = "✗"
                 display_text = "Empty or invalid response"

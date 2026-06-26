@@ -32,7 +32,7 @@ class MailTM(TempMailProvider):
         Args:
             auto_create (bool): Automatically create an email upon initialization
         """
-        self.url_bases = ['https://api.mail.tm', 'https://api.mail.gw']
+        self.url_bases = ["https://api.mail.tm", "https://api.mail.gw"]
         self.url_base = self.url_bases[random.randrange(2)]
         self.url_accounts = f"{self.url_base}/accounts"
         self.url_me = f"{self.url_base}/me"
@@ -57,7 +57,7 @@ class MailTM(TempMailProvider):
             resp = session.get(f"{self.url_domain}?page=1")
             resp.raise_for_status()
             ans = json.loads(str(resp.text))
-            return ans['hydra:member'][0]['domain']
+            return ans["hydra:member"][0]["domain"]
         except Exception:
             return ""
 
@@ -68,17 +68,17 @@ class MailTM(TempMailProvider):
             return False
 
         # Generate random email and password
-        self.email = generate_random_string(EMAIL_LENGTH) + '@' + domain
+        self.email = generate_random_string(EMAIL_LENGTH) + "@" + domain
         self.password = generate_random_string(PASSWORD_LENGTH, include_digits=True)
 
         # Register the account
-        myobj = {'address': self.email, "password": self.password}
+        myobj = {"address": self.email, "password": self.password}
         try:
             session = Session()
             resp = session.post(self.url_accounts, json=myobj)
             resp.raise_for_status()
             ans = json.loads(str(resp.text))
-            self.account_id = ans['id']
+            self.account_id = ans["id"]
 
             # Get token
             self.get_token()
@@ -92,14 +92,14 @@ class MailTM(TempMailProvider):
         if not self.email or not self.password:
             return ""
 
-        myobj = {'address': self.email, "password": self.password}
+        myobj = {"address": self.email, "password": self.password}
         try:
             session = Session()
             resp = session.post(self.url_token, json=myobj)
             resp.raise_for_status()
             ans = json.loads(str(resp.text))
-            self.token = ans['token']
-            self.header = {'Authorization': 'Bearer ' + self.token}
+            self.token = ans["token"]
+            self.header = {"Authorization": "Bearer " + self.token}
             return self.token
         except Exception:
             return ""
@@ -116,7 +116,7 @@ class MailTM(TempMailProvider):
             ans = json.loads(str(resp.text))
 
             # Use Scout instead of BeautifulSoup for HTML parsing
-            scout = Scout(ans['text'])
+            scout = Scout(ans["text"])
 
             # Extract text with Scout's get_text method
             return scout.get_text(strip=True)
@@ -136,16 +136,16 @@ class MailTM(TempMailProvider):
             ans = json.loads(str(resp.text))
 
             messages = []
-            if ans['hydra:totalItems'] > 0:
-                for x in ans['hydra:member']:
+            if ans["hydra:totalItems"] > 0:
+                for x in ans["hydra:member"]:
                     msg_dict = {
-                        'msg_id': x['id'],
-                        'from': x['from']['address'],
-                        'subject': x['subject'],
-                        'intro': x['intro'],
-                        'hasAttachments': x['hasAttachments'],
-                        'createdAt': x['createdAt'],
-                        'body': self.get_message_detail(x['id'])
+                        "msg_id": x["id"],
+                        "from": x["from"]["address"],
+                        "subject": x["subject"],
+                        "intro": x["intro"],
+                        "hasAttachments": x["hasAttachments"],
+                        "createdAt": x["createdAt"],
+                        "body": self.get_message_detail(x["id"]),
                     }
                     messages.append(msg_dict)
             return messages
@@ -208,7 +208,7 @@ class MailTMAsync(AsyncTempMailProvider):
 
     def __init__(self):
         """Initialize MailTM Async client"""
-        self.url_bases = ['https://api.mail.tm', 'https://api.mail.gw']
+        self.url_bases = ["https://api.mail.tm", "https://api.mail.gw"]
         self.url_base = self.url_bases[random.randrange(2)]
         self.url_accounts = f"{self.url_base}/accounts"
         self.url_me = f"{self.url_base}/me"
@@ -226,6 +226,7 @@ class MailTMAsync(AsyncTempMailProvider):
     async def initialize(self):
         """Initialize the session"""
         import aiohttp
+
         self.session = aiohttp.ClientSession()
         return self
 
@@ -255,11 +256,13 @@ class MailTMAsync(AsyncTempMailProvider):
             async with self.session.get(f"{self.url_domain}?page=1") as resp:
                 resp.raise_for_status()
                 ans = await resp.json()
-                return ans['hydra:member'][0]['domain']
+                return ans["hydra:member"][0]["domain"]
         except Exception:
             return ""
 
-    async def create_email(self, alias: Optional[str] = None, domain: Optional[str] = None) -> Tuple[str, str]:
+    async def create_email(
+        self, alias: Optional[str] = None, domain: Optional[str] = None
+    ) -> Tuple[str, str]:
         """Create a new email account"""
         if not self.session:
             await self.initialize()
@@ -282,12 +285,12 @@ class MailTMAsync(AsyncTempMailProvider):
         self.password = generate_random_string(PASSWORD_LENGTH, include_digits=True)
 
         # Register account
-        data = {'address': self.email, 'password': self.password}
+        data = {"address": self.email, "password": self.password}
         try:
             async with self.session.post(self.url_accounts, json=data) as resp:
                 resp.raise_for_status()
                 ans = await resp.json()
-                self.account_id = ans['id']
+                self.account_id = ans["id"]
 
                 # Get token
                 token = await self._get_token()
@@ -301,13 +304,13 @@ class MailTMAsync(AsyncTempMailProvider):
         if not self.email or not self.password or not self.session:
             return ""
 
-        data = {'address': self.email, 'password': self.password}
+        data = {"address": self.email, "password": self.password}
         try:
             async with self.session.post(self.url_token, json=data) as resp:
                 resp.raise_for_status()
                 ans = await resp.json()
-                self.token = ans['token']
-                self.header = {'Authorization': f'Bearer {self.token}'}
+                self.token = ans["token"]
+                self.header = {"Authorization": f"Bearer {self.token}"}
                 return self.token
         except Exception:
             return ""
@@ -323,11 +326,11 @@ class MailTMAsync(AsyncTempMailProvider):
                 ans = await resp.json()
 
                 # Use Scout instead of BeautifulSoup for HTML parsing
-                scout = Scout(ans['text'])
+                scout = Scout(ans["text"])
 
                 # Extract text with Scout's get_text method with improved options
                 # Strip whitespace for cleaner output
-                return scout.get_text(separator=' ', strip=True)
+                return scout.get_text(separator=" ", strip=True)
 
         except Exception:
             return ""
@@ -343,17 +346,17 @@ class MailTMAsync(AsyncTempMailProvider):
                 ans = await resp.json()
 
                 messages = []
-                if ans['hydra:totalItems'] > 0:
-                    for x in ans['hydra:member']:
-                        detail = await self.get_message_detail(x['id'])
+                if ans["hydra:totalItems"] > 0:
+                    for x in ans["hydra:member"]:
+                        detail = await self.get_message_detail(x["id"])
                         msg_dict = {
-                            'msg_id': x['id'],
-                            'from': x['from']['address'],
-                            'subject': x['subject'],
-                            'intro': x['intro'],
-                            'hasAttachments': x['hasAttachments'],
-                            'createdAt': x['createdAt'],
-                            'body': detail
+                            "msg_id": x["id"],
+                            "from": x["from"]["address"],
+                            "subject": x["subject"],
+                            "intro": x["intro"],
+                            "hasAttachments": x["hasAttachments"],
+                            "createdAt": x["createdAt"],
+                            "body": detail,
                         }
                         messages.append(msg_dict)
                 return messages
@@ -366,7 +369,9 @@ class MailTMAsync(AsyncTempMailProvider):
             return False
 
         try:
-            async with self.session.delete(f"{self.url_accounts}/{self.account_id}", headers=self.header) as resp:
+            async with self.session.delete(
+                f"{self.url_accounts}/{self.account_id}", headers=self.header
+            ) as resp:
                 resp.raise_for_status()
                 self.email = None
                 self.password = None

@@ -31,7 +31,7 @@ class Completions(BaseCompletions):
         marker = "</think>"
         idx = text.rfind(marker)
         if idx != -1:
-            return text[idx + len(marker):].lstrip()
+            return text[idx + len(marker) :].lstrip()
         return text
 
     def create(
@@ -241,17 +241,19 @@ class K2Think(OpenAICompatibleProvider):
         self.fingerprint = self.agent.generate_fingerprint(browser)
 
         # Set headers
-        self.session.headers.update({
-            "Accept": self.fingerprint["accept"],
-            "Accept-Language": self.fingerprint["accept_language"],
-            "Content-Type": "application/json",
-            "Origin": "https://www.k2think.ai",
-            "Referer": "https://www.k2think.ai/guest",
-            "User-Agent": self.fingerprint.get("user_agent", ""),
-            "Sec-CH-UA": self.fingerprint.get("sec_ch_ua", ""),
-            "Sec-CH-UA-Mobile": "?0",
-            "Sec-CH-UA-Platform": f'"{self.fingerprint.get("platform", "")}"',
-        })
+        self.session.headers.update(
+            {
+                "Accept": self.fingerprint["accept"],
+                "Accept-Language": self.fingerprint["accept_language"],
+                "Content-Type": "application/json",
+                "Origin": "https://www.k2think.ai",
+                "Referer": "https://www.k2think.ai/guest",
+                "User-Agent": self.fingerprint.get("user_agent", ""),
+                "Sec-CH-UA": self.fingerprint.get("sec_ch_ua", ""),
+                "Sec-CH-UA-Mobile": "?0",
+                "Sec-CH-UA-Platform": f'"{self.fingerprint.get("platform", "")}"',
+            }
+        )
 
         # Set proxies if provided
         if proxies:

@@ -234,9 +234,9 @@ class CookieHarvester:
 
                 if attempt < max_retries - 1:
                     print(
-                        "  No cookies yet — likely behind a Cloudflare/JS challenge. "
-                        "Waiting 10s..." if not self._headed else
-                        "  Solve the Cloudflare challenge in the browser window... "
+                        "  No cookies yet — likely behind a Cloudflare/JS challenge. Waiting 10s..."
+                        if not self._headed
+                        else "  Solve the Cloudflare challenge in the browser window... "
                         "retrying in 10s",
                     )
                     time.sleep(10)
@@ -256,10 +256,7 @@ class CookieHarvester:
         all_cookies = [Cookie.from_state_dict(c) for c in raw_cookies]
 
         if domain_filter:
-            result.cookies = [
-                c for c in all_cookies
-                if any(d in c.domain for d in domain_filter)
-            ]
+            result.cookies = [c for c in all_cookies if any(d in c.domain for d in domain_filter)]
         else:
             result.cookies = all_cookies
 
@@ -406,7 +403,8 @@ if __name__ == "__main__":
     )
     parser.add_argument("url", help="Target URL to visit")
     parser.add_argument(
-        "--domain", "-d",
+        "--domain",
+        "-d",
         action="append",
         help="Filter cookies by domain (can be used multiple times)",
     )
@@ -416,7 +414,8 @@ if __name__ == "__main__":
         help="Show browser window (required for Cloudflare-challenged sites)",
     )
     parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         help="Save cookie state to this path",
     )
     parser.add_argument(

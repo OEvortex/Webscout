@@ -17,7 +17,6 @@ from llm4free.TTI.base import BaseImages, TTICompatibleProvider
 from llm4free.TTI.image_hosting import upload_image_with_fallback
 from llm4free.TTI.utils import ImageData, ImageResponse
 
-
 # Mapping from aspect ratio to MagicHour format
 ASPECT_RATIO_MAP = {
     "1:1": "1:1",

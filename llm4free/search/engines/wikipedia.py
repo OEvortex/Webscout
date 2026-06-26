@@ -22,16 +22,20 @@ class Wikipedia(BaseSearchEngine[TextResult]):
     search_method = "GET"
 
     def build_payload(
-        self, query: str, region: str, safesearch: str, timelimit: str | None, page: int = 1, **kwargs: Any
+        self,
+        query: str,
+        region: str,
+        safesearch: str,
+        timelimit: str | None,
+        page: int = 1,
+        **kwargs: Any,
     ) -> dict[str, Any]:
         """Build a payload for the search request."""
         parts = region.lower().split("-")
         lang = parts[1] if len(parts) > 1 else parts[0]
         encoded_query = quote(query)
         limit = kwargs.get("max_results", 10)
-        self.search_url = (
-            f"https://{lang}.wikipedia.org/w/api.php?action=opensearch&profile=fuzzy&limit={limit}&search={encoded_query}"
-        )
+        self.search_url = f"https://{lang}.wikipedia.org/w/api.php?action=opensearch&profile=fuzzy&limit={limit}&search={encoded_query}"
         payload: dict[str, Any] = {}
         self.lang = lang
         return payload

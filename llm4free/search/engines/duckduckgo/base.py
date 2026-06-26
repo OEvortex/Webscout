@@ -15,14 +15,16 @@ import curl_cffi.requests
 try:
     from lxml.html import HTMLParser as LHTMLParser
     from lxml.html import document_fromstring
+
     LXML_AVAILABLE = True
 except ImportError:
     LXML_AVAILABLE = False
-    LHTMLParser = None # type: ignore
-    document_fromstring = None # type: ignore
+    LHTMLParser = None  # type: ignore
+    document_fromstring = None  # type: ignore
+
+from llm4free.litagent import LitAgent
 
 from ....exceptions import RatelimitE, TimeoutE, WebscoutE
-from llm4free.litagent import LitAgent
 from ....utils import (
     _extract_vqd,
     _normalize,
@@ -36,12 +38,31 @@ class DuckDuckGoBase:
 
     _executor: ThreadPoolExecutor = ThreadPoolExecutor()
     _impersonates = (
-        "chrome99", "chrome100", "chrome101", "chrome104", "chrome107", "chrome110",
-        "chrome116", "chrome119", "chrome120", "chrome123", "chrome124", "chrome131", "chrome133a",
-        "chrome99_android", "chrome131_android",
-        "safari15_3", "safari15_5", "safari17_0", "safari17_2_ios", "safari18_0", "safari18_0_ios",
-        "edge99", "edge101",
-        "firefox133", "firefox135",
+        "chrome99",
+        "chrome100",
+        "chrome101",
+        "chrome104",
+        "chrome107",
+        "chrome110",
+        "chrome116",
+        "chrome119",
+        "chrome120",
+        "chrome123",
+        "chrome124",
+        "chrome131",
+        "chrome133a",
+        "chrome99_android",
+        "chrome131_android",
+        "safari15_3",
+        "safari15_5",
+        "safari17_0",
+        "safari17_2_ios",
+        "safari18_0",
+        "safari18_0_ios",
+        "edge99",
+        "edge101",
+        "firefox133",
+        "firefox135",
     )
 
     def __init__(
@@ -65,7 +86,11 @@ class DuckDuckGoBase:
         self.proxy: str | None = ddgs_proxy if ddgs_proxy else proxy
 
         if not proxy and proxies:
-            self.proxy = proxies.get("http") or proxies.get("https") if isinstance(proxies, dict) else proxies
+            self.proxy = (
+                proxies.get("http") or proxies.get("https")
+                if isinstance(proxies, dict)
+                else proxies
+            )
 
         default_headers = {
             **LitAgent().generate_fingerprint(),
@@ -79,7 +104,7 @@ class DuckDuckGoBase:
         impersonate_browser = choice(self._impersonates)
         self.client = curl_cffi.requests.Session(
             headers=self.headers,
-            proxies={'http': self.proxy, 'https': self.proxy} if self.proxy else None,
+            proxies={"http": self.proxy, "https": self.proxy} if self.proxy else None,
             timeout=timeout,  # ty:ignore[invalid-argument-type]
             impersonate=impersonate_browser,  # ty:ignore[invalid-argument-type]
             verify=verify,
@@ -99,22 +124,36 @@ class DuckDuckGoBase:
 
         class Parser:
             def __init__(self):
-                self.lhtml_parser = LHTMLParser(
-                    remove_blank_text=True,
-                    remove_comments=True,
-                    remove_pis=True,
-                    collect_ids=False
-                ) if LHTMLParser else None
-                self.etree = __import__('lxml.etree', fromlist=['Element'])
+                self.lhtml_parser = (
+                    LHTMLParser(
+                        remove_blank_text=True,
+                        remove_comments=True,
+                        remove_pis=True,
+                        collect_ids=False,
+                    )
+                    if LHTMLParser
+                    else None
+                )
+                self.etree = __import__("lxml.etree", fromlist=["Element"])
 
             def fromstring(self, html: bytes | str) -> Any:
-                return document_fromstring(html, parser=self.lhtml_parser) if document_fromstring and self.lhtml_parser else None
+                return (
+                    document_fromstring(html, parser=self.lhtml_parser)
+                    if document_fromstring and self.lhtml_parser
+                    else None
+                )
 
         return Parser()
 
     def _sleep(self, sleeptime: float = 0.75) -> None:
         """Sleep between API requests."""
-        delay = 0.0 if not self.sleep_timestamp else 0.0 if time() - self.sleep_timestamp >= 20 else sleeptime
+        delay = (
+            0.0
+            if not self.sleep_timestamp
+            else 0.0
+            if time() - self.sleep_timestamp >= 20
+            else sleeptime
+        )
         self.sleep_timestamp = time()
         sleep(delay)
 
@@ -168,7 +207,9 @@ class DuckDuckGoBase:
 
     def _get_vqd(self, keywords: str) -> str:
         """Get vqd value for a search query."""
-        resp_content = self._get_url("GET", "https://duckduckgo.com", params={"q": keywords}).content
+        resp_content = self._get_url(
+            "GET", "https://duckduckgo.com", params={"q": keywords}
+        ).content
         return _extract_vqd(resp_content, keywords)
 
     def json_loads(self, obj: str | bytes) -> Any:

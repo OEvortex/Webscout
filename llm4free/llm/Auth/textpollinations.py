@@ -12,6 +12,7 @@ from typing import Any, Dict, Generator, List, Optional, Union, cast
 
 from curl_cffi import requests
 
+from llm4free.litagent import LitAgent
 from llm4free.llm.base import (
     BaseChat,
     BaseCompletions,
@@ -29,8 +30,6 @@ from llm4free.llm.utils import (
     ToolFunction,
     count_tokens,
 )
-
-from llm4free.litagent import LitAgent
 
 BOLD = "\033[1m"
 RED = "\033[91m"
@@ -327,7 +326,7 @@ class TextPollinations(OpenAICompatibleProvider):
     def __init__(self, api_key: str, timeout: int = 30, proxies: dict = {}):
         """
         Initialize the TextPollinations client.
-        
+
         Args:
             api_key (str): Pollinations API key (required).
             timeout (int): Request timeout in seconds. Defaults to 30.

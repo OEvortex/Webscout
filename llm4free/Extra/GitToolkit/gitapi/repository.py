@@ -28,7 +28,9 @@ class Repository:
         """Get basic repository information"""
         return request(self.base_url)
 
-    def get_commits(self, page: int = 1, per_page: int = 30, sha: Optional[str] = None) -> List[Dict[str, Any]]:
+    def get_commits(
+        self, page: int = 1, per_page: int = 30, sha: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """
         Get repository commits
 
@@ -47,7 +49,9 @@ class Repository:
         url = f"{self.base_url}/commits/{quote(sha, safe='')}"
         return request(url)
 
-    def get_pull_requests(self, state: str = "all", page: int = 1, per_page: int = 30) -> List[Dict[str, Any]]:
+    def get_pull_requests(
+        self, state: str = "all", page: int = 1, per_page: int = 30
+    ) -> List[Dict[str, Any]]:
         """
         Get repository pull requests
 
@@ -74,7 +78,9 @@ class Repository:
         url = f"{self.base_url}/pulls/{pr_number}/files"
         return request(url)
 
-    def get_issues(self, state: str = "all", page: int = 1, per_page: int = 30, labels: Optional[str] = None) -> List[Dict[str, Any]]:
+    def get_issues(
+        self, state: str = "all", page: int = 1, per_page: int = 30, labels: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """
         Get repository issues
 
@@ -236,7 +242,9 @@ class Repository:
         url = f"{self.base_url}/topics"
         return request(url)
 
-    def get_forks(self, sort: str = "newest", page: int = 1, per_page: int = 30) -> List[Dict[str, Any]]:
+    def get_forks(
+        self, sort: str = "newest", page: int = 1, per_page: int = 30
+    ) -> List[Dict[str, Any]]:
         """
         List repository forks.
 

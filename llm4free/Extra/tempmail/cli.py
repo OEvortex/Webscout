@@ -16,16 +16,33 @@ from .base import TempMailProvider, get_provider
 console = Console()
 
 # Create CLI app
-app = CLI(
-    name="tempmail",
-    help="Temporary Email CLI Tool",
-    version="1.0.0"
-)
+app = CLI(name="tempmail", help="Temporary Email CLI Tool", version="1.0.0")
+
 
 @app.command()
-@option("--wait", "-w", type=int, default=10, help="Wait time in seconds between checking for new messages")
-@option("--output", "-o", type=str, choices=["simple", "detailed"], default="simple", help="Output format")
-@option("--provider", "-p", type=str, choices=["mailtm", "tempmailio"], default="mailtm", help="Email provider to use")
+@option(
+    "--wait",
+    "-w",
+    type=int,
+    default=10,
+    help="Wait time in seconds between checking for new messages",
+)
+@option(
+    "--output",
+    "-o",
+    type=str,
+    choices=["simple", "detailed"],
+    default="simple",
+    help="Output format",
+)
+@option(
+    "--provider",
+    "-p",
+    type=str,
+    choices=["mailtm", "tempmailio"],
+    default="mailtm",
+    help="Email provider to use",
+)
 def monitor(wait: int = 10, output: str = "simple", provider: str = "mailtm"):
     """
     Create and monitor a temporary email account
@@ -36,7 +53,7 @@ def monitor(wait: int = 10, output: str = "simple", provider: str = "mailtm"):
     # Create a new email
     mail = cast(TempMailProvider, get_provider(provider_name=provider))
 
-    if hasattr(mail, 'auto_create'):
+    if hasattr(mail, "auto_create"):
         mail = cast(TempMailProvider, get_provider(provider_name=provider, async_provider=False))
         mail.create_account()
     else:
@@ -79,8 +96,16 @@ def monitor(wait: int = 10, output: str = "simple", provider: str = "mailtm"):
         else:
             console.print("[red]--Failed to delete account--[/red]")
 
+
 @app.command()
-@option("--provider", "-p", type=str, choices=["mailtm", "tempmailio"], default="mailtm", help="Email provider to use")
+@option(
+    "--provider",
+    "-p",
+    type=str,
+    choices=["mailtm", "tempmailio"],
+    default="mailtm",
+    help="Email provider to use",
+)
 def create(provider: str = "mailtm"):
     """
     Create a temporary email account and display its details
@@ -90,7 +115,7 @@ def create(provider: str = "mailtm"):
     """
     mail = cast(TempMailProvider, get_provider(provider_name=provider))
 
-    if hasattr(mail, 'auto_create'):
+    if hasattr(mail, "auto_create"):
         mail = cast(TempMailProvider, get_provider(provider_name=provider, async_provider=False))
         mail.create_account()
     else:
@@ -104,11 +129,26 @@ def create(provider: str = "mailtm"):
     console.print(f"Account ID: {mail.account_id}")
     console.print("Use 'tempmail monitor' to check for messages")
 
+
 @app.command()
 @option("--email", "-e", type=str, required=True, help="Email address to check")
 @option("--account-id", "-a", type=str, required=True, help="Account ID for the email")
-@option("--provider", "-p", type=str, choices=["mailtm", "tempmailio"], default="mailtm", help="Email provider to use")
-@option("--output", "-o", type=str, choices=["simple", "detailed"], default="simple", help="Output format")
+@option(
+    "--provider",
+    "-p",
+    type=str,
+    choices=["mailtm", "tempmailio"],
+    default="mailtm",
+    help="Email provider to use",
+)
+@option(
+    "--output",
+    "-o",
+    type=str,
+    choices=["simple", "detailed"],
+    default="simple",
+    help="Output format",
+)
 def check(email: str, account_id: str, provider: str = "mailtm", output: str = "simple"):
     """
     Check messages for an existing temporary email account
@@ -121,7 +161,7 @@ def check(email: str, account_id: str, provider: str = "mailtm", output: str = "
     mail.account_id = account_id
 
     # Try to get token if needed
-    if hasattr(mail, 'get_token'):
+    if hasattr(mail, "get_token"):
         mail.get_token()
 
     console.print(f"[cyan]Checking messages for: {email}[/cyan]")
@@ -150,10 +190,18 @@ def check(email: str, account_id: str, provider: str = "mailtm", output: str = "
     except Exception as e:
         console.print(f"[red]Error checking messages: {str(e)}[/red]")
 
+
 @app.command()
 @option("--email", "-e", type=str, required=True, help="Email address to delete")
 @option("--account-id", "-a", type=str, required=True, help="Account ID for the email")
-@option("--provider", "-p", type=str, choices=["mailtm", "tempmailio"], default="mailtm", help="Email provider to use")
+@option(
+    "--provider",
+    "-p",
+    type=str,
+    choices=["mailtm", "tempmailio"],
+    default="mailtm",
+    help="Email provider to use",
+)
 def delete(email: str, account_id: str, provider: str = "mailtm"):
     """
     Delete an existing temporary email account
@@ -165,7 +213,7 @@ def delete(email: str, account_id: str, provider: str = "mailtm"):
     mail.account_id = account_id
 
     # Try to get token if needed
-    if hasattr(mail, 'get_token'):
+    if hasattr(mail, "get_token"):
         mail.get_token()
 
     console.print(f"[yellow]Deleting account: {email}[/yellow]")
@@ -179,6 +227,7 @@ def delete(email: str, account_id: str, provider: str = "mailtm"):
     except Exception as e:
         console.print(f"[red]Error deleting account: {str(e)}[/red]")
 
+
 def main():
     """Main CLI function for tempmail"""
     try:
@@ -186,6 +235,7 @@ def main():
     except Exception as e:
         console.print(f"[red]Error: {str(e)}[/red]")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

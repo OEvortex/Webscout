@@ -61,12 +61,14 @@ class EmailnatorProvider(TempMailProvider):
                 json={"email": self.email, "messageID": msg_id},
             )
             # The response is HTML, so we just store it as body
-            messages.append({
-                "msg_id": msg_id,
-                "from": msg.get("from", ""),
-                "subject": msg.get("subject", ""),
-                "body": mail_context.text,
-            })
+            messages.append(
+                {
+                    "msg_id": msg_id,
+                    "from": msg.get("from", ""),
+                    "subject": msg.get("subject", ""),
+                    "body": mail_context.text,
+                }
+            )
         self._messages = messages
         return messages
 

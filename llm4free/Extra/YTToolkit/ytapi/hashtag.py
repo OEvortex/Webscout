@@ -1,4 +1,5 @@
 """YouTube Hashtag functionality."""
+
 import re
 from typing import Any, Dict, List, Optional
 from urllib.parse import quote
@@ -28,8 +29,8 @@ class Hashtag:
             return []
 
         # Remove # if present and clean the tag
-        tag = tag.lstrip('#').strip().lower()
-        tag = re.sub(r'[^a-zA-Z0-9]', '', tag)
+        tag = tag.lstrip("#").strip().lower()
+        tag = re.sub(r"[^a-zA-Z0-9]", "", tag)
 
         if not tag:
             return []
@@ -57,8 +58,8 @@ class Hashtag:
         if not tag:
             return {}
 
-        tag = tag.lstrip('#').strip().lower()
-        tag = re.sub(r'[^a-zA-Z0-9]', '', tag)
+        tag = tag.lstrip("#").strip().lower()
+        tag = re.sub(r"[^a-zA-Z0-9]", "", tag)
 
         if not tag:
             return {}
@@ -69,20 +70,22 @@ class Hashtag:
             html = request(url)
 
             # Try to extract video count if available
-            video_count_match = re.search(r'"videoCountText":\s*\{\s*"runs":\s*\[\s*\{\s*"text":\s*"([^"]+)"', html)
+            video_count_match = re.search(
+                r'"videoCountText":\s*\{\s*"runs":\s*\[\s*\{\s*"text":\s*"([^"]+)"', html
+            )
             video_count = video_count_match.group(1) if video_count_match else None
 
             # Get sample of videos
             video_ids = Patterns.video_id.findall(html)
 
             return {
-                'tag': tag,
-                'url': url,
-                'video_count': video_count,
-                'sample_videos': dup_filter(video_ids, 10)
+                "tag": tag,
+                "url": url,
+                "video_count": video_count,
+                "sample_videos": dup_filter(video_ids, 10),
             }
         except Exception:
-            return {'tag': tag, 'url': url}
+            return {"tag": tag, "url": url}
 
     @staticmethod
     def extract_from_text(text: str) -> List[str]:
@@ -98,7 +101,7 @@ class Hashtag:
         if not text:
             return []
 
-        pattern = r'#([a-zA-Z0-9_]+)'
+        pattern = r"#([a-zA-Z0-9_]+)"
         matches = re.findall(pattern, text)
         return list(dict.fromkeys(matches))  # Remove duplicates, preserve order
 

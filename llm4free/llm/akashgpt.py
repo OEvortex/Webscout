@@ -31,7 +31,7 @@ AVAILABLE_MODELS = [
     "Qwen/Qwen3-30B-A3B",
     "DeepSeek-V3.1",
     "Meta-Llama-3-3-70B-Instruct",
-    "DeepSeek-V3.2"
+    "DeepSeek-V3.2",
 ]
 
 
@@ -42,7 +42,7 @@ def _akash_extractor(chunk: Union[str, Dict[str, Any]]) -> Optional[str]:
         if match:
             # Decode potential unicode escapes like \u00e9
             content = match.group(1).encode().decode("unicode_escape", errors="replace")
-            return content.replace("\\", "\\").replace("\\""", '"')
+            return content.replace("\\", "\\").replace("\\", '"')
     return None
 
 
@@ -163,10 +163,14 @@ class Completions(BaseCompletions):
                         # Extract content from 0:"content" format
                         content = line[3:-1]  # Remove 0:" and "
                         # Decode escaped characters
-                        content = content.encode().decode('unicode_escape', errors='replace')
+                        content = content.encode().decode("unicode_escape", errors="replace")
 
                         # Calculate delta (new content since last chunk)
-                        delta_content = content[len(full_content):] if content.startswith(full_content) else content
+                        delta_content = (
+                            content[len(full_content) :]
+                            if content.startswith(full_content)
+                            else content
+                        )
                         full_content = content
 
                         if delta_content:
@@ -188,23 +192,33 @@ class Completions(BaseCompletions):
                             }
                             yield chunk_response
 
-                    elif line.startswith('e:{'):
+                    elif line.startswith("e:{"):
                         # Extract usage from e: line
                         import json
+
                         try:
                             usage_data = json.loads(line[2:])  # Remove 'e:'
-                            prompt_tokens = usage_data.get('usage', {}).get('promptTokens', prompt_tokens)
-                            completion_tokens = usage_data.get('usage', {}).get('completionTokens', completion_tokens)
+                            prompt_tokens = usage_data.get("usage", {}).get(
+                                "promptTokens", prompt_tokens
+                            )
+                            completion_tokens = usage_data.get("usage", {}).get(
+                                "completionTokens", completion_tokens
+                            )
                         except json.JSONDecodeError:
                             pass
-                    elif line.startswith('d:{'):
+                    elif line.startswith("d:{"):
                         # Alternative usage extraction from d: line
                         if prompt_tokens == 0:  # Only if not already set
                             import json
+
                             try:
                                 usage_data = json.loads(line[2:])  # Remove 'd:'
-                                prompt_tokens = usage_data.get('usage', {}).get('promptTokens', prompt_tokens)
-                                completion_tokens = usage_data.get('usage', {}).get('completionTokens', completion_tokens)
+                                prompt_tokens = usage_data.get("usage", {}).get(
+                                    "promptTokens", prompt_tokens
+                                )
+                                completion_tokens = usage_data.get("usage", {}).get(
+                                    "completionTokens", completion_tokens
+                                )
                             except json.JSONDecodeError:
                                 pass
 
@@ -283,25 +297,31 @@ class Completions(BaseCompletions):
                         # Extract content from 0:"content" format
                         content = line[3:-1]  # Remove 0:" and "
                         # Decode escaped characters
-                        content = content.encode().decode('unicode_escape')
+                        content = content.encode().decode("unicode_escape")
                         full_content += content
-                    elif line.startswith('e:{'):
+                    elif line.startswith("e:{"):
                         # Extract usage from e: line
                         import json
+
                         try:
                             usage_data = json.loads(line[2:])  # Remove 'e:'
-                            prompt_tokens = usage_data.get('usage', {}).get('promptTokens', 0)
-                            completion_tokens = usage_data.get('usage', {}).get('completionTokens', 0)
+                            prompt_tokens = usage_data.get("usage", {}).get("promptTokens", 0)
+                            completion_tokens = usage_data.get("usage", {}).get(
+                                "completionTokens", 0
+                            )
                         except json.JSONDecodeError:
                             pass
-                    elif line.startswith('d:{'):
+                    elif line.startswith("d:{"):
                         # Alternative usage extraction from d: line
                         if prompt_tokens == 0:  # Only if not already set
                             import json
+
                             try:
                                 usage_data = json.loads(line[2:])  # Remove 'd:'
-                                prompt_tokens = usage_data.get('usage', {}).get('promptTokens', 0)
-                                completion_tokens = usage_data.get('usage', {}).get('completionTokens', 0)
+                                prompt_tokens = usage_data.get("usage", {}).get("promptTokens", 0)
+                                completion_tokens = usage_data.get("usage", {}).get(
+                                    "completionTokens", 0
+                                )
                             except json.JSONDecodeError:
                                 pass
 
@@ -359,9 +379,7 @@ class AkashGPT(OpenAICompatibleProvider):
 
     AVAILABLE_MODELS = AVAILABLE_MODELS
 
-    def __init__(
-        self, tools: Optional[List] = None, proxies: Optional[Dict[str, str]] = None
-    ):
+    def __init__(self, tools: Optional[List] = None, proxies: Optional[Dict[str, str]] = None):
         """
         Initialize the AkashGPT-compatible client.
 
@@ -410,6 +428,7 @@ class AkashGPT(OpenAICompatibleProvider):
 
 if __name__ == "__main__":
     from rich import print
+
     client = AkashGPT()
     print("NON-STREAMING RESPONSE:")
     response = client.chat.completions.create(

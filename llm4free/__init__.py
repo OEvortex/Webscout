@@ -33,4 +33,3 @@ try:
         logger.info(update_message)
 except Exception:
     pass
-

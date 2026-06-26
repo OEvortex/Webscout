@@ -1,6 +1,7 @@
 """
 Scout Text Analyzer Module
 """
+
 import re
 from collections import Counter
 from typing import Dict, List, Optional, Set
@@ -10,6 +11,7 @@ class ScoutTextAnalyzer:
     """
     Advanced text analysis and processing utility.
     """
+
     @staticmethod
     def tokenize(text: str, lowercase=True, remove_punctuation=True) -> List[str]:
         """
@@ -27,7 +29,7 @@ class ScoutTextAnalyzer:
             text = text.lower()
 
         if remove_punctuation:
-            text = re.sub(r'[^\w\s]', '', text)
+            text = re.sub(r"[^\w\s]", "", text)
 
         return text.split()
 
@@ -56,9 +58,9 @@ class ScoutTextAnalyzer:
             Dict[str, Set[str]]: Extracted entities
         """
         entities = {
-            'emails': set(re.findall(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', text)),
-            'urls': set(re.findall(r'https?://\S+', text)),
-            'phones': set(re.findall(r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b', text)),
-            'dates': set(re.findall(r'\b\d{1,2}[-/]\d{1,2}[-/]\d{2,4}\b', text))
+            "emails": set(re.findall(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b", text)),
+            "urls": set(re.findall(r"https?://\S+", text)),
+            "phones": set(re.findall(r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b", text)),
+            "dates": set(re.findall(r"\b\d{1,2}[-/]\d{1,2}[-/]\d{2,4}\b", text)),
         }
         return entities

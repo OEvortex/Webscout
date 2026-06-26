@@ -67,9 +67,7 @@ class BraveSearch(AISearch):
 
             self.session.proxies.update(cast(Any, proxies))
         self._conversation_id: Optional[str] = None
-        self._symmetric_key = base64.urlsafe_b64encode(
-            os.urandom(32)
-        ).decode().rstrip("=")
+        self._symmetric_key = base64.urlsafe_b64encode(os.urandom(32)).decode().rstrip("=")
 
     def _parse_sveltekit_tap_data(self, raw_json: dict) -> Dict[str, str]:
         """Parse SvelteKit __data.json format to extract nonce and sig."""
@@ -184,9 +182,7 @@ class BraveSearch(AISearch):
         def for_stream():
             full_text = ""
             try:
-                for raw_line in self._iter_stream(
-                    prompt, is_deep, max_retries, effective_timeout
-                ):
+                for raw_line in self._iter_stream(prompt, is_deep, max_retries, effective_timeout):
                     if raw:
                         yield raw_line
                     else:
@@ -211,9 +207,7 @@ class BraveSearch(AISearch):
 
         def for_non_stream():
             try:
-                full_text = self._fetch_response(
-                    prompt, is_deep, max_retries, effective_timeout
-                )
+                full_text = self._fetch_response(prompt, is_deep, max_retries, effective_timeout)
                 if raw:
                     return full_text
                 self.last_response = SearchResponse(full_text)
@@ -223,9 +217,7 @@ class BraveSearch(AISearch):
 
         return for_stream() if stream else for_non_stream()
 
-    def _setup_conversation(
-        self, prompt: str, is_deep: bool, timeout: int
-    ) -> str:
+    def _setup_conversation(self, prompt: str, is_deep: bool, timeout: int) -> str:
         """Get nonce/sig and create conversation. Returns conversation ID."""
         data_params: Dict[str, str] = {
             "q": prompt,
@@ -255,9 +247,7 @@ class BraveSearch(AISearch):
         nonce = tap_data.get("nonce")
         sig = tap_data.get("sig")
         if not nonce or not sig:
-            raise RuntimeError(
-                f"Failed to extract nonce/sig from __data.json. Got: {tap_data}"
-            )
+            raise RuntimeError(f"Failed to extract nonce/sig from __data.json. Got: {tap_data}")
 
         new_params = {
             "language": "en",
@@ -280,9 +270,7 @@ class BraveSearch(AISearch):
         response = self.session.get(
             NEW_ENDPOINT,
             params=new_params,
-            headers={
-                "referer": f"{BRAVE_ASK_URL}?q={quote(prompt)}&source=newThread"
-            },
+            headers={"referer": f"{BRAVE_ASK_URL}?q={quote(prompt)}&source=newThread"},
             timeout=timeout,
         )
         if response.status_code != 200:
@@ -292,9 +280,7 @@ class BraveSearch(AISearch):
         new_data = response.json()
         conv_id = new_data.get("id")
         if not conv_id:
-            raise RuntimeError(
-                f"Failed to get conversation ID from /new: {new_data}"
-            )
+            raise RuntimeError(f"Failed to get conversation ID from /new: {new_data}")
         self._conversation_id = conv_id
         return conv_id
 

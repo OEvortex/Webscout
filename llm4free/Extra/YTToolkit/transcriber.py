@@ -32,7 +32,7 @@ from llm4free.exceptions import (
 from llm4free.litagent import LitAgent
 
 # YouTube API settings
-WATCH_URL = 'https://www.youtube.com/watch?v={video_id}'
+WATCH_URL = "https://www.youtube.com/watch?v={video_id}"
 INNERTUBE_API_URL = "https://www.youtube.com/youtubei/v1/player?key={api_key}"
 INNERTUBE_CONTEXT = {"client": {"clientName": "ANDROID", "clientVersion": "20.10.38"}}
 MAX_WORKERS = 4
@@ -53,17 +53,19 @@ class YTTranscriber:
     def _get_session(cls):
         if cls._session is None:
             cls._session = Session()
-            cls._session.headers.update({
-                'User-Agent': LitAgent().random()
-            })
+            cls._session.headers.update({"User-Agent": LitAgent().random()})
         return cls._session
 
     @classmethod
     @lru_cache(maxsize=100)
-    def get_transcript(cls, video_url: str, languages: Optional[str] = 'en',
-                      proxies: Optional[Dict[str, str]] = None,
-                      cookies: Optional[str] = None,
-                      preserve_formatting: bool = False) -> List[Dict[str, Union[str, float]]]:
+    def get_transcript(
+        cls,
+        video_url: str,
+        languages: Optional[str] = "en",
+        proxies: Optional[Dict[str, str]] = None,
+        cookies: Optional[str] = None,
+        preserve_formatting: bool = False,
+    ) -> List[Dict[str, Union[str, float]]]:
         """
         Retrieves the transcript for a given YouTube video URL.
 
@@ -104,10 +106,10 @@ class YTTranscriber:
     def _extract_video_id(video_url: str) -> str:
         """Extracts the video ID from different YouTube URL formats."""
         patterns = [
-            r'(?:v=|\/)([0-9A-Za-z_-]{11}).*',
-            r'youtu\.be\/([0-9A-Za-z_-]{11})',
-            r'youtube\.com\/embed\/([0-9A-Za-z_-]{11})',
-            r'youtube\.com\/shorts\/([0-9A-Za-z_-]{11})'
+            r"(?:v=|\/)([0-9A-Za-z_-]{11}).*",
+            r"youtu\.be\/([0-9A-Za-z_-]{11})",
+            r"youtube\.com\/embed\/([0-9A-Za-z_-]{11})",
+            r"youtube\.com\/shorts\/([0-9A-Za-z_-]{11})",
         ]
 
         for pattern in patterns:
@@ -115,7 +117,7 @@ class YTTranscriber:
             if match:
                 return match.group(1)
 
-        if re.match(r'^[0-9A-Za-z_-]{11}$', video_url):
+        if re.match(r"^[0-9A-Za-z_-]{11}$", video_url):
             return video_url
 
         raise InvalidVideoIdError(video_url)
@@ -214,7 +216,7 @@ class TranscriptListFetcher:
         match = re.search('name="v" value="(.*?)"', html_content)
         if match is None:
             raise FailedToCreateConsentCookieError(video_id)
-        self._http_client.cookies.set('CONSENT', 'YES+' + match.group(1), domain='.youtube.com')
+        self._http_client.cookies.set("CONSENT", "YES+" + match.group(1), domain=".youtube.com")
 
     def _fetch_video_html(self, video_id):
         html_content = self._fetch_html(video_id)
@@ -226,7 +228,9 @@ class TranscriptListFetcher:
         return html_content
 
     def _fetch_html(self, video_id):
-        response = self._http_client.get(WATCH_URL.format(video_id=video_id), headers={'Accept-Language': 'en-US'})
+        response = self._http_client.get(
+            WATCH_URL.format(video_id=video_id), headers={"Accept-Language": "en-US"}
+        )
         return html.unescape(_raise_http_errors(response, video_id).text)
 
 
@@ -238,7 +242,9 @@ class TranscriptList:
     en ("English")[TRANSLATABLE]
     """
 
-    def __init__(self, video_id, manually_created_transcripts, generated_transcripts, translation_languages):
+    def __init__(
+        self, video_id, manually_created_transcripts, generated_transcripts, translation_languages
+    ):
         """Init that transcript list with all the good stuff! 💯"""
         self.video_id = video_id
         self._manually_created_transcripts = manually_created_transcripts
@@ -261,55 +267,57 @@ class TranscriptList:
         """
         # Handle both old format (simpleText) and new format (runs)
         translation_languages = []
-        for tl in captions_json.get('translationLanguages', []):
-            lang_name = tl.get('languageName', {})
+        for tl in captions_json.get("translationLanguages", []):
+            lang_name = tl.get("languageName", {})
             if isinstance(lang_name, dict):
                 # Try new format first (runs), then old format (simpleText)
-                if 'runs' in lang_name:
-                    name = lang_name['runs'][0]['text']
-                elif 'simpleText' in lang_name:
-                    name = lang_name['simpleText']
+                if "runs" in lang_name:
+                    name = lang_name["runs"][0]["text"]
+                elif "simpleText" in lang_name:
+                    name = lang_name["simpleText"]
                 else:
-                    name = tl.get('languageCode', 'Unknown')
+                    name = tl.get("languageCode", "Unknown")
             else:
                 name = str(lang_name)
-            translation_languages.append({
-                'language': name,
-                'language_code': tl['languageCode'],
-            })
+            translation_languages.append(
+                {
+                    "language": name,
+                    "language_code": tl["languageCode"],
+                }
+            )
 
         manually_created_transcripts = {}
         generated_transcripts = {}
 
-        for caption in captions_json['captionTracks']:
-            if caption.get('kind', '') == 'asr':
+        for caption in captions_json["captionTracks"]:
+            if caption.get("kind", "") == "asr":
                 transcript_dict = generated_transcripts
             else:
                 transcript_dict = manually_created_transcripts
 
             # Extract caption name - handle both formats
-            caption_name = caption.get('name', {})
+            caption_name = caption.get("name", {})
             if isinstance(caption_name, dict):
-                if 'runs' in caption_name:
-                    name = caption_name['runs'][0]['text']
-                elif 'simpleText' in caption_name:
-                    name = caption_name['simpleText']
+                if "runs" in caption_name:
+                    name = caption_name["runs"][0]["text"]
+                elif "simpleText" in caption_name:
+                    name = caption_name["simpleText"]
                 else:
-                    name = caption.get('languageCode', 'Unknown')
+                    name = caption.get("languageCode", "Unknown")
             else:
-                name = str(caption_name) if caption_name else caption.get('languageCode', 'Unknown')
+                name = str(caption_name) if caption_name else caption.get("languageCode", "Unknown")
 
             # Remove &fmt=srv3 from URL as it can cause issues
-            base_url = caption['baseUrl'].replace("&fmt=srv3", "")
+            base_url = caption["baseUrl"].replace("&fmt=srv3", "")
 
-            transcript_dict[caption['languageCode']] = Transcript(
+            transcript_dict[caption["languageCode"]] = Transcript(
                 http_client,
                 video_id,
                 base_url,
                 name,
-                caption['languageCode'],
-                caption.get('kind', '') == 'asr',
-                translation_languages if caption.get('isTranslatable', False) else [],
+                caption["languageCode"],
+                caption.get("kind", "") == "asr",
+                translation_languages if caption.get("isTranslatable", False) else [],
             )
 
         return TranscriptList(
@@ -320,7 +328,10 @@ class TranscriptList:
         )
 
     def __iter__(self):
-        return iter(list(self._manually_created_transcripts.values()) + list(self._generated_transcripts.values()))
+        return iter(
+            list(self._manually_created_transcripts.values())
+            + list(self._generated_transcripts.values())
+        )
 
     def find_transcript(self, language_codes):
         """
@@ -334,12 +345,14 @@ class TranscriptList:
         :raises: NoTranscriptFound
         """
         if not language_codes:
-            language_codes = ['any']
+            language_codes = ["any"]
 
-        if 'any' in language_codes:
+        if "any" in language_codes:
             for transcript in self:
                 return transcript
-        return self._find_transcript(language_codes, [self._manually_created_transcripts, self._generated_transcripts])
+        return self._find_transcript(
+            language_codes, [self._manually_created_transcripts, self._generated_transcripts]
+        )
 
     def find_generated_transcript(self, language_codes):
         """
@@ -354,9 +367,9 @@ class TranscriptList:
         :raises: NoTranscriptFound
         """
         if not language_codes:
-            language_codes = ['any']
+            language_codes = ["any"]
 
-        if 'any' in language_codes:
+        if "any" in language_codes:
             for transcript in self:
                 if transcript.is_generated:
                     return transcript
@@ -375,7 +388,7 @@ class TranscriptList:
         :raises: NoTranscriptFound
         """
         if not language_codes:
-            language_codes = ['any']
+            language_codes = ["any"]
         return self._find_transcript(language_codes, [self._manually_created_transcripts])
 
     def _find_transcript(self, language_codes, transcript_dicts):
@@ -384,21 +397,17 @@ class TranscriptList:
                 if language_code in transcript_dict:
                     return transcript_dict[language_code]
 
-        raise NoTranscriptFoundError(
-            self.video_id,
-            language_codes,
-            self
-        )
+        raise NoTranscriptFoundError(self.video_id, language_codes, self)
 
     def __str__(self):
         return (
-            'For this video ({video_id}) transcripts are available in the following languages:\n\n'
-            '(MANUALLY CREATED)\n'
-            '{available_manually_created_transcript_languages}\n\n'
-            '(GENERATED)\n'
-            '{available_generated_transcripts}\n\n'
-            '(TRANSLATION LANGUAGES)\n'
-            '{available_translation_languages}'
+            "For this video ({video_id}) transcripts are available in the following languages:\n\n"
+            "(MANUALLY CREATED)\n"
+            "{available_manually_created_transcript_languages}\n\n"
+            "(GENERATED)\n"
+            "{available_generated_transcripts}\n\n"
+            "(TRANSLATION LANGUAGES)\n"
+            "{available_translation_languages}"
         ).format(
             video_id=self.video_id,
             available_manually_created_transcript_languages=self._get_language_description(
@@ -409,15 +418,18 @@ class TranscriptList:
             ),
             available_translation_languages=self._get_language_description(
                 '{language_code} ("{language}")'.format(
-                    language=translation_language['language'],
-                    language_code=translation_language['language_code'],
-                ) for translation_language in self._translation_languages
-            )
+                    language=translation_language["language"],
+                    language_code=translation_language["language_code"],
+                )
+                for translation_language in self._translation_languages
+            ),
         )
 
     def _get_language_description(self, transcript_strings):
-        description = '\n'.join(' - {transcript}'.format(transcript=transcript) for transcript in transcript_strings)
-        return description if description else 'None'
+        description = "\n".join(
+            " - {transcript}".format(transcript=transcript) for transcript in transcript_strings
+        )
+        return description if description else "None"
 
 
 class Transcript:
@@ -432,7 +444,16 @@ class Transcript:
     'Spanish'
     """
 
-    def __init__(self, http_client, video_id, url, language, language_code, is_generated, translation_languages):
+    def __init__(
+        self,
+        http_client,
+        video_id,
+        url,
+        language,
+        language_code,
+        is_generated,
+        translation_languages,
+    ):
         """Initialize with all the goodies! 🎁"""
         self._http_client = http_client
         self.video_id = video_id
@@ -442,7 +463,7 @@ class Transcript:
         self.is_generated = is_generated
         self.translation_languages = translation_languages
         self._translation_languages_dict = {
-            translation_language['language_code']: translation_language['language']
+            translation_language["language_code"]: translation_language["language"]
             for translation_language in translation_languages
         }
 
@@ -455,7 +476,7 @@ class Transcript:
         Returns:
             list: That sweet transcript data with text, start time, and duration! 📝
         """
-        response = self._http_client.get(self._url, headers={'Accept-Language': 'en-US'})
+        response = self._http_client.get(self._url, headers={"Accept-Language": "en-US"})
         return TranscriptParser(preserve_formatting=preserve_formatting).parse(
             _raise_http_errors(response, self.video_id).text,
         )
@@ -465,7 +486,7 @@ class Transcript:
         return '{language_code} ("{language}"){translation_description}'.format(
             language=self.language,
             language_code=self.language_code,
-            translation_description='[TRANSLATABLE]' if self.is_translatable else ''
+            translation_description="[TRANSLATABLE]" if self.is_translatable else "",
         )
 
     @property
@@ -495,7 +516,7 @@ class Transcript:
         return Transcript(
             self._http_client,
             self.video_id,
-            '{url}&tlang={language_code}'.format(url=self._url, language_code=language_code),
+            "{url}&tlang={language_code}".format(url=self._url, language_code=language_code),
             self._translation_languages_dict[language_code],
             language_code,
             True,
@@ -513,16 +534,16 @@ class TranscriptParser:
     """
 
     _FORMATTING_TAGS = [
-        'strong',  # For that extra emphasis 💪
-        'em',      # When you need that italic swag 🎨
-        'b',       # Bold and beautiful 💯
-        'i',       # More italic vibes ✨
-        'mark',    # Highlight that text 🌟
-        'small',   # Keep it lowkey 🤫
-        'del',     # Strike it out ⚡
-        'ins',     # Insert new stuff 🆕
-        'sub',     # Subscript gang 📉
-        'sup',     # Superscript squad 📈
+        "strong",  # For that extra emphasis 💪
+        "em",  # When you need that italic swag 🎨
+        "b",  # Bold and beautiful 💯
+        "i",  # More italic vibes ✨
+        "mark",  # Highlight that text 🌟
+        "small",  # Keep it lowkey 🤫
+        "del",  # Strike it out ⚡
+        "ins",  # Insert new stuff 🆕
+        "sub",  # Subscript gang 📉
+        "sup",  # Superscript squad 📈
     ]
 
     def __init__(self, preserve_formatting=False):
@@ -532,11 +553,11 @@ class TranscriptParser:
     def _get_html_regex(self, preserve_formatting):
         """Get that regex pattern ready! 🎯"""
         if preserve_formatting:
-            formats_regex = '|'.join(self._FORMATTING_TAGS)
-            formats_regex = r'<\/?(?!\/?(' + formats_regex + r')\b).*?\b>'
+            formats_regex = "|".join(self._FORMATTING_TAGS)
+            formats_regex = r"<\/?(?!\/?(" + formats_regex + r")\b).*?\b>"
             html_regex = re.compile(formats_regex, re.IGNORECASE)
         else:
-            html_regex = re.compile(r'<[^>]*>', re.IGNORECASE)
+            html_regex = re.compile(r"<[^>]*>", re.IGNORECASE)
         return html_regex
 
     def parse(self, plain_data):
@@ -544,9 +565,9 @@ class TranscriptParser:
         try:
             return [
                 {
-                    'text': re.sub(self._html_regex, '', html.unescape(xml_element.text or '')),
-                    'start': float(xml_element.attrib['start']),
-                    'duration': float(xml_element.attrib.get('dur', '0.0')),
+                    "text": re.sub(self._html_regex, "", html.unescape(xml_element.text or "")),
+                    "start": float(xml_element.attrib["start"]),
+                    "duration": float(xml_element.attrib.get("dur", "0.0")),
                 }
                 for xml_element in ElementTree.fromstring(plain_data)
                 if xml_element.text is not None
@@ -564,13 +585,15 @@ class TranscriptParser:
 
         for start, dur, text in matches:
             text = html.unescape(text)
-            text = re.sub(self._html_regex, '', text)
+            text = re.sub(self._html_regex, "", text)
             if text.strip():
-                results.append({
-                    'text': text.strip(),
-                    'start': float(start),
-                    'duration': float(dur),
-                })
+                results.append(
+                    {
+                        "text": text.strip(),
+                        "start": float(start),
+                        "duration": float(dur),
+                    }
+                )
 
         return results
 
@@ -589,6 +612,7 @@ def _raise_http_errors(response, video_id):
 if __name__ == "__main__":
     # Let's get this party started! 🎉
     from rich import print
+
     video_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
     transcript = YTTranscriber.get_transcript(video_url, languages=None)
     print("Here's what we got! 🔥")
