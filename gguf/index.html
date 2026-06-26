@@ -1,0 +1,2193 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Free OpenAI-compatible API for 40+ LLM providers">
+      
+      
+      
+        <link rel="canonical" href="https://llm4free.readthedocs.io/gguf/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Gguf - LLM4Free</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#table-of-contents" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="LLM4Free" class="md-header__button md-logo" aria-label="LLM4Free" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LLM4Free
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Gguf
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/OEvortex/Webscout" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    OEvortex/Webscout
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../api/client/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../models/" class="md-tabs__link">
+          
+  
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../architecture/" class="md-tabs__link">
+          
+  
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../DOCKER/" class="md-tabs__link">
+          
+  
+  
+  Deployment
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../gitapi/" class="md-tabs__link">
+          
+  
+  
+  Extra
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="LLM4Free" class="md-nav__button md-logo" aria-label="LLM4Free" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    LLM4Free
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/OEvortex/Webscout" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    OEvortex/Webscout
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/basic-chat/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Client
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/search/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Search
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../openai-api-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenAI Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tool-calling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tool Calling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/streaming-responses/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Streaming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../provider-development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Provider Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DOCKER/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Extra
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Extra
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gitapi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Git API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../search/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Search Engines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📋 Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🌟 Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#whats-new-in-v20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🆕 What's New in v2.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ⚙️ Installation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🛠️ Basic Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🧩 Advanced Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quantization-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📊 Quantization Methods
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#size-quality-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📏 Size &amp; Quality Comparison
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hardware-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📦 Hardware Requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ⚡ Examples
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🔍 Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#technical-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🧠 Technical Details
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#developer-notes-auto-generated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Developer Notes (auto-generated)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<div align="center">
+  <a href="https://github.com/OEvortex/Webscout">
+    <img src="https://img.shields.io/badge/WebScout-GGUF%20Converter%20v2.0-blue?style=for-the-badge&logo=python&logoColor=white" alt="GGUF Converter Logo">
+  </a>
+
+  <h1>GGUF Converter v2.0</h1>
+
+  <p><strong>Convert Hugging Face models to GGUF format with advanced quantization options</strong></p>
+
+  <p>
+    Transform large language models from Hugging Face into optimized GGUF format for efficient inference on consumer hardware. 
+    Now with remote mode, multiple output types, and the latest llama.cpp features.
+  </p>
+
+  <!-- Badges -->
+  <p>
+    <a href="https://github.com/ggerganov/llama.cpp"><img src="https://img.shields.io/badge/Powered%20by-llama.cpp-orange?style=flat-square" alt="Powered by llama.cpp"></a>
+    <a href="https://huggingface.co/"><img src="https://img.shields.io/badge/Hugging%20Face-compatible-yellow?style=flat-square" alt="Hugging Face compatible"></a>
+    <a href="#"><img src="https://img.shields.io/badge/GPU-acceleration-green?style=flat-square" alt="GPU acceleration"></a>
+    <a href="#"><img src="https://img.shields.io/badge/Version-2.0.0-purple?style=flat-square" alt="Version 2.0.0"></a>
+  </p>
+</div>
+
+<hr/>
+
+<h2 id="table-of-contents">📋 Table of Contents<a class="headerlink" href="#table-of-contents" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="#-features">🌟 Features</a></li>
+<li><a href="#-whats-new-in-v20">🆕 What's New in v2.0</a></li>
+<li><a href="#️-installation">⚙️ Installation</a></li>
+<li><a href="#️-basic-usage">🛠️ Basic Usage</a></li>
+<li><a href="#-advanced-options">🧩 Advanced Options</a></li>
+<li><a href="#-quantization-methods">📊 Quantization Methods</a></li>
+<li><a href="#-size--quality-comparison">📏 Size &amp; Quality Comparison</a></li>
+<li><a href="#-hardware-requirements">📦 Hardware Requirements</a></li>
+<li><a href="#-examples">⚡ Examples</a></li>
+<li><a href="#-troubleshooting">🔍 Troubleshooting</a></li>
+<li><a href="#-technical-details">🧠 Technical Details</a></li>
+</ul>
+<hr/>
+
+<h2 id="features">🌟 Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
+<details open>
+<summary><b>Core Capabilities</b></summary>
+<p>
+
+* **Multiple Output Types**: Support for f32, f16, bf16, q8_0, tq1_0, tq2_0, and auto-detection
+* **30+ Quantization Methods**: From 1-bit to 32-bit precision with K-quant and IQ variants
+* **Importance Matrix Quantization**: Enhanced precision with IQ1, IQ2, IQ3, IQ4 methods
+* **Remote Mode (Experimental)**: Convert models without downloading full weights to disk
+* **Model Splitting**: Split large models into manageable chunks with K/M/G size units
+* **Hardware Acceleration Detection**: Automatically detects CUDA, Metal, OpenCL, Vulkan, ROCm
+* **Hugging Face Integration**: Direct download from and upload to Hugging Face repositories
+* **README Generation**: Automatically creates documentation for your quantized models
+* **Dry Run Mode**: Preview split plans before writing any files
+</p>
+</details>
+
+<hr/>
+
+<h2 id="whats-new-in-v20">🆕 What's New in v2.0<a class="headerlink" href="#whats-new-in-v20" title="Permanent link">&para;</a></h2>
+<details open>
+<summary><b>New Features (December 2024)</b></summary>
+<p>
+
+| Feature | Description |
+|---------|-------------|
+| **Output Types** | New `--outtype` option: f32, f16, bf16, q8_0, tq1_0, tq2_0, auto |
+| **Remote Mode** | `--remote` flag to read tensors without full download |
+| **Dry Run** | `--dry-run` to preview split plans without writing files |
+| **Vocab Only** | `--vocab-only` to extract just vocabulary (no weights) |
+| **No Lazy** | `--no-lazy` to disable lazy evaluation (use more RAM) |
+| **Model Name** | `--model-name` to override the model name in output |
+| **Small First Shard** | `--small-first-shard` for metadata-only first split |
+| **New IQ Types** | IQ1, IQ2, IQ3, IQ4 importance-based quantization |
+| **K-Quant Updates** | Added q2_k_s, q4_k_l, q5_k_l variants |
+| **Ternary Quants** | tq1_0, tq2_0 experimental ternary quantization |
+
+</p>
+</details>
+
+<hr/>
+
+<h2 id="installation">⚙️ Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
+<div class="installation-box">
+<p>The GGUF Converter is included with the WebScout package:</p>
+
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>llm4free
+</code></pre></div>
+</div>
+
+<hr/>
+
+<h2 id="basic-usage">🛠️ Basic Usage<a class="headerlink" href="#basic-usage" title="Permanent link">&para;</a></h2>
+<p>The simplest way to convert a model is with the default settings:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>python<span class="w"> </span>-m<span class="w"> </span>llm4free.Extra.gguf<span class="w"> </span>convert<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;organization/model-name&quot;</span>
+</code></pre></div>
+<p>This will:
+1. Download the model from Hugging Face
+2. Convert it to GGUF format with f16 base and q4_k_m quantization
+3. Save the converted model in your current directory</p>
+<hr/>
+
+<h2 id="advanced-options">🧩 Advanced Options<a class="headerlink" href="#advanced-options" title="Permanent link">&para;</a></h2>
+<details open>
+<summary><b>Command Reference</b></summary>
+<p>
+
+The full command syntax is:
+
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>python -m llm4free.Extra.gguf convert [OPTIONS]
+</code></pre></div>
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-m, --model-id` | The HuggingFace model ID (e.g., 'OEvortex/HelpingAI-Lite-1.5T') | **Required** |
+| `-u, --username` | Your HuggingFace username for uploads | None |
+| `-t, --token` | Your HuggingFace API token for uploads | None |
+| `-q, --quantization` | Comma-separated quantization methods | "q4_k_m" |
+| `-o, --outtype` | Output type: f32, f16, bf16, q8_0, tq1_0, tq2_0, auto | "f16" |
+| `-i, --use-imatrix` | Use importance matrix for quantization | False |
+| `--train-data` | Training data file for imatrix quantization | None |
+| `-s, --split-model` | Split the model into smaller chunks | False |
+| `--split-max-tensors` | Maximum number of tensors per file when splitting | 256 |
+| `--split-max-size` | Maximum file size when splitting (e.g., '256M', '5G') | None |
+| `--vocab-only` | Only extract vocabulary (no model weights) | False |
+| `--remote` | (Experimental) Read tensors remotely without full download | False |
+| `--dry-run` | Only print split plan without writing files | False |
+| `--no-lazy` | Disable lazy evaluation (use more RAM) | False |
+| `--model-name` | Custom model name override | None |
+| `--small-first-shard` | Do not add tensors to the first split | False |
+</p>
+</details>
+
+<details>
+<summary><b>Output Types</b></summary>
+<p>
+
+Choose the base output precision before quantization:
+
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Use bfloat16 (good for models trained with bf16)</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>python<span class="w"> </span>-m<span class="w"> </span>llm4free.Extra.gguf<span class="w"> </span>convert<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;organization/model-name&quot;</span><span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;bf16&quot;</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Use auto-detection based on model&#39;s tensor types</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>python<span class="w"> </span>-m<span class="w"> </span>llm4free.Extra.gguf<span class="w"> </span>convert<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;organization/model-name&quot;</span><span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;auto&quot;</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Use 8-bit quantization directly</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>python<span class="w"> </span>-m<span class="w"> </span>llm4free.Extra.gguf<span class="w"> </span>convert<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;organization/model-name&quot;</span><span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;q8_0&quot;</span>
+</code></pre></div>
+</p>
+</details>
+
+<details>
+<summary><b>Multiple Quantization Methods</b></summary>
+<p>
+
+Apply multiple quantization methods at once:
+
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>python<span class="w"> </span>-m<span class="w"> </span>llm4free.Extra.gguf<span class="w"> </span>convert<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;organization/model-name&quot;</span><span class="w"> </span>-q<span class="w"> </span><span class="s2">&quot;q4_k_m,q5_k_m&quot;</span>
+</code></pre></div>
+
+This will create two versions of the model with different quantization methods.
+</p>
+</details>
+
+<details>
+<summary><b>Remote Mode (Experimental)</b></summary>
+<p>
+
+Convert models without downloading the full weights to disk:
+
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>python<span class="w"> </span>-m<span class="w"> </span>llm4free.Extra.gguf<span class="w"> </span>convert<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;organization/model-name&quot;</span><span class="w"> </span>--remote
+</code></pre></div>
+
+This downloads only config and tokenizer files, streaming tensor data directly from HuggingFace.
+Useful for systems with limited disk space.
+</p>
+</details>
+
+<details>
+<summary><b>Uploading to Hugging Face</b></summary>
+<p>
+
+Convert and upload the model to your Hugging Face account:
+
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>python<span class="w"> </span>-m<span class="w"> </span>llm4free.Extra.gguf<span class="w"> </span>convert<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;organization/model-name&quot;</span><span class="w"> </span>-u<span class="w"> </span><span class="s2">&quot;your-username&quot;</span><span class="w"> </span>-t<span class="w"> </span><span class="s2">&quot;your-token&quot;</span>
+</code></pre></div>
+
+This will create a new repository in your account named `model-name-GGUF` containing the converted model.
+</p>
+</details>
+
+<details>
+<summary><b>Importance Matrix Quantization</b></summary>
+<p>
+
+Use importance matrix for more efficient quantization:
+
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>python<span class="w"> </span>-m<span class="w"> </span>llm4free.Extra.gguf<span class="w"> </span>convert<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;organization/model-name&quot;</span><span class="w"> </span>-i<span class="w"> </span>--train-data<span class="w"> </span><span class="s2">&quot;train_data.txt&quot;</span><span class="w"> </span>-q<span class="w"> </span><span class="s2">&quot;iq4_nl&quot;</span>
+</code></pre></div>
+
+Importance matrix helps focus more bits on weights that matter most for the model's performance.
+</p>
+</details>
+
+<details>
+<summary><b>Model Splitting</b></summary>
+<p>
+
+Split large models for easier distribution:
+
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Split by number of tensors</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>python<span class="w"> </span>-m<span class="w"> </span>llm4free.Extra.gguf<span class="w"> </span>convert<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;organization/model-name&quot;</span><span class="w"> </span>-s<span class="w"> </span>--split-max-tensors<span class="w"> </span><span class="m">256</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Split by file size (supports K, M, G units)</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>python<span class="w"> </span>-m<span class="w"> </span>llm4free.Extra.gguf<span class="w"> </span>convert<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;organization/model-name&quot;</span><span class="w"> </span>-s<span class="w"> </span>--split-max-size<span class="w"> </span><span class="s2">&quot;2G&quot;</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1"># Preview split plan without writing files</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>python<span class="w"> </span>-m<span class="w"> </span>llm4free.Extra.gguf<span class="w"> </span>convert<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;organization/model-name&quot;</span><span class="w"> </span>-s<span class="w"> </span>--split-max-size<span class="w"> </span><span class="s2">&quot;2G&quot;</span><span class="w"> </span>--dry-run
+</code></pre></div>
+
+This is useful for very large models that may be difficult to distribute as a single file.
+</p>
+</details>
+
+<hr/>
+
+<h2 id="quantization-methods">📊 Quantization Methods<a class="headerlink" href="#quantization-methods" title="Permanent link">&para;</a></h2>
+<details open>
+<summary><b>Standard K-Quant Methods</b></summary>
+<p>
+
+| Method | Description |
+|--------|-------------|
+| `f32` | 32-bit floating point - full precision, largest size |
+| `f16` / `fp16` | 16-bit floating point - maximum accuracy, large size |
+| `bf16` | bfloat16 - good balance for training and some models |
+| `auto` | Auto-detect best 16-bit type based on model tensors |
+| `q8_0` | 8-bit quantization - near-original quality |
+| `q6_k` | 6-bit K-quant - near-lossless quality |
+| `q5_k_l` | 5-bit K-quant large - highest quality 5-bit |
+| `q5_k_m` | 5-bit K-quant medium - best balance for quality/size |
+| `q5_k_s` | 5-bit K-quant small - optimized for speed |
+| `q4_k_l` | 4-bit K-quant large - highest quality 4-bit |
+| `q4_k_m` | 4-bit K-quant medium - balanced for most models |
+| `q4_k_s` | 4-bit K-quant small - optimized for speed |
+| `q3_k_l` | 3-bit K-quant large - balanced for size/accuracy |
+| `q3_k_m` | 3-bit K-quant medium - good balance for most use cases |
+| `q3_k_s` | 3-bit K-quant small - optimized for speed |
+| `q2_k` | 2-bit K-quant - smallest size, lowest accuracy |
+| `q2_k_s` | 2-bit K-quant small - maximum compression |
+</p>
+</details>
+
+<details>
+<summary><b>Legacy Quantization Methods</b></summary>
+<p>
+
+| Method | Description |
+|--------|-------------|
+| `q4_0` | 4-bit quantization (legacy) - auto-repacks for ARM |
+| `q4_1` | 4-bit quantization (legacy) - improved accuracy |
+| `q5_0` | 5-bit quantization (legacy) - high accuracy |
+| `q5_1` | 5-bit quantization (legacy) - improved accuracy |
+</p>
+</details>
+
+<details>
+<summary><b>Ternary Quantization (Experimental)</b></summary>
+<p>
+
+| Method | Description |
+|--------|-------------|
+| `tq1_0` | 1-bit ternary quantization - extreme compression |
+| `tq2_0` | 2-bit ternary quantization - very small size |
+</p>
+</details>
+
+<details>
+<summary><b>Importance Matrix (IQ) Methods</b></summary>
+<p>
+
+These methods require `--use-imatrix` and optionally `--train-data`:
+
+| Method | Description |
+|--------|-------------|
+| `iq1_s` | 1-bit IQ small - extreme compression |
+| `iq1_m` | 1-bit IQ medium - extreme compression |
+| `iq2_xxs` | 2-bit IQ extra extra small - maximum compression |
+| `iq2_xs` | 2-bit IQ extra small - very high compression |
+| `iq2_s` | 2-bit IQ small - high compression |
+| `iq2_m` | 2-bit IQ medium - balanced compression |
+| `iq3_xxs` | 3-bit IQ extra extra small - maximum compression |
+| `iq3_xs` | 3-bit IQ extra small - high compression |
+| `iq3_s` | 3-bit IQ small - balanced compression |
+| `iq3_m` | 3-bit IQ medium - balanced importance-based |
+| `iq4_nl` | 4-bit IQ non-linear - best accuracy for 4-bit |
+| `iq4_xs` | 4-bit IQ extra small - maximum 4-bit compression |
+</p>
+</details>
+
+<hr/>
+
+<h2 id="size-quality-comparison">📏 Size &amp; Quality Comparison<a class="headerlink" href="#size-quality-comparison" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>TIP:</strong>
+When choosing a quantization method, consider the tradeoff between model size and quality. Here's a quick guide:</p>
+</blockquote>
+<div class="comparison-table">
+
+### 1. Maximum Quality (largest size)
+- **f32**: 100% of original size, best quality
+- **f16/bf16**: 50% of original size, excellent quality
+- **q8_0**: 50% of original size, nearly identical to f16
+
+### 2. Balanced Quality/Size
+- **q6_k**: 38% of original size, near-lossless
+- **q5_k_m with imatrix**: 31% of original size, excellent quality
+- **q4_k_m with imatrix**: 25% of original size, good quality for most use cases
+
+### 3. Minimum Size (reduced quality)
+- **q3_k_s**: 18% of original size, acceptable for some tasks
+- **q2_k**: 12% of original size, significantly reduced quality
+- **iq2_xxs with imatrix**: 10% of original size, requires careful calibration
+</div>
+
+<hr/>
+
+<h2 id="hardware-requirements">📦 Hardware Requirements<a class="headerlink" href="#hardware-requirements" title="Permanent link">&para;</a></h2>
+<p>Hardware requirements vary based on quantization method and model size:</p>
+<details open>
+<summary><b>Memory Requirements</b></summary>
+<p>
+
+| Quantization | RAM Required |
+|--------------|--------------|
+| f32 | ~4x model size |
+| f16/bf16 | ~2x model size |
+| q8_0 | ~1x model size |
+| q4_k_m | ~0.5x model size |
+| q2_k | ~0.25x model size |
+
+For example, a 7B parameter model requires:
+- f16: ~14GB RAM
+- q4_k_m: ~3.5GB RAM
+</p>
+</details>
+
+<details>
+<summary><b>Hardware Acceleration</b></summary>
+<p>
+
+The converter automatically detects and utilizes:
+- **CUDA** for NVIDIA GPUs
+- **Metal** for Apple Silicon and AMD GPUs on macOS
+- **OpenCL** for cross-platform GPU acceleration
+- **Vulkan** for cross-platform GPU acceleration
+- **ROCm** for AMD GPUs on Linux
+
+If no acceleration is available, the converter will use CPU-only mode.
+</p>
+</details>
+
+<blockquote>
+<p><strong>NOTE:</strong>
+<strong>GPU acceleration is highly recommended</strong> for converting larger models (13B+).</p>
+</blockquote>
+<hr/>
+
+<h2 id="examples">⚡ Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h2>
+<details open>
+<summary><b>Basic Conversion with Upload</b></summary>
+<p>
+
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>python<span class="w"> </span>-m<span class="w"> </span>llm4free.Extra.gguf<span class="w"> </span>convert<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span>-m<span class="w"> </span><span class="s2">&quot;mistralai/Mistral-7B-Instruct-v0.2&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span>-q<span class="w"> </span><span class="s2">&quot;q4_k_m&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span>-o<span class="w"> </span><span class="s2">&quot;f16&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span>-u<span class="w"> </span><span class="s2">&quot;your-username&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">    </span>-t<span class="w"> </span><span class="s2">&quot;your-token&quot;</span>
+</code></pre></div>
+
+This will convert Mistral-7B to q4_k_m quantization and upload it to your Hugging Face account.
+</p>
+</details>
+
+<details>
+<summary><b>bfloat16 Base with Multiple Quantizations</b></summary>
+<p>
+
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>python<span class="w"> </span>-m<span class="w"> </span>llm4free.Extra.gguf<span class="w"> </span>convert<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">    </span>-m<span class="w"> </span><span class="s2">&quot;meta-llama/Meta-Llama-3-8B&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span>-o<span class="w"> </span><span class="s2">&quot;bf16&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span>-q<span class="w"> </span><span class="s2">&quot;q4_k_m,q5_k_m,q6_k&quot;</span>
+</code></pre></div>
+
+This will create three versions of the model starting from bf16 base.
+</p>
+</details>
+
+<details>
+<summary><b>IQ Quantization with Importance Matrix</b></summary>
+<p>
+
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>python<span class="w"> </span>-m<span class="w"> </span>llm4free.Extra.gguf<span class="w"> </span>convert<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span>-m<span class="w"> </span><span class="s2">&quot;mistralai/Mistral-7B-Instruct-v0.2&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span>-q<span class="w"> </span><span class="s2">&quot;iq4_nl,iq3_m&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span>-i<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">    </span>--train-data<span class="w"> </span><span class="s2">&quot;my_training_data.txt&quot;</span>
+</code></pre></div>
+
+This will create two IQ-quantized versions using importance matrix for better quality.
+</p>
+</details>
+
+<details>
+<summary><b>Remote Mode (Experimental)</b></summary>
+<p>
+
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>python<span class="w"> </span>-m<span class="w"> </span>llm4free.Extra.gguf<span class="w"> </span>convert<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">    </span>-m<span class="w"> </span><span class="s2">&quot;meta-llama/Meta-Llama-3-8B&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span>--remote<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span>-q<span class="w"> </span><span class="s2">&quot;q4_k_m&quot;</span>
+</code></pre></div>
+
+Convert without downloading full model weights (streams from HuggingFace).
+</p>
+</details>
+
+<details>
+<summary><b>Split Large Model with Dry Run</b></summary>
+<p>
+
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Preview the split plan first</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>python<span class="w"> </span>-m<span class="w"> </span>llm4free.Extra.gguf<span class="w"> </span>convert<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">    </span>-m<span class="w"> </span><span class="s2">&quot;meta-llama/Llama-2-70b-chat-hf&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">    </span>-q<span class="w"> </span><span class="s2">&quot;q4_k_m&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">    </span>-s<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">    </span>--split-max-size<span class="w"> </span><span class="s2">&quot;4G&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">    </span>--dry-run
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="c1"># Then actually perform the split</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>python<span class="w"> </span>-m<span class="w"> </span>llm4free.Extra.gguf<span class="w"> </span>convert<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="w">    </span>-m<span class="w"> </span><span class="s2">&quot;meta-llama/Llama-2-70b-chat-hf&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="w">    </span>-q<span class="w"> </span><span class="s2">&quot;q4_k_m&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="w">    </span>-s<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="w">    </span>--split-max-size<span class="w"> </span><span class="s2">&quot;4G&quot;</span>
+</code></pre></div>
+
+This will split the large 70B model into multiple files, each no larger than 4GB.
+</p>
+</details>
+
+<hr/>
+
+<h2 id="troubleshooting">🔍 Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<details>
+<summary><b>Missing Dependencies</b></summary>
+<p>
+
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>Error: Missing required dependencies: git, cmake
+</code></pre></div>
+
+**Solution:** Install the required system dependencies:
+
+- **Ubuntu/Debian:** `sudo apt install git cmake python3-dev build-essential`
+- **macOS:** `brew install git cmake`
+- **Windows:** Install Git and CMake from their respective websites
+
+For hardware acceleration, install relevant drivers (CUDA, ROCm, etc.)
+</p>
+</details>
+
+<details>
+<summary><b>Out of Memory</b></summary>
+<p>
+
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>Error: CUDA out of memory
+</code></pre></div>
+
+**Solutions:**
+1. Try a lower precision quantization method: `q3_k_s` or `q2_k`
+2. Enable model splitting with `-s`
+3. Use `--no-lazy` to disable lazy evaluation (uses more RAM but may help)
+4. Try remote mode with `--remote` to reduce disk I/O
+5. Increase your system's swap space/virtual memory
+</p>
+</details>
+
+<details>
+<summary><b>Invalid Output Type</b></summary>
+<p>
+
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>Error: Invalid output type: xxx
+</code></pre></div>
+
+**Solution:** Use a valid output type:
+- `f32` - Full 32-bit precision
+- `f16` - Half 16-bit precision
+- `bf16` - bfloat16 precision
+- `q8_0` - 8-bit quantization
+- `tq1_0` - 1-bit ternary
+- `tq2_0` - 2-bit ternary
+- `auto` - Auto-detect
+</p>
+</details>
+
+<details>
+<summary><b>Download Failures</b></summary>
+<p>
+
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>Error: Failed to download model
+</code></pre></div>
+
+**Solutions:**
+1. Check your internet connection
+2. Verify you have access to the model on Hugging Face
+3. Try using a Hugging Face token with `-t`
+4. Check if the model repository exists and is public
+5. Try `--remote` mode for gated models
+</p>
+</details>
+
+<details>
+<summary><b>Build Failures</b></summary>
+<p>
+
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>Error: Failed to build llama.cpp
+</code></pre></div>
+
+**Solutions:**
+1. Check if you have a C++ compiler installed
+2. Ensure you have sufficient disk space
+3. Try building with CPU-only mode if GPU builds fail
+4. Update your GPU drivers if using acceleration
+</p>
+</details>
+
+<hr/>
+
+<h2 id="technical-details">🧠 Technical Details<a class="headerlink" href="#technical-details" title="Permanent link">&para;</a></h2>
+<p>The converter works by following these steps:</p>
+<ol>
+<li><strong>Setup</strong>: Clone and build llama.cpp with appropriate hardware acceleration</li>
+<li><strong>Download</strong>: Fetch the model from Hugging Face (or use remote streaming)</li>
+<li><strong>Convert</strong>: Transform the model to base GGUF format (f16/bf16/f32/q8_0/auto)</li>
+<li><strong>Quantize</strong>: Apply the requested quantization methods using llama-quantize</li>
+<li><strong>Split</strong>: Optionally split the model into smaller chunks</li>
+<li><strong>Upload</strong>: If credentials are provided, upload to Hugging Face</li>
+</ol>
+<details>
+<summary><b>Advanced Configuration</b></summary>
+<p>
+
+For special cases, you may want to modify llama.cpp's build parameters. The converter automatically detects and enables available hardware acceleration, but you can also build llama.cpp manually with custom options before running the converter.
+
+The converter uses the latest llama.cpp features including:
+- **GGML_CUDA** for NVIDIA GPU acceleration
+- **GGML_METAL** for Apple Silicon
+- **GGML_VULKAN** for cross-platform GPU support
+- **GGML_OPENCL** for OpenCL acceleration
+- **GGML_HIPBLAS** for AMD ROCm support
+</p>
+</details>
+
+<hr/>
+
+<div align="center">
+  <p>
+    <a href="https://github.com/OEvortex/Webscout">🔗 Part of the WebScout Project</a> |
+    <a href="https://github.com/ggerganov/llama.cpp">🚀 Powered by llama.cpp</a>
+  </p>
+
+  <p>Made with ❤️ by the LLM4Free team</p>
+</div>
+
+<!-- Auto-generated developer documentation summary -->
+<h2 id="developer-notes-auto-generated">Developer Notes (auto-generated)<a class="headerlink" href="#developer-notes-auto-generated" title="Permanent link">&para;</a></h2>
+<p>This section was appended by an automated documentation task for <code>llm4free/Extra/gguf.py</code> and summarizes the module's structure and usage:</p>
+<ul>
+<li>Provides ModelConverter for HF-&gt;GGUF conversion, quantization, optional imatrix and splitting.</li>
+<li>Includes robust llama.cpp build orchestration, cross-platform hardware detection, and Hugging Face upload helpers.</li>
+<li>CLI entrypoint: <code>gguf convert</code> exposing options such as <code>--quantization</code>, <code>--outtype</code>, <code>--use-imatrix</code>, <code>--split-model</code>, and upload credentials.</li>
+</ul>
+<p>For more details, see the rest of this document and inspect <code>llm4free/Extra/gguf.py</code> source directly.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.tabs.link"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

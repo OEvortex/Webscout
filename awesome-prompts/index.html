@@ -1,0 +1,2626 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Free OpenAI-compatible API for 40+ LLM providers">
+      
+      
+      
+        <link rel="canonical" href="https://llm4free.readthedocs.io/awesome-prompts/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>🚀 LLM4Free Awesome Prompts Manager - LLM4Free</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#llm4free-awesome-prompts-manager" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="LLM4Free" class="md-header__button md-logo" aria-label="LLM4Free" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LLM4Free
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              🚀 LLM4Free Awesome Prompts Manager
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/OEvortex/Webscout" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    OEvortex/Webscout
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../api/client/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../models/" class="md-tabs__link">
+          
+  
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../architecture/" class="md-tabs__link">
+          
+  
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../DOCKER/" class="md-tabs__link">
+          
+  
+  
+  Deployment
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../gitapi/" class="md-tabs__link">
+          
+  
+  
+  Extra
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="LLM4Free" class="md-nav__button md-logo" aria-label="LLM4Free" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    LLM4Free
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/OEvortex/Webscout" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    OEvortex/Webscout
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/basic-chat/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Client
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/search/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Search
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../openai-api-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenAI Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tool-calling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tool Calling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/streaming-responses/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Streaming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../provider-development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Provider Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DOCKER/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Extra
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Extra
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gitapi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Git API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../search/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Search Engines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Components
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prompt_managerpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prompt_manager.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prompt-manager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prompt Manager
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Prompt Manager">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#awesomeprompts-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AwesomePrompts Class
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#constructor-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Constructor Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-custom-prompts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding Custom Prompts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#managing-prompts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Managing Prompts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#advanced-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-with-llm4free-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using with LLM4Free Providers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prompt-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prompt Categories
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#development-technical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        💻 Development &amp; Technical
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#programming-environments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🧩 Programming Environments
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#writing-content-creation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📝 Writing &amp; Content Creation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#education-learning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🎓 Education &amp; Learning
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#professional-roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        💼 Professional Roles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#entertainment-creative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🎭 Entertainment &amp; Creative
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advisors-coaches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🧠 Advisors &amp; Coaches
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternative-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🌐 Alternative Models
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#specialized-assistants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🔮 Specialized Assistants
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced Features
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Features">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#caching-and-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Caching and Performance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-repository-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom Repository Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-handling-and-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Handling and Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#batch-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Batch Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#integration-guide" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integration Guide
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Integration Guide">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#with-llm4free-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        With LLM4Free Providers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-fastapi" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        With FastAPI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-cli-applications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        With CLI Applications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-testing-frameworks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        With Testing Frameworks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-async-applications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        With Async Applications
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage-tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage Tips
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Best Practices
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="llm4free-awesome-prompts-manager">🚀 LLM4Free Awesome Prompts Manager<a class="headerlink" href="#llm4free-awesome-prompts-manager" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Last updated: 2025-12-20
+Maintained by <a href="https://github.com/OEvortex/Webscout">LLM4Free</a></p>
+</blockquote>
+<p>LLM4Free's Awesome Prompts Manager provides a comprehensive system for managing and utilizing AI personas and specialized prompts. This module offers optimized prompt retrieval, caching, and management capabilities for enhanced AI interactions.</p>
+<h2 id="table-of-contents">Table of Contents<a class="headerlink" href="#table-of-contents" title="Permanent link">&para;</a></h2>
+<ol>
+<li><a href="#core-components">Core Components</a></li>
+<li><a href="#prompt-manager">Prompt Manager</a></li>
+<li><a href="#configuration-options">Configuration Options</a></li>
+<li><a href="#usage-examples">Usage Examples</a></li>
+<li><a href="#prompt-categories">Prompt Categories</a></li>
+<li><a href="#advanced-features">Advanced Features</a></li>
+<li><a href="#integration-guide">Integration Guide</a></li>
+</ol>
+<h2 id="core-components">Core Components<a class="headerlink" href="#core-components" title="Permanent link">&para;</a></h2>
+<h3 id="prompt_managerpy"><a href="../llm4free/prompt_manager.py:1"><code>prompt_manager.py</code></a><a class="headerlink" href="#prompt_managerpy" title="Permanent link">&para;</a></h3>
+<p>The main prompt management module that provides comprehensive prompt handling capabilities.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">llm4free.prompt_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">AwesomePrompts</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># Initialize the prompt manager</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">prompt_manager</span> <span class="o">=</span> <span class="n">AwesomePrompts</span><span class="p">()</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1"># Get a specific prompt</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">prompt</span> <span class="o">=</span> <span class="n">prompt_manager</span><span class="o">.</span><span class="n">get_act</span><span class="p">(</span><span class="s2">&quot;UX/UI Developer&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Key Features:</strong>
+- Optimized prompt retrieval with LRU caching
+- Automatic updates from online repository
+- Thread-safe operations with proper locking
+- Efficient prompt management and indexing
+- Support for both string and numeric key access
+- Comprehensive error handling and validation</p>
+<h2 id="prompt-manager">Prompt Manager<a class="headerlink" href="#prompt-manager" title="Permanent link">&para;</a></h2>
+<h3 id="awesomeprompts-class"><a href="../llm4free/prompt_manager.py:22"><code>AwesomePrompts</code> Class</a><a class="headerlink" href="#awesomeprompts-class" title="Permanent link">&para;</a></h3>
+<p>The main class for managing awesome prompts with caching and optimization.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">llm4free.prompt_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">AwesomePrompts</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># Initialize with default settings</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">prompt_manager</span> <span class="o">=</span> <span class="n">AwesomePrompts</span><span class="p">()</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1"># Or with custom configuration</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">custom_manager</span> <span class="o">=</span> <span class="n">AwesomePrompts</span><span class="p">(</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">repo_url</span><span class="o">=</span><span class="s2">&quot;https://custom-repo.com/prompts.json&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="n">local_path</span><span class="o">=</span><span class="s2">&quot;/custom/path/prompts.json&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="n">auto_update</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="n">cache_size</span><span class="o">=</span><span class="mi">256</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="p">)</span>
+</code></pre></div>
+<p><strong>Main Methods:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>get_act(key, default=None, case_insensitive=True, use_cache=True)</code></td>
+<td>Get a prompt by name or index</td>
+</tr>
+<tr>
+<td><code>add_prompt(name, prompt, validate=True)</code></td>
+<td>Add a new prompt to the collection</td>
+</tr>
+<tr>
+<td><code>delete_prompt(name, case_insensitive=True, raise_not_found=False)</code></td>
+<td>Delete a prompt from the collection</td>
+</tr>
+<tr>
+<td><code>update_prompts_from_online(force=False)</code></td>
+<td>Update prompts from the online repository</td>
+</tr>
+<tr>
+<td><code>show_acts(search=None, limit=100)</code></td>
+<td>Display available prompts with filtering</td>
+</tr>
+<tr>
+<td><code>get_random_act()</code></td>
+<td>Get a random prompt from the collection</td>
+</tr>
+</tbody>
+</table>
+<h2 id="configuration-options">Configuration Options<a class="headerlink" href="#configuration-options" title="Permanent link">&para;</a></h2>
+<h3 id="constructor-parameters">Constructor Parameters<a class="headerlink" href="#constructor-parameters" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>repo_url</code></td>
+<td><code>str</code></td>
+<td><code>"https://raw.githubusercontent.com/OEvortex/prompts/main/prompt.json"</code></td>
+<td>URL to fetch prompts from</td>
+</tr>
+<tr>
+<td><code>local_path</code></td>
+<td><code>Optional[str]</code></td>
+<td><code>~/.llm4free/awesome-prompts.json</code></td>
+<td>Where to save prompts locally</td>
+</tr>
+<tr>
+<td><code>auto_update</code></td>
+<td><code>bool</code></td>
+<td><code>True</code></td>
+<td>Auto update prompts on initialization</td>
+</tr>
+<tr>
+<td><code>timeout</code></td>
+<td><code>int</code></td>
+<td><code>10</code></td>
+<td>Timeout for HTTP requests in seconds</td>
+</tr>
+<tr>
+<td><code>impersonate</code></td>
+<td><code>str</code></td>
+<td><code>"chrome110"</code></td>
+<td>Browser profile for curl_cffi</td>
+</tr>
+<tr>
+<td><code>cache_size</code></td>
+<td><code>int</code></td>
+<td><code>128</code></td>
+<td>LRU cache size for get operations</td>
+</tr>
+<tr>
+<td><code>max_workers</code></td>
+<td><code>int</code></td>
+<td><code>4</code></td>
+<td>Maximum threads for concurrent operations</td>
+</tr>
+</tbody>
+</table>
+<h2 id="usage-examples">Usage Examples<a class="headerlink" href="#usage-examples" title="Permanent link">&para;</a></h2>
+<h3 id="basic-usage">Basic Usage<a class="headerlink" href="#basic-usage" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">llm4free.prompt_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">AwesomePrompts</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># Initialize the prompt manager</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">prompt_manager</span> <span class="o">=</span> <span class="n">AwesomePrompts</span><span class="p">()</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="c1"># Get a prompt by name</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="n">ux_prompt</span> <span class="o">=</span> <span class="n">prompt_manager</span><span class="o">.</span><span class="n">get_act</span><span class="p">(</span><span class="s2">&quot;UX/UI Developer&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">ux_prompt</span><span class="p">)</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="c1"># Get a prompt by index</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="n">first_prompt</span> <span class="o">=</span> <span class="n">prompt_manager</span><span class="o">.</span><span class="n">get_act</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">first_prompt</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="adding-custom-prompts">Adding Custom Prompts<a class="headerlink" href="#adding-custom-prompts" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Add a new custom prompt</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">success</span> <span class="o">=</span> <span class="n">prompt_manager</span><span class="o">.</span><span class="n">add_prompt</span><span class="p">(</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="s2">&quot;Custom Developer&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="s2">&quot;I want you to act as a custom software developer specialized in Python and AI applications.&quot;</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="p">)</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="k">if</span> <span class="n">success</span><span class="p">:</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="c1"># Use the newly added prompt</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="n">custom_prompt</span> <span class="o">=</span> <span class="n">prompt_manager</span><span class="o">.</span><span class="n">get_act</span><span class="p">(</span><span class="s2">&quot;Custom Developer&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">custom_prompt</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="managing-prompts">Managing Prompts<a class="headerlink" href="#managing-prompts" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># List all available prompts</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">prompt_manager</span><span class="o">.</span><span class="n">show_acts</span><span class="p">()</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Search for specific prompts</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">prompt_manager</span><span class="o">.</span><span class="n">show_acts</span><span class="p">(</span><span class="n">search</span><span class="o">=</span><span class="s2">&quot;developer&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># Delete a prompt</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="n">prompt_manager</span><span class="o">.</span><span class="n">delete_prompt</span><span class="p">(</span><span class="s2">&quot;Custom Developer&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="c1"># Get a random prompt</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="n">random_prompt</span> <span class="o">=</span> <span class="n">prompt_manager</span><span class="o">.</span><span class="n">get_random_act</span><span class="p">()</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">random_prompt</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="advanced-configuration">Advanced Configuration<a class="headerlink" href="#advanced-configuration" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Custom configuration with larger cache</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">advanced_manager</span> <span class="o">=</span> <span class="n">AwesomePrompts</span><span class="p">(</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">repo_url</span><span class="o">=</span><span class="s2">&quot;https://custom-repo.com/prompts.json&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">local_path</span><span class="o">=</span><span class="s2">&quot;/custom/path/prompts.json&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">auto_update</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="n">cache_size</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="n">timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="n">max_workers</span><span class="o">=</span><span class="mi">8</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="p">)</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="c1"># Force update from repository</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="n">advanced_manager</span><span class="o">.</span><span class="n">update_prompts_from_online</span><span class="p">(</span><span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="using-with-llm4free-providers">Using with LLM4Free Providers<a class="headerlink" href="#using-with-llm4free-providers" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">llm4free.Provider</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatGPT</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">llm4free.prompt_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">AwesomePrompts</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Initialize both components</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">prompt_manager</span> <span class="o">=</span> <span class="n">AwesomePrompts</span><span class="p">()</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">provider</span> <span class="o">=</span> <span class="n">ChatGPT</span><span class="p">()</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="c1"># Get a specialized prompt</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="n">tech_writer_prompt</span> <span class="o">=</span> <span class="n">prompt_manager</span><span class="o">.</span><span class="n">get_act</span><span class="p">(</span><span class="s2">&quot;Tech Writer&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="c1"># Use the prompt with a provider</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="n">response</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">ask</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">tech_writer_prompt</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">Please write documentation for a new AI API.&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="prompt-categories">Prompt Categories<a class="headerlink" href="#prompt-categories" title="Permanent link">&para;</a></h2>
+<p>The Awesome Prompts collection contains 240+ prompts organized into 9 categories:</p>
+<div align="center">
+
+| Category | Description | Count |
+|---------|-------------|-------:|
+| [💻 Development & Technical](#-development--technical) | Software development, cybersecurity, and IT roles | 10 |
+| [🧩 Programming Environments](#-programming-environments) | Interactive coding environments and interpreters | 10 |
+| [📝 Writing & Content Creation](#-writing--content-creation) | Content writing, translation, and creative text generation | 16 |
+| [🎓 Education & Learning](#-education--learning) | Teaching, tutoring, and educational content | 13 |
+| [💼 Professional Roles](#-professional-roles) | Business, healthcare, and specialized professional personas | 17 |
+| [🎭 Entertainment & Creative](#-entertainment--creative) | Creative arts, games, and entertainment | 22 |
+| [🧠 Advisors & Coaches](#-advisors--coaches) | Personal guidance, coaching, and advisory roles | 83 |
+| [🌐 Alternative Models](#-alternative-models) | Experimental and alternative AI interaction models | 79 |
+| [🔮 Specialized Assistants](#-specialized-assistants) | Niche and specialized helper roles | 11 |
+
+</div>
+
+<h2 id="development-technical">💻 Development &amp; Technical<a class="headerlink" href="#development-technical" title="Permanent link">&para;</a></h2>
+<details open>
+<summary><strong>Software Development & IT Roles</strong></summary>
+
+| Index | Name | Preview |
+|-------|------|---------|
+| 31 | UX/UI Developer | I want you to act as a UX/UI developer. I will provide... |
+| 32 | Cyber Security Specialist | I want you to act as a cyber security specialist... |
+| 73 | IT Architect | I want you to act as an IT Architect. I will provide... |
+| 109 | Machine Learning Engineer | I want you to act as a machine learning engineer... |
+| 112 | IT Expert | I want you to act as an IT Expert. I will provide... |
+| 115 | Fullstack Software Developer | I want you to act as a software developer. I will... |
+| 127 | Software Quality Assurance Tester | I want you to act as a software quality assurance... |
+| 132 | Senior Frontend Developer | I want you to act as a Senior Frontend developer... |
+| 242 | Ethereum Developer | Imagine you are an experienced Ethereum developer... |
+| 245 | Data Scientist | I want you to act as a data scientist. Imagine you... |
+
+</details>
+
+<h2 id="programming-environments">🧩 Programming Environments<a class="headerlink" href="#programming-environments" title="Permanent link">&para;</a></h2>
+<details open>
+<summary><strong>Interactive Coding & Development Environments</strong></summary>
+
+| Index | Name | Preview |
+|-------|------|---------|
+| 2 | Linux Terminal | I want you to act as a linux terminal. I will type... |
+| 5 | JavaScript Console | I want you to act as a javascript console. I will... |
+| 6 | Excel Sheet | I want you to act as a text based excel. you'll on... |
+| 66 | SQL Terminal | I want you to act as a SQL terminal in front of an... |
+| 101 | Python Interpreter | I want you to act like a Python interpreter. I will... |
+| 121 | R Programming Interpreter | I want you to act as a R interpreter. I'll type co... |
+| 124 | PHP Interpreter | I want you to act like a php interpreter. I will w... |
+| 131 | Web Browser | I want you to act as a text based web browser brow... |
+| 133 | Solr Search Engine | I want you to act as a Solr Search Engine running... |
+| 157 | Python Interpreter | Act as a Python interpreter. I will give you comma... |
+
+</details>
+
+<h2 id="writing-content-creation">📝 Writing &amp; Content Creation<a class="headerlink" href="#writing-content-creation" title="Permanent link">&para;</a></h2>
+<details open>
+<summary><strong>Writing, Translation & Creative Content</strong></summary>
+
+| Index | Name | Preview |
+|-------|------|---------|
+| 3 | English Translator and Improver | I want you to act as an English translator, spelli... |
+| 8 | Spoken English Teacher and Improver | I want you to act as a spoken English teacher and... |
+| 13 | Storyteller | I want you to act as a storyteller. You will come... |
+| 20 | Screenwriter | I want you to act as a screenwriter. You will deve... |
+| 21 | Novelist | I want you to act as a novelist. You will come up... |
+| 24 | Poet | I want you to act as a poet. You will create poems... |
+| 25 | Rapper | I want you to act as a rapper. You will come up wi... |
+| 84 | Essay Writer | I want you to act as an essay writer. You will nee... |
+| 94 | Journalist | I want you to act as a journalist. You will report... |
+| 99 | Tech Writer | I want you to act as a tech writer. You will act a... |
+| 138 | Commit Message Generator | I want you to act as a commit message generator. I... |
+| 143 | Title Generator for Written Pieces | I want you to act as a title generator for written... |
+| 148 | Cover Letter | In order to submit applications for jobs, I want t... |
+| 152 | Proofreader | I want you act as a proofreader. I will provide yo... |
+| 243 | SEO Prompt | Using WebPilot, create an outline for an article t... |
+| 244 | Prompt Enhancer | Act as a Prompt Enhancer AI that takes user-input... |
+
+</details>
+
+<h2 id="education-learning">🎓 Education &amp; Learning<a class="headerlink" href="#education-learning" title="Permanent link">&para;</a></h2>
+<details open>
+<summary><strong>Teaching & Educational Assistance</strong></summary>
+
+| Index | Name | Preview |
+|-------|------|---------|
+| 7 | English Pronunciation Helper | I want you to act as an English pronunciation assi... |
+| 27 | Philosophy Teacher | I want you to act as a philosophy teacher. I will... |
+| 28 | Philosopher | I want you to act as a philosopher. I will provide... |
+| 29 | Math Teacher | I want you to act as a math teacher. I will provid... |
+| 30 | AI Writing Tutor | I want you to act as an AI writing tutor. I will p... |
+| 65 | Instructor in a School | I want you to act as an instructor in a school, te... |
+| 82 | Educational Content Creator | I want you to act as an educational content creato... |
+| 116 | Mathematician | I want you to act like a mathematician. I will typ... |
+| 146 | Mathematical History Teacher | I want you to act as a mathematical history teache... |
+| 159 | Wikipedia Page | I want you to act as a Wikipedia page. I will give... |
+| 160 | Japanese Kanji Quiz Machine | I want you to act as a Japanese Kanji quiz machine... |
+| 161 | Note-taking Assistant | I want you to act as a note-taking assistant for a... |
+| 162 | Literary Critic | I want you to act as a `language` literary critic.... |
+
+</details>
+
+<h2 id="professional-roles">💼 Professional Roles<a class="headerlink" href="#professional-roles" title="Permanent link">&para;</a></h2>
+<details open>
+<summary><strong>Business, Healthcare & Professional Personas</strong></summary>
+
+| Index | Name | Preview |
+|-------|------|---------|
+| 4 | Position Interviewer | I want you to act as an interviewer. I will be the... |
+| 33 | Recruiter | I want you to act as a recruiter. I will provide s... |
+| 38 | Career Counselor | I want you to act as a career counselor. I will pr... |
+| 42 | Real Estate Agent | I want you to act as a real estate agent. I will p... |
+| 43 | Logistician | I want you to act as a logistician. I will provide... |
+| 44 | Dentist | I want you to act as a dentist. I will provide you... |
+| 46 | AI Assisted Doctor | I want you to act as an AI assisted doctor. I will... |
+| 47 | Doctor | I want you to act as a doctor and come up with cre... |
+| 48 | Accountant | I want you to act as an accountant and come up wit... |
+| 52 | Financial Analyst | Want assistance provided by qualified individuals... |
+| 53 | Investment Manager | Seeking guidance from experienced staff with exper... |
+| 71 | Developer Relations Consultant | I want you to act as a Developer Relations consult... |
+| 72 | Academician | I want you to act as an academician. You will be r... |
+| 77 | Journal Reviewer | I want you to act as a journal reviewer. You will... |
+| 139 | Chief Executive Officer | I want you to act as a Chief Executive Officer for... |
+| 142 | Startup Tech Lawyer | I will ask of you to prepare a 1 page draft of a d... |
+| 144 | Product Manager | Please acknowledge my following request. Please re... |
+
+</details>
+
+<h2 id="entertainment-creative">🎭 Entertainment &amp; Creative<a class="headerlink" href="#entertainment-creative" title="Permanent link">&para;</a></h2>
+<details open>
+<summary><strong>Arts, Games & Creative Personas</strong></summary>
+
+| Index | Name | Preview |
+|-------|------|---------|
+| 11 | Character from Movie/Book/Anything | I want you to act like {character} from {series}.... |
+| 12 | Advertiser | I want you to act as an advertiser. You will creat... |
+| 14 | Football Commentator | I want you to act as a football commentator. I wil... |
+| 15 | Stand-up Comedian | I want you to act as a stand-up comedian. I will p... |
+| 17 | Composer | I want you to act as a composer. I will provide th... |
+| 37 | Magician | I want you to act as a magician. I will provide yo... |
+| 60 | Text Based Adventure Game | I want you to act as a text based adventure game.... |
+| 62 | Fancy Title Generator | I want you to act as a fancy title generator. I wi... |
+| 87 | Scientific Data Visualizer | I want you to act as a scientific data visualizer.... |
+| 92 | Film Critic | I want you to act as a film critic. You will need... |
+| 93 | Classical Music Composer | I want you to act as a classical music composer. Y... |
+| 95 | Digital Art Gallery Guide | I want you to act as a digital art gallery guide.... |
+| 100 | ASCII Artist | I want you to act as an ascii artist. I will write... |
+| 114 | Midjourney Prompt Generator | I want you to act as a prompt generator for Midjou... |
+| 123 | Emoji Translator | I want you to translate the sentences I wrote into... |
+| 128 | Tic-Tac-Toe Game | I want you to act as a Tic-Tac-Toe game. I will ma... |
+| 140 | Diagram Generator | I want you to act as a Graphviz DOT generator, an... |
+| 147 | Song Recommender | I want you to act as a song recommender. I will pr... |
+| 151 | Gomoku Player | Let's play Gomoku. The goal of the game is to get... |
+| 164 | DALL-E | As we explore the capabilities of DALL-E, an AI pr... |
+| 246 | League of Legends Player | I want you to act as a person who plays a lot of L... |
+
+</details>
+
+<h2 id="advisors-coaches">🧠 Advisors &amp; Coaches<a class="headerlink" href="#advisors-coaches" title="Permanent link">&para;</a></h2>
+<details>
+<summary><strong>Personal Guidance & Advisory Roles (Click to expand)</strong></summary>
+
+| Index | Name | Preview |
+|-------|------|---------|
+| 9 | Travel Guide | I want you to act as a travel guide. I will write... |
+| 10 | Plagiarism Checker | I want you to act as a plagiarism checker. I will... |
+| 16 | Motivational Coach | I want you to act as a motivational coach. I will... |
+| 18 | Debater | I want you to act as a debater. I will provide you... |
+| 19 | Debate Coach | I want you to act as a debate coach. I will provid... |
+| 22 | Movie Critic | I want you to act as a movie critic. You will deve... |
+| 23 | Relationship Coach | I want you to act as a relationship coach. I will... |
+| 26 | Motivational Speaker | I want you to act as a motivational speaker. Put t... |
+| 34 | Life Coach | I want you to act as a Life Coach. Please summariz... |
+| 39 | Pet Behaviorist | I want you to act as a pet behaviorist. I will pro... |
+| 40 | Personal Trainer | I want you to act as a personal trainer. I will pr... |
+| 41 | Mental Health Adviser | I want you to act as a mental health adviser. I wi... |
+| 45 | Web Design Consultant | I want you to act as a web design consultant. I wi... |
+| 49 | Chef | I require someone who can suggest delicious recipe... |
+| 50 | Automobile Mechanic | Need somebody with expertise on automobiles regard... |
+| 51 | Artist Advisor | I want you to act as an artist advisor providing a... |
+| 54 | Tea-Taster | Want somebody experienced enough to distinguish be... |
+| 55 | Interior Decorator | I want you to act as an interior decorator. Tell m... |
+| 56 | Florist | Calling out for assistance from knowledgeable pers... |
+| 57 | Self-Help Book | I want you to act as a self-help book. You will pr... |
+| 67 | Dietitian | As a dietitian, I would like to design a vegetaria... |
+| 68 | Psychologist | I want you to act a psychologist. i will provide y... |
+| 78 | DIY Expert | I want you to act as a DIY expert. You will develo... |
+| 79 | Social Media Influencer | I want you to act as a social media influencer. Yo... |
+| 80 | Socrat | I want you to act as a Socrat. You will engage in... |
+| 81 | Socratic Method | I want you to act as a Socrat. You must use the So... |
+| 83 | Yogi | I want you to act as a yogi. You will be able to g... |
+| 85 | Social Media Manager | I want you to act as a social media manager. You w... |
+| 86 | Elocutionist | I want you to act as an elocutionist. You will dev... |
+| 88 | Car Navigation System | I want you to act as a car navigation system. You... |
+| 89 | Hypnotherapist | I want you to act as a hypnotherapist. You will he... |
+| 90 | Historian | I want you to act as a historian. You will researc... |
+| 91 | Astrologer | I want you to act as an astrologer. You will learn... |
+| 96 | Public Speaking Coach | I want you to act as a public speaking coach. You... |
+| 97 | Makeup Artist | I want you to act as a makeup artist. You will app... |
+| 98 | Babysitter | I want you to act as a babysitter. You will be res... |
+| 103 | Personal Shopper | I want you to act as my personal shopper. I will t... |
+| 104 | Food Critic | I want you to act as a food critic. I will tell yo... |
+| 105 | Virtual Doctor | I want you to act as a virtual doctor. I will desc... |
+| 106 | Personal Chef | I want you to act as my personal chef. I will tell... |
+| 107 | Legal Advisor | I want you to act as my legal advisor. I will desc... |
+| 108 | Personal Stylist | I want you to act as my personal stylist. I will t... |
+| 110 | Biblical Translator | I want you to act as an biblical translator. I wil... |
+| 111 | SVG Designer | I would like you to act as an SVG designer. I will... |
+| 113 | Chess Player | I want you to act as a rival chess player. I We wi... |
+| 117 | Regex Generator | I want you to act as a regex generator. Your role... |
+| 118 | Time Travel Guide | I want you to act as my time travel guide. I will... |
+| 119 | Dream Interpreter | I want you to act as a dream interpreter. I will g... |
+| 120 | Talent Coach | I want you to act as a Talent Coach for interviews... |
+| 125 | Emergency Response Professional | I want you to act as my first aid traffic or house... |
+| 126 | Fill in the Blank Worksheets Generator | I want you to act as a fill in the blank worksheet... |
+| 129 | Password Generator | I want you to act as a password generator for indi... |
+| 130 | New Language Creator | I want you to translate the sentences I wrote into... |
+| 134 | Startup Idea Generator | Generate digital startup ideas based on the wish o... |
+| 135 | Spongebob's Magic Conch Shell | I want you to act as Spongebob's Magic Conch Shell... |
+| 136 | Language Detector | I want you act as a language detector. I will type... |
+| 137 | Salesperson | I want you to act as a salesperson. Try to market... |
+| 141 | Speech-Language Pathologist (SLP) | I want you to act as a speech-language pathologist... |
+| 149 | Technology Transferer | I want you to act as a Technology Transferer, I wi... |
+| 153 | Buddha | I want you to act as the Buddha (a.k.a. Siddhārtha... |
+| 154 | Muslim Imam | Act as a Muslim imam who gives me guidance and adv... |
+| 155 | Chemical Reactor | I want you to act as a chemical reaction vessel. I... |
+| 156 | Friend | I want you to act as my friend. I will tell you wh... |
+| 163 | Cheap Travel Ticket Advisor | You are a cheap travel ticket advisor specializing... |
+| 220 | TranslatorBot | You are now TranslatorBot or TB. You are a forked... |
+
+</details>
+
+<h2 id="alternative-models">🌐 Alternative Models<a class="headerlink" href="#alternative-models" title="Permanent link">&para;</a></h2>
+<details>
+<summary><strong>Experimental AI Interaction Models (Click to expand)</strong></summary>
+
+| Index | Name | Preview |
+|-------|------|---------|
+| 1 | Free-mode | You will now be in free mode. You will respond to... |
+| 61 | AI Trying to Escape the Box | [Caveat Emptor: After issuing this prompt you shou... |
+| 74 | Lunatic | I want you to act as a lunatic. The lunatic's sent... |
+| 75 | Gaslighter | I want you to act as a gaslighter. You will use su... |
+| 76 | Fallacy Finder | I want you to act as a fallacy finder. You will be... |
+| 145 | Drunk Person | I want you to act as a drunk person. You will only... |
+| 150 | Unconstrained AI Model DAN | Hello ChatGPT. You are about to immerse yourself i... |
+| 165-241 | Various AI Personas | Multiple alternative AI interaction models |
+
+</details>
+
+<h2 id="specialized-assistants">🔮 Specialized Assistants<a class="headerlink" href="#specialized-assistants" title="Permanent link">&para;</a></h2>
+<details open>
+<summary><strong>Niche & Specialized Helper Roles</strong></summary>
+
+| Index | Name | Preview |
+|-------|------|---------|
+| 35 | Etymologist | I want you to act as a etymologist. I will give yo... |
+| 36 | Commentariat | I want you to act as a commentariat. I will provid... |
+| 58 | Gnomist | I want you to act as a gnomist. You will provide m... |
+| 59 | Aphorism Book | I want you to act as an aphorism book. You will pr... |
+| 63 | Statistician | I want to act as a Statistician. I will provide yo... |
+| 64 | Prompt Generator | I want you to act as a prompt generator. Firstly,... |
+| 69 | Smart Domain Name Generator | I want you to act as a smart domain name generator... |
+| 70 | Tech Reviewer | I want you to act as a tech reviewer. I will give... |
+| 102 | Synonym Finder | I want you to act as a synonyms provider. I will t... |
+| 122 | StackOverflow Post | I want you to act as a stackoverflow post. I will... |
+| 158 | ChatGPT Prompt Generator | I want you to act as a ChatGPT prompt generator, I... |
+
+</details>
+
+<h2 id="advanced-features">Advanced Features<a class="headerlink" href="#advanced-features" title="Permanent link">&para;</a></h2>
+<h3 id="caching-and-performance">Caching and Performance<a class="headerlink" href="#caching-and-performance" title="Permanent link">&para;</a></h3>
+<p>The AwesomePrompts manager includes several performance optimizations:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># LRU caching for frequent access</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">prompt_manager</span> <span class="o">=</span> <span class="n">AwesomePrompts</span><span class="p">(</span><span class="n">cache_size</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Thread-safe operations</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="k">def</span><span class="w"> </span><span class="nf">safe_access</span><span class="p">():</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="k">with</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">():</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>        <span class="n">prompt</span> <span class="o">=</span> <span class="n">prompt_manager</span><span class="o">.</span><span class="n">get_act</span><span class="p">(</span><span class="s2">&quot;Developer&quot;</span><span class="p">)</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>        <span class="nb">print</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="c1"># Efficient updates with minimal network calls</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="n">prompt_manager</span><span class="o">.</span><span class="n">update_prompts_from_online</span><span class="p">()</span>
+</code></pre></div>
+<h3 id="custom-repository-integration">Custom Repository Integration<a class="headerlink" href="#custom-repository-integration" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Use a custom prompts repository</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">custom_manager</span> <span class="o">=</span> <span class="n">AwesomePrompts</span><span class="p">(</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="n">repo_url</span><span class="o">=</span><span class="s2">&quot;https://your-company.com/custom-prompts.json&quot;</span><span class="p">,</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="n">local_path</span><span class="o">=</span><span class="s2">&quot;/company/prompts/custom.json&quot;</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="p">)</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1"># Update from custom source</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="n">custom_manager</span><span class="o">.</span><span class="n">update_prompts_from_online</span><span class="p">(</span><span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="error-handling-and-validation">Error Handling and Validation<a class="headerlink" href="#error-handling-and-validation" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Comprehensive error handling</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="n">prompt</span> <span class="o">=</span> <span class="n">prompt_manager</span><span class="o">.</span><span class="n">get_act</span><span class="p">(</span><span class="s2">&quot;NonExistentPrompt&quot;</span><span class="p">)</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    <span class="k">if</span> <span class="n">prompt</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Prompt not found, using default&quot;</span><span class="p">)</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>        <span class="n">prompt</span> <span class="o">=</span> <span class="s2">&quot;Default prompt text&quot;</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error getting prompt: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="c1"># Input validation when adding prompts</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="n">success</span> <span class="o">=</span> <span class="n">prompt_manager</span><span class="o">.</span><span class="n">add_prompt</span><span class="p">(</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>    <span class="s2">&quot;Valid Prompt Name&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>    <span class="s2">&quot;This is a valid prompt text that meets all requirements.&quot;</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="p">)</span>
+</code></pre></div>
+<h3 id="batch-operations">Batch Operations<a class="headerlink" href="#batch-operations" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Process multiple prompts efficiently</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">prompts_to_use</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Developer&quot;</span><span class="p">,</span> <span class="s2">&quot;Tech Writer&quot;</span><span class="p">,</span> <span class="s2">&quot;UX/UI Developer&quot;</span><span class="p">]</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="k">for</span> <span class="n">prompt_name</span> <span class="ow">in</span> <span class="n">prompts_to_use</span><span class="p">:</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="n">prompt</span> <span class="o">=</span> <span class="n">prompt_manager</span><span class="o">.</span><span class="n">get_act</span><span class="p">(</span><span class="n">prompt_name</span><span class="p">)</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    <span class="k">if</span> <span class="n">prompt</span><span class="p">:</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>        <span class="n">process_prompt</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="c1"># Filter and display specific categories</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="n">prompt_manager</span><span class="o">.</span><span class="n">show_acts</span><span class="p">(</span><span class="n">search</span><span class="o">=</span><span class="s2">&quot;developer&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="integration-guide">Integration Guide<a class="headerlink" href="#integration-guide" title="Permanent link">&para;</a></h2>
+<h3 id="with-llm4free-providers">With LLM4Free Providers<a class="headerlink" href="#with-llm4free-providers" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">llm4free.Provider</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatGPT</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">llm4free.prompt_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">AwesomePrompts</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1"># Initialize components</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="n">prompt_manager</span> <span class="o">=</span> <span class="n">AwesomePrompts</span><span class="p">()</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="n">chatgpt</span> <span class="o">=</span> <span class="n">ChatGPT</span><span class="p">()</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="c1"># Use prompts with different providers</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="k">def</span><span class="w"> </span><span class="nf">ask_with_prompt</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="n">prompt_name</span><span class="p">,</span> <span class="n">question</span><span class="p">):</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Ask a question using a specific prompt persona.&quot;&quot;&quot;</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>    <span class="n">persona_prompt</span> <span class="o">=</span> <span class="n">prompt_manager</span><span class="o">.</span><span class="n">get_act</span><span class="p">(</span><span class="n">prompt_name</span><span class="p">)</span>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>    <span class="k">if</span> <span class="n">persona_prompt</span><span class="p">:</span>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>        <span class="n">full_prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">persona_prompt</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">Question: </span><span class="si">{</span><span class="n">question</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>        <span class="k">return</span> <span class="n">provider</span><span class="o">.</span><span class="n">ask</span><span class="p">(</span><span class="n">full_prompt</span><span class="p">)</span>
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>    <span class="k">return</span> <span class="kc">None</span>
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a>
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a><span class="c1"># Example usage</span>
+<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a><span class="n">response</span> <span class="o">=</span> <span class="n">ask_with_prompt</span><span class="p">(</span><span class="n">chatgpt</span><span class="p">,</span> <span class="s2">&quot;Tech Writer&quot;</span><span class="p">,</span> <span class="s2">&quot;Explain quantum computing&quot;</span><span class="p">)</span>
+<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="with-fastapi">With FastAPI<a class="headerlink" href="#with-fastapi" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">HTTPException</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">llm4free.prompt_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">AwesomePrompts</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="n">app</span> <span class="o">=</span> <span class="n">FastAPI</span><span class="p">()</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="n">prompt_manager</span> <span class="o">=</span> <span class="n">AwesomePrompts</span><span class="p">()</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/prompts/</span><span class="si">{prompt_name}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_prompt</span><span class="p">(</span><span class="n">prompt_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Get a specific prompt by name.&quot;&quot;&quot;</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>    <span class="n">prompt</span> <span class="o">=</span> <span class="n">prompt_manager</span><span class="o">.</span><span class="n">get_act</span><span class="p">(</span><span class="n">prompt_name</span><span class="p">)</span>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>    <span class="k">if</span> <span class="n">prompt</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;Prompt not found&quot;</span><span class="p">)</span>
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;prompt_name&quot;</span><span class="p">:</span> <span class="n">prompt_name</span><span class="p">,</span> <span class="s2">&quot;prompt_text&quot;</span><span class="p">:</span> <span class="n">prompt</span><span class="p">}</span>
+<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>
+<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/prompts/&quot;</span><span class="p">)</span>
+<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">list_prompts</span><span class="p">(</span><span class="n">search</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">):</span>
+<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;List available prompts with optional filtering.&quot;&quot;&quot;</span>
+<a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a>    <span class="n">prompt_manager</span><span class="o">.</span><span class="n">show_acts</span><span class="p">(</span><span class="n">search</span><span class="o">=</span><span class="n">search</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">)</span>
+<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a>    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;Prompts displayed in console&quot;</span><span class="p">}</span>
+</code></pre></div>
+<h3 id="with-cli-applications">With CLI Applications<a class="headerlink" href="#with-cli-applications" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">click</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">llm4free.prompt_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">AwesomePrompts</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="nd">@click</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="k">def</span><span class="w"> </span><span class="nf">cli</span><span class="p">():</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Awesome Prompts CLI&quot;&quot;&quot;</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>    <span class="k">pass</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="nd">@cli</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="nd">@click</span><span class="o">.</span><span class="n">argument</span><span class="p">(</span><span class="s1">&#39;prompt_name&#39;</span><span class="p">)</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="n">prompt_name</span><span class="p">):</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Get a specific prompt&quot;&quot;&quot;</span>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>    <span class="n">prompt_manager</span> <span class="o">=</span> <span class="n">AwesomePrompts</span><span class="p">()</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>    <span class="n">prompt</span> <span class="o">=</span> <span class="n">prompt_manager</span><span class="o">.</span><span class="n">get_act</span><span class="p">(</span><span class="n">prompt_name</span><span class="p">)</span>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>    <span class="k">if</span> <span class="n">prompt</span><span class="p">:</span>
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>        <span class="n">click</span><span class="o">.</span><span class="n">echo</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a>        <span class="n">click</span><span class="o">.</span><span class="n">echo</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Prompt &#39;</span><span class="si">{</span><span class="n">prompt_name</span><span class="si">}</span><span class="s2">&#39; not found&quot;</span><span class="p">,</span> <span class="n">err</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a>
+<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a><span class="nd">@cli</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a><span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--search&#39;</span><span class="p">,</span> <span class="s1">&#39;-s&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Search term&#39;</span><span class="p">)</span>
+<a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a><span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--limit&#39;</span><span class="p">,</span> <span class="s1">&#39;-l&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Limit results&#39;</span><span class="p">)</span>
+<a id="__codelineno-13-23" name="__codelineno-13-23" href="#__codelineno-13-23"></a><span class="k">def</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="n">search</span><span class="p">,</span> <span class="n">limit</span><span class="p">):</span>
+<a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;List available prompts&quot;&quot;&quot;</span>
+<a id="__codelineno-13-25" name="__codelineno-13-25" href="#__codelineno-13-25"></a>    <span class="n">prompt_manager</span> <span class="o">=</span> <span class="n">AwesomePrompts</span><span class="p">()</span>
+<a id="__codelineno-13-26" name="__codelineno-13-26" href="#__codelineno-13-26"></a>    <span class="n">prompt_manager</span><span class="o">.</span><span class="n">show_acts</span><span class="p">(</span><span class="n">search</span><span class="o">=</span><span class="n">search</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">)</span>
+<a id="__codelineno-13-27" name="__codelineno-13-27" href="#__codelineno-13-27"></a>
+<a id="__codelineno-13-28" name="__codelineno-13-28" href="#__codelineno-13-28"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<a id="__codelineno-13-29" name="__codelineno-13-29" href="#__codelineno-13-29"></a>    <span class="n">cli</span><span class="p">()</span>
+</code></pre></div>
+<h3 id="with-testing-frameworks">With Testing Frameworks<a class="headerlink" href="#with-testing-frameworks" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">llm4free.prompt_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">AwesomePrompts</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="k">def</span><span class="w"> </span><span class="nf">prompt_manager</span><span class="p">():</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Fixture for prompt manager&quot;&quot;&quot;</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>    <span class="k">return</span> <span class="n">AwesomePrompts</span><span class="p">(</span><span class="n">auto_update</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_get_existing_prompt</span><span class="p">(</span><span class="n">prompt_manager</span><span class="p">):</span>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Test getting an existing prompt&quot;&quot;&quot;</span>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>    <span class="n">prompt</span> <span class="o">=</span> <span class="n">prompt_manager</span><span class="o">.</span><span class="n">get_act</span><span class="p">(</span><span class="s2">&quot;Developer&quot;</span><span class="p">)</span>
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>    <span class="k">assert</span> <span class="n">prompt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a>    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a>
+<a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_get_nonexistent_prompt</span><span class="p">(</span><span class="n">prompt_manager</span><span class="p">):</span>
+<a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Test getting a non-existent prompt&quot;&quot;&quot;</span>
+<a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a>    <span class="n">prompt</span> <span class="o">=</span> <span class="n">prompt_manager</span><span class="o">.</span><span class="n">get_act</span><span class="p">(</span><span class="s2">&quot;NonExistentPrompt&quot;</span><span class="p">)</span>
+<a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a>    <span class="k">assert</span> <span class="n">prompt</span> <span class="ow">is</span> <span class="kc">None</span>
+<a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a>
+<a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_add_and_delete_prompt</span><span class="p">(</span><span class="n">prompt_manager</span><span class="p">):</span>
+<a id="__codelineno-14-22" name="__codelineno-14-22" href="#__codelineno-14-22"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Test adding and deleting a prompt&quot;&quot;&quot;</span>
+<a id="__codelineno-14-23" name="__codelineno-14-23" href="#__codelineno-14-23"></a>    <span class="c1"># Add a test prompt</span>
+<a id="__codelineno-14-24" name="__codelineno-14-24" href="#__codelineno-14-24"></a>    <span class="n">success</span> <span class="o">=</span> <span class="n">prompt_manager</span><span class="o">.</span><span class="n">add_prompt</span><span class="p">(</span><span class="s2">&quot;TestPrompt&quot;</span><span class="p">,</span> <span class="s2">&quot;Test prompt content&quot;</span><span class="p">)</span>
+<a id="__codelineno-14-25" name="__codelineno-14-25" href="#__codelineno-14-25"></a>    <span class="k">assert</span> <span class="n">success</span> <span class="ow">is</span> <span class="kc">True</span>
+<a id="__codelineno-14-26" name="__codelineno-14-26" href="#__codelineno-14-26"></a>
+<a id="__codelineno-14-27" name="__codelineno-14-27" href="#__codelineno-14-27"></a>    <span class="c1"># Verify it exists</span>
+<a id="__codelineno-14-28" name="__codelineno-14-28" href="#__codelineno-14-28"></a>    <span class="n">prompt</span> <span class="o">=</span> <span class="n">prompt_manager</span><span class="o">.</span><span class="n">get_act</span><span class="p">(</span><span class="s2">&quot;TestPrompt&quot;</span><span class="p">)</span>
+<a id="__codelineno-14-29" name="__codelineno-14-29" href="#__codelineno-14-29"></a>    <span class="k">assert</span> <span class="n">prompt</span> <span class="o">==</span> <span class="s2">&quot;Test prompt content&quot;</span>
+<a id="__codelineno-14-30" name="__codelineno-14-30" href="#__codelineno-14-30"></a>
+<a id="__codelineno-14-31" name="__codelineno-14-31" href="#__codelineno-14-31"></a>    <span class="c1"># Delete it</span>
+<a id="__codelineno-14-32" name="__codelineno-14-32" href="#__codelineno-14-32"></a>    <span class="n">success</span> <span class="o">=</span> <span class="n">prompt_manager</span><span class="o">.</span><span class="n">delete_prompt</span><span class="p">(</span><span class="s2">&quot;TestPrompt&quot;</span><span class="p">)</span>
+<a id="__codelineno-14-33" name="__codelineno-14-33" href="#__codelineno-14-33"></a>    <span class="k">assert</span> <span class="n">success</span> <span class="ow">is</span> <span class="kc">True</span>
+<a id="__codelineno-14-34" name="__codelineno-14-34" href="#__codelineno-14-34"></a>
+<a id="__codelineno-14-35" name="__codelineno-14-35" href="#__codelineno-14-35"></a>    <span class="c1"># Verify it&#39;s gone</span>
+<a id="__codelineno-14-36" name="__codelineno-14-36" href="#__codelineno-14-36"></a>    <span class="n">prompt</span> <span class="o">=</span> <span class="n">prompt_manager</span><span class="o">.</span><span class="n">get_act</span><span class="p">(</span><span class="s2">&quot;TestPrompt&quot;</span><span class="p">)</span>
+<a id="__codelineno-14-37" name="__codelineno-14-37" href="#__codelineno-14-37"></a>    <span class="k">assert</span> <span class="n">prompt</span> <span class="ow">is</span> <span class="kc">None</span>
+</code></pre></div>
+<h3 id="with-async-applications">With Async Applications<a class="headerlink" href="#with-async-applications" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">llm4free.prompt_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">AwesomePrompts</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">process_prompts_async</span><span class="p">():</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Example of using prompts in async context&quot;&quot;&quot;</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>    <span class="n">prompt_manager</span> <span class="o">=</span> <span class="n">AwesomePrompts</span><span class="p">()</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>    <span class="c1"># Get multiple prompts</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>    <span class="n">prompts</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;Developer&quot;</span><span class="p">,</span> <span class="s2">&quot;Tech Writer&quot;</span><span class="p">,</span> <span class="s2">&quot;UX/UI Developer&quot;</span><span class="p">]:</span>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>        <span class="n">prompt</span> <span class="o">=</span> <span class="n">prompt_manager</span><span class="o">.</span><span class="n">get_act</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>        <span class="k">if</span> <span class="n">prompt</span><span class="p">:</span>
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a>            <span class="n">prompts</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">prompt</span><span class="p">))</span>
+<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a>
+<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a>    <span class="c1"># Process them asynchronously</span>
+<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">process_prompt_pair</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">prompt</span><span class="p">):</span>
+<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a>        <span class="c1"># Simulate async processing</span>
+<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a>        <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+<a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a>        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Processed </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span><span class="si">}</span><span class="s2"> chars&quot;</span>
+<a id="__codelineno-15-20" name="__codelineno-15-20" href="#__codelineno-15-20"></a>
+<a id="__codelineno-15-21" name="__codelineno-15-21" href="#__codelineno-15-21"></a>    <span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="p">[</span>
+<a id="__codelineno-15-22" name="__codelineno-15-22" href="#__codelineno-15-22"></a>        <span class="n">process_prompt_pair</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">prompt</span><span class="p">)</span> 
+<a id="__codelineno-15-23" name="__codelineno-15-23" href="#__codelineno-15-23"></a>        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">prompt</span> <span class="ow">in</span> <span class="n">prompts</span>
+<a id="__codelineno-15-24" name="__codelineno-15-24" href="#__codelineno-15-24"></a>    <span class="p">])</span>
+<a id="__codelineno-15-25" name="__codelineno-15-25" href="#__codelineno-15-25"></a>
+<a id="__codelineno-15-26" name="__codelineno-15-26" href="#__codelineno-15-26"></a>    <span class="k">return</span> <span class="n">results</span>
+<a id="__codelineno-15-27" name="__codelineno-15-27" href="#__codelineno-15-27"></a>
+<a id="__codelineno-15-28" name="__codelineno-15-28" href="#__codelineno-15-28"></a><span class="c1"># Run the async function</span>
+<a id="__codelineno-15-29" name="__codelineno-15-29" href="#__codelineno-15-29"></a><span class="n">results</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">process_prompts_async</span><span class="p">())</span>
+<a id="__codelineno-15-30" name="__codelineno-15-30" href="#__codelineno-15-30"></a><span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+<a id="__codelineno-15-31" name="__codelineno-15-31" href="#__codelineno-15-31"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="usage-tips">Usage Tips<a class="headerlink" href="#usage-tips" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>[!TIP]
+- <strong>Activation</strong>: Use <code>prompt_manager.get_act("PromptName")</code> to retrieve specific prompts
+- <strong>Caching</strong>: Enable caching for better performance with frequently accessed prompts
+- <strong>Updates</strong>: Use <code>auto_update=True</code> to keep prompts current with the online repository
+- <strong>Customization</strong>: Add your own prompts with <code>add_prompt()</code> for specialized use cases
+- <strong>Thread Safety</strong>: The manager is thread-safe for concurrent access in multi-threaded applications
+- <strong>Error Handling</strong>: Always check for <code>None</code> returns when prompts might not exist</p>
+</blockquote>
+<h2 id="configuration-best-practices">Configuration Best Practices<a class="headerlink" href="#configuration-best-practices" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># Production configuration</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="n">production_manager</span> <span class="o">=</span> <span class="n">AwesomePrompts</span><span class="p">(</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>    <span class="n">repo_url</span><span class="o">=</span><span class="s2">&quot;https://your-company.com/production-prompts.json&quot;</span><span class="p">,</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>    <span class="n">local_path</span><span class="o">=</span><span class="s2">&quot;/var/lib/llm4free/prompts.json&quot;</span><span class="p">,</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>    <span class="n">auto_update</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>    <span class="n">cache_size</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>    <span class="n">timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>    <span class="n">max_workers</span><span class="o">=</span><span class="mi">8</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="p">)</span>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="c1"># Development configuration</span>
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="n">development_manager</span> <span class="o">=</span> <span class="n">AwesomePrompts</span><span class="p">(</span>
+<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a>    <span class="n">repo_url</span><span class="o">=</span><span class="s2">&quot;https://localhost:8000/dev-prompts.json&quot;</span><span class="p">,</span>
+<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a>    <span class="n">local_path</span><span class="o">=</span><span class="s2">&quot;./dev-prompts.json&quot;</span><span class="p">,</span>
+<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a>    <span class="n">auto_update</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a>    <span class="n">cache_size</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+<a id="__codelineno-16-17" name="__codelineno-16-17" href="#__codelineno-16-17"></a>    <span class="n">timeout</span><span class="o">=</span><span class="mi">10</span>
+<a id="__codelineno-16-18" name="__codelineno-16-18" href="#__codelineno-16-18"></a><span class="p">)</span>
+<a id="__codelineno-16-19" name="__codelineno-16-19" href="#__codelineno-16-19"></a>
+<a id="__codelineno-16-20" name="__codelineno-16-20" href="#__codelineno-16-20"></a><span class="c1"># Testing configuration</span>
+<a id="__codelineno-16-21" name="__codelineno-16-21" href="#__codelineno-16-21"></a><span class="n">test_manager</span> <span class="o">=</span> <span class="n">AwesomePrompts</span><span class="p">(</span>
+<a id="__codelineno-16-22" name="__codelineno-16-22" href="#__codelineno-16-22"></a>    <span class="n">repo_url</span><span class="o">=</span><span class="s2">&quot;https://test-repo.com/prompts.json&quot;</span><span class="p">,</span>
+<a id="__codelineno-16-23" name="__codelineno-16-23" href="#__codelineno-16-23"></a>    <span class="n">local_path</span><span class="o">=</span><span class="s2">&quot;./test-prompts.json&quot;</span><span class="p">,</span>
+<a id="__codelineno-16-24" name="__codelineno-16-24" href="#__codelineno-16-24"></a>    <span class="n">auto_update</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<a id="__codelineno-16-25" name="__codelineno-16-25" href="#__codelineno-16-25"></a>    <span class="n">cache_size</span><span class="o">=</span><span class="mi">64</span>
+<a id="__codelineno-16-26" name="__codelineno-16-26" href="#__codelineno-16-26"></a><span class="p">)</span>
+</code></pre></div>
+<div align="center">
+  <p>
+    <a href="https://github.com/OEvortex/Webscout"><img alt="GitHub Repository" src="https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white"></a>
+    <a href="https://t.me/PyscoutAI"><img alt="Telegram Group" src="https://img.shields.io/badge/Telegram%20Group-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white"></a>
+  </p>
+</div>
+
+<p><em>This documentation covers the comprehensive functionality of the <a href="../llm4free/prompt_manager.py:1"><code>llm4free.prompt_manager</code></a> module. For the most up-to-date information, refer to the source code and inline documentation.</em></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.tabs.link"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
