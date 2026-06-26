@@ -5,22 +5,7 @@ Here's the consolidated list — 130+ free AI sites, no login required. Compiled
 ## 🎨 IMAGE GENERATION (38 sites)
 
 | # | Site | URL | Notes |
-|---|---|---|---|
-| 1 | Pollinations | https://pollinations.ai | Flux, SD, Kontext, Nano Banana. Default backend |
-| 2 | Craiyon | https://craiyon.com | Unlimited, lower quality (512px) |
-| 3 | Perchance Image | https://perchance.org/ai-text-to-image-generator | Unlimited, SD-based |
-| 4 | Raphael AI | https://raphael.app | Unlimited basic, no watermark |
-| 5 | Imagefree | https://imagefree.org | Truly unlimited, no signup |
-| 6 | FreeGPT.IM | https://freegpt.im | GPT Image 2, 30/day |
-| 7 | OneFreeAI | https://draw.onefreeai.com | Flux 1.1 Pro, Nano Banana Pro |
-| 8 | DrawAny | https://drawany.art | Flux 2, Qwen, Z-Image, Kling |
-| 9 | Creen | https://creen.ai/ai-image-generator | 11+ engines, 4K |
-| 10 | NoLoginTool | https://nologintool.com/image/ai-image-generator | Flux, SDXL, Cloudflare |
-| 11 | Perchance AI (alt) | https://www.perchanceai.app | Stable Diffusion |
-| 12 | PictoFlux | https://pictoflux.com | Private, fast |
-| 13 | OptiPix | https://optipix.art | ON-DEVICE (browser). SD Turbo, LCM |
-| 14 | Deeka.ai | https://deeka.ai | SDXL Lightning |
-| 15 | HCODX | https://hcodx.com/tools/ai-image-generator | Flux + GPT Image, Pollinations backend |
+
 | 16 | FreeGen | https://freegen.app | Unlimited, no signup |
 | 17 | FlatAI | https://flatai.org | Local-storage only |
 | 18 | Vheer | https://vheer.com | No watermark, unlimited |

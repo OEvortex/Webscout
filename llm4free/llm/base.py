@@ -1,6 +1,10 @@
 import json
+import re
+import time
+import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from functools import wraps
 from typing import Any, Callable, Dict, Generator, List, Optional, TypedDict, Union, cast
 
 from curl_cffi import requests
@@ -189,6 +193,208 @@ class BaseCompletions(ABC):
 
         return results
 
+    _TOOL_INVOKE_RE = re.compile(
+        r"<invoke>\s*<tool_name>(.*?)</tool_name>\s*<parameters>(.*?)</parameters>\s*</invoke>",
+        re.DOTALL,
+    )
+
+    def format_tools_for_prompt(self, tools: Optional[List[Tool]] = None) -> str:
+        """Format tool definitions as an XML instruction block for the prompt.
+
+        Injects tool definitions as XML instructions so the model knows how
+        to call tools using the ``<invoke>`` format.
+        """
+        tool_list = tools or []
+        if not tool_list:
+            return ""
+
+        parts = [
+            "# Tools",
+            "",
+            "You may call one or more functions to assist with the user query.",
+            "",
+            "For each function call, output EXACTLY the following XML block:",
+            "",
+            "<invoke>",
+            "  <tool_name>$TOOL_NAME</tool_name>",
+            "  <parameters>$JSON_ARGUMENTS</parameters>",
+            "</invoke>",
+            "",
+            "Where `$JSON_ARGUMENTS` is a valid JSON object of arguments.",
+            "Output one `<invoke>...</invoke>` block per tool call.",
+            "If no tool is needed, respond normally without any `<invoke>` blocks.",
+            "",
+            "Here are the available tools:",
+            "",
+        ]
+
+        for tool in tool_list:
+            parts.append(f"## {tool.name}")
+            parts.append(f"Description: {tool.description}")
+            parts.append("Parameters:")
+            if tool.parameters:
+                for pname, pinfo in tool.parameters.items():
+                    ptype = pinfo.get("type", "any")
+                    pdesc = pinfo.get("description", "")
+                    req = tool.required_params is None or pname in (tool.required_params or [])
+                    tag = " (required)" if req else " (optional)"
+                    parts.append(f"  - {pname} ({ptype}){tag}: {pdesc}")
+            else:
+                parts.append("  (none)")
+            parts.append("")
+
+        return "\n".join(parts)
+
+    @staticmethod
+    def extract_tool_calls(text: str) -> Optional[List[Dict[str, Any]]]:
+        """Parse ``<invoke>`` XML blocks from LLM response text.
+
+        Returns:
+            A list of ``{"name": ..., "arguments": ...}`` dicts, or ``None``
+            when the response contains no tool calls.
+        """
+        calls: List[Dict[str, Any]] = []
+        for match in BaseCompletions._TOOL_INVOKE_RE.finditer(text):
+            name = match.group(1).strip()
+            raw_args = match.group(2).strip()
+            try:
+                args = json.loads(raw_args) if raw_args else {}
+            except json.JSONDecodeError:
+                args = {}
+            calls.append({"name": name, "arguments": args})
+        return calls or None
+
+    @staticmethod
+    def format_tool_results_xml(results: List[Dict[str, Any]]) -> str:
+        """Format tool results as ``<tool_result>`` XML blocks."""
+        parts: List[str] = []
+        for r in results:
+            parts.append(
+                f"<tool_result>\n"
+                f"  <tool_name>{r['tool_name']}</tool_name>\n"
+                f"  <result>{r['result']}</result>\n"
+                f"</tool_result>"
+            )
+        return "\n".join(parts)
+
+    def _run_non_native_tool_loop(
+        self,
+        original_create: Callable[..., Any],
+        *,
+        model: str,
+        messages: List[Dict[str, Any]],
+        tools: Optional[List[Union[Tool, Dict[str, Any]]]] = None,
+        stream: bool = False,
+        **kwargs: Any,
+    ) -> Any:
+        """Inject tool definitions as XML prompt, call the model once, and
+        return a native OpenAI-format ``ChatCompletion`` with ``tool_calls``
+        populated — exactly like a native tool-supporting provider would.
+
+        The caller is responsible for executing the tools and making a
+        follow-up call to get the final answer (standard OpenAI pattern).
+
+        Args:
+            original_create: The provider's actual ``create()`` method.
+            model: Model name.
+            messages: Conversation messages.
+            tools: Tool definitions.
+            stream: Disabled when tools are present.
+            **kwargs: Extra arguments forwarded to ``original_create``.
+        """
+        # Parse tools into Tool objects
+        from llm4free.llm.utils import ToolCall, ToolFunction
+
+        tool_objects: List[Tool] = []
+        for t in (tools or []):
+            if isinstance(t, Tool):
+                tool_objects.append(t)
+            elif isinstance(t, dict):
+                fn = t.get("function", t)
+                tool_objects.append(
+                    Tool(
+                        name=fn.get("name", "unknown"),
+                        description=fn.get("description", ""),
+                        parameters=fn.get("parameters", {}).get("properties", {}),
+                        required_params=fn.get("parameters", {}).get("required"),
+                    )
+                )
+
+        if stream:
+            ic("stream=True is ignored in non-native tool loop")
+            stream = False
+
+        # Inject tool definitions into the first system message (or prepend one)
+        tool_block = self.format_tools_for_prompt(tool_objects)
+        working_messages = list(messages)
+        if tool_block:
+            if working_messages and working_messages[0].get("role") == "system":
+                working_messages = list(working_messages)
+                working_messages[0] = {
+                    **working_messages[0],
+                    "content": tool_block + "\n\n" + (working_messages[0].get("content") or ""),
+                }
+            else:
+                working_messages = [{"role": "system", "content": tool_block}, *working_messages]
+
+        response = original_create(
+            model=model,
+            messages=working_messages,
+            stream=False,
+            tools=None,
+            **kwargs,
+        )
+
+        text = ""
+        if hasattr(response, "choices") and response.choices:
+            msg = response.choices[0].message
+            text = msg.content if hasattr(msg, "content") else (msg.get("content") or "")
+        elif isinstance(response, dict):
+            text = (response.get("choices") or [{}])[0].get("message", {}).get("content", "")
+
+        calls = self.extract_tool_calls(text)
+        if not calls:
+            return response
+
+        # Build native ToolCall list
+        tool_calls: List[ToolCall] = []
+        for call in calls:
+            tool_calls.append(
+                ToolCall(
+                    id=f"call_{uuid.uuid4().hex}",
+                    type="function",
+                    function=ToolFunction(
+                        name=call["name"],
+                        arguments=json.dumps(call["arguments"]),
+                    ),
+                )
+            )
+
+        # Return a new ChatCompletion with native tool_calls format
+        import copy
+        from llm4free.llm.utils import ChatCompletion, ChatCompletionMessage, Choice
+
+        orig_choice = response.choices[0]
+        new_message = ChatCompletionMessage(
+            role="assistant",
+            content=None,
+            tool_calls=tool_calls,
+        )
+        new_choice = Choice(
+            index=0,
+            message=new_message,
+            finish_reason="tool_calls",
+            logprobs=getattr(orig_choice, "logprobs", None),
+        )
+        return ChatCompletion(
+            id=getattr(response, "id", f"chatcmpl-{uuid.uuid4().hex}"),
+            choices=[new_choice],
+            created=getattr(response, "created", int(time.time())),
+            model=getattr(response, "model", model),
+            usage=getattr(response, "usage", None),
+            system_fingerprint=getattr(response, "system_fingerprint", None),
+        )
+
 
 class BaseChat(ABC):
     completions: BaseCompletions
@@ -206,6 +412,41 @@ class OpenAICompatibleProvider(ABC):
     supports_tools: bool = False  # Whether the provider supports tools
     supports_tool_choice: bool = False  # Whether the provider supports tool_choice
     required_auth: bool = False  # Whether the provider requires authentication
+
+    def __init_subclass__(cls, **kwargs: Any):
+        super().__init_subclass__(**kwargs)
+
+        if cls.supports_tools:
+            return
+
+        orig_init = cls.__init__
+
+        @wraps(orig_init)
+        def _non_native_init(self, *args: Any, **kwargs: Any) -> None:
+            orig_init(self, *args, **kwargs)
+            completions = getattr(getattr(self, "chat", None), "completions", None)
+            if completions is None:
+                return
+            original_create = completions.create
+
+            @wraps(original_create)
+            def _tool_aware_create(*a: Any, **kw: Any) -> Any:
+                tools = kw.get("tools")
+                if tools is not None:
+                    kw.pop("tools", None)
+                    # tool_choice is irrelevant in the XML loop
+                    kw.pop("tool_choice", None)
+                    return completions._run_non_native_tool_loop(
+                        original_create,
+                        *a,
+                        tools=tools,
+                        **kw,
+                    )
+                return original_create(*a, **kw)
+
+            completions.create = _tool_aware_create
+
+        cls.__init__ = _non_native_init  # type: ignore[assignment]
 
     def __init__(
         self,

@@ -60,8 +60,6 @@ dependencies = [
     "litprinter",
     "lxml>=5.2.2",
     "pydantic",
-    "cloudscraper>=1.2.71",
-    "browser-cookie3>=0.20.1",
     "fastapi>=0.128.0",
     "uvicorn>=0.40.0",
     "starlette>=0.50.0",
@@ -70,6 +68,7 @@ dependencies = [
     "tokenizers>=0.23.1",
     "safetensors>=0.8.0",
     "huggingface-hub>=1.20.1",
+    "requests>=2.32.5",
 ]
 
 [project.scripts]

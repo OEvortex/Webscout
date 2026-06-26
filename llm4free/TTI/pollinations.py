@@ -140,12 +140,24 @@ class Images(BaseImages):
 
         for i in range(n):
             # Prepare parameters for Pollinations API
-            params = {
+            params: dict[str, Any] = {
                 "model": model,
                 "width": int(size.split("x")[0]) if "x" in size else 1024,
                 "height": int(size.split("x")[1]) if "x" in size else 1024,
                 "seed": seed if seed is not None else random.randint(0, 2**32 - 1),
+                "nologo": kwargs.get("nologo", True),
             }
+
+            # Optional boolean parameters
+            if "enhance" in kwargs:
+                params["enhance"] = kwargs["enhance"]
+            if "safe" in kwargs:
+                params["safe"] = kwargs["safe"]
+            if "private" in kwargs:
+                params["private"] = kwargs["private"]
+            if "transparent" in kwargs:
+                params["transparent"] = kwargs["transparent"]
+
             # Build the API URL
             base_url = f"https://image.pollinations.ai/prompt/{prompt}"
             # Compose query string
@@ -210,6 +222,14 @@ class PollinationsAI(TTICompatibleProvider):
         "any-dark",
         "turbo",
         "gptimage",
+        "gptimage-large",
+        "kontext",
+        "nanobanana",
+        "nanobanana-pro",
+        "seedream",
+        "seedream-pro",
+        "qwen-image",
+        "grok-imagine",
     ]
 
     def __init__(self):
