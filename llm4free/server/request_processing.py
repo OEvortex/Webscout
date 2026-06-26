@@ -5,7 +5,7 @@ Request processing utilities for the LLM4Free API.
 import json
 import time
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from fastapi.responses import StreamingResponse
 from litprinter import ic
@@ -21,7 +21,22 @@ from llm4free.llm.utils import (
 # from .simple_logger import log_api_request, get_client_ip, generate_request_id
 from .config import AppConfig
 from .exceptions import APIError, clean_text
-from .request_models import ChatCompletionRequest, Message
+from .request_models import (
+    ChatCompletionRequest,
+    Message,
+    AnthropicMessagesRequest,
+    AnthropicMessage,
+    AnthropicTextBlock,
+    AnthropicImageBlock,
+    AnthropicToolUseBlock,
+    AnthropicToolResultBlock,
+    AnthropicToolDefinition,
+    AnthropicToolChoice,
+    AnthropicMessagesResponse,
+    AnthropicTextResponseBlock,
+    AnthropicToolUseResponseBlock,
+    AnthropicUsage,
+)
 
 
 def get_client_ip(request) -> str:
@@ -468,3 +483,314 @@ async def handle_non_streaming_response(provider: Any, params: Dict[str, Any],
             HTTP_500_INTERNAL_SERVER_ERROR,
             "provider_error"
         )
+
+
+# ============================================================================
+# Anthropic API Conversion Functions
+# ============================================================================
+
+def extract_system_from_messages(messages: List[Dict[str, Any]]) -> Optional[str]:
+    """Extract system message content from OpenAI-style messages array."""
+    for msg in messages:
+        if msg.get("role") == "system":
+            content = msg.get("content", "")
+            if isinstance(content, str):
+                return content
+            elif isinstance(content, list):
+                text_parts = []
+                for part in content:
+                    if isinstance(part, dict) and part.get("type") == "text":
+                        text_parts.append(part.get("text", ""))
+                return "".join(text_parts)
+    return None
+
+
+def convert_anthropic_to_openai(anthropic_request: AnthropicMessagesRequest) -> Dict[str, Any]:
+    """Convert Anthropic Messages request to OpenAI Chat Completion format."""
+    messages = []
+
+    # Add system message if present (Anthropic uses top-level system param)
+    if anthropic_request.system:
+        if isinstance(anthropic_request.system, str):
+            messages.append({"role": "system", "content": anthropic_request.system})
+        elif isinstance(anthropic_request.system, list):
+            text_parts = []
+            for block in anthropic_request.system:
+                if hasattr(block, "text"):
+                    text_parts.append(block.text)
+            if text_parts:
+                messages.append({"role": "system", "content": "".join(text_parts)})
+
+    # Convert messages
+    for msg in anthropic_request.messages:
+        openai_msg: Dict[str, Any] = {"role": msg.role}
+
+        if isinstance(msg.content, str):
+            openai_msg["content"] = msg.content
+        elif isinstance(msg.content, list):
+            # Check if it's simple text content
+            if len(msg.content) == 1 and hasattr(msg.content[0], "text"):
+                openai_msg["content"] = msg.content[0].text
+            else:
+                # Handle multimodal/tool content
+                openai_content = []
+                tool_calls = []
+                tool_results = []
+
+                for block in msg.content:
+                    if hasattr(block, "type"):
+                        if block.type == "text":
+                            openai_content.append({"type": "text", "text": block.text})
+                        elif block.type == "image" and hasattr(block, "source"):
+                            if block.source.type == "url" and block.source.url:
+                                openai_content.append({
+                                    "type": "image_url",
+                                    "image_url": {"url": block.source.url}
+                                })
+                            elif block.source.type == "base64" and block.source.data:
+                                media_type = block.source.media_type or "image/jpeg"
+                                openai_content.append({
+                                    "type": "image_url",
+                                    "image_url": {"url": f"data:{media_type};base64,{block.source.data}"}
+                                })
+                        elif block.type == "tool_use":
+                            tool_calls.append({
+                                "id": block.id,
+                                "type": "function",
+                                "function": {
+                                    "name": block.name,
+                                    "content": json.dumps(block.input) if isinstance(block.input, dict) else str(block.input)
+                                }
+                            })
+                        elif block.type == "tool_result":
+                            tool_results.append({
+                                "role": "tool",
+                                "tool_call_id": block.tool_use_id,
+                                "content": block.content if isinstance(block.content, str) else json.dumps(block.content) if block.content else ""
+                            })
+
+                if openai_content:
+                    if len(openai_content) == 1 and openai_content[0].get("type") == "text":
+                        openai_msg["content"] = openai_content[0]["text"]
+                    else:
+                        openai_msg["content"] = openai_content
+
+                if tool_calls:
+                    openai_msg["tool_calls"] = tool_calls
+
+                # Add tool results as separate messages
+                for tr in tool_results:
+                    messages.append(tr)
+
+        messages.append(openai_msg)
+
+    # Build OpenAI request params
+    params: Dict[str, Any] = {
+        "model": anthropic_request.model,
+        "messages": messages,
+        "max_tokens": anthropic_request.max_tokens,
+    }
+
+    # Map optional parameters
+    if anthropic_request.temperature is not None:
+        params["temperature"] = anthropic_request.temperature
+    if anthropic_request.top_p is not None:
+        params["top_p"] = anthropic_request.top_p
+    if anthropic_request.stop_sequences:
+        params["stop"] = anthropic_request.stop_sequences
+    if anthropic_request.stream is not None:
+        params["stream"] = anthropic_request.stream
+
+    # Convert tools format
+    if anthropic_request.tools:
+        openai_tools = []
+        for tool in anthropic_request.tools:
+            openai_tools.append({
+                "type": "function",
+                "function": {
+                    "name": tool.name,
+                    "description": tool.description or "",
+                    "parameters": tool.input_schema
+                }
+            })
+        params["tools"] = openai_tools
+
+    # Convert tool_choice
+    if anthropic_request.tool_choice:
+        tc = anthropic_request.tool_choice
+        if tc.type == "auto":
+            params["tool_choice"] = "auto"
+        elif tc.type == "none":
+            params["tool_choice"] = "none"
+        elif tc.type == "any":
+            params["tool_choice"] = "required"
+        elif tc.type == "tool" and tc.name:
+            params["tool_choice"] = {"type": "function", "function": {"name": tc.name}}
+
+    return params
+
+
+def convert_openai_to_anthropic_response(
+    openai_response: Dict[str, Any],
+    anthropic_model: str
+) -> Dict[str, Any]:
+    """Convert OpenAI Chat Completion response to Anthropic Messages format."""
+    message_id = openai_response.get("id", f"msg_{uuid.uuid4().hex[:24]}")
+
+    # Extract content
+    content_blocks = []
+    stop_reason = "end_turn"
+
+    choices = openai_response.get("choices", [])
+    if choices:
+        choice = choices[0]
+        message = choice.get("message", {})
+        finish_reason = choice.get("finish_reason", "stop")
+
+        # Map finish reasons
+        if finish_reason == "length":
+            stop_reason = "max_tokens"
+        elif finish_reason == "stop":
+            stop_reason = "end_turn"
+        elif finish_reason == "tool_calls":
+            stop_reason = "tool_use"
+
+        # Add text content
+        text_content = message.get("content")
+        if text_content:
+            content_blocks.append({"type": "text", "text": text_content})
+
+        # Add tool calls
+        tool_calls = message.get("tool_calls", [])
+        for tc in tool_calls:
+            if tc.get("type") == "function":
+                func = tc.get("function", {})
+                try:
+                    tool_input = json.loads(func.get("content", "{}"))
+                except (json.JSONDecodeError, TypeError):
+                    tool_input = {"raw": func.get("content", "")}
+                content_blocks.append({
+                    "type": "tool_use",
+                    "id": tc.get("id", f"toolu_{uuid.uuid4().hex[:24]}"),
+                    "name": func.get("name", ""),
+                    "input": tool_input
+                })
+
+    # Ensure at least one content block
+    if not content_blocks:
+        content_blocks.append({"type": "text", "text": ""})
+
+    # Extract usage
+    usage_data = openai_response.get("usage", {})
+    anthropic_usage = {
+        "input_tokens": usage_data.get("prompt_tokens", 0),
+        "output_tokens": usage_data.get("completion_tokens", 0)
+    }
+
+    return {
+        "id": message_id,
+        "type": "message",
+        "role": "assistant",
+        "content": content_blocks,
+        "model": anthropic_model,
+        "stop_reason": stop_reason,
+        "stop_sequence": None,
+        "usage": anthropic_usage
+    }
+
+
+def convert_openai_chunk_to_anthropic_events(
+    chunk: Dict[str, Any],
+    anthropic_model: str,
+    is_first: bool = False
+) -> List[Dict[str, Any]]:
+    """Convert OpenAI streaming chunk to Anthropic streaming events."""
+    events = []
+
+    if is_first:
+        # Send message_start event
+        message_id = chunk.get("id", f"msg_{uuid.uuid4().hex[:24]}")
+        events.append({
+            "type": "message_start",
+            "message": {
+                "id": message_id,
+                "type": "message",
+                "role": "assistant",
+                "content": [],
+                "model": anthropic_model,
+                "stop_reason": None,
+                "stop_sequence": None,
+                "usage": {"input_tokens": 0, "output_tokens": 0}
+            }
+        })
+
+    # Process choices
+    choices = chunk.get("choices", [])
+    for choice in choices:
+        delta = choice.get("delta", {})
+        finish_reason = choice.get("finish_reason")
+
+        # Handle content delta
+        content = delta.get("content")
+        if content:
+            events.append({
+                "type": "content_block_start",
+                "index": 0,
+                "content_block": {"type": "text", "text": ""}
+            })
+            events.append({
+                "type": "content_block_delta",
+                "index": 0,
+                "delta": {"type": "text_delta", "text": content}
+            })
+            events.append({
+                "type": "content_block_stop",
+                "index": 0
+            })
+
+        # Handle tool calls
+        tool_calls = delta.get("tool_calls", [])
+        for i, tc in enumerate(tool_calls):
+            if tc.get("type") == "function":
+                func = tc.get("function", {})
+                tc_id = tc.get("id", f"toolu_{uuid.uuid4().hex[:24]}")
+                tc_name = func.get("name", "")
+                tc_args = func.get("arguments", "{}")
+
+                events.append({
+                    "type": "content_block_start",
+                    "index": i + 1,
+                    "content_block": {
+                        "type": "tool_use",
+                        "id": tc_id,
+                        "name": tc_name
+                    }
+                })
+                events.append({
+                    "type": "content_block_delta",
+                    "index": i + 1,
+                    "delta": {"type": "input_json_delta", "partial_json": tc_args}
+                })
+                events.append({
+                    "type": "content_block_stop",
+                    "index": i + 1
+                })
+
+        # Handle finish
+        if finish_reason:
+            stop_reason = "end_turn"
+            if finish_reason == "length":
+                stop_reason = "max_tokens"
+            elif finish_reason == "tool_calls":
+                stop_reason = "tool_use"
+
+            events.append({
+                "type": "message_delta",
+                "delta": {
+                    "stop_reason": stop_reason,
+                    "stop_sequence": None
+                },
+                "usage": {"output_tokens": 0}
+            })
+
+    return events

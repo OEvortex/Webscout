@@ -219,3 +219,130 @@ class ErrorDetail(BaseModel):
 class ErrorResponse(BaseModel):
     """Error response structure compatible with OpenAI API."""
     error: ErrorDetail
+
+
+# ============================================================================
+# Anthropic API Models
+# ============================================================================
+
+class AnthropicTextBlock(BaseModel):
+    """Text content block for Anthropic messages."""
+    type: Literal["text"] = "text"
+    text: str
+
+
+class AnthropicImageSource(BaseModel):
+    """Image source for Anthropic messages."""
+    type: Literal["base64", "url"] = "base64"
+    media_type: Optional[str] = None
+    data: Optional[str] = None
+    url: Optional[str] = None
+
+
+class AnthropicImageBlock(BaseModel):
+    """Image content block for Anthropic messages."""
+    type: Literal["image"] = "image"
+    source: AnthropicImageSource
+
+
+class AnthropicToolUseBlock(BaseModel):
+    """Tool use content block for Anthropic messages."""
+    type: Literal["tool_use"] = "tool_use"
+    id: str
+    name: str
+    input: Dict[str, Any]
+
+
+class AnthropicToolResultBlock(BaseModel):
+    """Tool result content block for Anthropic messages."""
+    type: Literal["tool_result"] = "tool_result"
+    tool_use_id: str
+    content: Optional[Union[str, List[Dict[str, Any]]]] = None
+    is_error: Optional[bool] = None
+
+
+AnthropicContentBlock = Union[AnthropicTextBlock, AnthropicImageBlock, AnthropicToolUseBlock, AnthropicToolResultBlock]
+
+
+class AnthropicMessage(BaseModel):
+    """Message model for Anthropic API."""
+    role: Literal["user", "assistant"]
+    content: Union[str, List[AnthropicContentBlock]]
+
+
+class AnthropicToolDefinition(BaseModel):
+    """Tool definition for Anthropic API."""
+    name: str
+    description: Optional[str] = None
+    input_schema: Dict[str, Any]
+
+
+class AnthropicToolChoice(BaseModel):
+    """Tool choice configuration for Anthropic API."""
+    type: Literal["auto", "any", "tool", "none"] = "auto"
+    name: Optional[str] = None
+    disable_parallel_tool_use: Optional[bool] = None
+
+
+class AnthropicMessagesRequest(BaseModel):
+    """Request model for Anthropic Messages API."""
+    model: str = Field(..., description="The model that will complete your prompt.")
+    messages: List[AnthropicMessage] = Field(..., description="Input messages.")
+    max_tokens: int = Field(..., description="The maximum number of tokens to generate.")
+    system: Optional[Union[str, List[AnthropicTextBlock]]] = Field(
+        None,
+        description="System prompt. Can be a string or array of text blocks."
+    )
+    temperature: Optional[float] = Field(None, description="Amount of randomness (0.0 to 1.0).")
+    top_p: Optional[float] = Field(None, description="Nucleus sampling parameter.")
+    top_k: Optional[int] = Field(None, description="Top-k sampling parameter.")
+    stop_sequences: Optional[List[str]] = Field(None, description="Custom stop sequences.")
+    stream: Optional[bool] = Field(False, description="Whether to stream the response.")
+    tools: Optional[List[AnthropicToolDefinition]] = Field(None, description="Tools the model may use.")
+    tool_choice: Optional[AnthropicToolChoice] = Field(None, description="How the model should use tools.")
+    metadata: Optional[Dict[str, Any]] = Field(None, description="Metadata about the request.")
+
+    model_config = ConfigDict(
+        extra="ignore",
+        json_schema_extra={
+            "example": {
+                "model": "claude-3-5-sonnet-20241022",
+                "max_tokens": 1024,
+                "messages": [
+                    {"role": "user", "content": "Hello, Claude"}
+                ]
+            }
+        }
+    )
+
+
+class AnthropicTextResponseBlock(BaseModel):
+    """Text content block in Anthropic response."""
+    type: Literal["text"] = "text"
+    text: str
+
+
+class AnthropicToolUseResponseBlock(BaseModel):
+    """Tool use content block in Anthropic response."""
+    type: Literal["tool_use"] = "tool_use"
+    id: str
+    name: str
+    input: Dict[str, Any]
+
+
+class AnthropicUsage(BaseModel):
+    """Usage information for Anthropic response."""
+    input_tokens: int
+    output_tokens: int
+
+
+class AnthropicMessagesResponse(BaseModel):
+    """Response model for Anthropic Messages API."""
+    id: str
+    type: Literal["message"] = "message"
+    role: Literal["assistant"] = "assistant"
+    content: List[Union[AnthropicTextResponseBlock, AnthropicToolUseResponseBlock]]
+    model: str
+    stop_reason: Optional[Literal["end_turn", "max_tokens", "stop_sequence", "tool_use"]] = None
+    stop_sequence: Optional[str] = None
+    usage: AnthropicUsage

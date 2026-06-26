@@ -2,10 +2,11 @@
 API routes for the LLM4Free server.
 """
 
+import json
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Dict, cast
+from typing import Any, Dict, Optional, cast
 
 from fastapi import Body, FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
@@ -33,12 +34,17 @@ from .request_models import (
     ImageGenerationRequest,
     ModelListResponse,
     SpeechGenerationRequest,
+    AnthropicMessagesRequest,
 )
 from .request_processing import (
     handle_non_streaming_response,
     handle_streaming_response,
     prepare_provider_params,
     process_messages,
+    convert_anthropic_to_openai,
+    convert_openai_to_anthropic_response,
+    convert_openai_chunk_to_anthropic_events,
+    log_request,
 )
 
 
@@ -129,6 +135,7 @@ class Api:
         self._register_health_route()
         self._register_model_routes()
         self._register_chat_routes()
+        self._register_anthropic_routes()
         self._register_image_routes()
         self._register_tts_routes()
         self._register_websearch_routes()
@@ -419,6 +426,111 @@ class Api:
                     HTTP_500_INTERNAL_SERVER_ERROR,
                     "internal_error"
                 )
+
+    def _register_anthropic_routes(self):
+        """Register Anthropic-compatible routes."""
+        @self.app.post(
+            "/v1/messages",
+            tags=["Anthropic Messages"],
+            description="Generate messages using the Anthropic-compatible API format.",
+        )
+        async def anthropic_messages(
+            request: Request,
+            anthropic_request: AnthropicMessagesRequest = Body(...)
+        ):
+            """Handle Anthropic Messages API requests."""
+            start_time = time.time()
+            request_id = f"msg_{uuid.uuid4().hex[:24]}"
+
+            try:
+                ic.configureOutput(prefix='INFO| ')
+                ic(f"Processing Anthropic messages request {request_id} for model: {anthropic_request.model}")
+
+                # Convert Anthropic request to OpenAI format
+                openai_params = convert_anthropic_to_openai(anthropic_request)
+
+                # Resolve provider and model
+                provider_class, model_name = resolve_provider_and_model(openai_params["model"])
+
+                # Initialize provider
+                try:
+                    provider = get_provider_instance(provider_class)
+                    ic.configureOutput(prefix='DEBUG| ')
+                    ic(f"Using provider instance: {provider_class.__name__}")
+                except Exception as e:
+                    ic.configureOutput(prefix='ERROR| ')
+                    ic(f"Failed to initialize provider {provider_class.__name__}: {e}")
+                    raise APIError(
+                        f"Failed to initialize provider {provider_class.__name__}: {e}",
+                        HTTP_500_INTERNAL_SERVER_ERROR,
+                        "provider_error"
+                    )
+
+                # Update model name in params
+                openai_params["model"] = model_name
+
+                # Extract client IP
+                client_ip = request.client.host if request.client else "unknown"
+                if "x-forwarded-for" in request.headers:
+                    client_ip = request.headers["x-forwarded-for"].split(",")[0].strip()
+                elif "x-real-ip" in request.headers:
+                    client_ip = request.headers["x-real-ip"]
+
+                # Extract question from messages
+                question = ""
+                for msg in reversed(openai_params.get("messages", [])):
+                    if msg.get("role") == "user":
+                        content = msg.get("content", "")
+                        if isinstance(content, str):
+                            question = content
+                        break
+
+                # Handle streaming
+                if anthropic_request.stream:
+                    return await _handle_anthropic_streaming_response(
+                        provider, openai_params, request_id, client_ip, question,
+                        model_name, start_time, provider_class.__name__, request,
+                        anthropic_request.model
+                    )
+                else:
+                    return await _handle_anthropic_non_streaming_response(
+                        provider, openai_params, request_id, start_time, client_ip,
+                        question, model_name, provider_class.__name__, request,
+                        anthropic_request.model
+                    )
+
+            except APIError:
+                raise
+            except Exception as e:
+                ic.configureOutput(prefix='ERROR| ')
+                ic(f"Unexpected error in Anthropic messages {request_id}: {e}")
+                raise APIError(
+                    f"Internal server error: {str(e)}",
+                    HTTP_500_INTERNAL_SERVER_ERROR,
+                    "internal_error"
+                )
+
+        @self.app.get(
+            "/v1/messages",
+            tags=["Anthropic Messages"],
+            description="List available models (Anthropic-compatible endpoint)."
+        )
+        async def anthropic_list_models():
+            """List available models in Anthropic-compatible format."""
+            models = []
+            for model_name, provider_class in AppConfig.provider_map.items():
+                if "/" not in model_name:
+                    continue
+                if any(m["id"] == model_name for m in models):
+                    continue
+                models.append({
+                    "id": model_name,
+                    "type": "model",
+                    "display_name": model_name.split("/", 1)[1],
+                    "created_at": int(time.time())
+                })
+            models = sorted(models, key=lambda m: m["id"].split("/", 1)[1].lower())
+            return {"data": models}
 
     def _register_image_routes(self):
         """Register image generation routes."""
@@ -848,3 +960,229 @@ class Api:
                 "providers": providers,
                 "total_providers": len(providers)
             }
+
+
+# ============================================================================
+# Anthropic Response Handler Functions
+# ============================================================================
+
+async def _handle_anthropic_streaming_response(
+    provider: Any,
+    params: Dict[str, Any],
+    request_id: str,
+    ip_address: str,
+    question: str,
+    model_name: str,
+    start_time: float,
+    provider_name: Optional[str],
+    request_obj: Any,
+    anthropic_model: str,
+) -> StreamingResponse:
+    """Handle streaming response in Anthropic format."""
+    collected_content = []
+
+    async def streaming():
+        nonlocal collected_content
+        try:
+            ic.configureOutput(prefix='DEBUG| ')
+            ic(f"Starting Anthropic streaming response for request {request_id}")
+            completion_stream = provider.chat.completions.create(**params)
+
+            is_first_chunk = True
+
+            if hasattr(completion_stream, '__iter__') and not isinstance(completion_stream, (str, bytes, dict)):
+                try:
+                    for chunk in completion_stream:
+                        model_dump = getattr(chunk, 'model_dump', None)
+                        model_dict = getattr(chunk, 'dict', None)
+                        if model_dump and callable(model_dump):
+                            chunk_data = model_dump(exclude_none=True)
+                        elif model_dict and callable(model_dict):
+                            chunk_data = model_dict(exclude_none=True)
+                        elif isinstance(chunk, dict):
+                            chunk_data = chunk
+                        else:
+                            chunk_data = chunk
+
+                        # Collect content for logging
+                        if isinstance(chunk_data, dict) and 'choices' in chunk_data:
+                            for choice in chunk_data.get('choices', []):
+                                if isinstance(choice, dict):
+                                    delta = choice.get('delta', {})
+                                    content = delta.get('content')
+                                    if content:
+                                        collected_content.append(content)
+
+                        # Convert to Anthropic events
+                        events = convert_openai_chunk_to_anthropic_events(
+                            chunk_data, anthropic_model, is_first_chunk
+                        )
+                        is_first_chunk = False
+
+                        for event in events:
+                            yield f"event: {event['type']}\ndata: {json.dumps(event, ensure_ascii=False)}\n\n"
+
+                except TypeError:
+                    # Fall back to non-generator response
+                    model_dump = getattr(completion_stream, 'model_dump', None)
+                    model_dict = getattr(completion_stream, 'dict', None)
+                    if model_dump and callable(model_dump):
+                        response_data = model_dump(exclude_none=True)
+                    elif model_dict and callable(model_dict):
+                        response_data = model_dict(exclude_none=True)
+                    else:
+                        response_data = completion_stream
+
+                    events = convert_openai_chunk_to_anthropic_events(
+                        response_data, anthropic_model, True
+                    )
+                    for event in events:
+                        yield f"event: {event['type']}\ndata: {json.dumps(event, ensure_ascii=False)}\n\n"
+            else:
+                # Non-generator response
+                model_dump = getattr(completion_stream, 'model_dump', None)
+                model_dict = getattr(completion_stream, 'dict', None)
+                if model_dump and callable(model_dump):
+                    response_data = model_dump(exclude_none=True)
+                elif model_dict and callable(model_dict):
+                    response_data = model_dict(exclude_none=True)
+                else:
+                    response_data = completion_stream
+
+                events = convert_openai_chunk_to_anthropic_events(
+                    response_data, anthropic_model, True
+                )
+                for event in events:
+                    yield f"event: {event['type']}\ndata: {json.dumps(event, ensure_ascii=False)}\n\n"
+
+        except Exception as e:
+            ic.configureOutput(prefix='ERROR| ')
+            ic(f"Error in Anthropic streaming response for request {request_id}: {e}")
+            error_event = {
+                "type": "error",
+                "error": {
+                    "type": "api_error",
+                    "message": str(e)
+                }
+            }
+            yield f"event: error\ndata: {json.dumps(error_event, ensure_ascii=False)}\n\n"
+
+        finally:
+            yield "event: message_stop\ndata: {}\n\n"
+
+            # Log request
+            if collected_content:
+                answer = "".join(collected_content)
+                response_time_ms = int((time.time() - start_time) * 1000)
+                await log_request(
+                    request_id=request_id,
+                    ip_address=ip_address,
+                    model_used=model_name,
+                    question=question,
+                    answer=answer,
+                    response_time_ms=response_time_ms,
+                    status_code=200,
+                    provider=provider_name,
+                    request_obj=request_obj
+                )
+
+    return StreamingResponse(streaming(), media_type="text/event-stream")
+
+
+async def _handle_anthropic_non_streaming_response(
+    provider: Any,
+    params: Dict[str, Any],
+    request_id: str,
+    start_time: float,
+    ip_address: str,
+    question: str,
+    model_name: str,
+    provider_name: Optional[str],
+    request_obj: Any,
+    anthropic_model: str,
+) -> Dict[str, Any]:
+    """Handle non-streaming response in Anthropic format."""
+    try:
+        ic.configureOutput(prefix='DEBUG| ')
+        ic(f"Starting Anthropic non-streaming response for request {request_id}")
+
+        # Ensure stream is False for non-streaming
+        params["stream"] = False
+        completion = provider.chat.completions.create(**params)
+
+        if completion is None:
+            return {
+                "id": f"msg_{request_id}",
+                "type": "message",
+                "role": "assistant",
+                "content": [{"type": "text", "text": "No response generated."}],
+                "model": anthropic_model,
+                "stop_reason": "end_turn",
+                "stop_sequence": None,
+                "usage": {"input_tokens": 0, "output_tokens": 0}
+            }
+
+        # Convert to Anthropic format
+        if hasattr(completion, "model_dump"):
+            response_data = completion.model_dump(exclude_none=True)
+        elif hasattr(completion, "dict"):
+            response_data = completion.dict(exclude_none=True)
+        elif isinstance(completion, dict):
+            response_data = completion
+        else:
+            raise APIError(
+                "Invalid response format from provider",
+                HTTP_500_INTERNAL_SERVER_ERROR,
+                "provider_error"
+            )
+
+        anthropic_response = convert_openai_to_anthropic_response(response_data, anthropic_model)
+
+        elapsed = time.time() - start_time
+        response_time_ms = int(elapsed * 1000)
+        ic.configureOutput(prefix='INFO| ')
+        ic(f"Completed Anthropic non-streaming request {request_id} in {elapsed:.2f}s")
+
+        # Log request
+        answer = ""
+        for block in anthropic_response.get("content", []):
+            if block.get("type") == "text":
+                answer += block.get("text", "")
+
+        await log_request(
+            request_id=request_id,
+            ip_address=ip_address,
+            model_used=model_name,
+            question=question,
+            answer=answer,
+            response_time_ms=response_time_ms,
+            status_code=200,
+            provider=provider_name,
+            request_obj=request_obj
+        )
+
+        return anthropic_response
+
+    except Exception as e:
+        ic.configureOutput(prefix='ERROR| ')
+        ic(f"Error in Anthropic non-streaming response for request {request_id}: {e}")
+        error_message = str(e)
+
+        await log_request(
+            request_id=request_id,
+            ip_address=ip_address,
+            model_used=model_name,
+            question=question,
+            answer="",
+            response_time_ms=int((time.time() - start_time) * 1000),
+            status_code=500,
+            error_message=error_message,
+            provider=provider_name,
+            request_obj=request_obj
+        )
+
+        raise APIError(
+            f"Provider error: {error_message}",
+            HTTP_500_INTERNAL_SERVER_ERROR,
+            "provider_error"
+        )
