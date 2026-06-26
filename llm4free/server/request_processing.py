@@ -103,6 +103,13 @@ def process_messages(messages: List[Message]) -> List[Dict[str, Any]]:
             if msg_in.name:
                 message_dict_out["name"] = msg_in.name
 
+            # Add tool call fields
+            if msg_in.tool_calls is not None:
+                message_dict_out["tool_calls"] = msg_in.tool_calls
+
+            if msg_in.tool_call_id is not None:
+                message_dict_out["tool_call_id"] = msg_in.tool_call_id
+
             processed_messages.append(message_dict_out)
 
         except Exception as e:
@@ -177,6 +184,20 @@ def prepare_provider_params(chat_request: ChatCompletionRequest, model_name: str
     )
 
     for param in optional_params:
+        value = getattr(chat_request, param, None)
+        if value is not None:
+            params[param] = value
+
+    # Add tool calling parameters
+    tool_params = ["tools", "tool_choice", "parallel_tool_calls"]
+    for param in tool_params:
+        value = getattr(chat_request, param, None)
+        if value is not None:
+            params[param] = value
+
+    # Add deprecated tool calling parameters (for backward compatibility)
+    deprecated_tool_params = ["functions", "function_call"]
+    for param in deprecated_tool_params:
         value = getattr(chat_request, param, None)
         if value is not None:
             params[param] = value

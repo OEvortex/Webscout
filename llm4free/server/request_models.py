@@ -1,7 +1,7 @@
 """
 Pydantic models for API requests and responses.
 """
-from typing import Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from pydantic import ConfigDict
 
@@ -44,6 +44,41 @@ class Message(BaseModel):
         description="The content of the message. Can be a string, a list of content parts (for multimodal), or null."
     )
     name: Optional[str] = None
+    tool_calls: Optional[List[Dict[str, Any]]] = Field(
+        None,
+        description="Tool calls that the assistant should make, used in assistant messages when tool use is enabled."
+    )
+    tool_call_id: Optional[str] = Field(
+        None,
+        description="Tool call ID for tool messages, used to match tool calls with tool responses."
+    )
+
+
+# Tool calling models
+class FunctionParameters(BaseModel):
+    """Parameters for a function tool."""
+    type: Literal["object"] = "object"
+    properties: Optional[Dict[str, Any]] = Field(None, description="The parameters the function accepts.")
+    required: Optional[List[str]] = Field(None, description="List of required parameter names.")
+    additionalProperties: Optional[bool] = Field(None, description="Whether additional properties are allowed.")
+
+
+class FunctionDefinition(BaseModel):
+    """Definition of a function tool (deprecated in favor of tools, but kept for compatibility)."""
+    name: str = Field(..., description="The name of the function to call.")
+    description: Optional[str] = Field(None, description="A description of what the function does.")
+    parameters: FunctionParameters = Field(..., description="The parameters the function accepts.")
+    strict: Optional[bool] = Field(None, description="Whether the function parameters must strictly match the schema.")
+
+
+class ToolFunction(BaseModel):
+    """Function tool definition for tools array."""
+    type: Literal["function"] = "function"
+    function: FunctionDefinition = Field(..., description="The function definition.")
+
+
+# Union type for all tool types
+ToolUnion = Union[ToolFunction, Dict[str, Any]]
 
 
 class ChatCompletionRequest(BaseModel):
@@ -60,6 +95,30 @@ class ChatCompletionRequest(BaseModel):
     logit_bias: Optional[Dict[str, float]] = Field(None, description="Modify the likelihood of specified tokens appearing in the completion.")
     user: Optional[str] = Field(None, description="A unique identifier representing your end-user.")
     stop: Optional[Union[str, List[str]]] = Field(None, description="Up to 4 sequences where the API will stop generating further tokens.")
+    
+    # Tool calling support
+    tools: Optional[List[ToolUnion]] = Field(
+        None,
+        description="A list of tools the model may call. Currently only function tools are supported."
+    )
+    tool_choice: Optional[Union[Literal["none", "auto", "required"], Dict[str, Any]]] = Field(
+        None,
+        description="Controls which (if any) tool is called by the model. 'none' means no tool calling, 'auto' means the model can choose, 'required' means the model must call a tool. Can also be a dict specifying a particular tool."
+    )
+    parallel_tool_calls: Optional[bool] = Field(
+        None,
+        description="Whether to enable parallel tool calling during tool use."
+    )
+    
+    # Deprecated fields (kept for backward compatibility)
+    functions: Optional[List[FunctionDefinition]] = Field(
+        None,
+        description="DEPRECATED: Use 'tools' instead. A list of functions the model may generate JSON inputs for."
+    )
+    function_call: Optional[Union[Literal["none", "auto"], Dict[str, str]]] = Field(
+        None,
+        description="DEPRECATED: Use 'tool_choice' instead. Controls which (if any) function is called by the model."
+    )
 
     model_config = ConfigDict(
         extra="ignore",
