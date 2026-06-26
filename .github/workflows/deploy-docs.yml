@@ -44,7 +44,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install mkdocs mkdocs-material pymdown-extensions
+          pip install mkdocs mkdocs-material mkdocstrings mkdocstrings-python pymdown-extensions
 
       - name: Build documentation
         run: mkdocs build
@@ -82,7 +82,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install mkdocs mkdocs-material pymdown-extensions
+          pip install mkdocs mkdocs-material mkdocstrings mkdocstrings-python pymdown-extensions
 
       - name: Build documentation (test)
         run: mkdocs build
