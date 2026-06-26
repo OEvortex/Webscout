@@ -7,7 +7,6 @@ from llm4free.litagent import LitAgent
 from .AISEARCH import *
 from .AIutel import *  # noqa: F403
 from .client import Client
-from .embedding import LF4CodebaseIndex, LF4StaticEmbedding
 from .Extra import *  # noqa: F403
 from .llm import *
 from .models import model
