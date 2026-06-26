@@ -69,6 +69,10 @@ dependencies = [
     "safetensors>=0.8.0",
     "huggingface-hub>=1.20.1",
     "requests>=2.32.5",
+    "mkdocs>=1.6.1",
+    "mkdocstrings>=1.0.4",
+    "mkdocstrings-python>=2.0.5",
+    "mkdocs-material>=9.7.6",
 ]
 
 [project.scripts]
@@ -101,6 +105,12 @@ api = [
 ]
 parser = [
     "lxml>=5.2.2",  # Optional: faster HTML/XML parsing with lxml
+]
+docs = [
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.7.6",
+    "mkdocstrings>=1.0.4",
+    "mkdocstrings-python>=2.0.5",
 ]
 
 [tool.pytest.ini_options]
