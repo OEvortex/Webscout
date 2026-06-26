@@ -24,7 +24,7 @@ except ImportError:
 
 from llm4free.litagent import LitAgent
 
-from ....exceptions import RatelimitE, TimeoutE, WebscoutE
+from ....exceptions import LLM4FreeE, RatelimitE, TimeoutE
 from ....utils import (
     _extract_vqd,
     _normalize,
@@ -197,13 +197,13 @@ class DuckDuckGoBase:
         except Exception as ex:
             if "time" in str(ex).lower():
                 raise TimeoutE(f"{url} {type(ex).__name__}: {ex}") from ex
-            raise WebscoutE(f"{url} {type(ex).__name__}: {ex}") from ex
+            raise LLM4FreeE(f"{url} {type(ex).__name__}: {ex}") from ex
 
         if resp.status_code == 200:
             return resp
         elif resp.status_code in (202, 301, 403, 400, 429, 418):
             raise RatelimitE(f"{resp.url} {resp.status_code} Ratelimit")
-        raise WebscoutE(f"{resp.url} return None. {params=} {content=} {data=}")
+        raise LLM4FreeE(f"{resp.url} return None. {params=} {content=} {data=}")
 
     def _get_vqd(self, keywords: str) -> str:
         """Get vqd value for a search query."""

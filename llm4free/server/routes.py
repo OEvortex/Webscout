@@ -60,7 +60,7 @@ class Api:
 
         from .exceptions import APIError
 
-        github_footer = "If you believe this is a bug, please pull an issue at https://github.com/OEvortex/Webscout."
+        github_footer = "If you believe this is a bug, please pull an issue at https://github.com/OEvortex/LLM4Free."
 
         @self.app.exception_handler(APIError)
         async def api_error_handler(request, exc: APIError):
@@ -617,7 +617,7 @@ class Api:
                             "error": {
                                 "message": e.message,
                                 "type": e.error_type,
-                                "footer": "If you believe this is a bug, please pull an issue at https://github.com/OEvortex/Webscout.",
+                                "footer": "If you believe this is a bug, please pull an issue at https://github.com/OEvortex/LLM4Free.",
                             }
                         },
                     )
@@ -793,7 +793,7 @@ class Api:
                             "error": {
                                 "message": e.message,
                                 "type": e.error_type,
-                                "footer": "If you believe this is a bug, please pull an issue at https://github.com/OEvortex/Webscout.",
+                                "footer": "If you believe this is a bug, please pull an issue at https://github.com/OEvortex/LLM4Free.",
                             }
                         },
                     )
@@ -914,7 +914,7 @@ class Api:
             language: str = Query("en", description="Language for weather"),
         ):
             """Unified web search endpoint."""
-            github_footer = "If you believe this is a bug, please pull an issue at https://github.com/OEvortex/Webscout."
+            github_footer = "If you believe this is a bug, please pull an issue at https://github.com/OEvortex/LLM4Free."
             try:
                 # Dynamically support all engines in ENGINES
                 found = False

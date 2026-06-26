@@ -1,8 +1,8 @@
 site_name: LLM4Free
 site_description: Free OpenAI-compatible API for 40+ LLM providers
 site_url: https://llm4free.readthedocs.io
-repo_url: https://github.com/OEvortex/Webscout
-repo_name: OEvortex/Webscout
+repo_url: https://github.com/OEvortex/LLM4Free
+repo_name: OEvortex/LLM4Free
 edit_uri: edit/main/docs/
 
 theme:

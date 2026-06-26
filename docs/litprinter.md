@@ -467,7 +467,7 @@ Contributions are welcome! Please:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-See [LLM4Free contributing guidelines](https://github.com/OEvortex/Webscout/blob/main/CONTRIBUTING.md) for details.
+See [LLM4Free contributing guidelines](https://github.com/OEvortex/LLM4Free/blob/main/CONTRIBUTING.md) for details.
 
 ---
 
@@ -481,7 +481,7 @@ LitPrinter is released under the MIT License. See [LICENSE](https://github.com/O
   <p>Made with ❤️ by OEvortex</p>
   <p>
     <a href="https://github.com/OEvortex/litprinter">GitHub</a> •
-    <a href="https://github.com/OEvortex/Webscout">LLM4Free</a> •
+    <a href="https://github.com/OEvortex/LLM4Free">LLM4Free</a> •
     <a href="https://pypi.org/project/litprinter/">PyPI</a>
   </p>
 </div>

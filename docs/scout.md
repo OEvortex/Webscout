@@ -1,6 +1,6 @@
 # Scout: Advanced HTML Parser & Web Crawler
 > Last updated: 2025-11-16
-> Maintained by [LLM4Free](https://github.com/OEvortex/Webscout)
+> Maintained by [LLM4Free](https://github.com/OEvortex/LLM4Free)
 
 **🚀 The Most Advanced HTML Parser & Web Crawler for AI/LLM Data Collection**
 
@@ -49,7 +49,7 @@ pip install llm4free
 Or install the latest version from GitHub:
 
 ```bash
-pip install git+https://github.com/OEvortex/Webscout.git
+pip install git+https://github.com/OEvortex/LLM4Free.git
 ```
 
 ## 🚀 Quick Start
@@ -484,7 +484,7 @@ soup.prettify()
 - `_crawl_page(url, depth=0)`: Crawl a single page (internal method)
 - `_is_valid_url(url)`: Check if a URL is valid (internal method)
 
-For detailed API documentation, please refer to the [documentation](https://github.com/OEvortex/Webscout/wiki).
+For detailed API documentation, please refer to the [documentation](https://github.com/OEvortex/LLM4Free/wiki).
 
 ## 🔧 Dependencies
 
@@ -514,9 +514,9 @@ Please make sure to update tests as appropriate.
 <div align="center">
   <p>Made with ❤️ by the LLM4Free team</p>
   <p>
-    <a href="https://github.com/OEvortex/Webscout">GitHub</a> •
-    <a href="https://github.com/OEvortex/Webscout/wiki">Documentation</a> •
-    <a href="https://github.com/OEvortex/Webscout/issues">Report Bug</a> •
-    <a href="https://github.com/OEvortex/Webscout/issues">Request Feature</a>
+    <a href="https://github.com/OEvortex/LLM4Free">GitHub</a> •
+    <a href="https://github.com/OEvortex/LLM4Free/wiki">Documentation</a> •
+    <a href="https://github.com/OEvortex/LLM4Free/issues">Report Bug</a> •
+    <a href="https://github.com/OEvortex/LLM4Free/issues">Request Feature</a>
   </p>
 </div>

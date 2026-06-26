@@ -7,7 +7,7 @@ from typing import Any, Literal, Optional, cast
 
 import curl_cffi.requests
 
-from ..exceptions import RatelimitE, TimeoutE, WebscoutE
+from ..exceptions import LLM4FreeE, RatelimitE, TimeoutE
 
 
 class HttpClient:
@@ -104,7 +104,7 @@ class HttpClient:
         Raises:
             TimeoutE: Request timeout.
             RatelimitE: Rate limit exceeded.
-            WebscoutE: Other request errors.
+            LLM4FreeE: Other request errors.
         """
         try:
             request_kwargs: dict[str, Any] = {
@@ -129,12 +129,12 @@ class HttpClient:
             elif resp.status_code in (202, 301, 403, 400, 429, 418):
                 raise RatelimitE(f"{resp.url} {resp.status_code} Rate limit")
             else:
-                raise WebscoutE(f"{resp.url} returned {resp.status_code}")
+                raise LLM4FreeE(f"{resp.url} returned {resp.status_code}")
 
         except Exception as ex:
             if "time" in str(ex).lower() or "timeout" in str(ex).lower():
                 raise TimeoutE(f"{url} {type(ex).__name__}: {ex}") from ex
-            raise WebscoutE(f"{url} {type(ex).__name__}: {ex}") from ex
+            raise LLM4FreeE(f"{url} {type(ex).__name__}: {ex}") from ex
 
     def get(self, url: str, **kwargs: Any) -> curl_cffi.requests.Response:
         """Make GET request."""

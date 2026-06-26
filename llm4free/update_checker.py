@@ -35,8 +35,8 @@ except ImportError:
 
 PYPI_URL = "https://pypi.org/pypi/llm4free/json"
 YOUTUBE_URL = "https://youtube.com/@OEvortex"
-GITHUB_URL = "https://github.com/OEvortex/Webscout"
-CACHE_FILE = Path(tempfile.gettempdir()) / "webscout_update_check.cache"
+GITHUB_URL = "https://github.com/OEvortex/LLM4Free"
+CACHE_FILE = Path(tempfile.gettempdir()) / "llm4free_update_check.cache"
 
 session = Session()
 
@@ -90,7 +90,7 @@ def get_pypi_versions() -> Dict[str, Optional[str]]:
 
 def should_check(force: bool = False) -> bool:
     """Check if we should perform an update check based on cache."""
-    if os.environ.get("WEBSCOUT_NO_UPDATE"):
+    if os.environ.get("LLM4FREE_NO_UPDATE"):
         return False
 
     if force:
@@ -145,7 +145,7 @@ def format_update_message(current: str, new: str, utype: str) -> str:
         content = Text.assemble(
             ("A new ", "white"),
             (f"{utype} ", "bold yellow" if utype == "Pre-release" else "bold green"),
-            ("version of Webscout is available!\n\n", "white"),
+            ("version of LLM4Free is available!\n\n", "white"),
             ("Current:     ", "white"),
             (f"{current}", "bold red"),
             ("\n", ""),
@@ -173,7 +173,7 @@ def format_update_message(current: str, new: str, utype: str) -> str:
         return capture.getvalue()
     else:
         return (
-            f"\n\033[1;36m[ Webscout Update ]\033[0m\n"
+            f"\n\033[1;36m[ LLM4Free Update ]\033[0m\n"
             f"New {utype} version available: \033[1;32m{new}\033[0m (Current: \033[1;31m{current}\033[0m)\n"
             f"Run: \033[1;33m{cmd}\033[0m to update.\n"
             f"\033[1;32mYouTube: {YOUTUBE_URL}\033[0m\n"
@@ -203,7 +203,7 @@ def format_dev_message(current: str, latest: str) -> str:
 
         panel = Panel(
             content,
-            title="[bold blue]Webscout Dev Mode[/bold blue]",
+            title="[bold blue]LLM4Free Dev Mode[/bold blue]",
             border_style="yellow",
             expand=False,
             padding=(1, 2),
@@ -212,7 +212,7 @@ def format_dev_message(current: str, latest: str) -> str:
         return capture.getvalue()
     else:
         return (
-            f"\n\033[1;33m[ Webscout Info ]\033[0m\n"
+            f"\n\033[1;33m[ LLM4Free Info ]\033[0m\n"
             f"You're running a development version (\033[1;36m{current}\033[0m)\n"
             f"Latest stable release: \033[1;32m{latest}\033[0m\n"
             f"\033[1;32mYouTube: {YOUTUBE_URL}\033[0m\n"
@@ -221,7 +221,7 @@ def format_dev_message(current: str, latest: str) -> str:
 
 def check_for_updates(force: bool = False) -> Optional[str]:
     """
-    Check if a newer version of Webscout is available.
+    Check if a newer version of LLM4Free is available.
 
     Args:
         force (bool): If True, ignore cache and force check.

@@ -1,6 +1,6 @@
 # OpenAI-Compatible API Server (`llm4free.server`)
 > Last updated: 2025-12-20
-> Maintained by [LLM4Free](https://github.com/OEvortex/Webscout)
+> Maintained by [LLM4Free](https://github.com/OEvortex/LLM4Free)
 
 LLM4Free's [`llm4free.server`](../llm4free/server/__init__.py:1) module provides a comprehensive OpenAI-compatible API server that serves AI models in OpenAI-compatible API format, making it usable wherever OpenAI API is expected. This server allows you to use any supported LLM4Free provider with tools and applications designed for OpenAI's API. The server exposes the same providers available in the LLM4Free Python client (`client.py`) through HTTP endpoints, enabling integration with any OpenAI-compatible application. For client-side integrations, see [docs/client.md](client.md).
 
@@ -493,7 +493,7 @@ raise APIError(
     "type": "invalid_request_error",
     "param": "model",
     "code": "model_not_found",
-    "footer": "If you believe this is a bug, please file an issue at https://github.com/OEvortex/Webscout."
+    "footer": "If you believe this is a bug, please file an issue at https://github.com/OEvortex/LLM4Free."
   }
 }
 ```
@@ -515,7 +515,7 @@ The server provides comprehensive exception handling with detailed error respons
       }
     ],
     "type": "validation_error",
-    "footer": "If you believe this is a bug, please file an issue at https://github.com/OEvortex/Webscout."
+    "footer": "If you believe this is a bug, please file an issue at https://github.com/OEvortex/LLM4Free."
   }
 }
 
@@ -524,7 +524,7 @@ The server provides comprehensive exception handling with detailed error respons
   "error": {
     "message": "Something went wrong.",
     "type": "http_error",
-    "footer": "If you believe this is a bug, please file an issue at https://github.com/OEvortex/Webscout."
+    "footer": "If you believe this is a bug, please file an issue at https://github.com/OEvortex/LLM4Free."
   }
 }
 
@@ -533,7 +533,7 @@ The server provides comprehensive exception handling with detailed error respons
   "error": {
     "message": "Internal server error: Details about the error",
     "type": "server_error",
-    "footer": "If you believe this is a bug, please file an issue at https://github.com/OEvortex/Webscout."
+    "footer": "If you believe this is a bug, please file an issue at https://github.com/OEvortex/LLM4Free."
   }
 }
 

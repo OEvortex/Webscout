@@ -32,7 +32,7 @@ All notable changes to this project will be documented in this file.
 - **LLMChat** — Changed API endpoint from dead `https://coderelisher.com/ai/fetch` to `https://llmchat.in/inference/stream`; added dual response format parsing (OpenAI-compatible delta vs. `{"response":"..."}` for Deepseek R1); forwarded `temperature`/`top_p` to payload.
 - **AI4Chat** — Updated model list from 178 to 277 entries based on `data-name` attributes scraped from `https://www.ai4chat.co/models`. All existing keys preserved, 99 new models appended.
 - **Wikipedia** — Fixed default region `"en-us"`→`"us-en"` (was generating `us.wikipedia.org` which fails DNS); `limit=1`→`limit=max_results` (was returning only 1 result regardless of `max_results`).
-- **search/`__init__.py`** — Updated docstring from "Webscout" to "LLM4Free".
+- **search/`__init__.py`** — Updated docstring from "LLM4Free" to "LLM4Free".
 
 ### 🗑️ Removed
 - **Elmo** — Deleted dead provider (file removed).
@@ -40,7 +40,7 @@ All notable changes to this project will be documented in this file.
 - **Jadve** — Deleted dead provider (file removed).
 - **LLMChatCo** — Deleted dead provider (file removed).
 - **Provider.md** — Deleted stale documentation file.
-- **docs/compose/plans/2026-06-18-rename-webscout-to-llm4free.md** — Deleted old plan document.
+- **docs/compose/plans/2026-06-18-rename-llm4free-to-llm4free.md** — Deleted old plan document.
 - **optimizers.py** — Deleted stale module.
 - **conversation.py** — Deleted stale module.
 - **AIauto.py** — Deleted stale module.

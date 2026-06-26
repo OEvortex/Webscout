@@ -1,6 +1,6 @@
 # LLM4Free Documentation Hub
 > Last updated: 2025-12-20  
-> Maintained by [LLM4Free](https://github.com/OEvortex/Webscout)
+> Maintained by [LLM4Free](https://github.com/OEvortex/LLM4Free)
 
 Welcome to the central entry point for everything you need to know about LLM4Free. This hub is organized around the actual modules that live inside the repository so you can quickly jump from high-level concepts to concrete implementation details.
 

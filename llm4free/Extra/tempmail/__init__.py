@@ -1,6 +1,6 @@
 """
 TempMail Package - Temporary Email Generation Functionality
-Part of Webscout Extra tools
+Part of LLM4Free Extra tools
 """
 
 from .base import (

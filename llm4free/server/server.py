@@ -91,7 +91,7 @@ def create_app():
         # Custom footer and styles
         footer_html = """
         <div class="llm4free-footer">
-            Powered by <a href='https://github.com/OEvortex/Webscout' target='_blank'>LLM4Free</a>
+            Powered by <a href='https://github.com/OEvortex/LLM4Free' target='_blank'>LLM4Free</a>
         </div>
         """
 

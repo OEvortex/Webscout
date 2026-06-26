@@ -33,14 +33,14 @@ Thank you for considering contributing to LLM4Free. This guide will help you get
 
 ```bash
 # 1. Fork the repository on GitHub
-# Visit: https://github.com/OEvortex/Webscout
+# Visit: https://github.com/OEvortex/LLM4Free
 
 # 2. Clone your fork
 git clone https://github.com/YOUR-USERNAME/LLM4Free.git
 cd LLM4Free
 
 # 3. Add upstream remote
-git remote add upstream https://github.com/OEvortex/Webscout.git
+git remote add upstream https://github.com/OEvortex/LLM4Free.git
 
 # 4. Verify remotes
 git remote -v
@@ -649,8 +649,8 @@ Follow the structure in [AGENTS.md](../AGENTS.md):
 
 ## Getting Help
 
-- **Questions:** [GitHub Discussions](https://github.com/OEvortex/Webscout/discussions)
-- **Issues:** [GitHub Issues](https://github.com/OEvortex/Webscout/issues)
+- **Questions:** [GitHub Discussions](https://github.com/OEvortex/LLM4Free/discussions)
+- **Issues:** [GitHub Issues](https://github.com/OEvortex/LLM4Free/issues)
 - **Chat:** [Telegram Group](https://t.me/OEvortexAI)
 - **Documentation:** [docs/README.md](README.md)
 

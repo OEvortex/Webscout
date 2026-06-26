@@ -133,7 +133,7 @@ class Tool:
 
 
 class Provider(ABC):
-    """Base class for all normal (non-OpenAI-compatible) Webscout providers.
+    """Base class for all normal (non-OpenAI-compatible) LLM4Free providers.
 
     Subclasses must implement :meth:`ask` and :meth:`get_message`.
 

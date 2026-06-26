@@ -57,7 +57,7 @@ class BaseTTSProvider(TTSProvider):
 
     def __init__(self):
         """Initialize the base TTS provider."""
-        self.temp_dir = tempfile.mkdtemp(prefix="webscout_tts_")
+        self.temp_dir = tempfile.mkdtemp(prefix="llm4free_tts_")
         self.default_model = "gpt-4o-mini-tts"
         self.default_voice = "coral"
         self.default_format = "mp3"
@@ -309,7 +309,7 @@ class AsyncBaseTTSProvider:
 
     def __init__(self):
         """Initialize the async base TTS provider."""
-        self.temp_dir = tempfile.mkdtemp(prefix="webscout_tts_")
+        self.temp_dir = tempfile.mkdtemp(prefix="llm4free_tts_")
         self.default_model = "gpt-4o-mini-tts"
         self.default_voice = "coral"
         self.default_format = "mp3"

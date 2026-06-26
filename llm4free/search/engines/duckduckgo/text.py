@@ -6,7 +6,7 @@ import warnings
 from random import shuffle
 from typing import Optional
 
-from ....exceptions import WebscoutE
+from ....exceptions import LLM4FreeE
 from ....search.results import TextResult
 from .base import DuckDuckGoBase
 
@@ -58,7 +58,7 @@ class DuckDuckGoTextSearch(DuckDuckGoBase):
             except Exception as ex:
                 err = ex
 
-        raise WebscoutE(err)
+        raise LLM4FreeE(err)
 
     def _text_html(
         self,

@@ -31,7 +31,7 @@ PROVIDER_ALL = list(PROVIDER_MAP.keys())
 
 def list_providers():
     console.print(f"[yellow]DEBUG: PROVIDER_ALL has {len(PROVIDER_ALL)} items[/yellow]")
-    table = Table(title="Webscout Providers")
+    table = Table(title="LLM4Free Providers")
     table.add_column("Name", style="cyan")
     table.add_column("Auth Required", style="magenta")
     table.add_column("Models", style="green")
@@ -121,7 +121,7 @@ def run_all_providers(prompt="Say 'Hello World' in one word", api_key=None):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Webscout Provider Tester")
+    parser = argparse.ArgumentParser(description="LLM4Free Provider Tester")
     parser.add_argument("--list", action="store_true", help="List all providers")
     parser.add_argument("--provider", type=str, help="Test a specific provider")
     parser.add_argument("--model", type=str, help="Model to use")

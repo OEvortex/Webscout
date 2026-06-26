@@ -409,9 +409,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-Made with ❤️ by the [LLM4Free](https://github.com/OEvortex/Webscout) team
+Made with ❤️ by the [LLM4Free](https://github.com/OEvortex/LLM4Free) team
 
-[![GitHub stars](https://img.shields.io/github/stars/OEvortex/LLM4Free?style=social)](https://github.com/OEvortex/Webscout)
+[![GitHub stars](https://img.shields.io/github/stars/OEvortex/LLM4Free?style=social)](https://github.com/OEvortex/LLM4Free)
 
 </div>
 

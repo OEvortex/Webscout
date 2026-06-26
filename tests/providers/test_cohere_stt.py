@@ -26,7 +26,7 @@ def test_cohere_stt():
 
     # Test transcription with a sample audio file
     # Using a publicly available sample audio
-    sample_audio_url = r"C:\Users\koula\Desktop\CODEBASE\Projects\OEvortex\Webscout\tests\test.wav"
+    sample_audio_url = r"C:\Users\koula\Desktop\CODEBASE\Projects\OEvortex\LLM4Free\tests\test.wav"
 
     print("\n=== Testing transcription ===")
     print(f"Using sample audio: {sample_audio_url}")

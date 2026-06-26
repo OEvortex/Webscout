@@ -1,6 +1,6 @@
 # Stream Sanitization Utilities (`llm4free.sanitize`)
 > Last updated: 2025-12-20
-> Maintained by [LLM4Free](https://github.com/OEvortex/Webscout)
+> Maintained by [LLM4Free](https://github.com/OEvortex/LLM4Free)
 
 LLM4Free's [`llm4free.sanitize`](../llm4free/sanitize.py:1) module provides a comprehensive suite of utilities for processing, transforming, and sanitizing data streams. These tools are designed for robust, flexible, and high-performance handling of text and byte streams, including real-time data, API responses, and streaming content from various sources.
 

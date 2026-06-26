@@ -3,7 +3,7 @@ from __future__ import annotations
 from decimal import Decimal
 from math import sqrt
 
-from ....exceptions import WebscoutE
+from ....exceptions import LLM4FreeE
 from .base import DuckDuckGoBase
 
 
@@ -83,7 +83,7 @@ class DuckDuckGoMaps(DuckDuckGoBase):
                 params=params,
             ).content
             if resp_content == b"[]":
-                raise WebscoutE("maps() Coordinates are not found, check function parameters.")
+                raise LLM4FreeE("maps() Coordinates are not found, check function parameters.")
             resp_json = self.json_loads(resp_content)
             coordinates = resp_json[0]["boundingbox"]
             lat_t, lon_l = Decimal(coordinates[1]), Decimal(coordinates[2])

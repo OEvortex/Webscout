@@ -1,6 +1,6 @@
 # 🚀 LLM4Free Awesome Prompts Manager
 > Last updated: 2025-12-20
-> Maintained by [LLM4Free](https://github.com/OEvortex/Webscout)
+> Maintained by [LLM4Free](https://github.com/OEvortex/LLM4Free)
 
 LLM4Free's Awesome Prompts Manager provides a comprehensive system for managing and utilizing AI personas and specialized prompts. This module offers optimized prompt retrieval, caching, and management capabilities for enhanced AI interactions.
 
@@ -724,7 +724,7 @@ test_manager = AwesomePrompts(
 
 <div align="center">
   <p>
-    <a href="https://github.com/OEvortex/Webscout"><img alt="GitHub Repository" src="https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white"></a>
+    <a href="https://github.com/OEvortex/LLM4Free"><img alt="GitHub Repository" src="https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white"></a>
     <a href="https://t.me/PyscoutAI"><img alt="Telegram Group" src="https://img.shields.io/badge/Telegram%20Group-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white"></a>
   </p>
 </div>

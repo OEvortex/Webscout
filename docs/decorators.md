@@ -1,6 +1,6 @@
 # Utility Decorators (`AIutel.py`)
 > Last updated: 2025-11-16
-> Maintained by [LLM4Free](https://github.com/OEvortex/Webscout)
+> Maintained by [LLM4Free](https://github.com/OEvortex/LLM4Free)
 
 LLM4Free's [`AIutel.py`](../llm4free/AIutel.py:1) module provides powerful utility decorators for function timing and automatic retry logic. These decorators are designed for robust, flexible, and high-performance function enhancement, supporting both synchronous and asynchronous functions with comprehensive error handling and performance monitoring.
 

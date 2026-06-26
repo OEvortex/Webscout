@@ -915,7 +915,7 @@ This repository contains GGUF quantized versions of [{self.model_id}](https://hu
 
 ## About
 
-This model was converted using [Webscout](https://github.com/Webscout/llm4free).
+This model was converted using [LLM4Free](https://github.com/LLM4Free/llm4free).
 
 ## Quantization Methods
 

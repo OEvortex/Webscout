@@ -6,7 +6,7 @@ from math import atan2, cos, radians, sin, sqrt
 from typing import Any, Dict, List, Optional, Union
 from urllib.parse import unquote
 
-from .exceptions import WebscoutE
+from .exceptions import LLM4FreeE
 
 REGEX_STRIP_TAGS = re.compile("<.*?>")
 
@@ -26,12 +26,12 @@ def json_dumps(obj: Any) -> str:
         JSON string representation
 
     Raises:
-        WebscoutE: If serialization fails
+        LLM4FreeE: If serialization fails
     """
     try:
         return json.dumps(obj, ensure_ascii=False, indent=2)
     except Exception as ex:
-        raise WebscoutE(f"{type(ex).__name__}: {ex}") from ex
+        raise LLM4FreeE(f"{type(ex).__name__}: {ex}") from ex
 
 
 def json_loads(obj: Union[str, bytes]) -> Any:
@@ -44,12 +44,12 @@ def json_loads(obj: Union[str, bytes]) -> Any:
         Deserialized Python object
 
     Raises:
-        WebscoutE: If deserialization fails
+        LLM4FreeE: If deserialization fails
     """
     try:
         return json.loads(obj)
     except Exception as ex:
-        raise WebscoutE(f"{type(ex).__name__}: {ex}") from ex
+        raise LLM4FreeE(f"{type(ex).__name__}: {ex}") from ex
 
 
 def _extract_vqd(html_bytes: bytes, keywords: str) -> str:
@@ -65,7 +65,7 @@ def _extract_vqd(html_bytes: bytes, keywords: str) -> str:
             return html_bytes[start:end].decode()
         except ValueError:
             pass
-    raise WebscoutE(f"_extract_vqd() {keywords=} Could not extract vqd.")
+    raise LLM4FreeE(f"_extract_vqd() {keywords=} Could not extract vqd.")
 
 
 def _text_extract_json(html_bytes: bytes, keywords: str) -> List[Dict[str, str]]:
@@ -77,7 +77,7 @@ def _text_extract_json(html_bytes: bytes, keywords: str) -> List[Dict[str, str]]
         result: List[Dict[str, str]] = json_loads(data)
         return result
     except Exception as ex:
-        raise WebscoutE(f"_text_extract_json() {keywords=} {type(ex).__name__}: {ex}") from ex
+        raise LLM4FreeE(f"_text_extract_json() {keywords=} {type(ex).__name__}: {ex}") from ex
 
 
 def _normalize(raw_html: str) -> str:

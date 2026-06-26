@@ -1,9 +1,9 @@
 <div align="center">
   <a href="https://github.com/pyscout/LLM4Free">
-    <img src="https://img.shields.io/badge/WebScout-OpenAI%20Compatible%20Providers-4285F4?style=for-the-badge&logo=openai&logoColor=white" alt="WebScout OpenAI Compatible Providers">
+    <img src="https://img.shields.io/badge/LLM4Free-OpenAI%20Compatible%20Providers-4285F4?style=for-the-badge&logo=openai&logoColor=white" alt="LLM4Free OpenAI Compatible Providers">
   </a>
   <br/>
-  <h1>WebScout OpenAI-Compatible Providers</h1>
+  <h1>LLM4Free OpenAI-Compatible Providers</h1>
   <p><strong>Seamlessly integrate with various AI providers using OpenAI-compatible interfaces</strong></p>
 
   <p>
@@ -19,7 +19,7 @@
 
 ## 🚀 Overview
 
-The WebScout OpenAI-Compatible Providers module offers a standardized way to interact with various AI providers using the familiar OpenAI API structure. This makes it easy to:
+The LLM4Free OpenAI-Compatible Providers module offers a standardized way to interact with various AI providers using the familiar OpenAI API structure. This makes it easy to:
 
 - Use the same code structure across different AI providers
 - Switch between providers without major code changes

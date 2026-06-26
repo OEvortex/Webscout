@@ -2,7 +2,7 @@
   <h1>☀️ LLM4Free Weather Toolkit</h1>
   
   > Last updated: 2025-11-16  
-  > Maintained by [LLM4Free](https://github.com/OEvortex/Webscout)
+  > Maintained by [LLM4Free](https://github.com/OEvortex/LLM4Free)
   <p><strong>Comprehensive weather data retrieval and visualization tools</strong></p>
   
   <!-- Badges -->
@@ -278,7 +278,7 @@ except Exception as e:
 
 <div align="center">
   <p>
-    <a href="https://github.com/OEvortex/Webscout"><img alt="GitHub Repository" src="https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white"></a>
+    <a href="https://github.com/OEvortex/LLM4Free"><img alt="GitHub Repository" src="https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white"></a>
     <a href="https://t.me/OEvortexAI"><img alt="Telegram Group" src="https://img.shields.io/badge/Telegram%20Group-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white"></a>
   </p>
 </div>

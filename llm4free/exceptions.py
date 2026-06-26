@@ -1,18 +1,18 @@
 WATCH_URL = "https://www.youtube.com/watch?v={video_id}"
 
 
-class WebscoutE(Exception):
+class LLM4FreeE(Exception):
     """
-    Base exception class for all Webscout related errors.
+    Base exception class for all LLM4Free related errors.
 
-    This class serves as the root for all custom exceptions raised by the Webscout library.
-    It provides a common base for catching and handling errors specific to Webscout.
+    This class serves as the root for all custom exceptions raised by the LLM4Free library.
+    It provides a common base for catching and handling errors specific to LLM4Free.
     """
 
     pass
 
 
-class ModelNotFoundError(WebscoutE):
+class ModelNotFoundError(LLM4FreeE):
     """
     Exception raised when a requested model is not found or available.
 
@@ -23,7 +23,7 @@ class ModelNotFoundError(WebscoutE):
     pass
 
 
-class MissingRequirementsError(WebscoutE):
+class MissingRequirementsError(LLM4FreeE):
     """
     Exception raised when required dependencies are missing.
 
@@ -34,7 +34,7 @@ class MissingRequirementsError(WebscoutE):
     pass
 
 
-class APIConnectionError(WebscoutE):
+class APIConnectionError(LLM4FreeE):
     """
     Exception raised when there are issues connecting to an API.
 
@@ -45,7 +45,7 @@ class APIConnectionError(WebscoutE):
     pass
 
 
-class AuthenticationError(WebscoutE):
+class AuthenticationError(LLM4FreeE):
     """
     Exception raised when authentication to a service fails.
 
@@ -56,7 +56,7 @@ class AuthenticationError(WebscoutE):
     pass
 
 
-class RatelimitE(WebscoutE):
+class RatelimitE(LLM4FreeE):
     """
     Exception raised when an API rate limit is exceeded.
 
@@ -67,7 +67,7 @@ class RatelimitE(WebscoutE):
     pass
 
 
-class ConversationLimitException(WebscoutE):
+class ConversationLimitException(LLM4FreeE):
     """
     Exception raised when a conversation limit is exceeded.
 
@@ -78,7 +78,7 @@ class ConversationLimitException(WebscoutE):
     pass
 
 
-class TimeoutE(WebscoutE):
+class TimeoutE(LLM4FreeE):
     """
     Exception raised when a request to an API times out.
 
@@ -89,7 +89,7 @@ class TimeoutE(WebscoutE):
     pass
 
 
-class FailedToGenerateResponseError(WebscoutE):
+class FailedToGenerateResponseError(LLM4FreeE):
     """
     Exception raised when a provider fails to generate a response.
 
@@ -100,7 +100,7 @@ class FailedToGenerateResponseError(WebscoutE):
     pass
 
 
-class InvalidResponseError(WebscoutE):
+class InvalidResponseError(LLM4FreeE):
     """
     Exception raised when an API response is invalid or unexpected.
 
@@ -111,7 +111,7 @@ class InvalidResponseError(WebscoutE):
     pass
 
 
-class ProviderConnectionError(WebscoutE):
+class ProviderConnectionError(LLM4FreeE):
     """
     Exception raised when there are issues connecting to a specific provider.
     """
@@ -119,7 +119,7 @@ class ProviderConnectionError(WebscoutE):
     pass
 
 
-class InvalidOptimizerError(WebscoutE):
+class InvalidOptimizerError(LLM4FreeE):
     """
     Exception raised when an invalid or unavailable optimizer is requested.
     """
@@ -133,7 +133,7 @@ class InvalidAuthenticationError(Exception):
     pass
 
 
-class AllProvidersFailure(WebscoutE):
+class AllProvidersFailure(LLM4FreeE):
     """
     Exception raised when all providers fail to generate a response.
 
@@ -144,7 +144,7 @@ class AllProvidersFailure(WebscoutE):
     pass
 
 
-class FacebookInvalidCredentialsException(WebscoutE):
+class FacebookInvalidCredentialsException(LLM4FreeE):
     """
     Exception raised when Facebook credentials are invalid.
 
@@ -155,7 +155,7 @@ class FacebookInvalidCredentialsException(WebscoutE):
     pass
 
 
-class FacebookRegionBlocked(WebscoutE):
+class FacebookRegionBlocked(LLM4FreeE):
     """
     Exception raised when Facebook access is blocked due to region restrictions.
 
@@ -166,7 +166,7 @@ class FacebookRegionBlocked(WebscoutE):
     pass
 
 
-class ModelUnloadedException(WebscoutE):
+class ModelUnloadedException(LLM4FreeE):
     """
     Exception raised when a model is unloaded.
 
@@ -177,7 +177,7 @@ class ModelUnloadedException(WebscoutE):
     pass
 
 
-class TranscriptRetrievalError(WebscoutE):
+class TranscriptRetrievalError(LLM4FreeE):
     """
     Base class for transcript retrieval errors.
 

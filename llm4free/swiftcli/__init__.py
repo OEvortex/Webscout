@@ -14,7 +14,7 @@ Basic Usage:
     >>> app.run()
 
 For more examples and documentation, visit:
-https://github.com/OEvortex/Webscout/tree/main/llm4free/swiftcli
+https://github.com/OEvortex/LLM4Free/tree/main/llm4free/swiftcli
 """
 
 from .core.cli import CLI

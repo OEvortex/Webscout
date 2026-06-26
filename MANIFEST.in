@@ -4,10 +4,10 @@ include LEGAL_NOTICE.md
 include changelog.md
 include CHANGELOG.md
 
-recursive-include webscout *
+recursive-include llm4free *
 
 # Exclude common unwanted files and directories
-recursive-exclude webscout __pycache__
-recursive-exclude webscout *.pyc
-recursive-exclude webscout *.pyo
-recursive-exclude webscout *.pyd
+recursive-exclude llm4free __pycache__
+recursive-exclude llm4free *.pyc
+recursive-exclude llm4free *.pyo
+recursive-exclude llm4free *.pyd

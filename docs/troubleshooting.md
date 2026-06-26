@@ -653,7 +653,7 @@ response = client.chat(prompt_encoded)
 
 **A:**
 
-1. Check the [GitHub Issues](https://github.com/OEvortex/Webscout/issues)
+1. Check the [GitHub Issues](https://github.com/OEvortex/LLM4Free/issues)
 2. Create a minimal reproducible example:
 
 ```python
@@ -677,5 +677,5 @@ print(response)  # Expected vs actual output
 - **Documentation:** [docs/README.md](README.md)
 - **API Reference:** [docs/api-reference.md](api-reference.md)
 - **Examples:** [docs/examples/](examples/README.md)
-- **GitHub Issues:** https://github.com/OEvortex/Webscout/issues
+- **GitHub Issues:** https://github.com/OEvortex/LLM4Free/issues
 - **Telegram Group:** https://t.me/OEvortexAI

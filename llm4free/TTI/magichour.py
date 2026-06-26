@@ -1,5 +1,5 @@
 """
-MagicHour AI - Free TTI Provider for Webscout
+MagicHour AI - Free TTI Provider for LLM4Free
 https://magichour.ai/products/ai-image-generator
 
 Uses the free API endpoint that doesn't require API key.
@@ -225,7 +225,7 @@ class Images(BaseImages):
 
 class MagicHourAI(TTICompatibleProvider):
     """
-    MagicHour AI Free TTI Provider for Webscout.
+    MagicHour AI Free TTI Provider for LLM4Free.
 
     Uses the free endpoint that doesn't require API key.
     https://magichour.ai/products/ai-image-generator

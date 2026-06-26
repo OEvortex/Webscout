@@ -1,6 +1,6 @@
 # LitAgent: The Advanced User Agent Generator
 > Last updated: 2025-12-19
-> Maintained by [LLM4Free](https://github.com/OEvortex/Webscout)
+> Maintained by [LLM4Free](https://github.com/OEvortex/LLM4Free)
 
 **🚀 Powerful, modern user agent generator to keep your requests fresh and undetectable!**
 
@@ -48,7 +48,7 @@ pip install llm4free
 Or install the latest version from GitHub:
 
 ```bash
-pip install git+https://github.com/OEvortex/Webscout.git
+pip install git+https://github.com/OEvortex/LLM4Free.git
 ```
 
 ## 🚀 Quick Start
@@ -206,8 +206,8 @@ Contributions are welcome! Please follow these steps:
 <div align="center">
   <p>Made with ❤️ by the LLM4Free team</p>
   <p>
-    <a href="https://github.com/OEvortex/Webscout">GitHub</a> •
-    <a href="https://github.com/OEvortex/Webscout/wiki">Documentation</a> •
-    <a href="https://github.com/OEvortex/Webscout/issues">Report Bug</a>
+    <a href="https://github.com/OEvortex/LLM4Free">GitHub</a> •
+    <a href="https://github.com/OEvortex/LLM4Free/wiki">Documentation</a> •
+    <a href="https://github.com/OEvortex/LLM4Free/issues">Report Bug</a>
   </p>
 </div>

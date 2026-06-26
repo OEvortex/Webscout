@@ -362,7 +362,7 @@ if __name__ == "__main__":
 
     # Example audio file path - replace with your own
     audio_file_path = (
-        r"C:\Users\koula\Desktop\CODEBASE\Projects\OEvortex\Webscout\tests\test_audio.wav"
+        r"C:\Users\koula\Desktop\CODEBASE\Projects\OEvortex\LLM4Free\tests\test_audio.wav"
     )
 
     print("=== Non-streaming example ===")

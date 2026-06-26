@@ -1,6 +1,6 @@
 <div align="center">
-  <a href="https://github.com/OEvortex/Webscout">
-    <img src="https://img.shields.io/badge/WebScout-GGUF%20Converter%20v2.0-blue?style=for-the-badge&logo=python&logoColor=white" alt="GGUF Converter Logo">
+  <a href="https://github.com/OEvortex/LLM4Free">
+    <img src="https://img.shields.io/badge/LLM4Free-GGUF%20Converter%20v2.0-blue?style=for-the-badge&logo=python&logoColor=white" alt="GGUF Converter Logo">
   </a>
 
   <h1>GGUF Converter v2.0</h1>
@@ -86,7 +86,7 @@
 ## ⚙️ Installation
 
 <div class="installation-box">
-<p>The GGUF Converter is included with the WebScout package:</p>
+<p>The GGUF Converter is included with the LLM4Free package:</p>
 
 ```bash
 pip install -U llm4free
@@ -599,7 +599,7 @@ The converter uses the latest llama.cpp features including:
 
 <div align="center">
   <p>
-    <a href="https://github.com/OEvortex/Webscout">🔗 Part of the WebScout Project</a> |
+    <a href="https://github.com/OEvortex/LLM4Free">🔗 Part of the LLM4Free Project</a> |
     <a href="https://github.com/ggerganov/llama.cpp">🚀 Powered by llama.cpp</a>
   </p>
   

@@ -89,7 +89,7 @@ class TTSAI(BaseTTSProvider):
         """Initialize TTS.ai provider."""
         super().__init__()
         # Set default attributes before calling parent init properly
-        self.temp_dir = tempfile.mkdtemp(prefix="webscout_tts_")
+        self.temp_dir = tempfile.mkdtemp(prefix="llm4free_tts_")
         self.default_model = "piper"
         self.default_voice = "en_GB-alan-medium"
         self.default_format = "wav"

@@ -211,9 +211,9 @@ Troubleshooting
 | Resource | Link |
 |----------|------|
 | 📦 PyPI Package | https://pypi.org/project/llm4free |
-| 📍 GitHub Repository | https://github.com/OEvortex/Webscout |
-| 🐛 Issue Tracker | https://github.com/OEvortex/Webscout/issues |
-| 💬 GitHub Discussions | https://github.com/OEvortex/Webscout/discussions |
+| 📍 GitHub Repository | https://github.com/OEvortex/LLM4Free |
+| 🐛 Issue Tracker | https://github.com/OEvortex/LLM4Free/issues |
+| 💬 GitHub Discussions | https://github.com/OEvortex/LLM4Free/discussions |
 | 📱 Telegram Community | https://t.me/OEvortexAI |
 | 📹 YouTube Channel | https://youtube.com/@OEvortex |
 
@@ -241,8 +241,8 @@ Troubleshooting
 - 🏗️ **Architecture?** → [Architecture Guide](architecture.md)
 
 ### Community Support
-- 🐛 **Found a bug?** → [GitHub Issues](https://github.com/OEvortex/Webscout/issues)
-- 💬 **Have questions?** → [GitHub Discussions](https://github.com/OEvortex/Webscout/discussions)
+- 🐛 **Found a bug?** → [GitHub Issues](https://github.com/OEvortex/LLM4Free/issues)
+- 💬 **Have questions?** → [GitHub Discussions](https://github.com/OEvortex/LLM4Free/discussions)
 - 👥 **Chat with community** → [Telegram Group](https://t.me/OEvortexAI)
 
 ---
@@ -334,4 +334,4 @@ LLM4Free is released under the MIT License. See [LICENSE.md](../LICENSE.md) for 
 ---
 
 *Last updated: January 24, 2026*  
-*[GitHub](https://github.com/OEvortex/Webscout) | [PyPI](https://pypi.org/project/llm4free) | [Documentation](DOCUMENTATION_INDEX.md)*
+*[GitHub](https://github.com/OEvortex/LLM4Free) | [PyPI](https://pypi.org/project/llm4free) | [Documentation](DOCUMENTATION_INDEX.md)*

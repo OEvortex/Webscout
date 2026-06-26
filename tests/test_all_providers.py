@@ -1,5 +1,5 @@
 """
-Webscout provider live tester with per-provider timeouts.
+LLM4Free provider live tester with per-provider timeouts.
 
 Tests every provider in `llm4free.__all__` that does not require an
 API key, plus optionally auth-required ones if a key is supplied via
@@ -260,7 +260,7 @@ _STATUS_STYLE = {
 
 
 def render_summary(results: List[ProviderResult]) -> Table:
-    table = Table(title="Webscout Provider Test Results", show_lines=False)
+    table = Table(title="LLM4Free Provider Test Results", show_lines=False)
     table.add_column("Provider", style="cyan", no_wrap=True)
     table.add_column("Status", style="magenta")
     table.add_column("Auth", style="dim")
@@ -377,7 +377,7 @@ def main() -> int:
         names = [n for n in names if n in wanted]
 
     console.print(
-        f"[bold]Webscout provider test[/bold] — {len(names)} providers, "
+        f"[bold]LLM4Free provider test[/bold] — {len(names)} providers, "
         f"timeout={args.timeout}s, prompt={args.prompt!r}"
     )
 

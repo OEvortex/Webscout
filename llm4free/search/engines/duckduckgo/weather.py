@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, TypedDict
 from urllib.parse import quote
 
-from ....exceptions import WebscoutE
+from ....exceptions import LLM4FreeE
 from .base import DuckDuckGoBase
 
 
@@ -32,16 +32,16 @@ class DuckDuckGoWeather(DuckDuckGoBase):
         resp_text = resp.decode("utf-8")
 
         if "ddg_spice_forecast(" not in resp_text:
-            raise WebscoutE(f"No weather data found for {location}")
+            raise LLM4FreeE(f"No weather data found for {location}")
 
         json_text = resp_text[resp_text.find("(") + 1 : resp_text.rfind(")")]
         try:
             result = json.loads(json_text)
         except Exception as e:
-            raise WebscoutE(f"Error parsing weather JSON: {e}")
+            raise LLM4FreeE(f"Error parsing weather JSON: {e}")
 
         if not result or "currentWeather" not in result or "forecastDaily" not in result:
-            raise WebscoutE(f"Invalid weather data format for {location}")
+            raise LLM4FreeE(f"Invalid weather data format for {location}")
 
         formatted_data: WeatherData = {
             "location": result["currentWeather"]["metadata"].get("ddg-location", "Unknown"),

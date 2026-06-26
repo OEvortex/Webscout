@@ -1,6 +1,6 @@
 # 🚀 GitAPI: GitHub Data Extraction Module
 > Last updated: 2025-12-20
-> Maintained by [LLM4Free](https://github.com/OEvortex/Webscout)
+> Maintained by [LLM4Free](https://github.com/OEvortex/LLM4Free)
 
 LLM4Free's GitAPI module provides a powerful, lightweight GitHub data extraction toolkit within the LLM4Free Python package. It offers comprehensive tools for retrieving GitHub repository, user, organization, gist, and trending data without requiring authentication for public data access.
 
@@ -657,7 +657,7 @@ for line in clean_content:
 
 <div align="center">
   <p>
-    <a href="https://github.com/OEvortex/Webscout"><img alt="GitHub Repository" src="https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white"></a>
+    <a href="https://github.com/OEvortex/LLM4Free"><img alt="GitHub Repository" src="https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white"></a>
     <a href="https://t.me/PyscoutAI"><img alt="Telegram Group" src="https://img.shields.io/badge/Telegram%20Group-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white"></a>
   </p>
 </div>

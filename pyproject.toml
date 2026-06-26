@@ -82,8 +82,8 @@ llm4free-server = "llm4free.server.server:main"
 llm4free-serve = "llm4free.server.server:main"
 
 [project.urls]
-Source = "https://github.com/OEvortex/Webscout"
-Tracker = "https://github.com/OEvortex/Webscout/issues"
+Source = "https://github.com/OEvortex/LLM4Free"
+Tracker = "https://github.com/OEvortex/LLM4Free/issues"
 YouTube = "https://youtube.com/@OEvortex"
 
 [project.optional-dependencies]

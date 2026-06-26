@@ -25,7 +25,7 @@ class ModelFetcherCache:
     """Thread-safe file-based cache for model lists with TTL support.
 
     Stores cached model data in the system temp directory under `llm4free/model_cache.json`
-    with per-provider expiration times. Supports disabling via `WEBSCOUT_NO_MODEL_CACHE`
+    with per-provider expiration times. Supports disabling via `LLM4FREE_NO_MODEL_CACHE`
     env var.
 
     Attributes:
@@ -39,7 +39,7 @@ class ModelFetcherCache:
         """Initialize the model fetcher cache.
 
         Args:
-            cache_ttl: TTL in seconds. If None, reads from WEBSCOUT_MODEL_CACHE_TTL
+            cache_ttl: TTL in seconds. If None, reads from LLM4FREE_MODEL_CACHE_TTL
                        env var or uses DEFAULT_CACHE_TTL.
             debug: Enable debug logging via ic.
         """
@@ -47,7 +47,7 @@ class ModelFetcherCache:
         self.cache_path = CACHE_DIR / "model_cache.json"
         self.lock = threading.Lock()
         self.debug = debug
-        self.cache_disabled = os.getenv("WEBSCOUT_NO_MODEL_CACHE", "").lower() in (
+        self.cache_disabled = os.getenv("LLM4FREE_NO_MODEL_CACHE", "").lower() in (
             "1",
             "true",
             "yes",
@@ -56,7 +56,7 @@ class ModelFetcherCache:
         if cache_ttl is not None:
             self.ttl = cache_ttl
         else:
-            env_ttl = os.getenv("WEBSCOUT_MODEL_CACHE_TTL")
+            env_ttl = os.getenv("LLM4FREE_MODEL_CACHE_TTL")
             self.ttl = int(env_ttl) if env_ttl else DEFAULT_CACHE_TTL
 
     def get(self, provider_name: str) -> Optional[list[str]]:

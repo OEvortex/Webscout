@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://github.com/pyscout/LLM4Free">
-    <img src="https://img.shields.io/badge/WebScout-TempMail%20Toolkit-blue?style=for-the-badge&logo=maildotru&logoColor=white" alt="WebScout TempMail Toolkit">
+    <img src="https://img.shields.io/badge/LLM4Free-TempMail%20Toolkit-blue?style=for-the-badge&logo=maildotru&logoColor=white" alt="LLM4Free TempMail Toolkit">
   </a>
 
   <h1>📧 TempMail</h1>
