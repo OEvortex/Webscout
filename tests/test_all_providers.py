@@ -132,7 +132,7 @@ def _coerce_response(resp: Any) -> str:
     return str(resp)[:400]
 
 
-def test_one_provider(
+def _run_provider_test(
     name: str,
     cls: Any,
     api_key: Optional[str],
@@ -415,7 +415,7 @@ def main() -> int:
 
             key = api_keys.get(name) or default_key
             progress.update(task, description=f"→ {name}")
-            result = test_one_provider(name, cls, key, args.prompt, args.timeout)
+            result = _run_provider_test(name, cls, key, args.prompt, args.timeout)
             results.append(result)
             mark = {"WORKING": "✓", "EMPTY_RESPONSE": "·",
                     "INIT_FAILED": "!", "RUNTIME_ERROR": "✗",

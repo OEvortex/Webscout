@@ -19,12 +19,12 @@ from llm4free.TTS.parler import ParlerTTS
 from llm4free.TTS.pockettts import PocketTTS
 from llm4free.TTS.qwen import QwenTTS
 from llm4free.TTS.sherpa import SherpaTTS
-from llm4free.TTS.streamElements import StreamElements
+from llm4free.TTS.stream_elements import StreamElements
 from llm4free.TTS.ttsai import TTSAI
-from llm4free.TTS.xlnk import XLNKTTS
 
 # Utility classes
 from llm4free.TTS.utils import SentenceTokenizer
+from llm4free.TTS.xlnk import XLNKTTS
 
 # List of all exported names
 __all__ = [

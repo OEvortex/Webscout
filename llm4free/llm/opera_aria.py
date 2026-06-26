@@ -1,11 +1,11 @@
 """
 Opera Aria — OpenAI-compatible variant.
 
-Mirrors :class:`llm4free.OperaAria` (the regular llm4free provider)
+Mirrors :class:`llm4free.opera_aria` (the regular llm4free provider)
 but exposes an ``OpenAICompatibleProvider`` interface so it can be used
 wherever an ``openai.chat.completions.create`` shape is expected:
 
-    from llm4free.llm.OperaAria import OperaAria
+    from llm4free.llm.opera_aria import OperaAria
     client = OperaAria()
     resp = client.chat.completions.create(
         model="aria",

@@ -10,10 +10,8 @@ import aiohttp
 from tests.providers.utils import FakeResp
 
 from llm4free.AISEARCH import (
-    AyeSoul,
     IAsk,
     Monica,
-    PERPLEXED,
     Perplexity,
     webpilotai,
 )
@@ -71,11 +69,10 @@ class TestAISEARCHProviders(unittest.TestCase):
 
     @patch("llm4free.AISEARCH.iask_search.AsyncSession")
     def test_iask_search_non_stream(self, mock_async_session):
-        # Mock async HTTP session and response
         response = MagicMock()
         response.status_code = 200
         response.reason = "OK"
-        response.text = "<div id=\"text\"><p>Answer</p></div>"
+        response.text = '<div id="text"><p>Answer</p></div>'
 
         async def fake_get(*args, **kwargs):
             return response
@@ -95,7 +92,7 @@ class TestAISEARCHProviders(unittest.TestCase):
         response = MagicMock()
         response.status_code = 200
         response.reason = "OK"
-        response.text = "<div id=\"text\"><p>Answer</p></div>"
+        response.text = '<div id="text"><p>Answer</p></div>'
 
         async def fake_get(*args, **kwargs):
             return response
@@ -113,7 +110,6 @@ class TestAISEARCHProviders(unittest.TestCase):
 
     @patch("llm4free.AISEARCH.monica_search.requests.Session.post")
     def test_monica_search_non_stream(self, mock_post):
-        # Simulate a response with JSON content
         payload = b'{"text":"Hello"}'
         mock_post.return_value = FakeStreamResp(content=payload)
 
@@ -153,30 +149,6 @@ class TestAISEARCHProviders(unittest.TestCase):
         result = "".join(str(x) for x in cast(GeneratorType[Any, Any, Any], gen))
         self.assertIn("Hello", result)
 
-    @patch("llm4free.AISEARCH.PERPLEXED_search.requests.Session.post")
-    def test_perplexed_search_non_stream(self, mock_post):
-        # Provide a mock response for PERPLEXED.
-        payload = b'{"success": true, "answer": "Hello"}'
-        mock_post.return_value = FakeStreamResp(content=payload)
-
-        ai = PERPLEXED()
-        result = ai.search("Hi")
-        self.assertIsInstance(result, SearchResponse)
-        self.assertIn("Hello", str(result))
-
-    @patch("llm4free.AISEARCH.PERPLEXED_search.requests.Session.post")
-    def test_perplexed_search_stream(self, mock_post):
-        payload_chunks = [
-            b'{"success": true, "answer": "He"}',
-            b'{"success": true, "answer": "llo"}',
-        ]
-        mock_post.return_value = FakeStreamResp(iter_bytes=payload_chunks)
-
-        ai = PERPLEXED()
-        gen = ai.search("Hi", stream=True)
-        result = "".join(str(x) for x in cast(GeneratorType[Any, Any, Any], gen))
-        self.assertIn("Hello", result)
-
     @patch("llm4free.AISEARCH.Perplexity.requests.Session.post")
     def test_perplexity_search_non_stream(self, mock_post):
         payload = b'data: {"step_type": "FINAL", "content": {"answer": "Hello"}}\r\n\r\n'
@@ -197,54 +169,6 @@ class TestAISEARCHProviders(unittest.TestCase):
 
         ai = Perplexity()
         gen = ai.search("Hi", stream=True)
-        result = "".join(str(x) for x in cast(GeneratorType[Any, Any, Any], gen))
-        self.assertIn("Hello", result)
-
-    @patch("llm4free.AISEARCH.ayesoul_search.aiohttp.ClientSession")
-    def test_ayesoul_search_stream(self, mock_client_session):
-        # Mock WebSocket session and messages
-        class FakeWS:
-            def __init__(self, messages):
-                self._messages = messages
-
-            async def send_str(self, *args, **kwargs):
-                return None
-
-            async def receive(self):
-                if not self._messages:
-                    return MagicMock(type=None)
-                return self._messages.pop(0)
-
-            async def __aenter__(self):
-                return self
-
-            async def __aexit__(self, exc_type, exc, tb):
-                return False
-
-        class FakeSession:
-            def __init__(self, ws):
-                self._ws = ws
-
-            async def __aenter__(self):
-                return self
-
-            async def __aexit__(self, exc_type, exc, tb):
-                return False
-
-            def ws_connect(self, *args, **kwargs):
-                return self._ws
-
-        # Create a sequence of websocket messages
-        msg1 = MagicMock(type=aiohttp.WSMsgType.TEXT, data=json.dumps({"status": "SOUL XStream", "message": "Hello"}))
-        msg2 = MagicMock(type=aiohttp.WSMsgType.TEXT, data=json.dumps({"status": "SOUL XOver", "message": ""}))
-
-        fake_ws = FakeWS([msg1, msg2])
-        fake_session = FakeSession(fake_ws)
-        mock_client_session.return_value = fake_session
-
-        ai = AyeSoul()
-        gen = ai.search("Hi", stream=True)
-        self.assertTrue(hasattr(gen, "__iter__"))
         result = "".join(str(x) for x in cast(GeneratorType[Any, Any, Any], gen))
         self.assertIn("Hello", result)
 

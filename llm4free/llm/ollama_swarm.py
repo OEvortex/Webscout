@@ -5,7 +5,7 @@ Self-contained Ollama swarm discovery + OpenAI-compatible chat interface.
 
 Usage::
 
-    from llm4free.llm.OllamaSwarm import OllamaSwarm
+    from llm4free.llm.ollama_swarm import OllamaSwarm
     client = OllamaSwarm()
     resp = client.chat.completions.create(
         model="qwen3:14b",

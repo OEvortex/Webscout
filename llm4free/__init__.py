@@ -1,18 +1,22 @@
 # llm4free/__init__.py
 
+import logging
+
+from llm4free.litagent import LitAgent
+
+from .AISEARCH import *
 from .AIutel import *  # noqa: F403
 from .client import Client
+from .embedding import LF4CodebaseIndex, LF4StaticEmbedding
 from .Extra import *  # noqa: F403
-from llm4free.litagent import LitAgent
-from .models import model
 from .llm import *
-from .AISEARCH import *
-from .STT import *  # noqa: F403
-from .TTI import *
-from .TTS import *
+from .models import model
 from .scout import *
 from .search import *
+from .STT import *  # noqa: F403
 from .swiftcli import *
+from .TTI import *
+from .TTS import *
 from .update_checker import check_for_updates
 from .version import __version__
 
@@ -21,11 +25,13 @@ from .zeroart import *
 
 useragent = LitAgent()
 
+logger = logging.getLogger(__name__)
+
 # Check for updates on import to notify users of new versions
 try:
     update_message = check_for_updates(force=True)
     if update_message:
-        print(update_message)
+        logger.info(update_message)
 except Exception:
     pass
 

@@ -276,13 +276,43 @@ Each entry in `parameters` is a dict with at least `type` and `description`:
 ### Example 1 — Calculator
 
 ```python
+import ast
+import operator
+
 from llm4free.Provider.llmchat import LLMChat
 from llm4free.AIbase import Tool
 
+SAFE_OPERATORS = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+    ast.FloorDiv: operator.floordiv,
+    ast.Mod: operator.mod,
+    ast.Pow: operator.pow,
+    ast.USub: operator.neg,
+}
+
+
+def _eval_node(node: ast.AST) -> float:
+    if isinstance(node, ast.Expression):
+        return _eval_node(node.body)
+    if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+        return float(node.value)
+    if isinstance(node, ast.BinOp) and type(node.op) in SAFE_OPERATORS:
+        left = _eval_node(node.left)
+        right = _eval_node(node.right)
+        return SAFE_OPERATORS[type(node.op)](left, right)
+    if isinstance(node, ast.UnaryOp) and type(node.op) in SAFE_OPERATORS:
+        return SAFE_OPERATORS[type(node.op)](_eval_node(node.operand))
+    raise ValueError(f"Unsupported expression: {ast.dump(node)}")
+
+
 def calculate(expression: str) -> str:
-    """Safe calculator using eval (demo only)."""
+    """Safe calculator using AST parsing (no eval)."""
     try:
-        result = eval(expression, {"__builtins__": {}}, {})
+        tree = ast.parse(expression.strip(), mode="eval")
+        result = _eval_node(tree)
         return str(result)
     except Exception as e:
         return f"Error: {e}"

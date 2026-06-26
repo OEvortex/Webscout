@@ -67,6 +67,9 @@ dependencies = [
     "starlette>=0.50.0",
     "openai>=2.43.0",
     "pytest>=9.0.2",
+    "tokenizers>=0.23.1",
+    "safetensors>=0.8.0",
+    "huggingface-hub>=1.20.1",
 ]
 
 [project.scripts]
@@ -150,8 +153,22 @@ target-version = "py39"
 select = ["E", "F", "W", "I"]
 ignore = ["E501", "F403", "F401"]
 
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+exclude = [
+    "llm4free/Extra/",
+    "llm4free/scout/",
+    "llm4free/zeroart/",
+    "tests/",
+]
+
 [dependency-groups]
 dev = [
     "numpy>=2.2.6",
     "vulture>=2.16",
+    "mypy>=1.10.0",
 ]

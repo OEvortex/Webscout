@@ -7,8 +7,10 @@ and TTS-based audio generation.
 """
 
 import difflib
+import functools
 import importlib
 import inspect
+import logging
 import pkgutil
 import random
 from pathlib import Path
@@ -42,6 +44,8 @@ from llm4free.TTI.base import BaseImages, TTICompatibleProvider
 from llm4free.TTI.utils import ImageResponse
 from llm4free.TTS.base import BaseTTSProvider
 
+logger = logging.getLogger(__name__)
+
 
 def load_openai_providers() -> Tuple[Dict[str, Type[OpenAICompatibleProvider]], Set[str]]:
     """
@@ -65,7 +69,7 @@ def load_openai_providers() -> Tuple[Dict[str, Type[OpenAICompatibleProvider]], 
         >>> print('Claude' in auth_required)
         True
     """
-    return _load_providers(
+    return _load_providers_cached(
         "llm4free.llm",
         OpenAICompatibleProvider,
         ("base", "utils", "pydantic", "__"),
@@ -94,7 +98,7 @@ def load_tti_providers() -> Tuple[Dict[str, Type[TTICompatibleProvider]], Set[st
         >>> print('Stable Diffusion' in auth_required)
         False
     """
-    return _load_providers("llm4free.TTI", TTICompatibleProvider, ("base", "utils", "__"))
+    return _load_providers_cached("llm4free.TTI", TTICompatibleProvider, ("base", "utils", "__"))
 
 
 def load_tts_providers() -> Tuple[Dict[str, Type[BaseTTSProvider]], Set[str]]:
@@ -107,9 +111,9 @@ def load_tts_providers() -> Tuple[Dict[str, Type[BaseTTSProvider]], Set[str]]:
     Returns:
         A tuple containing:
         - A dictionary mapping TTS provider class names to their class objects.
-        - A set of provider names that require API authentication.
+        - A set of TTS provider names that require API authentication.
     """
-    return _load_providers("llm4free.TTS", BaseTTSProvider, ("base", "utils", "__"))
+    return _load_providers_cached("llm4free.TTS", BaseTTSProvider, ("base", "utils", "__"))
 
 
 def _get_models_safely(provider_cls: type, client: Optional["Client"] = None) -> List[str]:
@@ -158,10 +162,10 @@ def _get_models_safely(provider_cls: type, client: Optional["Client"] = None) ->
                     if client.api_key:
                         init_kwargs["api_key"] = client.api_key
                     instance = provider_cls(**init_kwargs)
-                except Exception:
+                except (TypeError, RuntimeError):
                     try:
                         instance = provider_cls()
-                    except Exception:
+                    except (TypeError, RuntimeError):
                         pass
 
                 if instance:
@@ -169,7 +173,7 @@ def _get_models_safely(provider_cls: type, client: Optional["Client"] = None) ->
         else:
             try:
                 instance = provider_cls()
-            except Exception:
+            except (TypeError, RuntimeError):
                 pass
 
         if instance and hasattr(instance, "models") and hasattr(instance.models, "list"):
@@ -180,7 +184,7 @@ def _get_models_safely(provider_cls: type, client: Optional["Client"] = None) ->
                         models.append(m)
                     elif isinstance(m, dict) and "id" in m:
                         models.append(m["id"])
-    except Exception:
+    except (AttributeError, TypeError):
         pass
 
     return models
@@ -211,6 +215,16 @@ def _normalized_name_set(values: Optional[List[str]]) -> Set[str]:
 ProviderT = TypeVar("ProviderT")
 
 
+@functools.lru_cache(maxsize=None)
+def _load_providers_cached(
+    module_path: str,
+    base_class: type,
+    exclude_prefixes: Tuple[str, ...],
+) -> Tuple[Dict[str, Any], Set[str]]:
+    """Cached wrapper around _load_providers to avoid redundant scans."""
+    return _load_providers(module_path, base_class, exclude_prefixes)
+
+
 def _load_providers(
     module_path: str,
     base_class: Type[ProviderT],
@@ -237,9 +251,9 @@ def _load_providers(
                         provider_map[attr_name] = attr
                         if getattr(attr, "required_auth", False):
                             auth_required_providers.add(attr_name)
-            except Exception:
+            except (ImportError, AttributeError):
                 pass
-    except Exception:
+    except (ImportError, ValueError):
         pass
 
     return provider_map, auth_required_providers
@@ -290,14 +304,14 @@ def _get_provider_instance_cached(
             instance = provider_class(**init_kwargs)
             cache[provider_name] = instance
             return instance
-        except Exception:
+        except (TypeError, RuntimeError):
             continue
 
     try:
         instance = provider_class()
         cache[provider_name] = instance
         return instance
-    except Exception as exc:
+    except (TypeError, RuntimeError) as exc:
         label = f"{provider_kind} " if provider_kind else ""
         raise RuntimeError(f"Failed to initialize {label}provider {provider_class.__name__}: {exc}")
 
@@ -681,7 +695,7 @@ class ClientCompletions(BaseCompletions):
         """
         try:
             resolved_provider, resolved_model = self._resolve_provider_and_model(model, provider)
-        except Exception:
+        except (RuntimeError, ValueError):
             resolved_provider, resolved_model = None, model
 
         call_kwargs: Dict[str, Any] = {
@@ -723,8 +737,8 @@ class ClientCompletions(BaseCompletions):
                         )
                     except StopIteration:
                         pass
-                    except Exception:
-                        pass
+                    except (RuntimeError, ValueError) as exc:
+                        logger.debug("Stream error from %s: %s", resolved_provider.__name__, exc)
                 else:
                     if not inspect.isgenerator(response):
                         completion_response = cast(ChatCompletion, response)
@@ -738,8 +752,8 @@ class ClientCompletions(BaseCompletions):
                         raise ValueError(
                             f"Provider {resolved_provider.__name__} returned empty content"
                         )
-            except Exception:
-                pass
+            except (RuntimeError, ValueError, TypeError) as exc:
+                logger.debug("Provider %s failed: %s", resolved_provider.__name__, exc)
 
         all_available = self._get_available_providers()
         fallback_queue = _build_fallback_queue(
@@ -771,7 +785,7 @@ class ClientCompletions(BaseCompletions):
                             print_provider_info=self._client.print_provider_info,
                             fallback=True,
                         )
-                    except (StopIteration, Exception):
+                    except (StopIteration, RuntimeError, ValueError):
                         continue
 
                 if not inspect.isgenerator(response):
@@ -978,7 +992,7 @@ class ClientImages(BaseImages):
         """
         try:
             resolved_provider, resolved_model = self._resolve_provider_and_model(model, provider)
-        except Exception:
+        except (RuntimeError, ValueError):
             resolved_provider, resolved_model = None, model
 
         call_kwargs: Dict[str, Any] = {
@@ -998,8 +1012,8 @@ class ClientImages(BaseImages):
                 if self._client.print_provider_info:
                     _print_provider_selection(resolved_provider.__name__, resolved_model)
                 return response
-            except Exception:
-                pass
+            except (RuntimeError, ValueError, TypeError) as exc:
+                logger.debug("TTI provider %s failed: %s", resolved_provider.__name__, exc)
 
         all_available = self._get_available_providers()
         fallback_queue = _build_fallback_queue(
@@ -1021,7 +1035,7 @@ class ClientImages(BaseImages):
                 if self._client.print_provider_info:
                     _print_provider_selection(p_name, p_model, fallback=True)
                 return response
-            except Exception:
+            except (RuntimeError, ValueError, TypeError):
                 continue
         raise RuntimeError("All image providers failed.")
 
@@ -1156,7 +1170,7 @@ class ClientAudioSpeech:
 
         try:
             resolved_provider, resolved_model = self._resolve_provider_and_model(model, provider)
-        except Exception:
+        except (RuntimeError, ValueError):
             resolved_provider, resolved_model = None, model
 
         call_kwargs: Dict[str, Any] = {
@@ -1180,8 +1194,8 @@ class ClientAudioSpeech:
                         return self._stream_audio_file(audio_file, chunk_size)
                     return audio_file
                 raise FileNotFoundError(f"Audio file not generated by {resolved_provider.__name__}")
-            except Exception:
-                pass
+            except (RuntimeError, ValueError, TypeError, FileNotFoundError) as exc:
+                logger.debug("TTS provider %s failed: %s", resolved_provider.__name__, exc)
 
         all_available = self._get_available_providers()
         fallback_queue = _build_fallback_queue(
@@ -1208,7 +1222,7 @@ class ClientAudioSpeech:
                         return self._stream_audio_file(audio_file, chunk_size)
                     return audio_file
                 errors.append(f"{provider_name}: Audio file not generated.")
-            except Exception as exc:
+            except (RuntimeError, ValueError, TypeError) as exc:
                 errors.append(f"{provider_name}: {exc}")
 
         raise RuntimeError(f"All audio providers failed. Errors: {'; '.join(errors[:3])}")

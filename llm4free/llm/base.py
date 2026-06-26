@@ -7,10 +7,12 @@ from curl_cffi import requests
 from litprinter import ic
 
 from llm4free.AIbase import ModelList, SimpleModelList
-from llm4free.model_fetcher import BackgroundModelFetcher
 
 # Import the utils for response structures
 from llm4free.llm.utils import ChatCompletion, ChatCompletionChunk
+from llm4free.model_fetcher import BackgroundModelFetcher
+
+DEFAULT_TIMEOUT = (10.0, 30.0)  # (connect, read) in seconds
 
 
 # Define tool-related structures
@@ -217,6 +219,7 @@ class OpenAICompatibleProvider(ABC):
             self.register_tools(tools)
         self.proxies = proxies or {}
         self.session = requests.Session()
+        self.session.timeout = DEFAULT_TIMEOUT
         if self.proxies:
             self.session.proxies.update(cast(Any, self.proxies))
         # raise NotImplementedError  # <-- Commented out for metaclass test

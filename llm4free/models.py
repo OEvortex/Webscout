@@ -1,8 +1,11 @@
 import importlib
+import logging
 import pkgutil
 from typing import Any, Dict, List, Mapping, Optional, Union, cast
 
 from llm4free.AIbase import Provider, TTSProvider
+
+logger = logging.getLogger(__name__)
 
 # Import TTI base class
 BaseImages = None
@@ -95,7 +98,7 @@ class _LLMModels:
         """
         provider_models = {}
         provider_packages = ["llm4free.llm", "llm4free.AISEARCH", "llm4free.STT"]
-        
+
         for package_name in provider_packages:
             try:
                 package = importlib.import_module(package_name)
@@ -113,7 +116,7 @@ class _LLMModels:
                                         if isinstance(models, set):
                                             models = list(models)
                                         provider_models[attr_name] = cast(List[str], models)
-                                    except Exception:
+                                    except (RuntimeError, TypeError, ValueError):
                                         provider_models[attr_name] = []
                                 elif available_models is not None:
                                     # Convert any sets to lists to ensure serializability
@@ -123,9 +126,9 @@ class _LLMModels:
                                     provider_models[attr_name] = cast(List[str], models)
                                 else:
                                     provider_models[attr_name] = []
-                    except Exception:
+                    except (ImportError, AttributeError):
                         pass
-            except Exception:
+            except (ImportError, ValueError):
                 pass
 
         return provider_models
@@ -139,7 +142,7 @@ class _LLMModels:
         """
         provider_details = {}
         provider_packages = ["llm4free.llm", "llm4free.AISEARCH", "llm4free.STT"]
-        
+
         for package_name in provider_packages:
             try:
                 package = importlib.import_module(package_name)
@@ -162,7 +165,7 @@ class _LLMModels:
                                             models = list(fetched_models)
                                         else:
                                             models = [str(fetched_models)] if fetched_models else []
-                                    except Exception:
+                                    except (RuntimeError, TypeError, ValueError):
                                         models = []
                                 elif available_models is not None:
                                     if isinstance(available_models, set):
@@ -203,9 +206,9 @@ class _LLMModels:
                                     "model_count": len(models),
                                     "metadata": metadata,
                                 }
-                    except Exception:
+                    except (ImportError, AttributeError):
                         pass
-            except Exception:
+            except (ImportError, ValueError):
                 pass
 
         return provider_details
@@ -297,9 +300,9 @@ class _TTSModels:
                             all_voices = getattr(attr, "all_voices", None)
                             if all_voices is not None:
                                 provider_voices[attr_name] = all_voices
-                except Exception:
+                except (ImportError, AttributeError):
                     pass
-        except Exception:
+        except (ImportError, ValueError):
             pass
 
         return provider_voices
@@ -407,7 +410,7 @@ class _TTIModels:
                             if isinstance(models, set):
                                 models = list(models)
                             provider_models[attr_name] = models
-            except Exception:
+            except (ImportError, AttributeError):
                 pass
 
         return provider_models
@@ -449,7 +452,7 @@ class _TTIModels:
                                     models = list(fetched_models)
                                 else:
                                     models = [str(fetched_models)] if fetched_models else []
-                            except Exception:
+                            except (RuntimeError, TypeError, ValueError):
                                 models = []
                         elif available_models is not None:
                             if isinstance(available_models, set):
@@ -491,7 +494,7 @@ class _TTIModels:
                             "model_count": len(models),
                             "metadata": metadata,
                         }
-            except Exception:
+            except (ImportError, AttributeError):
                 pass
 
         return provider_details
