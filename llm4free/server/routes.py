@@ -30,21 +30,21 @@ from .providers import (
     resolve_tts_provider_and_model,
 )
 from .request_models import (
+    AnthropicMessagesRequest,
     ChatCompletionRequest,
     ImageGenerationRequest,
     ModelListResponse,
     SpeechGenerationRequest,
-    AnthropicMessagesRequest,
 )
 from .request_processing import (
+    convert_anthropic_to_openai,
+    convert_openai_chunk_to_anthropic_events,
+    convert_openai_to_anthropic_response,
     handle_non_streaming_response,
     handle_streaming_response,
+    log_request,
     prepare_provider_params,
     process_messages,
-    convert_anthropic_to_openai,
-    convert_openai_to_anthropic_response,
-    convert_openai_chunk_to_anthropic_events,
-    log_request,
 )
 
 
@@ -57,26 +57,32 @@ class Api:
     def register_validation_exception_handler(self):
         """Register comprehensive exception handlers."""
         from starlette.status import HTTP_422_UNPROCESSABLE_CONTENT, HTTP_500_INTERNAL_SERVER_ERROR
+
         from .exceptions import APIError
 
         github_footer = "If you believe this is a bug, please pull an issue at https://github.com/OEvortex/Webscout."
 
         @self.app.exception_handler(APIError)
         async def api_error_handler(request, exc: APIError):
-            ic.configureOutput(prefix='ERROR| ')
+            ic.configureOutput(prefix="ERROR| ")
             ic(f"API Error: {exc.message} (Status: {exc.status_code})")
             # Patch: add footer to error content before creating JSONResponse
             error_response = exc.to_response()
             # If the response is a JSONResponse, patch its content dict before returning
-            if hasattr(error_response, 'body') and hasattr(error_response, 'media_type'):
+            if hasattr(error_response, "body") and hasattr(error_response, "media_type"):
                 # Try to decode the body to dict and add footer if possible
                 try:
                     import json
-                    body_bytes = bytes(error_response.body) if hasattr(error_response, 'body') else b""
+
+                    body_bytes = (
+                        bytes(error_response.body) if hasattr(error_response, "body") else b""
+                    )
                     content_dict = json.loads(body_bytes.decode())
                     if "error" in content_dict:
                         content_dict["error"]["footer"] = github_footer
-                        return JSONResponse(status_code=error_response.status_code, content=content_dict)
+                        return JSONResponse(
+                            status_code=error_response.status_code, content=content_dict
+                        )
                 except Exception:
                     pass
             return error_response
@@ -91,17 +97,19 @@ class Api:
                 loc = error.get("loc", [])
                 loc_str = " -> ".join(str(item) for item in loc)
                 msg = error.get("msg", "Validation error")
-                error_messages.append({
-                    "loc": loc,
-                    "message": f"{msg} at {loc_str}",
-                    "type": error.get("type", "validation_error")
-                })
+                error_messages.append(
+                    {
+                        "loc": loc,
+                        "message": f"{msg} at {loc_str}",
+                        "type": error.get("type", "validation_error"),
+                    }
+                )
             content = {
                 "error": {
                     "message": "Request validation error.",
                     "details": error_messages,
                     "type": "validation_error",
-                    "footer": github_footer
+                    "footer": github_footer,
                 }
             }
             return JSONResponse(status_code=HTTP_422_UNPROCESSABLE_CONTENT, content=content)
@@ -112,20 +120,20 @@ class Api:
                 "error": {
                     "message": exc.detail or "HTTP error occurred.",
                     "type": "http_error",
-                    "footer": github_footer
+                    "footer": github_footer,
                 }
             }
             return JSONResponse(status_code=exc.status_code, content=content)
 
         @self.app.exception_handler(Exception)
         async def general_exception_handler(request, exc: Exception):
-            ic.configureOutput(prefix='ERROR| ')
+            ic.configureOutput(prefix="ERROR| ")
             ic(f"Unhandled server error: {exc}")
             content = {
                 "error": {
                     "message": f"Internal server error: {str(exc)}",
                     "type": "server_error",
-                    "footer": github_footer
+                    "footer": github_footer,
                 }
             }
             return JSONResponse(status_code=HTTP_500_INTERNAL_SERVER_ERROR, content=content)
@@ -142,6 +150,7 @@ class Api:
 
     def _register_health_route(self):
         """Register health check route."""
+
         @self.app.get("/monitor/health", include_in_schema=False)
         async def health_check():
             """Health check endpoint for monitoring."""
@@ -149,11 +158,12 @@ class Api:
 
     def _register_model_routes(self):
         """Register model listing routes."""
+
         @self.app.get(
             "/v1/models",
             response_model=ModelListResponse,
             tags=["Chat Completions"],
-            description="List all available chat completion models."
+            description="List all available chat completion models.",
         )
         async def list_models():
             models = []
@@ -162,24 +172,23 @@ class Api:
                     continue  # Skip provider names
                 if any(m["id"] == model_name for m in models):
                     continue
-                models.append({
-                    "id": model_name,
-                    "object": "model",
-                    "created": int(time.time()),
-                    "owned_by": 'llm4free'  # Set owned_by to llm4free
-                })
+                models.append(
+                    {
+                        "id": model_name,
+                        "object": "model",
+                        "created": int(time.time()),
+                        "owned_by": "llm4free",  # Set owned_by to llm4free
+                    }
+                )
             # Sort models alphabetically by the part after the first '/'
             models = sorted(models, key=lambda m: m["id"].split("/", 1)[1].lower())
-            return {
-                "object": "list",
-                "data": models
-            }
+            return {"object": "list", "data": models}
 
         @self.app.get(
             "/v1/models/{model}",
             response_model=dict,
             tags=["Chat Completions"],
-            description="Retrieve model instance details."
+            description="Retrieve model instance details.",
         )
         async def retrieve_model(model: str):
             """Retrieve model instance details."""
@@ -190,17 +199,17 @@ class Api:
                     "id": model,
                     "object": "model",
                     "created": int(time.time()),
-                    "owned_by": "llm4free"
+                    "owned_by": "llm4free",
                 }
             except APIError:
                 raise
             except Exception:
-                 raise APIError(f"Model {model} not found", 404, "model_not_found", param="model")
+                raise APIError(f"Model {model} not found", 404, "model_not_found", param="model")
 
         @self.app.get(
             "/v1/providers",
             tags=["Chat Completions"],
-            description="Get details about available chat completion providers including supported models and parameters."
+            description="Get details about available chat completion providers including supported models and parameters.",
         )
         async def list_providers():
             """Get information about all available chat completion providers."""
@@ -227,8 +236,16 @@ class Api:
 
                 # Get supported parameters (common OpenAI-compatible parameters)
                 supported_params = [
-                    "model", "messages", "max_tokens", "temperature", "top_p",
-                    "presence_penalty", "frequency_penalty", "stop", "stream", "user"
+                    "model",
+                    "messages",
+                    "max_tokens",
+                    "temperature",
+                    "top_p",
+                    "presence_penalty",
+                    "frequency_penalty",
+                    "stop",
+                    "stream",
+                    "user",
                 ]
 
                 providers[provider_name] = {
@@ -236,19 +253,16 @@ class Api:
                     "class": provider_class.__name__,
                     "models": models,
                     "parameters": supported_params,
-                    "model_count": len(models)
+                    "model_count": len(models),
                 }
 
-            return {
-                "providers": providers,
-                "total_providers": len(providers)
-            }
+            return {"providers": providers, "total_providers": len(providers)}
 
         @self.app.get(
             "/v1/TTI/models",
             response_model=ModelListResponse,
             tags=["Image Generation"],
-            description="List all available text-to-image (TTI) models."
+            description="List all available text-to-image (TTI) models.",
         )
         async def list_tti_models():
             models = []
@@ -257,23 +271,22 @@ class Api:
                     continue  # Skip provider names
                 if any(m["id"] == model_name for m in models):
                     continue
-                models.append({
-                    "id": model_name,
-                    "object": "model",
-                    "created": int(time.time()),
-                    "owned_by": 'llm4free'  # Set owned_by to llm4free
-                })
+                models.append(
+                    {
+                        "id": model_name,
+                        "object": "model",
+                        "created": int(time.time()),
+                        "owned_by": "llm4free",  # Set owned_by to llm4free
+                    }
+                )
             # Sort models alphabetically by the part after the first '/'
             models = sorted(models, key=lambda m: m["id"].split("/", 1)[1].lower())
-            return {
-                "object": "list",
-                "data": models
-            }
+            return {"object": "list", "data": models}
 
         @self.app.get(
             "/v1/TTI/providers",
             tags=["Image Generation"],
-            description="Get details about available text-to-image (TTI) providers including supported models and parameters."
+            description="Get details about available text-to-image (TTI) providers including supported models and parameters.",
         )
         async def list_tti_providers():
             """Get information about all available TTI providers."""
@@ -300,8 +313,17 @@ class Api:
 
                 # Get supported parameters (common TTI parameters)
                 supported_params = [
-                    "prompt", "model", "n", "size", "response_format", "user",
-                    "style", "aspect_ratio", "timeout", "image_format", "seed"
+                    "prompt",
+                    "model",
+                    "n",
+                    "size",
+                    "response_format",
+                    "user",
+                    "style",
+                    "aspect_ratio",
+                    "timeout",
+                    "image_format",
+                    "seed",
                 ]
 
                 providers[provider_name] = {
@@ -309,16 +331,14 @@ class Api:
                     "class": provider_class.__name__,
                     "models": models,
                     "parameters": supported_params,
-                    "model_count": len(models)
+                    "model_count": len(models),
                 }
 
-            return {
-                "providers": providers,
-                "total_providers": len(providers)
-            }
+            return {"providers": providers, "total_providers": len(providers)}
 
     def _register_chat_routes(self):
         """Register chat completion routes."""
+
         @self.app.post(
             "/v1/chat/completions",
             response_model_exclude_none=True,
@@ -329,29 +349,27 @@ class Api:
                 "requestBody": {
                     "content": {
                         "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/ChatCompletionRequest"
-                            },
-                            "example": cast(
-                                Dict[str, Any],
-                                ChatCompletionRequest.model_config
-                            )["json_schema_extra"]["example"]
+                            "schema": {"$ref": "#/components/schemas/ChatCompletionRequest"},
+                            "example": cast(Dict[str, Any], ChatCompletionRequest.model_config)[
+                                "json_schema_extra"
+                            ]["example"],
                         }
                     }
                 }
-            }
+            },
         )
         async def chat_completions(
-            request: Request,
-            chat_request: ChatCompletionRequest = Body(...)
+            request: Request, chat_request: ChatCompletionRequest = Body(...)
         ):
             """Handle chat completion requests with comprehensive error handling."""
             start_time = time.time()
             request_id = f"chatcmpl-{uuid.uuid4()}"
 
             try:
-                ic.configureOutput(prefix='INFO| ')
-                ic(f"Processing chat completion request {request_id} for model: {chat_request.model}")
+                ic.configureOutput(prefix="INFO| ")
+                ic(
+                    f"Processing chat completion request {request_id} for model: {chat_request.model}"
+                )
 
                 # Resolve provider and model
                 provider_class, model_name = resolve_provider_and_model(chat_request.model)
@@ -359,15 +377,15 @@ class Api:
                 # Initialize provider with caching and error handling
                 try:
                     provider = get_provider_instance(provider_class)
-                    ic.configureOutput(prefix='DEBUG| ')
+                    ic.configureOutput(prefix="DEBUG| ")
                     ic(f"Using provider instance: {provider_class.__name__}")
                 except Exception as e:
-                    ic.configureOutput(prefix='ERROR| ')
+                    ic.configureOutput(prefix="ERROR| ")
                     ic(f"Failed to initialize provider {provider_class.__name__}: {e}")
                     raise APIError(
                         f"Failed to initialize provider {provider_class.__name__}: {e}",
                         HTTP_500_INTERNAL_SERVER_ERROR,
-                        "provider_error"
+                        "provider_error",
                     )
 
                 # Process and validate messages
@@ -406,45 +424,61 @@ class Api:
                 # Handle streaming vs non-streaming
                 if chat_request.stream:
                     return await handle_streaming_response(
-                        provider, params, request_id, client_ip, question, model_name, start_time,
-                        provider_class.__name__, request
+                        provider,
+                        params,
+                        request_id,
+                        client_ip,
+                        question,
+                        model_name,
+                        start_time,
+                        provider_class.__name__,
+                        request,
                     )
                 else:
                     return await handle_non_streaming_response(
-                        provider, params, request_id, start_time, client_ip, question, model_name,
-                        provider_class.__name__, request
+                        provider,
+                        params,
+                        request_id,
+                        start_time,
+                        client_ip,
+                        question,
+                        model_name,
+                        provider_class.__name__,
+                        request,
                     )
 
             except APIError:
                 # Re-raise API errors as-is
                 raise
             except Exception as e:
-                ic.configureOutput(prefix='ERROR| ')
+                ic.configureOutput(prefix="ERROR| ")
                 ic(f"Unexpected error in chat completion {request_id}: {e}")
                 raise APIError(
                     f"Internal server error: {str(e)}",
                     HTTP_500_INTERNAL_SERVER_ERROR,
-                    "internal_error"
+                    "internal_error",
                 )
 
     def _register_anthropic_routes(self):
         """Register Anthropic-compatible routes."""
+
         @self.app.post(
             "/v1/messages",
             tags=["Anthropic Messages"],
             description="Generate messages using the Anthropic-compatible API format.",
         )
         async def anthropic_messages(
-            request: Request,
-            anthropic_request: AnthropicMessagesRequest = Body(...)
+            request: Request, anthropic_request: AnthropicMessagesRequest = Body(...)
         ):
             """Handle Anthropic Messages API requests."""
             start_time = time.time()
             request_id = f"msg_{uuid.uuid4().hex[:24]}"
 
             try:
-                ic.configureOutput(prefix='INFO| ')
-                ic(f"Processing Anthropic messages request {request_id} for model: {anthropic_request.model}")
+                ic.configureOutput(prefix="INFO| ")
+                ic(
+                    f"Processing Anthropic messages request {request_id} for model: {anthropic_request.model}"
+                )
 
                 # Convert Anthropic request to OpenAI format
                 openai_params = convert_anthropic_to_openai(anthropic_request)
@@ -455,15 +489,15 @@ class Api:
                 # Initialize provider
                 try:
                     provider = get_provider_instance(provider_class)
-                    ic.configureOutput(prefix='DEBUG| ')
+                    ic.configureOutput(prefix="DEBUG| ")
                     ic(f"Using provider instance: {provider_class.__name__}")
                 except Exception as e:
-                    ic.configureOutput(prefix='ERROR| ')
+                    ic.configureOutput(prefix="ERROR| ")
                     ic(f"Failed to initialize provider {provider_class.__name__}: {e}")
                     raise APIError(
                         f"Failed to initialize provider {provider_class.__name__}: {e}",
                         HTTP_500_INTERNAL_SERVER_ERROR,
-                        "provider_error"
+                        "provider_error",
                     )
 
                 # Update model name in params
@@ -488,32 +522,46 @@ class Api:
                 # Handle streaming
                 if anthropic_request.stream:
                     return await _handle_anthropic_streaming_response(
-                        provider, openai_params, request_id, client_ip, question,
-                        model_name, start_time, provider_class.__name__, request,
-                        anthropic_request.model
+                        provider,
+                        openai_params,
+                        request_id,
+                        client_ip,
+                        question,
+                        model_name,
+                        start_time,
+                        provider_class.__name__,
+                        request,
+                        anthropic_request.model,
                     )
                 else:
                     return await _handle_anthropic_non_streaming_response(
-                        provider, openai_params, request_id, start_time, client_ip,
-                        question, model_name, provider_class.__name__, request,
-                        anthropic_request.model
+                        provider,
+                        openai_params,
+                        request_id,
+                        start_time,
+                        client_ip,
+                        question,
+                        model_name,
+                        provider_class.__name__,
+                        request,
+                        anthropic_request.model,
                     )
 
             except APIError:
                 raise
             except Exception as e:
-                ic.configureOutput(prefix='ERROR| ')
+                ic.configureOutput(prefix="ERROR| ")
                 ic(f"Unexpected error in Anthropic messages {request_id}: {e}")
                 raise APIError(
                     f"Internal server error: {str(e)}",
                     HTTP_500_INTERNAL_SERVER_ERROR,
-                    "internal_error"
+                    "internal_error",
                 )
 
         @self.app.get(
             "/v1/messages",
             tags=["Anthropic Messages"],
-            description="List available models (Anthropic-compatible endpoint)."
+            description="List available models (Anthropic-compatible endpoint).",
         )
         async def anthropic_list_models():
             """List available models in Anthropic-compatible format."""
@@ -523,12 +571,14 @@ class Api:
                     continue
                 if any(m["id"] == model_name for m in models):
                     continue
-                models.append({
-                    "id": model_name,
-                    "type": "model",
-                    "display_name": model_name.split("/", 1)[1],
-                    "created_at": int(time.time())
-                })
+                models.append(
+                    {
+                        "id": model_name,
+                        "type": "model",
+                        "display_name": model_name.split("/", 1)[1],
+                        "created_at": int(time.time()),
+                    }
+                )
             models = sorted(models, key=lambda m: m["id"].split("/", 1)[1].lower())
             return {"data": models}
 
@@ -538,18 +588,18 @@ class Api:
         @self.app.post(
             "/v1/images/generations",
             tags=["Image Generation"],
-            description="Generate images from text prompts using the specified TTI model."
+            description="Generate images from text prompts using the specified TTI model.",
         )
-        async def image_generations(
-            image_request: ImageGenerationRequest = Body(...)
-        ):
+        async def image_generations(image_request: ImageGenerationRequest = Body(...)):
             """Handle image generation requests."""
             start_time = time.time()
             request_id = f"img-{uuid.uuid4()}"
 
             try:
-                ic.configureOutput(prefix='INFO| ')
-                ic(f"Processing image generation request {request_id} for model: {image_request.model}")
+                ic.configureOutput(prefix="INFO| ")
+                ic(
+                    f"Processing image generation request {request_id} for model: {image_request.model}"
+                )
 
                 # Resolve TTI provider and model
                 provider_class, model_name = resolve_tti_provider_and_model(image_request.model)
@@ -557,7 +607,7 @@ class Api:
                 # Initialize TTI provider
                 try:
                     provider = get_tti_provider_instance(provider_class)
-                    ic.configureOutput(prefix='DEBUG| ')
+                    ic.configureOutput(prefix="DEBUG| ")
                     ic(f"Using TTI provider instance: {provider_class.__name__}")
                 except APIError as e:
                     # Add helpful footer for provider errors
@@ -567,17 +617,17 @@ class Api:
                             "error": {
                                 "message": e.message,
                                 "type": e.error_type,
-                                "footer": "If you believe this is a bug, please pull an issue at https://github.com/OEvortex/Webscout."
+                                "footer": "If you believe this is a bug, please pull an issue at https://github.com/OEvortex/Webscout.",
                             }
-                        }
+                        },
                     )
                 except Exception as e:
-                    ic.configureOutput(prefix='ERROR| ')
+                    ic.configureOutput(prefix="ERROR| ")
                     ic(f"Failed to initialize TTI provider {provider_class.__name__}: {e}")
                     raise APIError(
                         f"Failed to initialize TTI provider {provider_class.__name__}: {e}",
                         HTTP_500_INTERNAL_SERVER_ERROR,
-                        "provider_error"
+                        "provider_error",
                     )
 
                 # Prepare parameters for TTI provider
@@ -590,7 +640,14 @@ class Api:
                 }
 
                 # Add optional parameters
-                optional_params = ["user", "style", "aspect_ratio", "timeout", "image_format", "seed"]
+                optional_params = [
+                    "user",
+                    "style",
+                    "aspect_ratio",
+                    "timeout",
+                    "image_format",
+                    "seed",
+                ]
                 for param in optional_params:
                     value = getattr(image_request, param, None)
                     if value is not None:
@@ -610,33 +667,33 @@ class Api:
                     raise APIError(
                         "Invalid response format from TTI provider",
                         HTTP_500_INTERNAL_SERVER_ERROR,
-                        "provider_error"
+                        "provider_error",
                     )
 
                 elapsed = time.time() - start_time
-                ic.configureOutput(prefix='INFO| ')
+                ic.configureOutput(prefix="INFO| ")
                 ic(f"Completed image generation request {request_id} in {elapsed:.2f}s")
 
                 return response_data
             except APIError:
                 raise
             except Exception as e:
-                ic.configureOutput(prefix='ERROR| ')
+                ic.configureOutput(prefix="ERROR| ")
                 ic(f"Unexpected error in image generation {request_id}: {e}")
                 raise APIError(
                     f"Internal server error: {str(e)}",
                     HTTP_500_INTERNAL_SERVER_ERROR,
-                    "internal_error"
+                    "internal_error",
                 )
 
     def _register_tts_routes(self):
         """Register TTS (text-to-speech) endpoints."""
-        
+
         @self.app.get(
             "/v1/TTS/models",
             response_model=ModelListResponse,
             tags=["Audio Generation"],
-            description="List all available text-to-speech (TTS) models."
+            description="List all available text-to-speech (TTS) models.",
         )
         async def list_tts_models():
             models = []
@@ -645,23 +702,22 @@ class Api:
                     continue  # Skip provider names
                 if any(m["id"] == model_name for m in models):
                     continue
-                models.append({
-                    "id": model_name,
-                    "object": "model",
-                    "created": int(time.time()),
-                    "owned_by": 'llm4free'  # Set owned_by to llm4free
-                })
+                models.append(
+                    {
+                        "id": model_name,
+                        "object": "model",
+                        "created": int(time.time()),
+                        "owned_by": "llm4free",  # Set owned_by to llm4free
+                    }
+                )
             # Sort models alphabetically by the part after the first '/'
             models = sorted(models, key=lambda m: m["id"].split("/", 1)[1].lower())
-            return {
-                "object": "list",
-                "data": models
-            }
+            return {"object": "list", "data": models}
 
         @self.app.get(
             "/v1/TTS/providers",
             tags=["Audio Generation"],
-            description="Get details about available text-to-speech (TTS) providers including supported models and parameters."
+            description="Get details about available text-to-speech (TTS) providers including supported models and parameters.",
         )
         async def list_tts_providers():
             """Get information about all available TTS providers."""
@@ -688,7 +744,12 @@ class Api:
 
                 # Get supported parameters (common TTS parameters)
                 supported_params = [
-                    "input", "model", "voice", "response_format", "instructions", "stream"
+                    "input",
+                    "model",
+                    "voice",
+                    "response_format",
+                    "instructions",
+                    "stream",
                 ]
 
                 providers[provider_name] = {
@@ -696,29 +757,26 @@ class Api:
                     "class": provider_class.__name__,
                     "models": models,
                     "parameters": supported_params,
-                    "model_count": len(models)
+                    "model_count": len(models),
                 }
 
-            return {
-                "providers": providers,
-                "total_providers": len(providers)
-            }
+            return {"providers": providers, "total_providers": len(providers)}
 
         @self.app.post(
             "/v1/audio/speech",
             tags=["Audio Generation"],
-            description="Generate audio from text using the specified TTS model."
+            description="Generate audio from text using the specified TTS model.",
         )
-        async def audio_speech(
-            speech_request: SpeechGenerationRequest = Body(...)
-        ):
+        async def audio_speech(speech_request: SpeechGenerationRequest = Body(...)):
             """Handle speech generation requests."""
             start_time = time.time()
             request_id = f"tts-{uuid.uuid4()}"
 
             try:
-                ic.configureOutput(prefix='INFO| ')
-                ic(f"Processing speech generation request {request_id} for model: {speech_request.model}")
+                ic.configureOutput(prefix="INFO| ")
+                ic(
+                    f"Processing speech generation request {request_id} for model: {speech_request.model}"
+                )
 
                 # Resolve TTS provider and model
                 provider_class, model_name = resolve_tts_provider_and_model(speech_request.model)
@@ -726,7 +784,7 @@ class Api:
                 # Initialize TTS provider
                 try:
                     provider = get_tts_provider_instance(provider_class)
-                    ic.configureOutput(prefix='DEBUG| ')
+                    ic.configureOutput(prefix="DEBUG| ")
                     ic(f"Using TTS provider instance: {provider_class.__name__}")
                 except APIError as e:
                     return JSONResponse(
@@ -735,17 +793,17 @@ class Api:
                             "error": {
                                 "message": e.message,
                                 "type": e.error_type,
-                                "footer": "If you believe this is a bug, please pull an issue at https://github.com/OEvortex/Webscout."
+                                "footer": "If you believe this is a bug, please pull an issue at https://github.com/OEvortex/Webscout.",
                             }
-                        }
+                        },
                     )
                 except Exception as e:
-                    ic.configureOutput(prefix='ERROR| ')
+                    ic.configureOutput(prefix="ERROR| ")
                     ic(f"Failed to initialize TTS provider {provider_class.__name__}: {e}")
                     raise APIError(
                         f"Failed to initialize TTS provider {provider_class.__name__}: {e}",
                         HTTP_500_INTERNAL_SERVER_ERROR,
-                        "provider_error"
+                        "provider_error",
                     )
 
                 # Prepare parameters for TTS provider
@@ -768,11 +826,11 @@ class Api:
                     raise APIError(
                         "Failed to generate audio file",
                         HTTP_500_INTERNAL_SERVER_ERROR,
-                        "generation_failed"
+                        "generation_failed",
                     )
 
                 elapsed = time.time() - start_time
-                ic.configureOutput(prefix='INFO| ')
+                ic.configureOutput(prefix="INFO| ")
                 ic(f"Completed speech generation request {request_id} in {elapsed:.2f}s")
 
                 # Determine content type based on format
@@ -784,7 +842,9 @@ class Api:
                     "wav": "audio/wav",
                     "pcm": "audio/pcm",
                 }
-                content_type = content_type_map.get(speech_request.response_format or "mp3", "audio/mpeg")
+                content_type = content_type_map.get(
+                    speech_request.response_format or "mp3", "audio/mpeg"
+                )
 
                 if speech_request.stream:
                     # Stream the audio file
@@ -798,27 +858,25 @@ class Api:
                         media_type=content_type,
                         headers={
                             "Content-Disposition": f'attachment; filename="speech.{speech_request.response_format}"'
-                        }
+                        },
                     )
                 else:
                     return FileResponse(
                         audio_file,
                         media_type=content_type,
-                        filename=f"speech.{speech_request.response_format}"
+                        filename=f"speech.{speech_request.response_format}",
                     )
 
             except APIError:
                 raise
             except Exception as e:
-                ic.configureOutput(prefix='ERROR| ')
+                ic.configureOutput(prefix="ERROR| ")
                 ic(f"Unexpected error in speech generation {request_id}: {e}")
                 raise APIError(
                     f"Internal server error: {str(e)}",
                     HTTP_500_INTERNAL_SERVER_ERROR,
-                    "internal_error"
+                    "internal_error",
                 )
-
-
 
     def _register_websearch_routes(self):
         """Register web search endpoint."""
@@ -826,15 +884,21 @@ class Api:
         @self.app.get(
             "/search",
             tags=["Web search"],
-            description="Unified web search endpoint supporting all available search engines with various search types including text, news, images, videos (Brave, DuckDuckGo, Yahoo), suggestions (Brave, Bing, DuckDuckGo, Yep, Yahoo), answers, maps, translate, and weather."
+            description="Unified web search endpoint supporting all available search engines with various search types including text, news, images, videos (Brave, DuckDuckGo, Yahoo), suggestions (Brave, Bing, DuckDuckGo, Yep, Yahoo), answers, maps, translate, and weather.",
         )
         async def websearch(
             q: str = Query(..., description="Search query"),
-            engine: str = Query("duckduckgo", description=f"Search engine: {', '.join(sorted(set(name for cat in ENGINES.values() for name in cat)))}"),
+            engine: str = Query(
+                "duckduckgo",
+                description=f"Search engine: {', '.join(sorted(set(name for cat in ENGINES.values() for name in cat)))}",
+            ),
             max_results: int = Query(10, description="Maximum number of results"),
             region: str = Query("all", description="Region code (optional)"),
             safesearch: str = Query("moderate", description="Safe search: on, moderate, off"),
-            type: str = Query("text", description="Search type: text, news, images, videos, suggestions, answers, maps, translate, weather"),
+            type: str = Query(
+                "text",
+                description="Search type: text, news, images, videos, suggestions, answers, maps, translate, weather",
+            ),
             place: str = Query(None, description="Place for maps search"),
             street: str = Query(None, description="Street for maps search"),
             city: str = Query(None, description="City for maps search"),
@@ -865,7 +929,12 @@ class Api:
                             # Some engines may require different params
                             try:
                                 if type in ("text", "images", "news", "videos"):
-                                    results = method(keywords=q, region=region, safesearch=safesearch, max_results=max_results)
+                                    results = method(
+                                        keywords=q,
+                                        region=region,
+                                        safesearch=safesearch,
+                                        max_results=max_results,
+                                    )
                                 elif type == "suggestions":
                                     # Suggestions method might have different signature
                                     try:
@@ -875,23 +944,52 @@ class Api:
                                 elif type == "answers":
                                     results = method(keywords=q)
                                 elif type == "maps":
-                                    results = method(keywords=q, place=place, street=street, city=city, county=county, state=state, country=country, postalcode=postalcode, latitude=latitude, longitude=longitude, radius=radius, max_results=max_results)
+                                    results = method(
+                                        keywords=q,
+                                        place=place,
+                                        street=street,
+                                        city=city,
+                                        county=county,
+                                        state=state,
+                                        country=country,
+                                        postalcode=postalcode,
+                                        latitude=latitude,
+                                        longitude=longitude,
+                                        radius=radius,
+                                        max_results=max_results,
+                                    )
                                 elif type == "translate":
                                     results = method(keywords=q, from_=from_, to=to)
                                 elif type == "weather":
                                     results = method(location=q, language=language)
                                 else:
-                                    return {"error": f"{engine} does not support type '{type}'.", "footer": github_footer}
+                                    return {
+                                        "error": f"{engine} does not support type '{type}'.",
+                                        "footer": github_footer,
+                                    }
                                 # Try to serialize results if needed
-                                if isinstance(results, list) and results and hasattr(results[0], "__dict__"):
+                                if (
+                                    isinstance(results, list)
+                                    and results
+                                    and hasattr(results[0], "__dict__")
+                                ):
                                     results = [r.__dict__ for r in results]
                                 return {"engine": engine, "type": type, "results": results}
                             except Exception as ex:
-                                return {"error": f"Error running {engine}.{type}: {ex}", "footer": github_footer}
+                                return {
+                                    "error": f"Error running {engine}.{type}: {ex}",
+                                    "footer": github_footer,
+                                }
                         else:
-                            return {"error": f"{engine} does not support type '{type}'.", "footer": github_footer}
+                            return {
+                                "error": f"{engine} does not support type '{type}'.",
+                                "footer": github_footer,
+                            }
                 if not found:
-                    return {"error": f"Unknown engine. Use one of: {', '.join(sorted(set(name for cat in ENGINES.values() for name in cat)))}.", "footer": github_footer}
+                    return {
+                        "error": f"Unknown engine. Use one of: {', '.join(sorted(set(name for cat in ENGINES.values() for name in cat)))}.",
+                        "footer": github_footer,
+                    }
             except Exception as e:
                 # Special handling for rate limit errors
                 msg = str(e)
@@ -900,17 +998,14 @@ class Api:
                         "error": "You have hit the search rate limit. Please try again later.",
                         "details": msg,
                         "code": 429,
-                        "footer": github_footer
+                        "footer": github_footer,
                     }
-                return {
-                    "error": f"Search request failed: {msg}",
-                    "footer": github_footer
-                }
+                return {"error": f"Search request failed: {msg}", "footer": github_footer}
 
         @self.app.get(
             "/search/provider",
             tags=["Web search"],
-            description="Get details about available search providers including supported categories and parameters."
+            description="Get details about available search providers including supported categories and parameters.",
         )
         async def get_search_providers():
             """Get information about all available search providers."""
@@ -931,14 +1026,33 @@ class Api:
                 # Get supported parameters based on categories
                 supported_params = ["q"]  # query is always supported
 
-                if "text" in categories or "images" in categories or "news" in categories or "videos" in categories:
+                if (
+                    "text" in categories
+                    or "images" in categories
+                    or "news" in categories
+                    or "videos" in categories
+                ):
                     supported_params.extend(["max_results", "region", "safesearch"])
 
                 if "suggestions" in categories:
                     supported_params.extend(["region"])
 
                 if "maps" in categories:
-                    supported_params.extend(["place", "street", "city", "county", "state", "country", "postalcode", "latitude", "longitude", "radius", "max_results"])
+                    supported_params.extend(
+                        [
+                            "place",
+                            "street",
+                            "city",
+                            "county",
+                            "state",
+                            "country",
+                            "postalcode",
+                            "latitude",
+                            "longitude",
+                            "radius",
+                            "max_results",
+                        ]
+                    )
 
                 if "translate" in categories:
                     supported_params.extend(["from_", "to"])
@@ -953,18 +1067,16 @@ class Api:
                     "name": engine_name,
                     "categories": sorted(categories),
                     "supported_types": sorted(categories),  # types are the same as categories
-                    "parameters": sorted(supported_params)
+                    "parameters": sorted(supported_params),
                 }
 
-            return {
-                "providers": providers,
-                "total_providers": len(providers)
-            }
+            return {"providers": providers, "total_providers": len(providers)}
 
 
 # ============================================================================
 # Anthropic Response Handler Functions
 # ============================================================================
+
 
 async def _handle_anthropic_streaming_response(
     provider: Any,
@@ -984,17 +1096,19 @@ async def _handle_anthropic_streaming_response(
     async def streaming():
         nonlocal collected_content
         try:
-            ic.configureOutput(prefix='DEBUG| ')
+            ic.configureOutput(prefix="DEBUG| ")
             ic(f"Starting Anthropic streaming response for request {request_id}")
             completion_stream = provider.chat.completions.create(**params)
 
             is_first_chunk = True
 
-            if hasattr(completion_stream, '__iter__') and not isinstance(completion_stream, (str, bytes, dict)):
+            if hasattr(completion_stream, "__iter__") and not isinstance(
+                completion_stream, (str, bytes, dict)
+            ):
                 try:
                     for chunk in completion_stream:
-                        model_dump = getattr(chunk, 'model_dump', None)
-                        model_dict = getattr(chunk, 'dict', None)
+                        model_dump = getattr(chunk, "model_dump", None)
+                        model_dict = getattr(chunk, "dict", None)
                         if model_dump and callable(model_dump):
                             chunk_data = model_dump(exclude_none=True)
                         elif model_dict and callable(model_dict):
@@ -1005,11 +1119,11 @@ async def _handle_anthropic_streaming_response(
                             chunk_data = chunk
 
                         # Collect content for logging
-                        if isinstance(chunk_data, dict) and 'choices' in chunk_data:
-                            for choice in chunk_data.get('choices', []):
+                        if isinstance(chunk_data, dict) and "choices" in chunk_data:
+                            for choice in chunk_data.get("choices", []):
                                 if isinstance(choice, dict):
-                                    delta = choice.get('delta', {})
-                                    content = delta.get('content')
+                                    delta = choice.get("delta", {})
+                                    content = delta.get("content")
                                     if content:
                                         collected_content.append(content)
 
@@ -1024,8 +1138,8 @@ async def _handle_anthropic_streaming_response(
 
                 except TypeError:
                     # Fall back to non-generator response
-                    model_dump = getattr(completion_stream, 'model_dump', None)
-                    model_dict = getattr(completion_stream, 'dict', None)
+                    model_dump = getattr(completion_stream, "model_dump", None)
+                    model_dict = getattr(completion_stream, "dict", None)
                     if model_dump and callable(model_dump):
                         response_data = model_dump(exclude_none=True)
                     elif model_dict and callable(model_dict):
@@ -1040,8 +1154,8 @@ async def _handle_anthropic_streaming_response(
                         yield f"event: {event['type']}\ndata: {json.dumps(event, ensure_ascii=False)}\n\n"
             else:
                 # Non-generator response
-                model_dump = getattr(completion_stream, 'model_dump', None)
-                model_dict = getattr(completion_stream, 'dict', None)
+                model_dump = getattr(completion_stream, "model_dump", None)
+                model_dict = getattr(completion_stream, "dict", None)
                 if model_dump and callable(model_dump):
                     response_data = model_dump(exclude_none=True)
                 elif model_dict and callable(model_dict):
@@ -1056,15 +1170,9 @@ async def _handle_anthropic_streaming_response(
                     yield f"event: {event['type']}\ndata: {json.dumps(event, ensure_ascii=False)}\n\n"
 
         except Exception as e:
-            ic.configureOutput(prefix='ERROR| ')
+            ic.configureOutput(prefix="ERROR| ")
             ic(f"Error in Anthropic streaming response for request {request_id}: {e}")
-            error_event = {
-                "type": "error",
-                "error": {
-                    "type": "api_error",
-                    "message": str(e)
-                }
-            }
+            error_event = {"type": "error", "error": {"type": "api_error", "message": str(e)}}
             yield f"event: error\ndata: {json.dumps(error_event, ensure_ascii=False)}\n\n"
 
         finally:
@@ -1083,7 +1191,7 @@ async def _handle_anthropic_streaming_response(
                     response_time_ms=response_time_ms,
                     status_code=200,
                     provider=provider_name,
-                    request_obj=request_obj
+                    request_obj=request_obj,
                 )
 
     return StreamingResponse(streaming(), media_type="text/event-stream")
@@ -1103,7 +1211,7 @@ async def _handle_anthropic_non_streaming_response(
 ) -> Dict[str, Any]:
     """Handle non-streaming response in Anthropic format."""
     try:
-        ic.configureOutput(prefix='DEBUG| ')
+        ic.configureOutput(prefix="DEBUG| ")
         ic(f"Starting Anthropic non-streaming response for request {request_id}")
 
         # Ensure stream is False for non-streaming
@@ -1119,7 +1227,7 @@ async def _handle_anthropic_non_streaming_response(
                 "model": anthropic_model,
                 "stop_reason": "end_turn",
                 "stop_sequence": None,
-                "usage": {"input_tokens": 0, "output_tokens": 0}
+                "usage": {"input_tokens": 0, "output_tokens": 0},
             }
 
         # Convert to Anthropic format
@@ -1133,14 +1241,14 @@ async def _handle_anthropic_non_streaming_response(
             raise APIError(
                 "Invalid response format from provider",
                 HTTP_500_INTERNAL_SERVER_ERROR,
-                "provider_error"
+                "provider_error",
             )
 
         anthropic_response = convert_openai_to_anthropic_response(response_data, anthropic_model)
 
         elapsed = time.time() - start_time
         response_time_ms = int(elapsed * 1000)
-        ic.configureOutput(prefix='INFO| ')
+        ic.configureOutput(prefix="INFO| ")
         ic(f"Completed Anthropic non-streaming request {request_id} in {elapsed:.2f}s")
 
         # Log request
@@ -1158,13 +1266,13 @@ async def _handle_anthropic_non_streaming_response(
             response_time_ms=response_time_ms,
             status_code=200,
             provider=provider_name,
-            request_obj=request_obj
+            request_obj=request_obj,
         )
 
         return anthropic_response
 
     except Exception as e:
-        ic.configureOutput(prefix='ERROR| ')
+        ic.configureOutput(prefix="ERROR| ")
         ic(f"Error in Anthropic non-streaming response for request {request_id}: {e}")
         error_message = str(e)
 
@@ -1178,11 +1286,9 @@ async def _handle_anthropic_non_streaming_response(
             status_code=500,
             error_message=error_message,
             provider=provider_name,
-            request_obj=request_obj
+            request_obj=request_obj,
         )
 
         raise APIError(
-            f"Provider error: {error_message}",
-            HTTP_500_INTERNAL_SERVER_ERROR,
-            "provider_error"
+            f"Provider error: {error_message}", HTTP_500_INTERNAL_SERVER_ERROR, "provider_error"
         )
